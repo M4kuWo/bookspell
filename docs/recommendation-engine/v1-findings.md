@@ -133,6 +133,45 @@ thematic — systemic oppression allegory and anti-war statement,
 respectively); The Poppy War also `heavy_handed`, matching the user's
 own stated reaction.
 
+## Additional validation: synthetic profiles across the wider catalog
+
+The pilot's 30 books are one slice of the catalog (mostly grimdark/epic
+fantasy-leaning). To check the approach generalizes rather than being
+tuned to that slice specifically, ran three more synthetic taste
+profiles against books the pilot never touched:
+
+- **Cozy/found-family fan** (liked Legends & Lattes, The House in the
+  Cerulean Sea, Before the Coffee Gets Cold; disliked A Game of Thrones,
+  Prince of Thorns, The Blade Itself) → top result The Alchemist, then
+  **The Long Way to a Small, Angry Planet** (about as perfect a match as
+  this catalog has for "cozy"), The Midnight Library, Harry Potter and
+  the Philosopher's Stone, Edgedancer, Tress of the Emerald Sea. 6 of 8
+  are clearly on-theme; I, Robot and I Who Have Never Known Men are
+  more debatable but not wrong.
+- **Hard sci-fi fan** (liked The Martian, Project Hail Mary, Children of
+  Time; disliked A Court of Thorns and Roses, Twilight, Fourth Wing) →
+  I, Robot, Recursion, Caliban's War, Leviathan Wakes, Dune, The
+  Three-Body Problem, Artemis, Network Effect. Near-perfect — exactly
+  the hard-SF shelf a Martian/Hail Mary fan would want next.
+- **Romantasy fan** (liked A Court of Thorns and Roses, Throne of Glass,
+  A Court of Mist and Fury; disliked Never Let Me Go, Piranesi, The Left
+  Hand of Darkness) → Shadow and Bone, Fourth Wing, The Cruel Prince,
+  Iron Flame land exactly right at the top. But rank 5-8 drifts (Harry
+  Potter and the Half-Blood Prince, the Percy Jackson books, The Colour
+  of Magic) — these picked up enough overlapping structural features
+  (pacing, POV, moderate stakes) to rank highly despite having little to
+  do with romance specifically. This is a real, useful signal: the
+  current weighting can under-value a defining trope (romance content)
+  relative to several weaker-but-numerous structural matches. Worth
+  watching once real ratings exist — may need trope-category weights to
+  not get diluted by the sheer count of scalar-field agreements.
+
+Net: the approach generalizes well beyond the pilot's specific slice of
+the catalog, with one concrete tuning question flagged for whenever real
+user ratings make it worth revisiting (not fixed here — no real data to
+tune against yet, and guessing at a fix without evidence would be the
+same mistake as force-fitting a schema field on a single data point).
+
 ## What this is (and isn't) yet
 
 This is a validated v1 *algorithm*, not a shipped feature — it's a
