@@ -662,3 +662,34 @@ a separate scalar. Progression fantasy already existed as
 
 Catalog stands at 168/168 books tagged with all core + round-2 + round-3
 fields, 112 tropes, 37 content warnings.
+
+## 2026-08-28 — Internal catalog review tool
+
+Built the "minimal internal review tool" flagged earlier as a
+prerequisite before the recommendation engine (step 05). Single static
+HTML file (`tools/catalog-review/index.html`), no build step, no
+framework — queries Supabase's auto-generated REST API (PostgREST)
+directly from the browser. Required one small migration
+(`20260828040000_review_tool_read_grants.sql`) granting the `anon` role
+read access to the catalog tables, since PostgREST enforces grants even
+with RLS off.
+
+What it does: browsable/searchable book list with cover art, click-through
+to a full per-book DNA view (grouped and labeled the way the schema
+groups fields, not raw column names), and cross-catalog filtering by any
+scalar field, trope, or content warning combination — the main point
+being able to ask "show me everything tagged X" and eyeball whether that
+group actually belongs together. Deliberately no editing: corrections
+still go through direct SQL, same as every prior fix in this project.
+
+Tested end-to-end in a real browser session (list load, detail view,
+scalar filter, trope filter, combined-filter zero-result case, clear
+filters) — all worked correctly, no console errors.
+
+Surfaced one real, pre-existing data gap while testing: the original
+30-book pilot corpus (tagged before `age_category`/`book_length` existed
+as fields, and before step 03's Hardcover ingestion supplied
+`page_count`) is missing those two fields plus the three round-3 fields
+for the same reason. The tool flags this directly (a "N fields missing"
+badge per book, plus a header-level count) rather than hiding it. Not
+fixed in this pass — flagged for a follow-up backfill.

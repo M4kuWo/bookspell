@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bookspell catalog review</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --panel: #ffffff;
+    --border: #ddd8cf;
+    --text: #2a2620;
+    --muted: #7a7468;
+    --accent: #6b4f2a;
+    --accent-bg: #f0e6d6;
+    --warn: #b3541e;
+    --warn-bg: #fbe9dc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header h1 { font-size: 18px; margin: 0; }
+  header .stat { font-size: 13px; color: var(--muted); }
+  header .stat.warn { color: var(--warn); }
+
+  #layout { display: flex; height: calc(100vh - 57px); }
+  #sidebar {
+    width: 300px;
+    flex: none;
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px;
+    background: var(--panel);
+  }
+  #sidebar h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 18px 0 6px; }
+  #sidebar h2:first-child { margin-top: 0; }
+  #search { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+  select.filter-select { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; margin-bottom: 8px; background: white; }
+  .filter-label { font-size: 12px; color: var(--muted); margin-bottom: 2px; display: block; }
+  .multiselect-box { border: 1px solid var(--border); border-radius: 6px; max-height: 160px; overflow-y: auto; padding: 6px; background: white; margin-bottom: 8px; }
+  .multiselect-box input[type=text] { width: 100%; border: none; border-bottom: 1px solid var(--border); padding: 4px; font-size: 12px; margin-bottom: 4px; }
+  .ms-item { font-size: 12px; padding: 2px 4px; display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 4px; }
+  .ms-item:hover { background: var(--accent-bg); }
+  .ms-item.selected { background: var(--accent-bg); font-weight: 600; }
+  #clearFilters { font-size: 12px; color: var(--accent); background: none; border: none; cursor: pointer; padding: 4px 0; text-decoration: underline; }
+
+  #main { flex: 1; overflow-y: auto; padding: 16px 24px; }
+  #resultCount { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card img { width: 52px; height: 78px; object-fit: cover; border-radius: 4px; flex: none; background: #eee; }
+  .card .meta { min-width: 0; }
+  .card .title { font-size: 13px; font-weight: 600; line-height: 1.25; margin-bottom: 2px; }
+  .card .author { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .card .badges { display: flex; flex-wrap: wrap; gap: 4px; }
+  .badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; background: var(--accent-bg); color: var(--accent); white-space: nowrap; }
+  .badge.warn { background: var(--warn-bg); color: var(--warn); }
+
+  #overlay {
+    display: none;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    align-items: center; justify-content: center; z-index: 10;
+  }
+  #overlay.open { display: flex; }
+  #detail {
+    background: var(--panel);
+    width: min(760px, 92vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    border-radius: 10px;
+    padding: 24px;
+    position: relative;
+  }
+  #detail .close { position: absolute; top: 14px; right: 16px; border: none; background: none; font-size: 20px; cursor: pointer; color: var(--muted); }
+  #detail .dhead { display: flex; gap: 16px; margin-bottom: 18px; }
+  #detail .dhead img { width: 84px; height: 126px; object-fit: cover; border-radius: 6px; background: #eee; flex: none; }
+  #detail h2 { margin: 0 0 4px; font-size: 20px; }
+  #detail .dauthor { color: var(--muted); font-size: 14px; margin-bottom: 6px; }
+  #detail .dseries { font-size: 12px; color: var(--muted); }
+  .dsection { margin-bottom: 16px; }
+  .dsection h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 8px; }
+  .fieldgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px 14px; }
+  .fieldrow { font-size: 13px; }
+  .fieldrow .fname { color: var(--muted); font-size: 11px; display: block; }
+  .fieldrow .fval { font-weight: 500; }
+  .fieldrow .fval.null { color: var(--warn); font-style: italic; font-weight: 400; }
+  .troupe-group { margin-bottom: 8px; }
+  .troupe-group .gname { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { font-size: 12px; padding: 3px 8px; border-radius: 12px; background: var(--accent-bg); color: var(--accent); }
+  .chip.cw { background: var(--warn-bg); color: var(--warn); }
+  .chip .sev { opacity: 0.75; font-size: 10px; margin-left: 4px; }
+  .empty-note { font-size: 12px; color: var(--muted); font-style: italic; }
+  #loadError { padding: 40px; text-align: center; color: var(--warn); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Bookspell — catalog review</h1>
+  <span class="stat" id="statTotal"></span>
+  <span class="stat warn" id="statGaps"></span>
+</header>
+
+<div id="layout">
+  <div id="sidebar">
+    <h2>Search</h2>
+    <input id="search" type="text" placeholder="Title or author…">
+
+    <h2>Scalar fields</h2>
+    <div id="scalarFilters"></div>
+
+    <h2>Tropes</h2>
+    <div class="multiselect-box" id="tropeBox"></div>
+
+    <h2>Content warnings</h2>
+    <div class="multiselect-box" id="cwBox"></div>
+
+    <button id="clearFilters">Clear all filters</button>
+  </div>
+
+  <div id="main">
+    <div id="resultCount"></div>
+    <div id="grid"></div>
+  </div>
+</div>
+
+<div id="overlay">
+  <div id="detail"></div>
+</div>
+
+<script>
+const API_URL = 'http://127.0.0.1:54321/rest/v1';
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+
+// Which book_dna scalar fields are exposed as filters, grouped for the
+// detail view the way the schema groups them. Values for each are derived
+// from the actual data, not hardcoded, so new enum values show up
+// automatically.
+const FIELD_GROUPS = [
+  { title: 'Point of view & structure', fields: ['pov_count','person','narrator_reliability','timeline','form','prose_density','prose_complexity'] },
+  { title: 'Pacing & tone', fields: ['overall_pace','pace_shape','drive','darkness','humor_level','emotional_register','message_intensity','intellectual_weight'] },
+  { title: 'Content & shape', fields: ['romance_heat_frequency','romance_heat_intensity','violence_frequency','violence_intensity','worldbuilding_density','stakes_scope','narrative_closure','emotional_resolution','ends_on_cliffhanger'] },
+  { title: 'Tropes & craft', fields: ['magic_system_hardness','scifi_hardness'] },
+  { title: 'Bibliographic', fields: ['genre','age_category','book_length','audiobook_length'] },
+];
+const ALL_SCALAR_FIELDS = FIELD_GROUPS.flatMap(g => g.fields);
+const FIELD_LABELS = {
+  pov_count:'POV count', person:'Person', narrator_reliability:'Narrator reliability', timeline:'Timeline', form:'Form',
+  prose_density:'Prose density', prose_complexity:'Prose complexity',
+  overall_pace:'Overall pace', pace_shape:'Pace shape', drive:'Drive', darkness:'Darkness', humor_level:'Humor level',
+  emotional_register:'Emotional register', message_intensity:'Message intensity', intellectual_weight:'Intellectual weight',
+  romance_heat_frequency:'Romance heat (freq)', romance_heat_intensity:'Romance heat (intensity)',
+  violence_frequency:'Violence (freq)', violence_intensity:'Violence (intensity)', worldbuilding_density:'Worldbuilding density',
+  stakes_scope:'Stakes scope', narrative_closure:'Narrative closure', emotional_resolution:'Emotional resolution',
+  ends_on_cliffhanger:'Ends on cliffhanger', magic_system_hardness:'Magic hardness', scifi_hardness:'Sci-fi hardness',
+  genre:'Genre', age_category:'Age category', book_length:'Book length', audiobook_length:'Audiobook length',
+};
+// Fields whose absence is a real data gap worth flagging (vs. legitimately n/a).
+const COMPLETENESS_FIELDS = ['age_category','book_length','prose_density','prose_complexity','intellectual_weight','stakes_scope'];
+
+let BOOKS = [];
+let state = { search: '', scalars: {}, tropes: new Set(), cws: new Set() };
+
+function titleCase(s) {
+  if (s === null || s === undefined) return null;
+  return String(s).split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+}
+
+async function load() {
+  const url = `${API_URL}/books?select=id,title,author,cover_url,page_count,publication_year,` +
+    `series:series_id(name,status,book_count),universe:universe_id(name),` +
+    `book_dna(*),` +
+    `book_tropes(trope:tropes(id,group_name)),` +
+    `book_content_warnings(warning_id,severity,reveals_spoiler)` +
+    `&order=title.asc`;
+  const res = await fetch(url, {
+    headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` }
+  });
+  if (!res.ok) {
+    document.getElementById('grid').innerHTML =
+      `<div id="loadError">Couldn't load the catalog (HTTP ${res.status}). ` +
+      `Is Supabase running locally (supabase start)? Is 127.0.0.1:54321 reachable?</div>`;
+    return;
+  }
+  const rows = await res.json();
+  BOOKS = rows.map(r => ({
+    ...r,
+    dna: r.book_dna || {},
+    tropes: (r.book_tropes || []).map(t => t.trope).filter(Boolean),
+    warnings: r.book_content_warnings || [],
+  }));
+  buildFilterUI();
+  renderStats();
+  render();
+}
+
+function buildFilterUI() {
+  // Scalar field dropdowns, one per field, options = distinct values present in data.
+  const container = document.getElementById('scalarFilters');
+  container.innerHTML = '';
+  ALL_SCALAR_FIELDS.forEach(field => {
+    const values = new Set();
+    BOOKS.forEach(b => {
+      let v = field === 'genre' ? (b.dna.genre || []) : [b.dna[field]];
+      v.forEach(x => { if (x !== null && x !== undefined) values.add(x); });
+    });
+    if (values.size === 0) return;
+    const wrap = document.createElement('div');
+    const label = document.createElement('span');
+    label.className = 'filter-label';
+    label.textContent = FIELD_LABELS[field] || field;
+    const select = document.createElement('select');
+    select.className = 'filter-select';
+    select.dataset.field = field;
+    select.innerHTML = `<option value="">Any</option>` +
+      [...values].sort().map(v => `<option value="${v}">${titleCase(v)}</option>`).join('');
+    select.addEventListener('change', () => {
+      if (select.value) state.scalars[field] = select.value;
+      else delete state.scalars[field];
+      render();
+    });
+    wrap.appendChild(label);
+    wrap.appendChild(select);
+    container.appendChild(wrap);
+  });
+
+  buildMultiSelect('tropeBox', collectTropeOptions(), state.tropes);
+  buildMultiSelect('cwBox', collectCwOptions(), state.cws);
+}
+
+function collectTropeOptions() {
+  const seen = new Map();
+  BOOKS.forEach(b => b.tropes.forEach(t => seen.set(t.id, t.group_name)));
+  return [...seen.keys()].sort().map(id => ({ id, label: titleCase(id) }));
+}
+function collectCwOptions() {
+  const seen = new Set();
+  BOOKS.forEach(b => b.warnings.forEach(w => seen.add(w.warning_id)));
+  return [...seen].sort().map(id => ({ id, label: titleCase(id) }));
+}
+
+function buildMultiSelect(containerId, options, selectedSet) {
+  const box = document.getElementById(containerId);
+  box.innerHTML = '';
+  const searchInput = document.createElement('input');
+  searchInput.type = 'text';
+  searchInput.placeholder = 'Filter…';
+  box.appendChild(searchInput);
+  const list = document.createElement('div');
+  box.appendChild(list);
+
+  function renderList(filterText) {
+    list.innerHTML = '';
+    options
+      .filter(o => !filterText || o.label.toLowerCase().includes(filterText.toLowerCase()))
+      .forEach(o => {
+        const div = document.createElement('div');
+        div.className = 'ms-item' + (selectedSet.has(o.id) ? ' selected' : '');
+        div.textContent = o.label;
+        div.addEventListener('click', () => {
+          if (selectedSet.has(o.id)) selectedSet.delete(o.id);
+          else selectedSet.add(o.id);
+          renderList(searchInput.value);
+          render();
+        });
+        list.appendChild(div);
+      });
+  }
+  searchInput.addEventListener('input', () => renderList(searchInput.value));
+  renderList('');
+}
+
+function renderStats() {
+  document.getElementById('statTotal').textContent = `${BOOKS.length} books`;
+  const gapCount = BOOKS.filter(b => COMPLETENESS_FIELDS.some(f => b.dna[f] === null || b.dna[f] === undefined)).length;
+  document.getElementById('statGaps').textContent = gapCount
+    ? `${gapCount} books missing one or more core fields (see badges)` : '';
+}
+
+function matches(b) {
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    if (!b.title.toLowerCase().includes(q) && !b.author.toLowerCase().includes(q)) return false;
+  }
+  for (const [field, val] of Object.entries(state.scalars)) {
+    if (field === 'genre') {
+      if (!(b.dna.genre || []).includes(val)) return false;
+    } else if (b.dna[field] !== val) return false;
+  }
+  if (state.tropes.size) {
+    const ids = new Set(b.tropes.map(t => t.id));
+    for (const t of state.tropes) if (!ids.has(t)) return false;
+  }
+  if (state.cws.size) {
+    const ids = new Set(b.warnings.map(w => w.warning_id));
+    for (const c of state.cws) if (!ids.has(c)) return false;
+  }
+  return true;
+}
+
+function render() {
+  const filtered = BOOKS.filter(matches);
+  document.getElementById('resultCount').textContent = `${filtered.length} of ${BOOKS.length} books`;
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  filtered.forEach(b => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const gaps = COMPLETENESS_FIELDS.filter(f => b.dna[f] === null || b.dna[f] === undefined);
+    card.innerHTML = `
+      <img src="${b.cover_url || ''}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+      <div class="meta">
+        <div class="title">${b.title}</div>
+        <div class="author">${b.author}</div>
+        <div class="badges">
+          ${(b.dna.genre || []).map(g => `<span class="badge">${titleCase(g)}</span>`).join('')}
+          ${b.dna.stakes_scope ? `<span class="badge">${titleCase(b.dna.stakes_scope)}</span>` : ''}
+          ${gaps.length ? `<span class="badge warn">${gaps.length} field${gaps.length>1?'s':''} missing</span>` : ''}
+        </div>
+      </div>`;
+    card.addEventListener('click', () => openDetail(b));
+    grid.appendChild(card);
+  });
+}
+
+function fieldRow(field, value) {
+  const isNull = value === null || value === undefined;
+  const display = Array.isArray(value) ? value.map(titleCase).join(', ') : (isNull ? 'not tagged' : titleCase(value));
+  return `<div class="fieldrow">
+    <span class="fname">${FIELD_LABELS[field] || field}</span>
+    <span class="fval${isNull ? ' null' : ''}">${display || 'not tagged'}</span>
+  </div>`;
+}
+
+function openDetail(b) {
+  const d = document.getElementById('detail');
+  const seriesLine = b.series
+    ? `${b.series.name}${b.series.book_count ? ` (${b.series.book_count} books, ${b.series.status})` : ` (${b.series.status})`}`
+    : null;
+  const groupedTropes = {};
+  b.tropes.forEach(t => {
+    (groupedTropes[t.group_name] = groupedTropes[t.group_name] || []).push(t.id);
+  });
+
+  d.innerHTML = `
+    <button class="close" id="closeBtn">&times;</button>
+    <div class="dhead">
+      <img src="${b.cover_url || ''}" alt="" onerror="this.style.visibility='hidden'">
+      <div>
+        <h2>${b.title}</h2>
+        <div class="dauthor">${b.author}${b.page_count ? ` · ${b.page_count}pp` : ''}${b.publication_year ? ` · ${b.publication_year}` : ''}</div>
+        ${seriesLine ? `<div class="dseries">${seriesLine}${b.universe ? ` — ${b.universe.name}` : ''}</div>` : ''}
+      </div>
+    </div>
+
+    ${FIELD_GROUPS.map(g => `
+      <div class="dsection">
+        <h3>${g.title}</h3>
+        <div class="fieldgrid">
+          ${g.fields.map(f => fieldRow(f, f === 'genre' ? b.dna.genre : b.dna[f])).join('')}
+        </div>
+      </div>
+    `).join('')}
+
+    <div class="dsection">
+      <h3>Tropes</h3>
+      ${Object.keys(groupedTropes).length ? Object.entries(groupedTropes).map(([group, ids]) => `
+        <div class="troupe-group">
+          <div class="gname">${titleCase(group)}</div>
+          <div class="chip-row">${ids.map(id => `<span class="chip">${titleCase(id)}</span>`).join('')}</div>
+        </div>
+      `).join('') : '<div class="empty-note">None tagged.</div>'}
+    </div>
+
+    <div class="dsection">
+      <h3>Content warnings</h3>
+      ${b.warnings.length ? `<div class="chip-row">${b.warnings.map(w =>
+        `<span class="chip cw">${titleCase(w.warning_id)}<span class="sev">${titleCase(w.severity)}${w.reveals_spoiler ? ' · spoiler' : ''}</span></span>`
+      ).join('')}</div>` : '<div class="empty-note">None tagged.</div>'}
+    </div>
+  `;
+  document.getElementById('closeBtn').addEventListener('click', closeDetail);
+  document.getElementById('overlay').classList.add('open');
+}
+function closeDetail() { document.getElementById('overlay').classList.remove('open'); }
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target.id === 'overlay') closeDetail();
+});
+
+document.getElementById('search').addEventListener('input', e => {
+  state.search = e.target.value;
+  render();
+});
+document.getElementById('clearFilters').addEventListener('click', () => {
+  state = { search: '', scalars: {}, tropes: new Set(), cws: new Set() };
+  document.getElementById('search').value = '';
+  buildFilterUI();
+  render();
+});
+
+load();
+</script>
+</body>
+</html>
