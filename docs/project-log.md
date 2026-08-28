@@ -746,3 +746,34 @@ local running rather than fully retiring it). Actual catalog data (new
 books, tag corrections) should be written directly against the hosted
 project from here on — local Postgres is not being kept in sync with it
 automatically, and would need another manual dump/push if it drifts.
+
+## 2026-08-29 — Backfilled age_category/book_length for the 30 pilot books
+
+Closed the data gap the review tool surfaced: the original 30-book pilot
+corpus was tagged before `age_category` existed as a field and before
+step 03's Hardcover ingestion supplied `page_count` (also confirmed the
+round-3 fields — `prose_density`/`prose_complexity`/`intellectual_weight`/
+`stakes_scope` — were NOT actually missing for these books; that round's
+full-catalog retag already covered them).
+
+- `book_length` — computed deterministically from each book's now-known
+  `page_count` (same bucket thresholds as everywhere else in the
+  project), not a judgment call.
+- `age_category` — a real judgment call, made directly rather than via a
+  tagging agent (30 well-known titles, low ambiguity for all but a
+  couple). Two genuinely close calls, flagged here rather than silently
+  decided: **A Wizard of Earthsea** and **Ender's Game** both tagged
+  `ya` on the strength of common retail/library shelving and young
+  protagonists, despite both having a real claim to `adult` (original
+  adult-SF awards/marketing for Ender's Game; frequent "classic fantasy"
+  adult shelving for Earthsea) — worth a second look if either's
+  recommendation behavior looks off later. Genre-fit-excluded candidates
+  (The Road, Bird Box) still got real `age_category`/`book_length`
+  values here too — that's a separate, still-open question from whether
+  they belong in the catalog at all.
+
+Applied to both hosted and local DBs — see
+`docs/remaining-catalog-tagging/pilot-corpus-backfill.sql`. Catalog now
+has 100% field coverage across `age_category` and `book_length` for all
+168 books (`audiobook_length` remains null for books with no audiobook
+edition on Hardcover's side — that's a legitimate absence, not a gap).
