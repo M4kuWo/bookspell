@@ -809,3 +809,60 @@ worked out beforehand).
 Applied via `supabase/migrations/20260829010000_split_stakes_scope_personal_stakes.sql`
 plus a data-only update (`docs/remaining-catalog-tagging/personal-stakes-values.json`)
 to both hosted and local DBs — verified matching distributions on both.
+
+## 2026-08-29 — Recommendation engine v1: designed, built, validated
+
+Main autonomous work for this window (user asleep ~7 hours until weekly
+usage reset). Chose this over expanding the catalog further: catalog
+growth doesn't reduce future tagging cost (a book costs the same to tag
+whether it's added today or in six months) and we'd already agreed 168
+books is enough to validate against; the recommendation engine is the
+actual next roadmap milestone (step 05), and uniquely has a way to
+self-validate without the user present — the 30-book pilot's real,
+already-documented like/dislike reactions.
+
+**Design** (matches the original artifact's spec: per-user weighted
+vector, no collaborative filtering for v1): every book's DNA becomes a
+flat feature space (ordinal fields by position, nominal fields by exact
+match, tropes as a multi-select set; content warnings deliberately
+excluded — they're filter material per book-dna.md, not a positive-match
+signal). A user's profile is a liked-books centroid plus PER-FEATURE
+WEIGHTS derived from how much that feature actually differs between
+their liked and disliked books — not a fixed global formula. Implemented
+in `scripts/recommend.py`, reading live from Postgres (same DATABASE_URL
+pattern as every other script in this project).
+
+**Validation** against the pilot's real, documented reactions (6 liked:
+Golden Compass, Locke Lamora, Eye of the World, Kings of Paradise, Prince
+of Thorns, Way of Kings; 8 disliked: Bird Box, Assassin's Apprentice, We
+Are Legion, Interview with the Vampire, The Poppy War, Circe, Dark
+Matter, He Who Fights with Monsters — pulled from `docs/pilot/findings.md`,
+not fabricated). Result: strong, sensible signal — unprompted top-15 was
+almost entirely multi-POV political/war epic fantasy (Malice, A Game of
+Thrones, Oathbringer, LOTR, The Blade Itself, the ASOIAF books, etc.),
+and 7 of 8 disliked books ranked in the bottom half when scored against
+the same profile without being excluded. The algorithm independently
+found `pov_count`/`person` as strong discriminators — correctly
+separating Assassin's Apprentice (single-POV, disliked) from
+structurally-similar liked books, without that distinction being
+hand-coded anywhere.
+
+**One honest limitation surfaced, not hidden**: The Poppy War (disliked
+for being "preachy") didn't rank low, because a single disliked example
+tagged `heavy_handed` doesn't outweigh 7 other disliked books mostly
+tagged `subtle` in a centroid-average approach — small-sample preference
+learning genuinely can't isolate a one-off qualitative reason yet. Same
+category as the already-documented "Known limitations — engine-level,
+not schema fixes" in book-dna.md, not a new problem.
+
+**Real data gap found and fixed along the way**: chasing the Poppy War
+result surfaced that `message_intensity` was null for all 30 original
+pilot-corpus books (confirmed via a full column-by-column null check —
+no other field had this gap) — same root cause as the earlier
+age_category/book_length backfill. Fixed directly, applied to both
+hosted and local DBs.
+
+Full design writeup, validation table, and limitation analysis in
+`docs/recommendation-engine/v1-findings.md`. This is a validated
+algorithm, not a shipped feature — wiring it into the app as a real
+service is step 06+ work once the app exists.
