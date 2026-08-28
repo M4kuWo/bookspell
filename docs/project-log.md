@@ -356,6 +356,55 @@ found a real bug that reading the files carefully did not. Same pattern
 as the original pilot's whole reason for existing — validate against
 real data, don't just trust that a review pass caught everything.
 
+## 2026-08-28 — Step 03: seed catalog bootstrapped from Hardcover
+
+Signed up for a Hardcover account and generated a scoped API token
+("Bookspell - seed catalog ingestion", `read:catalog` only, 1-year
+expiration) via browser automation once the user authorized doing it
+directly. Saved to a gitignored `.env`, never exposed in chat.
+
+Investigated Hardcover's actual GraphQL schema live (introspection, not
+assumed from memory) before writing any queries — a Hasura-generated API
+over Postgres plus a Typesense-backed `search` field. Found the real
+per-page cap (25, not the 110 first assumed) and the real home for
+audiobook duration (`default_audio_edition.audio_seconds` — the top-level
+`books.audio_seconds` field is unpopulated for every book tried, confirmed
+directly against Harry Potter's known audiobook data before trusting it
+elsewhere).
+
+Wrote `scripts/ingest-seed-catalog.js`: matches the 30 pilot books by
+title+author against Hardcover and updates their existing rows (preserving
+`book_id` so DNA tagging stays linked) rather than inserting duplicates,
+then pulls top Fantasy + Science Fiction titles by popularity for the rest
+of the catalog. `series` rows get created with live `status` (fetched
+separately, since the search index doesn't carry `is_completed`) and
+`book_count`.
+
+Three real bugs surfaced and fixed while running it against live data —
+consistent with this project's whole pattern of real data finding what
+research/design review doesn't:
+1. **Pilot-matching heuristic** — name-order mismatches ("Liu Cixin" vs.
+   Hardcover's "Cixin Liu"), an over-strict exact-title requirement (missed
+   "We Are Legion" vs. our "We Are Legion (We Are Bob)"), a missing accent
+   in the title normalizer (Circé vs. Circe), and relevance-sorted (rather
+   than popularity-sorted) search results letting comic-book adaptations
+   outrank the actual Wheel of Time novel. Fixed all four; pilot match rate
+   went 26/30 → 30/30.
+2. **Duplicate rows** — a popular pilot book can also appear in the general
+   genre pull, and the first run created untagged duplicate rows for
+   exactly the four books the matching heuristic had failed on (Three-Body
+   Problem, Eye of the World, Circe, We Are Legion). Verified zero DNA data
+   was attached to the duplicates before deleting them, then fixed the
+   script to exclude any hardcover_id already present in the database, not
+   just ones matched in the current run.
+3. **Audiobook duration** — as above; backfilled all previously-inserted
+   rows once the correct field was found (`scripts/backfill-audio-duration.js`).
+
+Final state: 168 books (30 pilot + 138 new), 83 series, all 30 pilot books
+now have real page counts/audiobook hours/series links. `universe` stays
+unpopulated — deliberately, since no metadata API models curated shared
+continuities like "The First Law World"; that's a manual step for later.
+
 ## Current status (as of 2026-08-28)
 
 - Schema: locked at v0.1, two research passes, one 30-book blind pilot,
@@ -366,10 +415,13 @@ real data, don't just trust that a review pass caught everything.
 - Roadmap: resequenced, published to the artifact.
 - Database: step 02 done. Local Supabase project running (git
   initialized, `supabase start` via Docker), migration generated
-  programmatically from the schema, all 8 tables live, 30-book pilot
-  corpus loaded and verified as real content.
-- Next up: step 03, bootstrapping a real seed catalog (a few hundred to
-  low-thousand titles pulled from Open Library/Google Books/Hardcover).
+  programmatically from the schema, all 8 tables live.
+- Seed catalog: step 03 done. 168 books (30 DNA-tagged pilot books + 138
+  new), 83 series, sourced from Hardcover's API. Bibliographic data only —
+  no DNA tags on the 138 new books yet.
+- Next up: step 04, the tagging pipeline (LLM structured extraction to
+  fill `book_dna` for the 138 untagged books, plus a minimal internal tool
+  for reviewing tagged output and logging ratings at scale).
 
 ## Lessons for future projects
 
