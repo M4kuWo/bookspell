@@ -1,0 +1,508 @@
+# Book DNA schema — machine-readable draft
+#
+# Status: DRAFT, v0.1 — pending review (see book-dna.md, "Open for review")
+# This is the source of truth to generate, later:
+#   - Postgres columns for `book_dna` (step 02 of the roadmap)
+#   - the JSON schema handed to the LLM tagging pipeline (step 04)
+#   - filter UI + the natural-language assistant's parse targets (step 06)
+#
+# Conventions:
+#   - every field has: type (enum | multi_enum), values, spoiler
+#   - spoiler: true means the recommendation engine always reads the real
+#     value, but the UI must gate display (see spoiler_horizon note at
+#     the bottom for series-level gating)
+#   - multi_enum "tropes" carries spoiler per-value, since most tropes are
+#     safe and a few specific ones aren't
+
+schema_version: 0.1.0-draft
+
+# Every book gets this regardless of category — the hook that lets a future
+# genre module (romance, literary fiction, ...) be new rows + a new
+# extension category instead of a schema migration.
+genre_field:
+  id: genre
+  type: multi_enum
+  values: [sci_fi, fantasy]  # closed for v1; will open up post-v1
+  spoiler: false
+
+# Bibliographic fact, not a taste attribute — but a real, mostly-objective
+# axis readers have strong preferences on, independent of genre or any
+# DNA field. Added after real user feedback flagged it as a gap (user
+# likes The Golden Compass despite a general YA aversion).
+age_category_field:
+  id: age_category
+  type: enum
+  values: [middle_grade, ya, new_adult, adult]
+  spoiler: false
+
+# Same shape as age_category: a bibliographic fact (derived from page/word
+# count, standard metadata from every source in the sourcing plan), not an
+# intrinsic taste attribute — but a real axis readers have strong, often
+# hard-threshold preferences on, independent of genre/tone/trope. Someone
+# avoiding The Wheel of Time isn't reacting to its tropes, they're
+# reacting to "14 books"; someone avoiding Stormlight isn't avoiding epic
+# fantasy, they're avoiding ~450,000-word individual volumes. Two
+# genuinely different axes — this field covers per-book length; series
+# length (book_count) lives on the `series` entity instead, see "Series &
+# universe" below, since it's a series-level fact, not a book-level one.
+# The raw page/word count itself is plain bibliographic data in the
+# `books` table; this field is the bucketed version used for similarity
+# scoring. Gets the same three-tier treatment as content_warnings/tropes:
+# soft signal, informational display, and — likely more load-bearing here
+# than for most fields — an explicit opt-in cap ("nothing over 500
+# pages" / "no series longer than 6 books"), since approachability is
+# often a hard threshold, not a graduated taste.
+book_length_field:
+  id: book_length
+  type: enum
+  values: [short, standard, long, epic]
+  # Rough guidance, not a hard rule — bucket from actual page/word count:
+  # short: under ~350pp / ~100k words. standard: ~350-500pp / 100-140k.
+  # long: ~500-700pp / 140-200k. epic: 700pp+ / 200k+ (Stormlight-tier).
+  spoiler: false
+
+categories:
+
+  pov_structure:
+    label: Point of view & structure
+    scope: core
+    fields:
+      pov_count:
+        type: enum
+        values: [single, multiple]
+        spoiler: false
+      person:
+        type: enum
+        values: [first, second, third_limited, third_omniscient, mixed]
+        # mixed = different POV threads use different persons (e.g. The
+        # Fifth Season: one thread in 2nd person, others in 3rd) —
+        # surfaced by the 30-book pilot; only relevant alongside
+        # pov_count: multiple.
+        spoiler: false
+      narrator_reliability:
+        type: enum
+        values: [reliable, unreliable]
+        spoiler: false
+      timeline:
+        type: enum
+        values: [linear, nonlinear, multi_timeline]
+        # multi_timeline replaces the old dual_timeline (was hard-coded to
+        # exactly two) — generalizes to any number of interwoven
+        # timelines. The similarity math cares whether a book uses this
+        # structural device at all, not the exact count.
+        spoiler: false
+      form:
+        type: enum
+        values: [standard_prose, epistolary, framing_device, verse]
+        spoiler: false
+
+  pacing_tone:
+    label: Pacing & tone
+    scope: core
+    fields:
+      overall_pace:
+        type: enum
+        values: [slow, medium, fast]
+        spoiler: false
+      pace_shape:
+        type: enum
+        values: [consistent, slow_burn_to_fast_finish, front_loaded, uneven]
+        spoiler: false
+      drive:
+        type: enum
+        values: [character_driven, plot_driven, balanced, worldbuilding_driven]
+        # worldbuilding_driven added after the pilot: New Weird-style books
+        # (Perdido Street Station) are consistently described as driven by
+        # the setting itself, not character/plot/an even split of the two.
+        spoiler: false
+      darkness:
+        type: enum
+        values: [light, moderate, dark, grimdark]
+        spoiler: false
+      humor_level:
+        type: enum
+        values: [none, light, moderate, heavy]
+        spoiler: false
+      emotional_register:
+        type: enum
+        values: [comfort_read, bittersweet, tense, gut_punch]
+        spoiler: false
+      message_intensity:
+        type: enum
+        values: [subtle, moderate, heavy_handed]
+        # How OVERTLY the book pushes a moral/philosophical argument —
+        # deliberately NOT which argument (see the schema's ideological-
+        # neutrality decision in book-dna.md). A reader can be averse to
+        # heavy-handedness itself regardless of the specific message (e.g.
+        # disliking both an overt pacifism theme and an overt religious-
+        # redemption theme in different books) — this field lets that
+        # generalized aversion be learned from ratings without the schema
+        # ever tagging which position a book argues.
+        spoiler: false
+
+  content_shape:
+    label: Content & shape
+    scope: core
+    fields:
+      romance_heat_frequency:
+        type: enum
+        values: [none, rare, occasional, frequent]
+        spoiler: false
+      romance_heat_intensity:
+        type: enum
+        values: [na, closed_door, low, moderate, explicit]
+        spoiler: false
+      violence_frequency:
+        type: enum
+        values: [none, rare, occasional, frequent]
+        spoiler: false
+      violence_intensity:
+        type: enum
+        values: [na, mild, moderate, graphic, brutal]
+        # `brutal` added after direct reader comparison across the 30-book
+        # pilot corpus: books as different in actual violence experience
+        # as The Way of Kings and Kings of Paradise/Prince of Thorns were
+        # both landing on `graphic`, the top of a 4-point scale — the same
+        # "top bucket absorbing too wide a range" problem `darkness`
+        # already solved by adding `grimdark` above `dark`. `brutal` is
+        # for extreme, dwelled-upon violence (detailed dismemberment,
+        # prolonged torture) — distinct from `graphic`, which still reads
+        # as clearly violent but not lingering on extremity.
+        spoiler: false
+      content_warnings:
+        type: multi_enum
+        spoiler: false  # neutral data, not editorial — see book-dna.md
+        # Each per-book selection also carries TWO per-instance axes below
+        # — neither is a fixed property of the vocabulary item (unlike
+        # tropes' per-value `spoiler`), since both vary by book, not by
+        # warning type. Stored per (book, warning) pair, e.g. a join table
+        # in step 02, not baked into the vocabulary list itself.
+        value_severity: [brief, moderate, central_theme]
+        # How much of the book this warning covers — see book-dna.md.
+        value_reveals_spoiler: [false, true]
+        # Whether flagging this warning ON THIS BOOK gives away a plot
+        # point. Most instances of most warnings are known from the start
+        # (false) — but the same warning type can be a late, concealed
+        # reveal on a different book (e.g. Perdido Street Station's
+        # sexual_assault: Yagharek's crime is hidden until deep in the
+        # book). This is why it's per-instance, not a per-value spoiler
+        # flag like tropes has: sexual_assault itself isn't inherently a
+        # spoiler, this specific book's use of it is. The UI gates display
+        # of true=instances the same way any other spoiler field does; the
+        # recommendation engine always reads the real value regardless.
+        values:
+          - sexual_assault
+          - dubious_consent
+          - self_harm
+          - suicide
+          - eating_disorder
+          - child_death
+          - child_abuse
+          - animal_harm
+          - domestic_abuse
+          - substance_abuse
+          - torture
+          - body_horror
+          - hate_speech_depicted
+          - ableism_depicted
+          - racism_depicted
+          - colonization_themes
+          - slavery
+          - genocide
+          - war_trauma
+          - religious_trauma_or_cults
+          - mental_illness_depiction
+          - pregnancy_loss
+          - kidnapping_or_captivity
+          - sexual_harassment
+          - emotional_abuse
+          - child_sexual_abuse
+          - stalking
+          - trafficking
+          - classism
+          - sexism_or_misogyny_depicted
+          - infertility
+          - abortion
+          - bullying
+      worldbuilding_density:
+        type: enum
+        values: [light, moderate, dense]
+        spoiler: false
+      narrative_closure:
+        type: enum
+        values: [self_contained, requires_series]
+        spoiler: false
+        # Intrinsic to the text, stable once published — does THIS book
+        # resolve its own plot, or does it require other books to.
+        # Series/universe MEMBERSHIP is deliberately not a field here — see
+        # "Series & universe" note at the bottom of this file.
+      emotional_resolution:
+        type: enum
+        values: [happy, tragic, ambiguous, bittersweet]
+        spoiler: true
+      ends_on_cliffhanger:
+        type: enum
+        values: [resolved, cliffhanger]
+        spoiler: true
+        # Distinct from narrative_closure (a series-level structural fact:
+        # does this book NEED future installments to resolve its arc) and
+        # from emotional_resolution above. A book can requires_series with
+        # a non-cliffhanger ending (episodic — resolves this installment's
+        # immediate conflict, sets up the next without withholding
+        # resolution), or emotional_resolution: happy while still ending
+        # on a cliffhanger (a personal beat lands even though the external
+        # plot is left hanging).
+
+  audiobook_native:
+    label: Audiobook-native
+    scope: core
+    wedge: true
+    fields:
+      narrator_performance:
+        type: enum
+        values: [poor, average, good, excellent]
+        spoiler: false
+      narrator_cast:
+        type: enum
+        values: [single_narrator, dual_narrator, full_cast]
+        spoiler: false
+      narration_pace_vs_prose:
+        type: enum
+        values: [matches, slower, faster]
+        spoiler: false
+      accent_authenticity:
+        type: enum
+        values: [na, poor, adequate, excellent]
+        spoiler: false
+      production_quality:
+        type: enum
+        values: [basic, standard, high]
+        spoiler: false
+      audiobook_length:
+        type: enum
+        values: [short, standard, long, epic]
+        # Bucketed from actual listening hours, NOT derived from
+        # book_length — narration pace means the two can diverge (a
+        # deliberate, measured narrator can make a standard-length novel
+        # feel long to listen to; a brisk one can do the reverse), and for
+        # an audiobook-first product, hours-to-listen is the more relevant
+        # approachability signal than page count for a large share of
+        # users. Rough guidance: short < 8h, standard 8-15h, long 15-25h,
+        # epic 25h+ (Stormlight-tier audiobooks routinely run 45-55h).
+        # Skipped for the 30-book pilot corpus along with every other
+        # audiobook_native field — not assessable from web research.
+        spoiler: false
+
+  tropes_craft:
+    label: Tropes & craft
+    scope: sff_extension
+    genre: [sci_fi, fantasy]
+    fields:
+      magic_system_hardness:
+        type: enum
+        values: [hard, soft, none, na]
+        # none = a fantasy-genre book that simply has no magic system in
+        # it (the concept applies to this genre but isn't present here).
+        # na = the concept doesn't apply at all — a pure sci-fi book with
+        # no fantasy element (use scifi_hardness instead). Left undefined
+        # until the pilot forced an inference — now documented.
+        spoiler: false
+      scifi_hardness:
+        type: enum
+        values: [hard, soft, na]
+        # na = book has no significant sci-fi/tech component (pure fantasy).
+        # Direct sci-fi analog to magic_system_hardness: how rigorously the
+        # science/tech is explained and grounded in real/plausible physics
+        # vs. treated as unexplained narrative furniture (e.g. FTL travel
+        # just works). A well-established reader-facing axis that had no
+        # equivalent field until this review flagged the gap.
+        spoiler: false
+      tropes:
+        type: multi_enum
+        # `group` is doc/UI grouping only — all tropes are one flat
+        # controlled vocabulary for the similarity math regardless of
+        # group. Groups exist so a filter UI can organize ~95 options
+        # instead of showing one long flat checklist.
+        #
+        # Vocabulary growth is an ongoing practice, not a one-time pass:
+        # during real tagging (step 04), when a book's defining device
+        # doesn't fit the existing vocabulary, that's a candidate addition
+        # — reviewed against the same bar used throughout this schema's
+        # review ("does this predict a different recommendation, not just
+        # is it a real term") before being added. The 13 entries added
+        # after the 30-book pilot (marked with pilot-sourced comments
+        # below) are the first real instance of this practice, not a
+        # special one-off.
+        values:
+          # -- character archetypes (protagonist + antagonist) --
+          - {id: chosen_one, group: character_archetypes, spoiler: false}
+          - {id: reluctant_hero, group: character_archetypes, spoiler: false}
+          - {id: anti_hero, group: character_archetypes, spoiler: false}
+          - {id: villain_protagonist, group: character_archetypes, spoiler: false}
+          - {id: cursed_protagonist, group: character_archetypes, spoiler: false}
+          - {id: morally_grey_protagonist, group: character_archetypes, spoiler: false}
+          - {id: secret_royalty, group: character_archetypes, spoiler: false}
+          - {id: immortal_or_ageless_character, group: character_archetypes, spoiler: false}
+          - {id: reincarnated_protagonist, group: character_archetypes, spoiler: false}
+          - {id: hidden_talent_prodigy, group: character_archetypes, spoiler: false}  # untrained character suddenly shows exceptional skill — distinct from chosen_one, which is destiny-driven rather than skill-driven
+          - {id: wise_mentor, group: character_archetypes, spoiler: false}
+          - {id: underdog_rising, group: character_archetypes, spoiler: false}  # powerless-to-strong arc
+          - {id: dark_lord_or_evil_overlord, group: character_archetypes, spoiler: false}
+
+          # -- romance & relationships --
+          - {id: enemies_to_lovers, group: romance_relationships, spoiler: false}
+          - {id: friends_to_lovers, group: romance_relationships, spoiler: false}
+          - {id: forbidden_love, group: romance_relationships, spoiler: false}
+          - {id: love_triangle, group: romance_relationships, spoiler: false}
+          - {id: fated_mates, group: romance_relationships, spoiler: false}
+          - {id: soulmate_bond, group: romance_relationships, spoiler: false}
+          - {id: arranged_marriage, group: romance_relationships, spoiler: false}
+          - {id: marriage_of_convenience, group: romance_relationships, spoiler: false}
+          - {id: fake_dating, group: romance_relationships, spoiler: false}
+          - {id: forced_proximity, group: romance_relationships, spoiler: false}
+          - {id: only_one_bed, group: romance_relationships, spoiler: false}
+          - {id: age_gap_romance, group: romance_relationships, spoiler: false}
+          - {id: second_chance_romance, group: romance_relationships, spoiler: false}
+          - {id: grumpy_sunshine, group: romance_relationships, spoiler: false}
+          # distinct from pace_shape.slow_burn_to_fast_finish, which is
+          # overall plot pacing — this is specifically the romance subplot
+          - {id: slow_burn_romance, group: romance_relationships, spoiler: false}
+          - {id: found_family, group: romance_relationships, spoiler: false}
+          - {id: monster_or_fae_romance, group: romance_relationships, spoiler: false}
+          - {id: insta_love, group: romance_relationships, spoiler: false}  # structural opposite of slow_burn_romance
+          - {id: hidden_identity_romance, group: romance_relationships, spoiler: false}  # love interest conceals true nature — broader than secret_royalty (could be a spy, a god, a monster)
+          - {id: reverse_harem_or_why_choose, group: romance_relationships, spoiler: false}  # relationship STRUCTURE (one protagonist, multiple love interests, no forced choice), not just flavor
+          - {id: telepathic_animal_bond, group: romance_relationships, spoiler: false}  # non-romantic bond, grouped alongside found_family per that precedent — e.g. Robin Hobb's Wit, His Dark Materials' daemons; surfaced by the 30-book pilot (Assassin's Apprentice)
+
+          # -- setting & worldbuilding --
+          - {id: magic_school, group: setting_worldbuilding, spoiler: false}
+          - {id: portal_fantasy, group: setting_worldbuilding, spoiler: false}
+          - {id: medieval_european_setting, group: setting_worldbuilding, spoiler: false}
+          - {id: non_european_inspired_setting, group: setting_worldbuilding, spoiler: false}
+          - {id: lost_civilizations, group: setting_worldbuilding, spoiler: false}
+          - {id: fae_courts, group: setting_worldbuilding, spoiler: false}
+          - {id: high_fantasy_setting, group: setting_worldbuilding, spoiler: false}
+          - {id: urban_fantasy_setting, group: setting_worldbuilding, spoiler: false}
+          - {id: post_apocalyptic, group: setting_worldbuilding, spoiler: false}
+          - {id: dystopia, group: setting_worldbuilding, spoiler: false}
+          - {id: space_opera, group: setting_worldbuilding, spoiler: false}
+          - {id: cyberpunk, group: setting_worldbuilding, spoiler: false}
+          - {id: multiple_fantasy_species, group: setting_worldbuilding, spoiler: false}
+          - {id: dark_academia_setting, group: setting_worldbuilding, spoiler: false}  # distinct tone from magic_school — moodier, more elite institution
+          - {id: steampunk, group: setting_worldbuilding, spoiler: false}
+          - {id: litrpg_or_progression_fantasy, group: setting_worldbuilding, spoiler: false}  # protagonist reincarnated/transported into a world with explicit game-like stat/level mechanics — a real, sizable subgenre (He Who Fights with Monsters) with no prior vocabulary home
+          - {id: new_weird_setting, group: setting_worldbuilding, spoiler: false}  # fantasy/sci-fi blend with pseudo-scientific, industrial-grotesque worldbuilding — Perdido Street Station is the defining example
+          - {id: isekai, group: setting_worldbuilding, spoiler: false}  # protagonist transported/reincarnated from their origin world into a different one and generally remains there — distinct from portal_fantasy (classic doorway, often round-trip, no reincarnation/game-system implication) and litrpg_or_progression_fantasy (about game-mechanics presence, not the transportation premise); the two frequently co-occur but neither implies the other
+          - {id: renaissance_or_mercantile_setting, group: setting_worldbuilding, spoiler: false}  # Renaissance/early-modern-era analog: merchant city-states, guilds, canals, maritime trade — distinct from medieval_european_setting's feudal-kingdom default (The Lies of Locke Lamora's Camorr, modeled on Renaissance Venice)
+          - {id: vampires, group: setting_worldbuilding, spoiler: false}  # the specific creature mythology (turning, bloodlines, sunlight vulnerability, etc.) — distinct from immortal_or_ageless_character (a character trait any long-lived being could have) and monster_or_fae_romance (a romantic pairing, not a general setting element)
+
+          # -- plot devices & structure --
+          - {id: epic_quest, group: plot_devices, spoiler: false}
+          - {id: court_intrigue, group: plot_devices, spoiler: false}
+          - {id: heist, group: plot_devices, spoiler: false}
+          - {id: rebellion_against_empire, group: plot_devices, spoiler: false}
+          - {id: time_loop, group: plot_devices, spoiler: false}
+          - {id: time_travel, group: plot_devices, spoiler: false}
+          - {id: parallel_universe_or_multiverse, group: plot_devices, spoiler: false}
+          - {id: prophecy, group: plot_devices, spoiler: false}
+          - {id: war_story, group: plot_devices, spoiler: false}
+          - {id: ancient_evil_awakens, group: plot_devices, spoiler: false}
+          - {id: powerful_artifact_macguffin, group: plot_devices, spoiler: false}
+          - {id: last_minute_rescue, group: plot_devices, spoiler: false}
+          - {id: black_and_white_morality, group: plot_devices, spoiler: false}  # explicit opposite pole of morally_grey_protagonist
+          - {id: child_soldiers_in_warfare, group: plot_devices, spoiler: false}  # children trained/deployed as combatants — Ender's Game's defining premise, distinct from hidden_talent_prodigy (which captures the skill angle, not the weaponized-childhood angle)
+          - {id: noir_detective_structure, group: plot_devices, spoiler: false}  # investigation-driven plot with a hardboiled-detective throughline, e.g. Leviathan Wakes' Miller arc
+
+          # -- sci-fi specific --
+          - {id: first_contact, group: scifi_specific, spoiler: false}
+          - {id: generation_ship, group: scifi_specific, spoiler: false}
+          - {id: dying_earth, group: scifi_specific, spoiler: false}
+          - {id: alien_invasion, group: scifi_specific, spoiler: false}
+          - {id: ai_consciousness, group: scifi_specific, spoiler: false}
+          - {id: cloning, group: scifi_specific, spoiler: false}
+          - {id: terraforming_or_space_colonization, group: scifi_specific, spoiler: false}
+          - {id: cryosleep, group: scifi_specific, spoiler: false}
+          - {id: mind_uploading_or_digital_immortality, group: scifi_specific, spoiler: false}
+          - {id: virtual_reality_or_simulated_world, group: scifi_specific, spoiler: false}  # "life is a simulation" — distinct from cyberpunk, which is a setting
+          - {id: ai_uprising_or_rebellion, group: scifi_specific, spoiler: false}  # distinct from ai_consciousness — hostile turn, not just sentience emerging
+          - {id: android_or_replicant_rights, group: scifi_specific, spoiler: false}
+          - {id: cybernetic_enhancement, group: scifi_specific, spoiler: false}  # about humans augmented with machine parts, distinct from the ai_* entries
+          - {id: hive_mind, group: scifi_specific, spoiler: false}
+          - {id: mecha_or_giant_robots, group: scifi_specific, spoiler: false}
+          - {id: self_replicating_consciousness, group: scifi_specific, spoiler: false}  # one mind copying itself into many autonomous, divergent instances — distinct from mind_uploading_or_digital_immortality, which covers the upload but not the multiplicity (We Are Legion)
+          - {id: species_divergence, group: scifi_specific, spoiler: false}  # humanity splits into distinct species over deep time, e.g. Eloi/Morlock — distinct from dystopia, which doesn't capture the speciation shape (The Time Machine)
+          - {id: relativistic_time_dilation, group: scifi_specific, spoiler: false}  # near-light travel causes subjective vs. objective time to diverge — distinct from time_loop/time_travel (The Forever War)
+          - {id: mutual_human_alien_war, group: scifi_specific, spoiler: false}  # humans and aliens in symmetric expansionist conflict — distinct from alien_invasion, which implies a one-sided attack on human territory (Old Man's War)
+          - {id: aging_reversal_or_rejuvenation, group: scifi_specific, spoiler: false}  # elderly protagonist restored to a younger, enhanced body (Old Man's War)
+          - {id: satirical_or_comedic_scifi, group: scifi_specific, spoiler: false}  # sci-fi as vehicle for parody/satire of genre or bureaucratic conventions, not just humor_level's amount-of-comedy axis (Hitchhiker's Guide)
+
+          # -- craft & narrative devices --
+          - {id: twist_ending, group: craft_devices, spoiler: true}
+          - {id: twist_filled, group: craft_devices, spoiler: true}  # multiple reversals throughout, not one ending twist — e.g. The Prestige, vs. twist_ending's Sixth Sense shape
+          - {id: sanderlanche, group: craft_devices, spoiler: false}  # converging multi-thread payoff into an intense climax; community term, kept as-is (genre-native)
+          - {id: redemption_arc, group: craft_devices, spoiler: true}
+          - {id: villain_turns_ally, group: craft_devices, spoiler: true}
+          - {id: major_character_death, group: craft_devices, spoiler: true}
+          - {id: mentor_death, group: craft_devices, spoiler: true}
+          - {id: mythological_retelling, group: craft_devices, spoiler: false}  # a known myth retold/reframed, usually from a different vantage point — a large, currently booming category (Circe, Song of Achilles) with no prior coverage
+          - {id: shadow_self_confrontation, group: craft_devices, spoiler: false}  # protagonist must confront and integrate a literal or figurative dark half of themselves — distinct from redemption_arc, which requires prior villainy (A Wizard of Earthsea)
+
+# Series-level spoiler gating (not a schema field — a data-model note).
+# Any field with spoiler: true, on a book that belongs to a series, gets a
+# companion "reveals at installment N" value stored per book record, e.g.
+# book_dna.ending_type_spoiler_horizon = 3. The UI hides the field until
+# the reader's tracked progress reaches that installment, or they hit
+# "reveal anyway." The recommendation engine always reads the true value
+# regardless of horizon or reveal state.
+
+# Series & universe (not a schema field — a data-model note for step 02).
+# Membership in a series, and a series' completion status, are relational
+# and mutable — they do NOT belong in book_dna as frozen tag data.
+#   universe (optional)  — a shared continuity, e.g. "The First Law World"
+#     └── series (optional) — a bounded arc within it, e.g. "The First Law"
+#           status: ongoing | completed | hiatus  — refreshed from
+#           metadata sources periodically, never set once at tagging time
+#           book_count: how many books are in it (nullable/estimated
+#           while ongoing — e.g. Stormlight's planned 10) — same reasoning
+#           as status: a mutable, series-level fact, refreshed from
+#           metadata, never frozen at tagging time. This is the "series
+#           length" half of the length-as-approachability idea; the
+#           per-book half is book_length above — they're independent
+#           (few-but-huge volumes vs. many-but-normal-sized ones are both
+#           "a lot of commitment," for different reasons).
+#         └── book — position_in_series (nullable, may be fractional
+#             for novellas/interquels)
+#   A book can link to a universe directly without belonging to any one
+#   series (e.g. Best Served Cold in the First Law world). Adding a later
+#   sequel (The Shining -> Doctor Sleep) means adding a series row and
+#   linking both books to it — it never requires re-tagging the earlier
+#   book's own book_dna.narrative_closure, which stays whatever it always
+#   was.
+
+# Future fields backlog (deliberately not in v0.1 — revisit post-MVP):
+#   - humor_flavor: witty_banter | slapstick | dark_comedy | satire | dry_wit
+#     (style/flavor of humor, separate from humor_level's amount/frequency)
+#   - tropes candidates deferred as too narrow for v1 (real terms, but
+#     mostly matter to readers already deep in romantasy-specific
+#     taxonomy rather than changing recommendations for a general SFF
+#     reader — revisit if tagging real books shows they're needed):
+#       touch_her_and_die, captive_or_captor_romance,
+#       teacher_or_mentor_romance
+#   - solarpunk (setting_worldbuilding) — flagged during trope research as
+#     real but weaker/niche; not added
+#   - content_warnings deferred as too marginal for v1 (real, weaker case
+#     than what was added — revisit if tagging shows they're needed):
+#       religious_bigotry (distinct from religious_trauma_or_cults —
+#         persecution FOR faith vs. harm FROM a religion/cult),
+#       physical_abuse non-domestic (risks real overlap with
+#         domestic_abuse + child_abuse combined),
+#       forced_institutionalization (niche)
+#   - cannibalism (content_warnings) — considered during the 30-book
+#     pilot (The Road), REJECTED on reflection: unlike the researched
+#     content_warnings additions (cross-checked against StoryGraph/real
+#     book lists), this was only a single in-the-moment inference while
+#     tagging, and on the same "does this change the recommendation, not
+#     just is it upsetting" test used throughout, it reads as a specific
+#     flavor of body_horror + violence_intensity:graphic rather than a
+#     distinct category — same reasoning that excluded gore/blood/injury
+#     earlier. Not added.

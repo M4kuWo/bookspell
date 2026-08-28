@@ -1,0 +1,12 @@
+.DS_Store
+**/.DS_Store
+
+# Node / Next.js (for later steps)
+node_modules/
+.next/
+out/
+
+# Env files
+.env
+.env.local
+.env.*.local

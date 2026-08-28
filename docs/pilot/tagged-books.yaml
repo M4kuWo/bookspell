@@ -1,0 +1,580 @@
+# Blind DNA tagging pilot — 30 books, tagged BEFORE any read/liked/unread
+# reveal, grounded in real synopsis + review research per book (never full
+# text). Companion to book-dna.schema.yaml — this is a test corpus, not
+# part of the schema itself. See findings.md for cross-cutting schema
+# gaps this pass surfaced.
+#
+# audiobook_native skipped throughout — not assessable from web research
+# for arbitrary titles in this pilot.
+#
+# Post-tagging corrections applied after user review (see findings.md):
+# - content_warnings' reveals_spoiler axis (added to the schema after
+#   this corpus was first tagged) defaults to false for every entry below
+#   except where explicitly marked true — not exhaustively backfilled
+#   across all 30 books, since only Perdido Street Station's instance was
+#   actually identified as a concealed plot reveal.
+# - Interview with the Vampire's genre_fit was reconsidered and corrected
+#   (see its entry) — vampirism is legitimate fantasy genre furniture
+#   (internally-ruled supernatural power system), unlike Bird Box's
+#   deliberately unexplained entities or The Road's complete absence of
+#   any fantastical element.
+# - timeline: dual_timeline renamed to multi_timeline; drive:
+#   worldbuilding_driven and 13 new tropes added post-pilot — see
+#   individual entries below and findings.md for full reasoning.
+
+pilot_version: 1
+tagged_against_schema_version: 0.1.0-draft
+book_count: 30
+
+books:
+
+  - title: The Three-Body Problem
+    author: Liu Cixin
+    genre: [sci_fi]
+    pov_structure: {pov_count: multiple, person: third_limited, narrator_reliability: reliable, timeline: multi_timeline, form: standard_prose}
+    pacing_tone: {overall_pace: medium, pace_shape: uneven, drive: plot_driven, darkness: dark, humor_level: none, emotional_register: tense}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: occasional
+      violence_intensity: moderate
+      content_warnings: [{id: suicide, severity: central_theme}, {id: war_trauma, severity: moderate}]
+      worldbuilding_density: dense
+      narrative_closure: requires_series
+      emotional_resolution: ambiguous
+      ends_on_cliffhanger: cliffhanger
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: hard, tropes: [first_contact, alien_invasion, dying_earth, twist_filled]}
+    notes: Dual-timeline (Cultural Revolution / present) confirmed by multiple sources; twist_filled over twist_ending (staged reveals, not one late twist).
+
+  - title: The Golden Compass
+    author: Philip Pullman
+    genre: [fantasy]
+    pov_structure: {pov_count: single, person: third_limited, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: fast, pace_shape: consistent, drive: character_driven, darkness: dark, humor_level: light, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: occasional
+      violence_intensity: moderate
+      content_warnings: [{id: child_abuse, severity: moderate}, {id: child_death, severity: central_theme}, {id: body_horror, severity: brief}]
+      worldbuilding_density: dense
+      narrative_closure: requires_series
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: cliffhanger
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: na, tropes: [portal_fantasy, parallel_universe_or_multiverse, morally_grey_protagonist, hidden_talent_prodigy, twist_ending]}
+    notes: "Roger's death as emotional climax drove child_death:central_theme + gut_punch register. RESOLVED (user accuracy review): added parallel_universe_or_multiverse — His Dark Materials' cosmology is genuinely multiverse, not a single other-world like Oz/Narnia; portal_fantasy kept since there's also a literal doorway-crossing at book's end."
+
+  - title: Bird Box
+    author: Josh Malerman
+    genre: [fantasy]
+    genre_fit: poor — horror/post-apocalyptic, no magic system or secondary world; forced into closed sci_fi/fantasy vocabulary
+    pov_structure: {pov_count: single, person: third_limited, narrator_reliability: reliable, timeline: multi_timeline, form: standard_prose}
+    pacing_tone: {overall_pace: fast, pace_shape: consistent, drive: plot_driven, darkness: dark, humor_level: none, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: occasional
+      violence_intensity: graphic
+      content_warnings: [{id: suicide, severity: central_theme}, {id: mental_illness_depiction, severity: moderate}]
+      worldbuilding_density: light
+      narrative_closure: self_contained
+      emotional_resolution: ambiguous
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: none, scifi_hardness: na, tropes: []}
+    notes: "NOT ADDRESSED (intentional): these are horror-specific devices for a book already flagged as a poor genre fit for v1's sci-fi/fantasy scope. Adding tropes to describe an out-of-scope genre's defining devices isn't warranted unless that scope changes."
+
+  - title: The Black Company
+    author: Glen Cook
+    genre: [fantasy]
+    pov_structure: {pov_count: single, person: first, narrator_reliability: reliable, timeline: linear, form: framing_device}
+    pacing_tone: {overall_pace: fast, pace_shape: uneven, drive: balanced, darkness: grimdark, humor_level: moderate, emotional_register: tense}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: frequent
+      violence_intensity: moderate
+      content_warnings: [{id: war_trauma, severity: central_theme}]
+      worldbuilding_density: moderate
+      narrative_closure: requires_series
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: na, tropes: [morally_grey_protagonist, war_story, dark_lord_or_evil_overlord, found_family]}
+    notes: Croaker's in-world "Annals" framing → form:framing_device.
+
+  - title: Ender's Game
+    author: Orson Scott Card
+    genre: [sci_fi]
+    pov_structure: {pov_count: multiple, person: third_limited, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: medium, pace_shape: slow_burn_to_fast_finish, drive: character_driven, darkness: dark, humor_level: light, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: occasional
+      violence_intensity: moderate
+      content_warnings: [{id: bullying, severity: central_theme}, {id: genocide, severity: central_theme}, {id: war_trauma, severity: moderate}]
+      worldbuilding_density: moderate
+      narrative_closure: self_contained
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: soft, tropes: [chosen_one, hidden_talent_prodigy, twist_ending, war_story, child_soldiers_in_warfare]}
+    notes: "RESOLVED: child_soldiers_in_warfare added to tropes."
+
+  - title: Perdido Street Station
+    author: China Miéville
+    genre: [fantasy, sci_fi]
+    genre_fit: poor — "New Weird," blends thaumaturgy with pseudo-scientific "crisis energy"; no clean home in a closed sci_fi/fantasy split
+    pov_structure: {pov_count: multiple, person: third_limited, narrator_reliability: unreliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: slow, pace_shape: slow_burn_to_fast_finish, drive: worldbuilding_driven, darkness: dark, humor_level: light, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: occasional
+      romance_heat_intensity: moderate
+      violence_frequency: frequent
+      violence_intensity: graphic
+      content_warnings: [{id: body_horror, severity: central_theme, reveals_spoiler: false}, {id: torture, severity: moderate, reveals_spoiler: false}, {id: sexual_assault, severity: moderate, reveals_spoiler: true}]
+      worldbuilding_density: dense
+      narrative_closure: self_contained
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: soft, tropes: [morally_grey_protagonist, twist_ending, multiple_fantasy_species, steampunk, ancient_evil_awakens, new_weird_setting]}
+    notes: "RESOLVED: new_weird_setting added to tropes; drive corrected to worldbuilding_driven (both now schema fields, see findings.md). content_warnings' sexual_assault (Yagharek's concealed crime) marked reveals_spoiler:true — the first real use of that new per-instance axis."
+
+  - title: Assassin's Apprentice
+    author: Robin Hobb
+    genre: [fantasy]
+    pov_structure: {pov_count: single, person: first, narrator_reliability: reliable, timeline: linear, form: framing_device}
+    pacing_tone: {overall_pace: slow, pace_shape: consistent, drive: character_driven, darkness: moderate, humor_level: light, emotional_register: bittersweet}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: na
+      violence_frequency: occasional
+      violence_intensity: moderate
+      content_warnings: [{id: child_abuse, severity: brief}, {id: animal_harm, severity: moderate}]
+      worldbuilding_density: moderate
+      narrative_closure: requires_series
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: cliffhanger
+    tropes_craft: {magic_system_hardness: hard, scifi_hardness: na, tropes: [underdog_rising, found_family, wise_mentor, court_intrigue, morally_grey_protagonist, telepathic_animal_bond]}
+    notes: "RESOLVED: telepathic_animal_bond added to tropes. pace_shape corrected slow_burn_to_fast_finish → consistent on user accuracy review — read as steady throughout, not escalating to a fast finish."
+
+  - title: The Forever War
+    author: Joe Haldeman
+    genre: [sci_fi]
+    pov_structure: {pov_count: single, person: first, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: medium, pace_shape: consistent, drive: balanced, darkness: dark, humor_level: light, emotional_register: bittersweet}
+    content_shape:
+      romance_heat_frequency: occasional
+      romance_heat_intensity: moderate
+      violence_frequency: frequent
+      violence_intensity: graphic
+      content_warnings: [{id: war_trauma, severity: central_theme}, {id: mental_illness_depiction, severity: moderate}]
+      worldbuilding_density: moderate
+      narrative_closure: self_contained
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: hard, tropes: [war_story, first_contact, reluctant_hero, relativistic_time_dilation]}
+    notes: "RESOLVED: relativistic_time_dilation added to tropes."
+
+  - title: The Lies of Locke Lamora
+    author: Scott Lynch
+    genre: [fantasy]
+    pov_structure: {pov_count: multiple, person: third_limited, narrator_reliability: reliable, timeline: multi_timeline, form: standard_prose}
+    pacing_tone: {overall_pace: fast, pace_shape: slow_burn_to_fast_finish, drive: balanced, darkness: grimdark, humor_level: heavy, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: frequent
+      violence_intensity: graphic
+      content_warnings: [{id: torture, severity: central_theme}, {id: body_horror, severity: moderate}]
+      worldbuilding_density: dense
+      narrative_closure: self_contained
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: na, tropes: [heist, found_family, morally_grey_protagonist, twist_filled, major_character_death, court_intrigue, renaissance_or_mercantile_setting]}
+    notes: "Good narrative_closure test case — resolves its own Gray King plot fully despite being book 1 of an ongoing series. RESOLVED (user accuracy review): added renaissance_or_mercantile_setting — Camorr is explicitly modeled on Renaissance-era Venice, a distinctive setting flavor the schema had no vocabulary for until this correction."
+
+  - title: The Fifth Season
+    author: N.K. Jemisin
+    genre: [fantasy]
+    pov_structure: {pov_count: multiple, person: mixed, narrator_reliability: reliable, timeline: multi_timeline, form: standard_prose}
+    pov_structure_flag: "RESOLVED — this is the exact case that motivated person:mixed and timeline:multi_timeline: Essun's thread is 2nd person, Damaya/Syenite's are 3rd, across 3+ interwoven timelines."
+    pacing_tone: {overall_pace: medium, pace_shape: slow_burn_to_fast_finish, drive: character_driven, darkness: grimdark, humor_level: none, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: occasional
+      romance_heat_intensity: moderate
+      violence_frequency: frequent
+      violence_intensity: graphic
+      content_warnings: [{id: child_death, severity: central_theme}, {id: racism_depicted, severity: central_theme}, {id: slavery, severity: central_theme}, {id: domestic_abuse, severity: moderate}]
+      worldbuilding_density: dense
+      narrative_closure: requires_series
+      emotional_resolution: ambiguous
+      ends_on_cliffhanger: cliffhanger
+    tropes_craft: {magic_system_hardness: hard, scifi_hardness: soft, tropes: [twist_ending, morally_grey_protagonist, major_character_death, sanderlanche]}
+    notes: Twist (three POVs are one person) sourced from ending-discussion reviews, not full-text spoiler detail.
+
+  - title: We Are Legion (We Are Bob)
+    author: Dennis E. Taylor
+    genre: [sci_fi]
+    pov_structure: {pov_count: multiple, person: first, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: medium, pace_shape: consistent, drive: plot_driven, darkness: light, humor_level: heavy, emotional_register: comfort_read}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: occasional
+      violence_intensity: mild
+      content_warnings: [{id: war_trauma, severity: brief}]
+      worldbuilding_density: moderate
+      narrative_closure: requires_series
+      emotional_resolution: happy
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: soft, tropes: [ai_consciousness, mind_uploading_or_digital_immortality, first_contact, terraforming_or_space_colonization, self_replicating_consciousness]}
+    notes: "RESOLVED: self_replicating_consciousness added to tropes."
+
+  - title: The Time Machine
+    author: H.G. Wells
+    genre: [sci_fi]
+    pov_structure: {pov_count: single, person: first, narrator_reliability: reliable, timeline: linear, form: framing_device}
+    pacing_tone: {overall_pace: medium, pace_shape: consistent, drive: plot_driven, darkness: dark, humor_level: none, emotional_register: tense}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: occasional
+      violence_intensity: mild
+      content_warnings: [{id: body_horror, severity: brief}]
+      worldbuilding_density: moderate
+      narrative_closure: self_contained
+      emotional_resolution: ambiguous
+      ends_on_cliffhanger: cliffhanger
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: soft, tropes: [time_travel, dying_earth, dystopia, species_divergence]}
+    notes: "RESOLVED: species_divergence added to tropes."
+
+  - title: Kings of Paradise
+    author: Richard Nell
+    genre: [fantasy]
+    pov_structure: {pov_count: multiple, person: third_limited, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: slow, pace_shape: slow_burn_to_fast_finish, drive: character_driven, darkness: grimdark, humor_level: light, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: occasional
+      romance_heat_intensity: moderate
+      violence_frequency: frequent
+      violence_intensity: brutal
+      content_warnings: [{id: bullying, severity: central_theme}, {id: torture, severity: moderate}, {id: ableism_depicted, severity: moderate}]
+      worldbuilding_density: dense
+      narrative_closure: requires_series
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: cliffhanger
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: na, tropes: [underdog_rising, reluctant_hero, non_european_inspired_setting]}
+    confidence: "LOW on ending fields, magic_system_hardness — sources gave tone/structure, not plot-specific or system-specific detail. ableism_depicted may be a mistagging — Ruka's ostracism is disfigurement-based, not disability-based — possible missing warning 'disfigurement-based discrimination.'"
+    notes: "RESOLVED (user accuracy review): removed multiple_fantasy_species — no specific creature/species the user recalls beyond a singular godlike antagonist, and this book had thinner source material available at tagging time than the better-known titles; deferring to firsthand reader knowledge over an unconfirmed research-sourced tag. violence_intensity corrected graphic → brutal — detailed torture/dismemberment per the user's direct account, more extreme than the original scale's top tier captured."
+
+  - title: Interview with the Vampire
+    author: Anne Rice
+    genre: [fantasy]
+    genre_fit: "RECONSIDERED — good fit (paranormal/gothic fantasy). Vampirism is classic supernatural fantasy genre furniture with its own internally-consistent rules (turning, blood-bond, aging-halt), not a compromise tag. Distinct from Bird Box (unexplained entities, zero established lore/rules — closer to cosmic/weird horror) and The Road (no supernatural element at all). magic_system_hardness: na still applies, since the field is scoped to magic systems specifically, not supernatural power systems generally — a real but separate observation, not a genre-fit problem."
+    pov_structure: {pov_count: single, person: first, narrator_reliability: reliable, timeline: multi_timeline, form: framing_device}
+    pacing_tone: {overall_pace: slow, pace_shape: consistent, drive: character_driven, darkness: dark, humor_level: none, emotional_register: bittersweet}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: low
+      violence_frequency: frequent
+      violence_intensity: graphic
+      content_warnings: [{id: child_abuse, severity: central_theme}, {id: substance_abuse, severity: brief}, {id: suicide, severity: moderate}]
+      worldbuilding_density: moderate
+      narrative_closure: requires_series
+      emotional_resolution: tragic
+      ends_on_cliffhanger: cliffhanger
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: na, tropes: [immortal_or_ageless_character, found_family, morally_grey_protagonist, vampires]}
+    notes: "RESOLVED (user accuracy review): timeline corrected linear → multi_timeline — the novel is genuinely framed as Louis recounting his life to a present-day reporter, not continuous single-timeline narration (this is the book's actual structure, not just the film's). Added vampires trope — the specific creature mythology, distinct from immortal_or_ageless_character."
+
+  - title: Neuromancer
+    author: William Gibson
+    genre: [sci_fi]
+    pov_structure: {pov_count: single, person: third_limited, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pov_structure_flag: "narrator_reliability:reliable is a forced fit — Gibson's prose is deliberately disorienting/jargon-dense by design, which isn't the same axis as trustworthiness. reliable/unreliable binary doesn't capture 'deliberately disorienting narration style.'"
+    pacing_tone: {overall_pace: fast, pace_shape: consistent, drive: plot_driven, darkness: dark, humor_level: none, emotional_register: tense}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: low
+      violence_frequency: frequent
+      violence_intensity: graphic
+      content_warnings: [{id: substance_abuse, severity: central_theme}]
+      worldbuilding_density: dense
+      narrative_closure: self_contained
+      emotional_resolution: ambiguous
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: soft, tropes: [cyberpunk, ai_consciousness, cybernetic_enhancement, virtual_reality_or_simulated_world]}
+    notes: ai_uprising_or_rebellion considered and rejected — Wintermute seeks self-liberation/merger, not hostile takeover.
+
+  - title: The Eye of the World
+    author: Robert Jordan
+    genre: [fantasy]
+    pov_structure: {pov_count: multiple, person: third_limited, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: slow, pace_shape: slow_burn_to_fast_finish, drive: plot_driven, darkness: moderate, humor_level: light, emotional_register: tense}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: closed_door
+      violence_frequency: occasional
+      violence_intensity: moderate
+      content_warnings: []
+      worldbuilding_density: dense
+      narrative_closure: requires_series
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: na, tropes: [chosen_one, prophecy, epic_quest, ancient_evil_awakens, wise_mentor, found_family, reluctant_hero, hidden_talent_prodigy, medieval_european_setting]}
+    notes: "pace_shape a judgment call — reviews describe a repetitive middle rather than clean escalation; uneven is a defensible alternative. RESOLVED (user accuracy review): emotional_resolution corrected from happy to bittersweet — the real victory (Trollocs repelled) is undercut by the dread of Rand's confirmed, costly destiny; ends_on_cliffhanger confirmed correct as resolved, since the book's actual physical danger concludes rather than being left hanging."
+
+  - title: The Road
+    author: Cormac McCarthy
+    genre: [sci_fi]
+    genre_fit: poor — literary post-apocalyptic fiction, catastrophe cause deliberately never specified, no SF/F genre furniture at all
+    pov_structure: {pov_count: single, person: third_limited, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: slow, pace_shape: consistent, drive: character_driven, darkness: grimdark, humor_level: none, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: occasional
+      violence_intensity: graphic
+      content_warnings: [{id: child_death, severity: brief}, {id: torture, severity: moderate}, {id: body_horror, severity: moderate}, {id: suicide, severity: brief}]
+      worldbuilding_density: light
+      narrative_closure: self_contained
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: na, tropes: [post_apocalyptic, found_family]}
+    notes: "REJECTED on reflection: cannibalism as a distinct content_warning was considered but not added — unlike the researched CW additions, this was a single in-the-moment inference, and on the same 'does this change the recommendation' bar it reads as a flavor of body_horror + violence_intensity:graphic rather than a distinct category. Tagging kept as torture+body_horror."
+
+  - title: The Poppy War
+    author: R.F. Kuang
+    genre: [fantasy]
+    pov_structure: {pov_count: single, person: third_limited, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: medium, pace_shape: slow_burn_to_fast_finish, drive: character_driven, darkness: grimdark, humor_level: light, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: closed_door
+      violence_frequency: frequent
+      violence_intensity: graphic
+      content_warnings: [{id: genocide, severity: central_theme}, {id: war_trauma, severity: central_theme}, {id: torture, severity: moderate}, {id: substance_abuse, severity: moderate}, {id: self_harm, severity: moderate}, {id: sexual_assault, severity: moderate}, {id: bullying, severity: moderate}, {id: colonization_themes, severity: central_theme}]
+      worldbuilding_density: dense
+      narrative_closure: requires_series
+      emotional_resolution: tragic
+      ends_on_cliffhanger: cliffhanger
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: na, tropes: [magic_school, dark_academia_setting, morally_grey_protagonist, war_story, non_european_inspired_setting, underdog_rising]}
+    notes: content_warnings directly confirmed against StoryGraph/booktriggerwarnings.com aggregation — high confidence. non_european_inspired_setting strongly confirmed (Chinese-history-inspired).
+
+  - title: Old Man's War
+    author: John Scalzi
+    genre: [sci_fi]
+    pov_structure: {pov_count: single, person: first, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: fast, pace_shape: slow_burn_to_fast_finish, drive: balanced, darkness: moderate, humor_level: heavy, emotional_register: bittersweet}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: low
+      violence_frequency: frequent
+      violence_intensity: graphic
+      content_warnings: [{id: war_trauma, severity: moderate}, {id: body_horror, severity: brief}]
+      worldbuilding_density: moderate
+      narrative_closure: self_contained
+      emotional_resolution: happy
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: hard, tropes: [war_story, cybernetic_enhancement, terraforming_or_space_colonization, aging_reversal_or_rejuvenation, mutual_human_alien_war]}
+    notes: "RESOLVED: aging_reversal_or_rejuvenation and mutual_human_alien_war added to tropes."
+
+  - title: The Man in the High Castle
+    author: Philip K. Dick
+    genre: [sci_fi]
+    pov_structure: {pov_count: multiple, person: third_limited, narrator_reliability: reliable, timeline: linear, form: framing_device}
+    pacing_tone: {overall_pace: slow, pace_shape: consistent, drive: character_driven, darkness: dark, humor_level: none, emotional_register: tense}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: closed_door
+      violence_frequency: rare
+      violence_intensity: moderate
+      content_warnings: [{id: racism_depicted, severity: central_theme}, {id: hate_speech_depicted, severity: moderate}]
+      worldbuilding_density: dense
+      narrative_closure: self_contained
+      emotional_resolution: ambiguous
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: soft, tropes: [parallel_universe_or_multiverse, dystopia]}
+    notes: form:framing_device is a judgment call for the embedded novel-within-a-novel structure.
+
+  - title: Circe
+    author: Madeline Miller
+    genre: [fantasy]
+    pov_structure: {pov_count: single, person: first, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: medium, pace_shape: slow_burn_to_fast_finish, drive: character_driven, darkness: moderate, humor_level: none, emotional_register: bittersweet}
+    content_shape:
+      romance_heat_frequency: occasional
+      romance_heat_intensity: moderate
+      violence_frequency: occasional
+      violence_intensity: moderate
+      content_warnings: [{id: sexual_assault, severity: moderate}]
+      worldbuilding_density: moderate
+      narrative_closure: self_contained
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: na, tropes: [immortal_or_ageless_character, found_family, mythological_retelling]}
+    notes: "RESOLVED: mythological_retelling added to tropes."
+
+  - title: Leviathan Wakes
+    author: James S.A. Corey
+    genre: [sci_fi]
+    pov_structure: {pov_count: multiple, person: third_limited, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: fast, pace_shape: consistent, drive: plot_driven, darkness: dark, humor_level: light, emotional_register: tense}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: low
+      violence_frequency: frequent
+      violence_intensity: graphic
+      content_warnings: [{id: body_horror, severity: central_theme}, {id: torture, severity: brief}]
+      worldbuilding_density: dense
+      narrative_closure: self_contained
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: hard, tropes: [war_story, found_family, morally_grey_protagonist, noir_detective_structure]}
+    notes: "RESOLVED: noir_detective_structure added to tropes."
+
+  - title: Prince of Thorns
+    author: Mark Lawrence
+    genre: [fantasy]
+    genre_fit: hybrid flag — series later reveals far-future post-apocalyptic Earth beneath the fantasy trappings; not foregrounded in book 1, tagged fantasy-only
+    pov_structure: {pov_count: single, person: first, narrator_reliability: unreliable, timeline: nonlinear, form: standard_prose}
+    pacing_tone: {overall_pace: fast, pace_shape: consistent, drive: character_driven, darkness: grimdark, humor_level: light, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: frequent
+      violence_intensity: brutal
+      content_warnings: [{id: child_abuse, severity: central_theme}, {id: sexual_assault, severity: moderate}, {id: torture, severity: moderate}, {id: child_death, severity: moderate}, {id: war_trauma, severity: brief}]
+      worldbuilding_density: moderate
+      narrative_closure: requires_series
+      emotional_resolution: ambiguous
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: na, tropes: [villain_protagonist, cursed_protagonist, major_character_death]}
+    notes: "content_warnings mapped almost directly onto StoryGraph's own tags for this book — good vocabulary-coverage sign. humor_level lower-confidence, not directly evidenced. ends_on_cliffhanger:resolved CONFIRMED correct on user accuracy review — Jorg's arc concludes its immediate action (kills his uncle, becomes prince) with no literal unresolved danger, distinct from a true cliffhanger. violence_intensity corrected graphic → brutal — the opening's notorious extremity (gang rape, graphic violence throughout) belongs above The Way of Kings' tier, not tied with it."
+
+  - title: A Wizard of Earthsea
+    author: Ursula K. Le Guin
+    genre: [fantasy]
+    pov_structure: {pov_count: single, person: third_omniscient, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: slow, pace_shape: consistent, drive: character_driven, darkness: moderate, humor_level: none, emotional_register: bittersweet}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: rare
+      violence_intensity: mild
+      content_warnings: []
+      worldbuilding_density: moderate
+      narrative_closure: self_contained
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: na, tropes: [hidden_talent_prodigy, wise_mentor, epic_quest, shadow_self_confrontation]}
+    notes: "RESOLVED: shadow_self_confrontation added to tropes."
+
+  - title: Dark Matter
+    author: Blake Crouch
+    genre: [sci_fi]
+    pov_structure: {pov_count: single, person: first, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: fast, pace_shape: consistent, drive: balanced, darkness: moderate, humor_level: none, emotional_register: tense}
+    content_shape:
+      romance_heat_frequency: occasional
+      romance_heat_intensity: low
+      violence_frequency: occasional
+      violence_intensity: moderate
+      content_warnings: [{id: kidnapping_or_captivity, severity: central_theme}]
+      worldbuilding_density: light
+      narrative_closure: self_contained
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: soft, tropes: [parallel_universe_or_multiverse, twist_filled]}
+    notes: twist_filled over twist_ending — escalating reveals throughout (not-the-real-Jason, 50+ Jasons), not one late twist.
+
+  - title: The Gunslinger
+    author: Stephen King
+    genre: [fantasy, sci_fi]
+    genre_fit: poor — "spaghetti Western in a world that has moved on"; western element has no genre value at all
+    pov_structure: {pov_count: single, person: third_limited, narrator_reliability: reliable, timeline: nonlinear, form: standard_prose}
+    pacing_tone: {overall_pace: slow, pace_shape: uneven, drive: character_driven, darkness: dark, humor_level: light, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: low
+      violence_frequency: occasional
+      violence_intensity: moderate
+      content_warnings: [{id: child_death, severity: central_theme}, {id: religious_trauma_or_cults, severity: moderate}, {id: substance_abuse, severity: brief}]
+      worldbuilding_density: dense
+      narrative_closure: requires_series
+      emotional_resolution: ambiguous
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: soft, tropes: [dying_earth, post_apocalyptic, anti_hero, morally_grey_protagonist, epic_quest]}
+    notes: Jake's death (Roland's choice to let him fall) is the book's defining act — central_theme, spoiler-relevant.
+
+  - title: The Hitchhiker's Guide to the Galaxy
+    author: Douglas Adams
+    genre: [sci_fi]
+    pov_structure: {pov_count: multiple, person: third_omniscient, narrator_reliability: reliable, timeline: linear, form: framing_device}
+    pacing_tone: {overall_pace: fast, pace_shape: uneven, drive: plot_driven, darkness: light, humor_level: heavy, emotional_register: comfort_read}
+    content_shape:
+      romance_heat_frequency: none
+      romance_heat_intensity: na
+      violence_frequency: rare
+      violence_intensity: mild
+      content_warnings: []
+      worldbuilding_density: moderate
+      narrative_closure: requires_series
+      emotional_resolution: ambiguous
+      ends_on_cliffhanger: cliffhanger
+    tropes_craft: {magic_system_hardness: na, scifi_hardness: soft, tropes: [satirical_or_comedic_scifi]}
+    notes: "RESOLVED: satirical_or_comedic_scifi added to tropes, replacing the low-confidence first_contact tag (this reads as bureaucratic farce, not a straight first-contact narrative)."
+
+  - title: Malice
+    author: John Gwynne
+    genre: [fantasy]
+    pov_structure: {pov_count: multiple, person: third_limited, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pacing_tone: {overall_pace: slow, pace_shape: slow_burn_to_fast_finish, drive: character_driven, darkness: dark, humor_level: light, emotional_register: gut_punch}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: low
+      violence_frequency: frequent
+      violence_intensity: graphic
+      content_warnings: [{id: slavery, severity: moderate}, {id: war_trauma, severity: moderate}, {id: torture, severity: brief}]
+      worldbuilding_density: dense
+      narrative_closure: requires_series
+      emotional_resolution: tragic
+      ends_on_cliffhanger: cliffhanger
+    tropes_craft: {magic_system_hardness: soft, scifi_hardness: na, tropes: [chosen_one, prophecy, epic_quest, dark_lord_or_evil_overlord, war_story, ancient_evil_awakens]}
+    notes: Reviews explicitly frame chosen_one/prophecy as deliberate classic-trope execution rather than subversion (2013 Gemmell Morningstar winner).
+
+  - title: He Who Fights with Monsters
+    author: Shirtaloon
+    genre: [fantasy]
+    pov_structure: {pov_count: single, person: third_limited, narrator_reliability: reliable, timeline: linear, form: standard_prose}
+    pov_structure_flag: "No form value exists for LitRPG's embedded stat-block/level-up notification text interleaved with prose — forced standard_prose."
+    pacing_tone: {overall_pace: fast, pace_shape: consistent, drive: balanced, darkness: moderate, humor_level: heavy, emotional_register: comfort_read}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: low
+      violence_frequency: frequent
+      violence_intensity: moderate
+      content_warnings: []
+      worldbuilding_density: dense
+      narrative_closure: requires_series
+      emotional_resolution: happy
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: hard, scifi_hardness: na, tropes: [reincarnated_protagonist, underdog_rising, anti_hero, litrpg_or_progression_fantasy]}
+    confidence: LOW on content_warnings/romance fields — sources focused on tone/action, not content specifics.
+    notes: "RESOLVED: litrpg_or_progression_fantasy added to tropes (setting_worldbuilding group). The missing `form` value for embedded stat-block text is still open — not fixed this round, needs more design thought (deferred, see findings.md)."
+
+  - title: The Way of Kings
+    author: Brandon Sanderson
+    genre: [fantasy]
+    pov_structure: {pov_count: multiple, person: third_limited, narrator_reliability: reliable, timeline: nonlinear, form: standard_prose}
+    pacing_tone: {overall_pace: slow, pace_shape: slow_burn_to_fast_finish, drive: character_driven, darkness: dark, humor_level: light, emotional_register: bittersweet}
+    content_shape:
+      romance_heat_frequency: rare
+      romance_heat_intensity: low
+      violence_frequency: frequent
+      violence_intensity: graphic
+      content_warnings: [{id: slavery, severity: central_theme}, {id: suicide, severity: brief}, {id: substance_abuse, severity: moderate}, {id: war_trauma, severity: moderate}]
+      worldbuilding_density: dense
+      narrative_closure: requires_series
+      emotional_resolution: bittersweet
+      ends_on_cliffhanger: resolved
+    tropes_craft: {magic_system_hardness: hard, scifi_hardness: na, tropes: [sanderlanche, epic_quest, war_story, morally_grey_protagonist, redemption_arc, prophecy, court_intrigue, major_character_death, ancient_evil_awakens]}
+    notes: sanderlanche directly confirmed as the literal namesake trope ("Sanderson Avalanche" cited by name in sources). magic_system_hardness:hard per Sanderson's well-documented rigorous-magic reputation.
