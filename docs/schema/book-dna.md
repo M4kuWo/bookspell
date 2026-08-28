@@ -108,6 +108,7 @@ loudly without inviting deeper reflection).
 | `content_warnings` | multi-select, see schema file | no |
 | `worldbuilding_density` | light, moderate, dense | no |
 | `stakes_scope` | intimate, regional, global, cosmic | no |
+| `personal_stakes` | low, moderate, high, life_threatening | no |
 | `narrative_closure` | self_contained, requires_series | no |
 | `emotional_resolution` | happy, tragic, ambiguous, bittersweet | **yes** |
 | `ends_on_cliffhanger` | resolved, cliffhanger | **yes** |
@@ -138,15 +139,37 @@ until deep in the book; that specific instance is `reveals_spoiler: true`
 even though `sexual_assault` on most other books isn't a spoiler at all.
 
 `stakes_scope` (`intimate` / `regional` / `global` / `cosmic`) is a
-user-sourced field measuring the scale of what's actually at risk —
-Legends & Lattes' intimate personal-scale stakes vs. Death's End's
-cosmic, universe-ending ones. It's deliberately independent of
+user-sourced field measuring the BREADTH of what's at risk — Legends &
+Lattes' intimate personal-scale stakes vs. Death's End's cosmic,
+universe-ending ones. `global` deliberately includes galaxy-spanning
+single-universe empires (Dune, Foundation, Star Wars) — `cosmic` is
+reserved for stakes that go beyond one universe/reality (multiverse,
+alternate dimensions), not just "very large." It's independent of
 `worldbuilding_density` (how much lore gets explained, not how high the
 stakes are) and `darkness` (tone, not scale): a cozy book can still be
 tonally dark, and a world-ending epic can still read tonally light.
-The UI gates display of `true` instances the same way any other
-spoiler-flagged field does; the recommendation engine always reads the
-real value regardless.
+
+**`personal_stakes` (`low` / `moderate` / `high` / `life_threatening`)**
+was added alongside `stakes_scope` after review surfaced that the
+original field was quietly conflating two questions: how much of the
+*world* is threatened, and how much danger the *protagonist* is
+personally in. A story about a boy who might get scolded for losing a
+toy and a story about a man forced by the mafia into a deadly heist are
+both `intimate` in scope — but obviously not the same kind of read. Now
+they split: `low` + `intimate` vs. `life_threatening` + `intimate`. Other
+telling pairs: The Time Traveler's Wife and The Green Mile are both
+`intimate` scope but `life_threatening` (a fatal condition; an innocent
+man's execution). Circe is `intimate` scope and only `high`, not
+`life_threatening` — she's an immortal goddess, so her own death was
+never really the threat, even though her son's safety is. Good Omens and
+The Invisible Life of Addie LaRue are `moderate` for the same reason at
+different scope levels: immortal/unkillable protagonists whose real
+stakes are something other than dying (losing a comfortable life;
+being forgotten).
+
+The UI gates display of spoiler-flagged fields' `true` instances the
+same way any other spoiler-flagged field does; the recommendation
+engine always reads the real value regardless.
 
 **What content_warnings actually drive — three uses of the same data:**
 1. **Soft signal.** Same mechanism as every other DNA field — if a user's

@@ -300,17 +300,50 @@ categories:
       stakes_scope:
         type: enum
         values: [intimate, regional, global, cosmic]
-        # The scale of what's actually at risk — intimate (personal
-        # relationships/small cast, low body count; Legends & Lattes, The
-        # House in the Cerulean Sea, Before the Coffee Gets Cold) up
-        # through cosmic (universe/multiverse-scale; Death's End, A
-        # Darker Shade of Magic's multiverse threat). Distinct from
+        # The BREADTH of what's at risk — how large a footprint is
+        # threatened, independent of how severe the danger is for any
+        # one character. intimate (personal relationships/small cast;
+        # Legends & Lattes, The House in the Cerulean Sea, Before the
+        # Coffee Gets Cold) → regional (a city/kingdom/single planet;
+        # The Lies of Locke Lamora) → global (an entire civilization is
+        # at stake, however large that civilization is — this includes
+        # galaxy-spanning single-universe empires like Dune, Foundation,
+        # or Star Wars, not just one planet) → cosmic (stakes that go
+        # beyond one universe/reality entirely: multiverse, alternate
+        # dimensions, existential threats to reality itself — Death's
+        # End, A Darker Shade of Magic's parallel Londons). Deliberately
+        # does NOT capture how dangerous things are for the protagonist
+        # personally — see personal_stakes below, added specifically
+        # because this field was originally conflating the two (a boy
+        # who might get scolded for losing a toy and a man forced by the
+        # mafia into a deadly heist are both "intimate" in scope, but
+        # obviously not the same book to read). Also distinct from
         # worldbuilding_density (how much lore gets explained, not how
-        # high the stakes are) and from darkness (tone, not scale) —
-        # a cozy, low-stakes book can still be tonally dark, and an
-        # epic-stakes book can still be tonally light. User-sourced
-        # field: readers have strong, independent preferences for cozy
-        # vs. epic scope regardless of other axes.
+        # big the stakes are) and darkness (tone, not scale) — a cozy,
+        # low-stakes book can still be tonally dark, and an epic-stakes
+        # book can still be tonally light.
+        spoiler: false
+      personal_stakes:
+        type: enum
+        values: [low, moderate, high, life_threatening]
+        # How dire the risk is for the protagonist SPECIFICALLY, however
+        # big or small the story's scope is. low (The House in the
+        # Cerulean Sea, Legends & Lattes — nobody's life is ever on the
+        # line) → moderate (Good Omens' immortal protagonists watching
+        # the apocalypse approach without personally risking death; The
+        # Invisible Life of Addie LaRue, whose curse makes her literally
+        # unkillable — her real stake is being forgotten, not dying) →
+        # high (real, serious danger short of the story treating death
+        # as the live central threat) → life_threatening (Ender's Game,
+        # The Lies of Locke Lamora — the protagonist's actual death is a
+        # real, present possibility). Added alongside stakes_scope as a
+        # deliberate split of what was one field: scope is about breadth
+        # (how much of the world is threatened), this is about severity
+        # for the protagonist — independent axes (The Time Traveler's
+        # Wife and The Green Mile are both intimate in scope but
+        # life_threatening; Circe is intimate in scope and only high,
+        # not life_threatening, since she's an immortal goddess and her
+        # own death was never really the threat).
         spoiler: false
       narrative_closure:
         type: enum

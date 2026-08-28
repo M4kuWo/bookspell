@@ -777,3 +777,35 @@ Applied to both hosted and local DBs — see
 has 100% field coverage across `age_category` and `book_length` for all
 168 books (`audiobook_length` remains null for books with no audiobook
 edition on Hardcover's side — that's a legitimate absence, not a gap).
+
+## 2026-08-29 — Split stakes_scope into stakes_scope + personal_stakes
+
+User caught a real design flaw during casual review: `stakes_scope` was
+conflating two questions — how large a footprint is threatened (breadth)
+and how dire the danger is for the protagonist personally (severity). A
+boy who might get scolded for losing a toy and a man forced by the mafia
+into a deadly heist are both "intimate" in scope, but obviously not the
+same book. Worked through diverse calibration examples (Harry Potter,
+LOTR, Star Wars, The Time Traveler's Wife, Ender's Game, The Green Mile,
+Circe, The Lies of Locke Lamora) before committing, which also resolved
+a previously-unaddressed ambiguity: whether a galaxy-spanning single-
+universe empire (Star Wars, Dune, Foundation) counts as `global` or
+`cosmic`. Settled: `cosmic` means beyond one universe/reality
+(multiverse, alternate dimensions), not just "very large" — so those
+stay `global`.
+
+Added `personal_stakes` (`low`/`moderate`/`high`/`life_threatening`),
+kept `stakes_scope`'s meaning unchanged but clarified to breadth-only.
+Retagged all 168 books via the same lightweight background-agent
+pattern (7 batches of 24 books, ~26K tokens each — two batches hit a
+transient API server error and were cleanly retried). Distribution:
+123 life_threatening / 24 high / 18 moderate / 3 low — expected skew for
+an SFF catalog, but with real, checkable variance at the low end (The
+House in the Cerulean Sea and Legends & Lattes landed on `low`, exactly
+matching the calibration discussion; Good Omens and Circe landed on
+`moderate`/`high` respectively for the "immortal protagonist" reason
+worked out beforehand).
+
+Applied via `supabase/migrations/20260829010000_split_stakes_scope_personal_stakes.sql`
+plus a data-only update (`docs/remaining-catalog-tagging/personal-stakes-values.json`)
+to both hosted and local DBs — verified matching distributions on both.
