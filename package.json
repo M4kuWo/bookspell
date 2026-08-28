@@ -1,0 +1,12 @@
+{
+  "name": "bookspell",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "ingest:seed-catalog": "node --env-file=.env scripts/ingest-seed-catalog.js"
+  },
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}
