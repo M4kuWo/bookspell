@@ -418,14 +418,18 @@ continuities like "The First Law World"; that's a manual step for later.
   programmatically from the schema, all 8 tables live.
 - Seed catalog: step 03 done. 168 books (30 DNA-tagged pilot books + 138
   new), 83 series, sourced from Hardcover's API.
-- Step 04 (tagging pipeline): a 30-book test batch done via Claude forked
-  subagents (not a local or third-party hosted model — see the discussion
-  below on why, and the cost tradeoff that decided it). 60/168 books now
-  have `book_dna`; 108 remain. Real usage cost measured on this batch
-  before committing to the rest — see below.
-- Next up: decide, from the real usage delta, whether to tag the
-  remaining 108 books in one push or spread across sessions/weekly resets,
-  then continue step 04 with a minimal internal review tool.
+- Step 04 (tagging pipeline): **complete — 168/168 books now have
+  `book_dna`.** The 30-book test batch (forked subagents) was followed by
+  a full pass over the remaining 108 books during a user-authorized
+  autonomous window, using lighter-weight non-forked agents instead (see
+  the 2026-08-28 "remaining catalog" entry below for why, and the real
+  cost difference it made).
+- Next up: a minimal internal review tool to spot-check tagging quality
+  across the full catalog, then step 05 (recommendation engine). A batch
+  of schema vocabulary gaps surfaced across all three tagging rounds is
+  logged in `docs/remaining-catalog-tagging/findings.md` and
+  `docs/step04-test-batch/findings.md`, awaiting a deliberate review pass
+  with the user before any are applied.
 
 ## 2026-08-28 — Step 04 test batch: 30 books tagged, real usage measured
 
@@ -520,3 +524,59 @@ books.
   structure didn't support it. The same "why does this come first"
   question is worth asking about sequencing, not just about individual
   decisions.
+
+## 2026-08-28 — Remaining catalog tagged: all 108 books, methodology change
+
+User authorized ~2 hours of autonomous work while away from their
+computer ("use it to the max if you need"), specifically to tag as much
+of the remaining 108-book catalog as the session's usage budget allowed,
+using Claude via subagents rather than a local model or a separate
+Anthropic API key (consistent with the cost/credential reasoning already
+logged for step 04).
+
+**Methodology change from the 30-book test batch**: the test batch used
+forked subagents (`subagent_type: "fork"`), which inherit the full parent
+conversation history — by that point in the session, ~830K-840K tokens
+per fork for only 5-6 books of actual tagging work. This round switched
+to plain background agents that start fresh and read the schema file
+directly (`docs/schema/book-dna.schema.yaml` + `book-dna.md`) instead of
+relying on inherited context. Per-agent cost came in at ~40K-65K tokens
+for 6 books — roughly 15-20x cheaper, with no observed drop in tagging
+discipline (same vocabulary-only rule, same gap-flagging behavior, same
+schema-fidelity checks). This is the reason all 108 books got tagged in
+one window rather than the partial pass originally planned.
+
+Work ran in three waves of six 6-book agents each (36 books/wave), fully
+in parallel within each wave. All three waves' output was consolidated,
+cross-checked against the schema's literal trope/content-warning ID
+lists and CHECK-constrained enum values (catching zero actual errors —
+every ID and value used across all 108 books was already valid), then
+inserted into `book_dna`/`book_tropes`/`book_content_warnings`, with
+`book_length`/`audiobook_length` computed deterministically from stored
+`page_count`/`audiobook_duration_minutes` as in every prior round.
+
+**Result: 168/168 books now tagged — full catalog coverage**, confirmed
+via a direct count query at the end of the session.
+
+Full tagging data and this round's findings (schema vocabulary gaps,
+poor-genre-fit candidates) are in `docs/remaining-catalog-tagging/`:
+`wave1-tagged.json`, `wave2-tagged.json`, `wave3-tagged.json`,
+`findings.md`.
+
+**Open items for the user's review (not decided unilaterally)**:
+- Several books tagged but flagged as poor genre fits for a sci-fi/
+  fantasy-scoped catalog (same treatment as Bird Box/The Road earlier):
+  The Silent Patient, The Girl with the Dragon Tattoo, House of Leaves,
+  Slaughterhouse-Five, One Hundred Years of Solitude, The Alchemist,
+  Tomorrow and Tomorrow and Tomorrow (the last tagged with an empty
+  `genre` — no sci-fi/fantasy tag applied at all).
+- The LitRPG `form` gap (no schema value for embedded game-notification
+  text) recurred 6+ times across three tagging rounds now — the strongest
+  candidate yet for an actual schema addition rather than a logged-only
+  gap.
+- A handful of other recurring trope/content-warning gaps (corruption
+  arcs, mythological-figures-as-characters, intelligence-enhancement-then-
+  reversal, fantasy-side satire, crime-family sagas, structured death-
+  tournaments, species uplift, pandemic/epidemic content warning,
+  fictional-species-based prejudice content warning) — full list in
+  `docs/remaining-catalog-tagging/findings.md`.

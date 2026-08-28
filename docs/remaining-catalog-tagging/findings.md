@@ -36,7 +36,13 @@ and `book_length`/`audiobook_length`/`audiobook_native` explicitly excluded
   `wave1-tagged.json`.
 - Wave 2 (groups 7-12, 36 books): tagged, validated, inserted. See
   `wave2-tagged.json`.
-- Wave 3 (groups 13-18, 36 books): in progress as of this commit.
+- Wave 3 (groups 13-18, 36 books): tagged, validated, inserted. See
+  `wave3-tagged.json`.
+
+**All 108 remaining books tagged. Catalog is now at 168/168 books tagged
+(100% coverage)** — confirmed via `select count(*) from books` vs
+`select count(*) from book_dna` both returning 168, run at the end of
+this session.
 
 ## Open items surfaced for later review (not applied yet)
 
@@ -86,6 +92,46 @@ and `book_length`/`audiobook_length`/`audiobook_native` explicitly excluded
   based rather than literally telepathic; `child_sexual_abuse` content
   warning applied to Snow Crash's Y.T./Raven relationship, flagged as
   worth a second look on severity/framing).
+
+### Additional gaps surfaced in wave 3
+
+- **LitRPG `form` gap** — reconfirmed twice more (Dungeon Crawler Carl book
+  1, This Inevitable Ruin, The Eye of the Bedlam Bride). Now hit 6+ times
+  across three tagging rounds — this is no longer a marginal one-off and
+  is the strongest candidate for an actual schema addition.
+- **Crime-family/gang-clan saga gap** (Jade City) — no trope for a
+  mafia-style clan-turf-war structure; `court_intrigue`/`war_story`/
+  `found_family` cover adjacent ground but not the genre blend itself.
+- **Structured death-tournament/trial gap** (Harry Potter and the Goblet
+  of Fire's Triwizard Tournament, Divergent's faction trials) — related to
+  but distinct from the Hunger Games "death game" gap already noted;
+  broader category of "formal, life-threatening competition among
+  selected participants" with no matching trope.
+- **Uplift gap** (Children of Time) — a species deliberately/accidentally
+  granted intelligence via human tech has no matching trope;
+  `species_divergence` only covers humanity splitting into new species,
+  not another species being uplifted.
+- **Amnesia-reveals-own-backstory gap** (Project Hail Mary) — no trope for
+  a protagonist whose memory loss/recovery is the structural engine
+  revealing his own past to himself, distinct from `twist_ending`/
+  `twist_filled` (which are reader-facing reversals, not self-discovery).
+- **Solo-survival-via-competence gap** (The Martian) — no trope for
+  survivalist-ingenuity-against-an-indifferent-environment as the book's
+  entire engine; left thin (`last_minute_rescue` only) despite being a
+  defining genre entry.
+- **No content-warning for pandemic/epidemic** (Station Eleven) — closest
+  neighbors (`child_death`, `war_trauma`) don't fit civilizational
+  collapse from disease specifically; a real gap for a growing subgenre.
+- **No content-warning for fictional-species-based prejudice** (The Cruel
+  Prince's fae-vs-human contempt, The House in the Cerulean Sea's
+  anti-magical-youth bigotry) — `racism_depicted`/`hate_speech_depicted`
+  are written for real-world-analog prejudice; in-world species bigotry
+  doesn't map cleanly onto either.
+- **Frankenstein — genre fit judgment call**: tagged `sci_fi` (scientific
+  transgression, not supernatural), but the schema has no horror genre
+  option and this is arguably gothic horror first. Not flagged for
+  exclusion (unlike the sci-fi/fantasy-scoped poor fits above), just
+  noted as an imperfect single-genre fit.
 
 None of these were applied to the schema in this pass — same discipline as
 every other vocabulary decision in this project: logged for deliberate
