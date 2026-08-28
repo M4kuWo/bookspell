@@ -13,19 +13,28 @@ other tagging correction in this project has been made.
 
 ## Running it
 
-1. Make sure the local Supabase stack is running: `supabase start` (from
-   the project root).
-2. Serve this directory as static files — it needs to be loaded via
+Points at the hosted Supabase project (`bookspell`,
+`yhvubjqstswxvctdikbc`) as of 2026-08-29 — no local Docker/`supabase
+start` required.
+
+1. Serve this directory as static files — it needs to be loaded via
    `http://`, not opened directly as a `file://` path, for the
-   browser's CORS handling to cooperate with the local PostgREST API:
+   browser's CORS handling to cooperate with the REST API:
    ```
    cd tools/catalog-review
    python3 -m http.server 8765
    ```
-3. Open `http://127.0.0.1:8765/` in a browser.
+2. Open `http://127.0.0.1:8765/` in a browser.
 
 That's it — no build step, no dependencies. It's a single static HTML
-file that queries Supabase's auto-generated REST API
-(`http://127.0.0.1:54321`) directly with the local anon key (safe to
-have in this file — it's the well-known Supabase local-dev default key,
-not a real secret, and only has read access granted to it here).
+file that queries Supabase's auto-generated REST API directly with the
+project's publishable (anon-equivalent) key. That key is safe to have in
+this file — it's meant for exactly this (client-side, public) use, and
+only has read access to the catalog tables, gated by both a table grant
+and an explicit RLS "public read" policy (see
+`supabase/migrations/20260829000000_enable_rls_public_read.sql`).
+
+To point this at local Supabase instead (e.g. testing against in-progress
+schema changes before pushing them), swap `API_URL`/`ANON_KEY` at the top
+of `index.html` for `http://127.0.0.1:54321/rest/v1` and the local anon
+key from `supabase status`.

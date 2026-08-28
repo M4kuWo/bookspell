@@ -693,3 +693,56 @@ as fields, and before step 03's Hardcover ingestion supplied
 for the same reason. The tool flags this directly (a "N fields missing"
 badge per book, plus a header-level count) rather than hiding it. Not
 fixed in this pass — flagged for a follow-up backfill.
+
+## 2026-08-29 — Moved to a hosted Supabase project
+
+User created a hosted Supabase project ("bookspell", ref
+`yhvubjqstswxvctdikbc`, `ap-southeast-1`) in their existing org via the
+dashboard themselves — deliberately not something done via CLI on their
+behalf, since creating a second project in an org can carry billing
+implications only their own dashboard would show and confirm before
+charging anything.
+
+Migration steps:
+1. `supabase link --project-ref yhvubjqstswxvctdikbc`, then
+   `supabase db push` — applied all 5 existing migrations plus a new one
+   written for this move (see below). This recreated the schema and the
+   tropes/content_warning_types lookup vocabulary (both seeded via
+   `insert` statements inside the migration files themselves).
+2. **Real catalog data (168 books, their DNA, tropes, content warnings,
+   series) was NOT in any migration file** — it was loaded via ad hoc
+   scripts against local Postgres throughout steps 03-04, so pushing
+   migrations alone left the hosted project schema-complete but
+   data-empty. Dumped data-only (`pg_dump --data-only`) per table in
+   FK-safe order (universe, series, books, book_dna, book_tropes,
+   book_content_warnings) from local, stripped the psql-only
+   `\restrict`/`\unrestrict` meta-commands pg_dump 17 adds (not valid
+   SQL, would break a non-psql executor), and applied via
+   `supabase db query --file ... --linked`. Verified row-for-row parity
+   against local afterward (168/168/867/336/83 across the five
+   non-empty tables, `universe` empty in both — never populated,
+   expected).
+3. **Turned on RLS properly instead of carrying forward the local-dev
+   shortcut.** Local had RLS off catalog-wide with a blanket `SELECT`
+   grant to `anon` — fine on localhost, but this project is now
+   genuinely internet-reachable, so that implicit "everything open"
+   default became a real, permanent exposure rather than a convenience.
+   New migration (`20260829000000_enable_rls_public_read.sql`) enables
+   RLS on all 8 catalog tables and adds an explicit `"public read
+   access"` SELECT-only policy per table — same effective read access as
+   before, but auditable, and correctly leaves writes closed to `anon`/
+   `authenticated` by default. Applied to local too, to keep the two
+   environments' policies in sync. Step 07 (ratings, friend graph) will
+   need its own, much narrower policies once real user data exists —
+   this pass deliberately doesn't try to anticipate that.
+4. Repointed the catalog review tool at the hosted project's URL and
+   publishable (anon-equivalent) key. Re-tested end-to-end in a real
+   browser session against the hosted DB — list load, filtering, detail
+   view all confirmed working.
+
+**Going forward**: schema changes get authored and tested against local
+Supabase, then promoted via `supabase db push` (standard workflow, kept
+local running rather than fully retiring it). Actual catalog data (new
+books, tag corrections) should be written directly against the hosted
+project from here on — local Postgres is not being kept in sync with it
+automatically, and would need another manual dump/push if it drifts.
