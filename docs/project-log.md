@@ -417,11 +417,79 @@ continuities like "The First Law World"; that's a manual step for later.
   initialized, `supabase start` via Docker), migration generated
   programmatically from the schema, all 8 tables live.
 - Seed catalog: step 03 done. 168 books (30 DNA-tagged pilot books + 138
-  new), 83 series, sourced from Hardcover's API. Bibliographic data only —
-  no DNA tags on the 138 new books yet.
-- Next up: step 04, the tagging pipeline (LLM structured extraction to
-  fill `book_dna` for the 138 untagged books, plus a minimal internal tool
-  for reviewing tagged output and logging ratings at scale).
+  new), 83 series, sourced from Hardcover's API.
+- Step 04 (tagging pipeline): a 30-book test batch done via Claude forked
+  subagents (not a local or third-party hosted model — see the discussion
+  below on why, and the cost tradeoff that decided it). 60/168 books now
+  have `book_dna`; 108 remain. Real usage cost measured on this batch
+  before committing to the rest — see below.
+- Next up: decide, from the real usage delta, whether to tag the
+  remaining 108 books in one push or spread across sessions/weekly resets,
+  then continue step 04 with a minimal internal review tool.
+
+## 2026-08-28 — Step 04 test batch: 30 books tagged, real usage measured
+
+Before committing to tagging all 138 untagged catalog books, ran a
+smaller test: chose Claude (via forked subagents in this session) over
+either a local model or a separate hosted Anthropic API key, reasoning
+through the actual tradeoffs rather than defaulting to the original
+plan's "local model for cost" assumption:
+
+- The schema has grown considerably more nuanced since that original
+  local-model assumption was made (`message_intensity`, `emotional_resolution`
+  vs. `ends_on_cliffhanger`, 99 tropes with real near-duplicates to tell
+  apart) — exactly the kind of judgment call a small quantized local model
+  tends to get wrong, and the pilot already showed even careful tagging
+  needs real verification.
+- A standalone script hitting the Anthropic API directly would need a
+  new, separately-billed credential and would incur real (if modest)
+  per-token cost — distinct from Claude Code's subscription-based access,
+  a distinction the user asked about directly and got a real answer to
+  rather than an assumption.
+- Chose instead: continue using this session's own forked subagents (as
+  in the original pilot), trading a reusable standalone pipeline script
+  for zero new cost/credentials, using only the user's existing Claude
+  Code access.
+
+Before running the full batch, the user asked whether there's a monthly
+usage cap in addition to the known 4-hour session limit. Researched
+rather than guessed: confirmed it's a **weekly** limit, not monthly (fixed
+day/time per account, not a calendar boundary) — publicly documented, but
+the user's own account screenshot was the real answer: Team plan, 31%
+session used (resets 2h20m), 36% weekly used (resets in 14h10m), plus a
+temporary 50%-higher weekly limit active through August 31. Good timing
+for a token-heavier task, and low risk either way given the short reset
+window.
+
+Test batch: 30 untagged catalog books (well-known titles — Sea of
+Tranquility, LOTR trilogy books, Dune, Mistborn, A Song of Ice and Fire,
+Harry Potter, Murderbot, several others), tagged via 6 forks of 5 books
+each, using the synopsis already stored from step 03 as the primary
+source (supplementary web search available but rarely used, given how
+well-documented these titles are). All 30 validated cleanly against the
+schema and were inserted into `book_dna`/`book_tropes`/
+`book_content_warnings`. `book_length`/`audiobook_length` were
+deliberately NOT left to the model — computed directly from the
+`page_count`/`audiobook_duration_minutes` already sitting in `books` from
+step 03, since those are arithmetic, not judgment calls (verified: Dune
+704pp/21hrs → epic/long; The Lord of the Rings 1178pp/22.6hrs →
+epic/long; Fahrenheit 451 227pp/5.15hrs → short/short).
+
+Four schema-gap candidates surfaced (Jurassic Park's genetic-engineering
+trope, Good Omens' cross-genre satire gap, a second independent hit on
+the LitRPG embedded-game-text `form` gap, and a mythological-vs-fairy-tale
+retelling distinction question) — logged in
+`docs/step04-test-batch/findings.md`, none applied yet, same discipline
+as always: real gap, not just "a real term exists."
+
+**Usage cost**: ~5.0M subagent tokens total across the 6 forks for 30
+books (831,859 / 836,022 / 831,484 / 831,827 / 831,484 / 844,156) — most
+of that per-fork cost is inherited conversation history (this session is
+long), not the book-tagging work itself. Real-world Claude Code usage
+delta from the user's own before/after usage screenshots is the
+authoritative number, not this token count — see whatever the user
+observed for the actual decision on how to proceed with the remaining 108
+books.
 
 ## Lessons for future projects
 
