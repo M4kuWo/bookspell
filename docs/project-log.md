@@ -866,3 +866,89 @@ Full design writeup, validation table, and limitation analysis in
 `docs/recommendation-engine/v1-findings.md`. This is a validated
 algorithm, not a shipped feature — wiring it into the app as a real
 service is step 06+ work once the app exists.
+
+## 2026-08-29 — Series/universe data was systemically wrong catalog-wide
+
+User spot-checked Sanderson's books and found real problems, which
+turned out to be catalog-wide, not Sanderson-specific:
+
+**1. Series `book_count`/`status` were auto-populated garbage.** Despite
+the project's own explicit design decision (series/universe data is
+manually curated, never pulled from a metadata API), step 03's
+ingestion silently linked books to whatever "series" Hardcover's raw
+feed returned, with that series' raw book_count/status carried over
+uncorrected. Every single series in the catalog was wrong — Harry
+Potter "29 books," A Song of Ice and Fire "59 books," The Wheel of Time
+"86 books," and the specific case the user caught: "Mistborn: Wax &
+Wayne" tagged as 9 books (it's 4). Corrected all 79 series against real
+publication facts (75 in one pass, plus Mistborn x2/Stormlight/LOTR
+handled separately below). Left `book_count` null for one fast-moving
+ongoing series (He Who Fights with Monsters) rather than guess.
+
+**2. The Cosmere (and Middle-earth) were never modeled as universes.**
+The schema has always had this concept (`universe` → `series` → `book`,
+explicitly "not auto-populated from any metadata API"), but it had
+never actually been populated for any books, including the one series
+where it obviously matters — Sanderson's shared-universe Cosmere. Fixed:
+created a "The Cosmere" universe; renamed and corrected "The Mistborn
+Saga: The Original Trilogy" → "Mistborn Era One" (3 books, completed)
+and "Mistborn: Wax & Wayne" → "Mistborn Era Two (Wax and Wayne)" (4
+books, completed), both linked to it; corrected Stormlight Archive to
+10 books (Sanderson's own stated two-arc plan), linked to it; unlinked
+Elantris, Warbreaker, and Tress of the Emerald Sea from bogus/
+speculative "series" entries Hardcover had invented for them
+(book_count 45, 2, and 4 respectively) and linked them to the Cosmere
+universe directly as standalones instead. Same fix for Middle-earth:
+The Hobbit had been linked to its own fabricated "series" (book_count
+19); created a "Middle-earth" universe holding The Hobbit (standalone)
+and a corrected "The Lord of the Rings" series (3 books, not 4 — see
+below).
+
+**3. Found and removed a genuine duplicate: "The Lord of the Rings" was
+in the catalog twice.** Once correctly as three separate trilogy
+volumes (Fellowship/Two Towers/Return of the King), and once as a
+1178pp single-volume omnibus edition, independently tagged with its own
+`book_dna`/tropes/content warnings. Since the omnibus is the same
+content as the trilogy already in the catalog, having both would have
+double-counted the same book in anyone's preference profile and could
+recommend the same story to someone who'd already read it under a
+different title. Deleted the omnibus row (cascaded to its DNA/tropes/
+warnings automatically). Checked the rest of the catalog for
+similarly-oversized entries — nothing else found; the other long books
+(Stormlight, ASOIAF, Wise Man's Fear, Jonathan Strange) are genuinely
+that long as individual novels.
+
+**4. Rhythm of War's tropes were thin and had a real error.** User's
+own read: the book has no single protagonist (Shallan, Dalinar, Adolin,
+and Kaladin all get major POV time), and most of them read as heroic,
+not morally grey — unlike The Way of Kings/Words of Radiance/Oathbringer,
+where Szeth's tragic-assassin arc and Dalinar's dark-past flashbacks
+genuinely justify that tag. Removed `morally_grey_protagonist` from
+Rhythm of War; added `multiple_fantasy_species`, `found_family`,
+`ancient_evil_awakens`, `shadow_self_confrontation`, and `redemption_arc`
+(Venli's arc). Extended the same audit across all 15 Sanderson books in
+the catalog: added `multiple_fantasy_species` wherever Parshendi/
+singers/kandra/koloss were a clear omission (Way of Kings, Words of
+Radiance, Oathbringer, Mistborn: The Final Empire, The Well of
+Ascension, The Hero of Ages); fixed inconsistent tagging across the Wax
+and Wayne era (The Alloy of Law had only 3 tropes total — added
+`found_family`, `noir_detective_structure`, `twist_ending`; added
+`morally_grey_protagonist` to Shadows of Self/Bands of Mourning/The
+Lost Metal for consistency with Wax's ongoing moral-complexity arc
+tagged elsewhere in the era); added `court_intrigue` to Warbreaker and
+The Lost Metal (clear omissions given how political both books are);
+added `epic_quest` to Tress of the Emerald Sea (only had 2 tropes
+total); added `immortal_or_ageless_character` to Warbreaker (the
+Returned are literally gods living as people) and `morally_grey_protagonist`
+to Elantris (Hrathen, a major POV, is genuinely morally grey — a true
+believer capable of real cruelty and real compassion).
+
+**Proposed, not yet applied**: a new trope for gods/deities as directly
+present, interactive characters (Sanderson's Shards — Odium, Preservation,
+Ruin, the Returned in Warbreaker — plus the wider pattern in American
+Gods, Percy Jackson, Circe). Distinct from `mythological_pantheon_as_characters`
+(real-world myth specifically) and `dark_lord_or_evil_overlord` (a villain
+archetype, not necessarily divine). Awaiting confirmation before adding,
+same discipline as every other vocabulary decision in this project.
+
+All fixes applied to both hosted and local DBs, verified matching.
