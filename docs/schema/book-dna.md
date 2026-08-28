@@ -37,13 +37,32 @@ That constraint is what makes similarity scoring work at all (roadmap §05).
 | `person` | first, second, third_limited, third_omniscient, mixed |
 | `narrator_reliability` | reliable, unreliable |
 | `timeline` | linear, nonlinear, multi_timeline |
-| `form` | standard_prose, epistolary, framing_device, verse |
+| `form` | standard_prose, epistolary, framing_device, verse, embedded_system_text |
+| `prose_density` | sparse, moderate, lush |
+| `prose_complexity` | accessible, moderate, dense |
 
 `person: mixed` and `timeline: multi_timeline` (generalized from the old
 `dual_timeline`, hard-coded to exactly two) both came from the 30-book
 pilot — The Fifth Season mixes 2nd- and 3rd-person across its POV threads
 and runs 3+ interwoven, non-chronological timelines. One data point, but
 a well-known, Hugo-winning structural technique, not a fluke.
+
+`form: embedded_system_text` closes the LitRPG game-notification-text gap
+that recurred 6+ times across three tagging rounds before being added —
+see the vocabulary growth section below.
+
+`prose_density` (how much physical/sensory description the prose
+carries) and `prose_complexity` (vocabulary/sentence-structure
+difficulty) are a user-sourced pair of fields, added after real-world
+comparisons like Lord of the Rings vs. a leaner Sanderson novel, and
+Gene Wolfe's Shadow of the Torturer vs. Brent Weeks' The Black Prism.
+They're deliberately independent axes: a book can be lushly descriptive
+but simply worded, or sparse but syntactically demanding. Both are
+distinct from `worldbuilding_density` (how much of the world's lore/rules
+get explained, not how the prose itself reads) — a book can have dense
+worldbuilding delivered in accessible, sparse prose. `prose_complexity`
+in particular matters for an audiobook-native product specifically:
+dense prose is harder to follow by ear than by eye.
 
 ### 2. Pacing & tone — core
 | Field | Values |
@@ -54,6 +73,8 @@ a well-known, Hugo-winning structural technique, not a fluke.
 | `darkness` | light, moderate, dark, grimdark |
 | `humor_level` | none, light, moderate, heavy |
 | `emotional_register` | comfort_read, bittersweet, tense, gut_punch |
+| `message_intensity` | subtle, moderate, heavy_handed |
+| `intellectual_weight` | escapist, moderate, cerebral |
 
 `drive: worldbuilding_driven` was added after the 30-book pilot —
 Perdido Street Station didn't fit `character_driven`/`plot_driven`/
@@ -68,6 +89,15 @@ heavy-handedness itself regardless of the specific message, so the
 per-user rating history can learn "this user rates heavy-handed books
 lower" without the schema ever tagging which position a book takes.
 
+`intellectual_weight` (`escapist` / `moderate` / `cerebral`) measures how
+much the book invites philosophical, ethical, or psychological
+reflection versus functioning as plot-forward entertainment — the "John
+Wick is fun, but Ender's Game makes you think" distinction. It's
+deliberately independent of `message_intensity`: a subtle book can still
+be cerebral (it demands thought without stating a thesis), and a
+heavy-handed one can still be pure escapism (it states a simple moral
+loudly without inviting deeper reflection).
+
 ### 3. Content & shape — core
 | Field | Values | Spoiler |
 |---|---|---|
@@ -77,6 +107,7 @@ lower" without the schema ever tagging which position a book takes.
 | `violence_intensity` | na, mild, moderate, graphic, brutal | no |
 | `content_warnings` | multi-select, see schema file | no |
 | `worldbuilding_density` | light, moderate, dense | no |
+| `stakes_scope` | intimate, regional, global, cosmic | no |
 | `narrative_closure` | self_contained, requires_series | no |
 | `emotional_resolution` | happy, tragic, ambiguous, bittersweet | **yes** |
 | `ends_on_cliffhanger` | resolved, cliffhanger | **yes** |
@@ -105,6 +136,14 @@ warning type can be a concealed, late plot reveal on a different book.
 Perdido Street Station's `sexual_assault` (Yagharek's crime) is hidden
 until deep in the book; that specific instance is `reveals_spoiler: true`
 even though `sexual_assault` on most other books isn't a spoiler at all.
+
+`stakes_scope` (`intimate` / `regional` / `global` / `cosmic`) is a
+user-sourced field measuring the scale of what's actually at risk —
+Legends & Lattes' intimate personal-scale stakes vs. Death's End's
+cosmic, universe-ending ones. It's deliberately independent of
+`worldbuilding_density` (how much lore gets explained, not how high the
+stakes are) and `darkness` (tone, not scale): a cozy book can still be
+tonally dark, and a world-ending epic can still read tonally light.
 The UI gates display of `true` instances the same way any other
 spoiler-flagged field does; the recommendation engine always reads the
 real value regardless.
@@ -336,6 +375,20 @@ particular had recurred 6+ times across three separate tagging rounds
 (pilot, step04, remaining-catalog) before being added — the clearest
 case yet of the "does this predict a different recommendation" bar being
 met through repetition rather than a single instance.
+
+**Third growth round (2026-08-28, user-sourced field ideas)**: the user
+brought a list of candidate fields from outside feedback (friends'
+suggestions). Reviewed against the existing schema and the same bar as
+every prior addition — several were already covered (gore level by
+`violence_intensity`, progression fantasy by the pre-existing
+`litrpg_or_progression_fantasy`, politics-heavy substantially by
+`court_intrigue`) and left out; four genuinely new, independent axes were
+added (`prose_density`, `prose_complexity`, `intellectual_weight`,
+`stakes_scope`) plus two new tropes (`dragons`, `coming_of_age`). Unlike
+tropes/content warnings, the four new scalar fields require every book
+in the catalog to get a value (not just an optional retroactive tag on
+the specific books that surfaced the gap) — see the project log for the
+retagging pass this triggered.
 
 ## Known limitations — engine-level, not schema fixes
 

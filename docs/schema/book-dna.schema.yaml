@@ -104,6 +104,31 @@ categories:
         # value at all; every instance was previously force-fit into
         # standard_prose.
         spoiler: false
+      prose_density:
+        type: enum
+        values: [sparse, moderate, lush]
+        # How much physical/sensory/environmental description the prose
+        # carries — sparse (dialogue/action-forward, minimal scene-setting;
+        # Sanderson, Six of Crows) vs. lush (extensive immersive detail;
+        # The Fellowship of the Ring, The Priory of the Orange Tree, The
+        # Name of the Wind). Distinct from worldbuilding_density (how much
+        # of the WORLD's lore/rules get explained) — a book can have dense
+        # worldbuilding delivered in sparse prose, or light worldbuilding
+        # described lushly. User-sourced field: readers have a durable,
+        # independent preference on prose texture itself.
+        spoiler: false
+      prose_complexity:
+        type: enum
+        values: [accessible, moderate, dense]
+        # Vocabulary and sentence-structure difficulty — accessible
+        # (commercial-fiction register; most YA, Sanderson, Weir) vs. dense
+        # (archaic/elevated vocabulary, complex syntax; Piranesi, Jonathan
+        # Strange & Mr Norrell, Frankenstein). Distinct from prose_density
+        # (amount of description) — a book can be simply worded but
+        # heavily descriptive, or sparse but syntactically demanding.
+        # Particularly relevant for an audiobook-native product: dense
+        # prose is harder to follow by ear than by eye. User-sourced field.
+        spoiler: false
 
   pacing_tone:
     label: Pacing & tone
@@ -147,6 +172,20 @@ categories:
         # redemption theme in different books) — this field lets that
         # generalized aversion be learned from ratings without the schema
         # ever tagging which position a book argues.
+        spoiler: false
+      intellectual_weight:
+        type: enum
+        values: [escapist, moderate, cerebral]
+        # How much the book invites philosophical/ethical/psychological
+        # reflection vs. functions as plot-forward entertainment —
+        # escapist (Fourth Wing, Six of Crows, Ready Player One) vs.
+        # cerebral (Ender's Game, The Left Hand of Darkness, Never Let Me
+        # Go, Flowers for Algernon). Distinct from message_intensity (how
+        # OVERTLY a specific argument is pushed — a subtle book can still
+        # be cerebral, a heavy-handed one can still be pure escapism) and
+        # from darkness (tone, not depth of thought invited). User-sourced
+        # field, from the "John Wick is fun but Ender's Game makes you
+        # think" distinction.
         spoiler: false
 
   content_shape:
@@ -257,6 +296,21 @@ categories:
       worldbuilding_density:
         type: enum
         values: [light, moderate, dense]
+        spoiler: false
+      stakes_scope:
+        type: enum
+        values: [intimate, regional, global, cosmic]
+        # The scale of what's actually at risk — intimate (personal
+        # relationships/small cast, low body count; Legends & Lattes, The
+        # House in the Cerulean Sea, Before the Coffee Gets Cold) up
+        # through cosmic (universe/multiverse-scale; Death's End, A
+        # Darker Shade of Magic's multiverse threat). Distinct from
+        # worldbuilding_density (how much lore gets explained, not how
+        # high the stakes are) and from darkness (tone, not scale) —
+        # a cozy, low-stakes book can still be tonally dark, and an
+        # epic-stakes book can still be tonally light. User-sourced
+        # field: readers have strong, independent preferences for cozy
+        # vs. epic scope regardless of other axes.
         spoiler: false
       narrative_closure:
         type: enum
@@ -375,6 +429,7 @@ categories:
           - {id: immortal_or_ageless_character, group: character_archetypes, spoiler: false}
           - {id: reincarnated_protagonist, group: character_archetypes, spoiler: false}
           - {id: hidden_talent_prodigy, group: character_archetypes, spoiler: false}  # untrained character suddenly shows exceptional skill — distinct from chosen_one, which is destiny-driven rather than skill-driven
+          - {id: coming_of_age, group: character_archetypes, spoiler: false}  # protagonist's growth from childhood/adolescence into adulthood is the book's central arc — distinct from hidden_talent_prodigy and underdog_rising, which are about skill/status arcs, not growing up per se
           - {id: wise_mentor, group: character_archetypes, spoiler: false}
           - {id: underdog_rising, group: character_archetypes, spoiler: false}  # powerless-to-strong arc
           - {id: dark_lord_or_evil_overlord, group: character_archetypes, spoiler: false}
@@ -426,6 +481,7 @@ categories:
           - {id: isekai, group: setting_worldbuilding, spoiler: false}  # protagonist transported/reincarnated from their origin world into a different one and generally remains there — distinct from portal_fantasy (classic doorway, often round-trip, no reincarnation/game-system implication) and litrpg_or_progression_fantasy (about game-mechanics presence, not the transportation premise); the two frequently co-occur but neither implies the other
           - {id: renaissance_or_mercantile_setting, group: setting_worldbuilding, spoiler: false}  # Renaissance/early-modern-era analog: merchant city-states, guilds, canals, maritime trade — distinct from medieval_european_setting's feudal-kingdom default (The Lies of Locke Lamora's Camorr, modeled on Renaissance Venice)
           - {id: vampires, group: setting_worldbuilding, spoiler: false}  # the specific creature mythology (turning, bloodlines, sunlight vulnerability, etc.) — distinct from immortal_or_ageless_character (a character trait any long-lived being could have) and monster_or_fae_romance (a romantic pairing, not a general setting element)
+          - {id: dragons, group: setting_worldbuilding, spoiler: false}  # dragons as a specific, defining creature/setting element (dragon-riders, dragon-as-companion, dragon-as-threat) — same logic as vampires: a specific mythology readers have strong, independent preferences on, not just "a fantasy creature exists"
           - {id: sudden_apocalypse_event, group: setting_worldbuilding, spoiler: false}  # the unfolding, in-progress collapse of civilization itself (Cat's Cradle, Station Eleven) — distinct from post_apocalyptic, which only covers settings after collapse has already happened
           - {id: satirical_or_comedic_fantasy, group: setting_worldbuilding, spoiler: false}  # fantasy as a vehicle for parody of genre/bureaucratic/religious convention (The Colour of Magic, Good Omens) — fantasy-side equivalent of scifi_specific's satirical_or_comedic_scifi, which doesn't fit a book with no sci-fi element
           - {id: crime_family_saga, group: setting_worldbuilding, spoiler: false}  # organized-crime/clan-turf-war structure as the book's defining shape (Jade City) — distinct from court_intrigue (political scheming, not criminal-clan structure) and war_story

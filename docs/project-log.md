@@ -621,3 +621,44 @@ some already covered by existing fields (gore level by
 pending the user's decision (story scope/stakes scale, philosophical-vs-
 plot-driven axis, prose density, prose complexity, `coming_of_age` and
 `dragons` as new tropes). Not yet decided or added.
+
+## 2026-08-28 — Vocabulary growth round 3: 4 new scalar fields, full catalog retag
+
+Implemented the "worth adding" list from the friend-sourced field ideas
+(see the prior entry): 4 new scalar fields, added to the schema and then
+filled in for all 168 books (unlike tropes/content warnings, a scalar
+field needs a value on every row, not just an optional retroactive tag).
+
+- `prose_density` (sparse/moderate/lush) — under `pov_structure`, how
+  much physical/sensory description the prose carries.
+- `prose_complexity` (accessible/moderate/dense) — under `pov_structure`,
+  vocabulary/sentence-structure difficulty, independent of prose_density.
+- `intellectual_weight` (escapist/moderate/cerebral) — under
+  `pacing_tone`, how much the book invites philosophical/ethical/
+  psychological reflection vs. functions as plot-forward entertainment.
+- `stakes_scope` (intimate/regional/global/cosmic) — under
+  `content_shape`, the scale of what's at risk.
+
+Plus 2 new tropes: `dragons` (parallel to the existing `vampires` —
+specific creature mythology, not just "fantasy creature exists") and
+`coming_of_age` (a real, previously-uncovered bildungsroman trope).
+
+Applied via `supabase/migrations/20260828030000_vocabulary_growth_round3.sql`.
+The 4 scalar fields were filled for all 168 books using the same
+lightweight non-forked-agent pattern from the remaining-catalog round —
+7 parallel agents, 24 books each, ~26-38K tokens per agent (~225K total
+for the full catalog) since the task per book (4 quick judgment calls,
+mostly on well-known titles) is much lighter than full DNA tagging.
+`dragons`/`coming_of_age` were retroactively applied only to the clearest,
+highest-confidence matches (25 books total) — not a full audit of all 168
+for either trope.
+
+Full field-value data: `docs/remaining-catalog-tagging/round3-new-fields.json`.
+
+Not implemented from the same list (already covered by existing fields,
+per the analysis in the prior log entry): gore level, politics-heavy as
+a separate scalar. Progression fantasy already existed as
+`litrpg_or_progression_fantasy` before this round.
+
+Catalog stands at 168/168 books tagged with all core + round-2 + round-3
+fields, 112 tropes, 37 content warnings.
