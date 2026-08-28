@@ -580,3 +580,44 @@ poor-genre-fit candidates) are in `docs/remaining-catalog-tagging/`:
   tournaments, species uplift, pandemic/epidemic content warning,
   fictional-species-based prejudice content warning) — full list in
   `docs/remaining-catalog-tagging/findings.md`.
+
+## 2026-08-28 — Vocabulary growth round 2: 11 tropes, 4 content warnings, 1 form value
+
+User reviewed the gap list from the remaining-catalog round and approved
+applying it (rather than leaving it logged-only). Added, following the
+same "specific book, specific gap, distinct-from-X" discipline as every
+prior vocabulary decision:
+
+- 11 tropes: `ghost_sight`, `sudden_apocalypse_event`,
+  `satirical_or_comedic_fantasy`, `crime_family_saga`,
+  `deadly_competition_or_trial`, `survivalist_ingenuity`, `uplift`,
+  `corruption_arc`, `mythological_pantheon_as_characters`,
+  `tragic_reversal_of_fortune`, `amnesia_driven_narrative`.
+- 4 content warnings: `pandemic_or_epidemic`,
+  `fictional_species_prejudice`, `incest`, `chronic_illness_or_disability`.
+- 1 new `form` value: `embedded_system_text`, closing the LitRPG
+  embedded-game-text gap that had recurred 6+ times across all three
+  tagging rounds (pilot, step04, remaining-catalog) — the clearest case
+  yet of "does this predict a different recommendation" being met through
+  repetition.
+
+Applied via `supabase/migrations/20260828020000_vocabulary_growth_round2.sql`
+and retroactively tagged onto the specific books that originally
+surfaced each gap (16 new trope associations, 5 new content warnings, 8
+books' `form` corrected) — not a full re-tagging sweep of the catalog.
+Full mapping in `docs/remaining-catalog-tagging/findings.md`.
+
+Catalog stands at 168/168 books tagged, 110 tropes, 37 content warnings.
+
+Separately, the user brought a list of field ideas from friends (weird
+factor, gore level, story scope/stakes scale, philosophical-depth vs.
+plot-driven-fun axis, prose description density, prose/language
+complexity, progression fantasy, coming-of-age, death-games, dragons,
+politics-heavy). Analyzed but deliberately not implemented in this pass —
+some already covered by existing fields (gore level by
+`violence_intensity`, progression fantasy by the existing
+`litrpg_or_progression_fantasy`, politics-heavy substantially by
+`court_intrigue`), others recommended as genuinely new axes worth adding
+pending the user's decision (story scope/stakes scale, philosophical-vs-
+plot-driven axis, prose density, prose complexity, `coming_of_age` and
+`dragons` as new tropes). Not yet decided or added.

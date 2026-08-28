@@ -327,6 +327,16 @@ a special one-off — it's the shape future additions during step 04 should
 take: a specific book, a specific gap, a specific "distinct from X"
 justification, checked against the bar above before it goes in.
 
+**Second growth round (2026-08-28, after the 108-book remaining-catalog
+pass)**: 11 tropes, 4 content warnings, and one `form` value
+(`embedded_system_text`) added, each sourced from a specific gap hit
+during real tagging — full list and per-book rationale in
+`docs/remaining-catalog-tagging/findings.md`. `embedded_system_text` in
+particular had recurred 6+ times across three separate tagging rounds
+(pilot, step04, remaining-catalog) before being added — the clearest
+case yet of the "does this predict a different recommendation" bar being
+met through repetition rather than a single instance.
+
 ## Known limitations — engine-level, not schema fixes
 
 Surfaced during the 30-book pilot's reveal-and-score round, when the user

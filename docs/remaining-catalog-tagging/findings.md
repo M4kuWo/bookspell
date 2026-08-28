@@ -136,3 +136,69 @@ this session.
 None of these were applied to the schema in this pass — same discipline as
 every other vocabulary decision in this project: logged for deliberate
 review with the user, not unilaterally added.
+
+## Update (2026-08-28): reviewed and applied
+
+The user reviewed this list and approved implementing it. Applied:
+
+- **11 new tropes**: `ghost_sight`, `sudden_apocalypse_event`,
+  `satirical_or_comedic_fantasy`, `crime_family_saga`,
+  `deadly_competition_or_trial`, `survivalist_ingenuity`, `uplift`,
+  `corruption_arc`, `mythological_pantheon_as_characters`,
+  `tragic_reversal_of_fortune`, `amnesia_driven_narrative`.
+- **4 new content warnings**: `pandemic_or_epidemic`,
+  `fictional_species_prejudice`, `incest`,
+  `chronic_illness_or_disability`.
+- **1 new `form` value**: `embedded_system_text`, for LitRPG's embedded
+  game-notification text — the single most-recurring gap across all
+  three tagging rounds (6+ instances).
+
+All are now in `docs/schema/book-dna.schema.yaml` (with inline
+"distinct from X" rationale per entry, same as every prior addition) and
+live in the database via
+`supabase/migrations/20260828020000_vocabulary_growth_round2.sql`.
+
+**Retroactively applied** to the specific books that originally surfaced
+each gap (not a full re-tagging sweep of the catalog — just the known,
+already-identified instances):
+
+- `corruption_arc` + `deadly_competition_or_trial` → The Ballad of
+  Songbirds and Snakes
+- `deadly_competition_or_trial` → Catching Fire, Sunrise on the Reaping,
+  Harry Potter and the Goblet of Fire, Divergent, The Maze Runner
+- `mythological_pantheon_as_characters` → American Gods
+- `tragic_reversal_of_fortune` → Flowers for Algernon
+- `satirical_or_comedic_fantasy` → The Colour of Magic
+- `sudden_apocalypse_event` → Cat's Cradle
+- `ghost_sight` → Ninth House
+- `crime_family_saga` → Jade City
+- `uplift` → Children of Time
+- `amnesia_driven_narrative` → Project Hail Mary
+- `survivalist_ingenuity` → The Martian
+- `pandemic_or_epidemic` (CW) → Station Eleven
+- `fictional_species_prejudice` (CW) → The Cruel Prince, The House in the
+  Cerulean Sea
+- `incest` (CW) → One Hundred Years of Solitude
+- `chronic_illness_or_disability` (CW) → Tomorrow, and Tomorrow, and
+  Tomorrow
+- `form: embedded_system_text` → Carl's Doomsday Scenario, The Butcher's
+  Masquerade, This Inevitable Ruin, Dungeon Crawler Carl, The Eye of the
+  Bedlam Bride, The Dungeon Anarchist's Cookbook, The Gate of the Feral
+  Gods (step04), He Who Fights with Monsters (original pilot) — all
+  previously force-fit into `standard_prose`.
+
+**Not applied** (out of scope for this pass, left as open items):
+
+- The two poor-genre-fit candidate lists (Silent Patient, Girl with the
+  Dragon Tattoo, etc.) — still awaiting an exclude/keep decision.
+- The `narrator_reliability` binary gap (Piranesi) and a few other
+  soft/imprecise-fit notes from the per-book gap reports — these are
+  smaller, single-instance observations rather than recurring gaps, and
+  weren't judged to clear the "does this predict a different
+  recommendation" bar on their own.
+- A comprehensive retroactive sweep applying the new tropes/warnings to
+  *every* book in the catalog that might qualify (e.g. `coming_of_age`-
+  or `dragons`-style tropes weren't part of this round's approved list —
+  see the separate friend-suggested-fields discussion). Only the books
+  that specifically surfaced each gap during tagging got the retroactive
+  tag.
