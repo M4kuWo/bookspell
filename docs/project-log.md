@@ -1093,3 +1093,280 @@ up agents, since every item was small and well-defined enough that
 agent overhead (tool listing, schema read, DB connect — fixed cost
 regardless of task size) wasn't worth it. Recommended reserving
 agent fan-out for genuinely large multi-book batches going forward.
+
+## 2026-08-29 (later) — creature trope retroactive tagging pass + design discussion
+
+Added two more creature tropes (`orcs`, `werewolves_or_shapeshifters`) to
+round out the set alongside `dragons`/`vampires`/`elves`/`dwarves`/
+`fae_or_fairies` — same fatigue-pattern rationale, applied via
+`20260829050000_more_creature_tropes.sql` to both local and hosted.
+
+Launched the deferred retroactive tagging pass across all 7 creature
+tropes at once (rather than three separate passes) as 8 parallel
+non-forked background agents, ~21 books each, each given the trope
+definitions inline in the prompt (not a schema-file read) plus known
+per-batch hints (e.g. LOTR volumes get elves/dwarves/orcs, Sanderson's
+Cosmere gets none of these) to cut down on agent guesswork tokens.
+
+All 8 batches completed cleanly — every agent correctly left ambiguous
+cases untagged rather than forcing matches (e.g. batch 00 declined to
+tag ASOIAF's warging/Bran or Tyrion as werewolves/dwarves since those
+are a meaningfully different mechanic; batch 02 declined Veela as
+fae_or_fairies; batch 05 declined Shanka/koloss/gnomes as orc/dwarf
+equivalents since they're distinct original creations). One real
+consistency gap found on manual review: the agent covering Mistborn:
+The Final Empire correctly tagged `werewolves_or_shapeshifters` for
+OreSeur (a kandra), but the agents covering the rest of the Mistborn
+saga defaulted to zero across the board — kandra (OreSeur/TenSoon/
+MeLaan) recur through the entire saga, not just book 1. Fixed directly
+(no agent needed, small well-defined fix) by adding the tag to The Well
+of Ascension, The Hero of Ages, The Alloy of Law, Shadows of Self, The
+Bands of Mourning, and The Lost Metal. Consolidated everything into one
+migration (`20260829060000_creature_trope_tagging_pass.sql`) and
+applied to both local (via a psycopg2 script, since `supabase db query
+--file` rejects multi-statement files) and hosted (via `supabase db
+push`, which handled the multi-statement file fine) — both now at 82
+creature-trope rows.
+
+Also had a design discussion (not yet built, logged to `book-dna.md`'s
+future-fields backlog):
+- **`work_type` (novel/novella) on `books`** — user's idea, prompted by
+  decimal `position_in_series` values (e.g. 2.5) not clearly signaling
+  "this is a novella" to a newcomer, plus audiobook-credit economics
+  (a novella may not be "worth" a full Audible credit). Leaning toward
+  recommending this get built as a binary novella/novel field, mostly
+  computable from page/word count with manual overrides for known cases
+  (the 4 Murderbot novellas, Edgedancer) — not yet built pending user
+  confirmation.
+- **`crucial_to_arc` flag for interstitial series entries** — user's
+  future-roadmap idea, citing Edgedancer (Nale the Herald lore, often
+  skipped) and Dawnshard (bridges Stormlight 3→4 across a time jump) as
+  examples of novellas that matter more than their skippable-side-story
+  positioning suggests. Logged only, not built.
+
+## 2026-08-29 (later still) — werewolves/shapeshifters split, work_type built, first real-user recommendation test
+
+User feedback: `werewolves_or_shapeshifters` conflated two genuinely
+different signals — classic lycanthropy vs. general shapeshifting.
+Split into `werewolves` + `shapeshifters` (both new tropes), reclassified
+all 19 previously-tagged books by which mechanic actually appears (one
+book, Prisoner of Azkaban, got both — Lupin's condition and the Sirius/
+Pettigrew Animagi reveal). One deliberate surprise: Twilight's wolf pack
+are canonically shapeshifters per the books' own internal mythology (no
+moon-tie, no silver vulnerability, transform at will), not lycanthropes,
+despite the pop-culture "werewolf" label — tagged `shapeshifters`.
+Applied via `20260829070000_split_werewolves_shapeshifters.sql` to both
+local and hosted, verified matching (2 new tropes, old one removed).
+
+Built `work_type` (novella/novel) on `books`
+(`20260829080000_add_work_type.sql`). Checked page_count as a possible
+auto-computation source first and rejected it — not reliable (Tor.com's
+novella imprint trim/font inflates page counts, e.g. Edgedancer at 272pp
+reads longer than full novels like Fahrenheit 451 at 227pp; The Time
+Machine at 144pp is a full novel, shorter than every Murderbot novella).
+Set manually from real publishing classification instead: the 4
+Murderbot novellas, Edgedancer, and This Is How You Lose the Time War
+(2020 Hugo Best Novella winner) — 6 books total, applied to both
+databases.
+
+Ran the first real-user recommendation engine test: the user's wife's
+actual liked list (The Eye of the World, Harry Potter [used Philosopher's
+Stone as the representative entry], Ender's Game, Lord of the Rings
+[used Fellowship of the Ring], Eragon, The Hitchhiker's Guide to the
+Galaxy — she couldn't name dislikes, mostly reads on family
+recommendation rather than personal aversions). Two of her stated loves
+(The Time Traveler's Wife, Murakami's Hard-Boiled Wonderland and the End
+of the World) aren't in the catalog (out of SFF/audiobook-native scope
+or simply not yet added) and were skipped. Top results were coherent,
+classic-epic-fantasy-leaning (The Hobbit, Mistborn: The Final Empire,
+several Harry Potter/LOTR entries, A Darker Shade of Magic) — driven
+almost entirely by shared tropes (chosen_one, wise_mentor, epic_quest,
+underdog_rising). Honest limitation surfaced: with no disliked signal,
+per-user weights fall back to a flat default, so the 5-of-6 fantasy
+majority in her list dominates the centroid and The Hitchhiker's Guide's
+comedic-scifi signal gets diluted rather than genuinely represented —
+a real, expected consequence of the "no dislikes yet" case documented in
+v1-findings.md, now confirmed with a real (not synthetic) user.
+
+## 2026-08-29 (later still) — weight cap fix + genre-scoped profiles
+
+User flagged two real problems with the recommendation results shown
+above: (1) the HP/LOTR recommendations were real mid-series entries
+(Goblet of Fire, Order of the Phoenix, etc.) with no series-position
+awareness -- confirms the existing roadmap gap with a concrete example;
+(2) a small liked list can't capture an eclectic reader's actual taste,
+since a single centroid blurs multi-modal preferences into the empty
+space between them rather than resembling any of the input books. Tested
+with the user's own deliberately eclectic list (grimdark/political
+fantasy + hard SF liked; assorted single-POV/first-person books
+disliked) and it surfaced a real bug: `pov_count`/`person` (structural
+fields, not taste content) ended up with weights of 0.889/0.542 --
+bigger than any individual trope -- because the liked set happened to be
+uniformly multi-POV/third-person against a disliked set that wasn't,
+so those two fields functioned as a near hard-filter dominating every
+result's top factors.
+
+Fix 1: added `WEIGHT_CAP = 0.5` in `recommend.py`, clamping every
+computed weight (ordinal, nominal, and signed trope weights) so no
+single field can dominate disproportionately. Reran the eclectic test --
+ranking barely changed, because pov_count/person were still the two
+largest weights even capped (0.5 each vs ~0.39 max for any trope). The
+cap alone doesn't fix relative dominance, only extreme magnitude.
+
+Fix 2 (the real fix, user's idea): genre-scoped profiles. `genre` was
+already a real multi_enum field in book_dna (`[sci_fi, fantasy]`,
+already populated per book) but had never been wired into scoring --
+`MULTI_FIELDS` listed it but `build_profile`/`score_book` only ever
+processed tropes. Added a `genre` param to `recommend()`: when set, both
+the candidate pool AND the liked/disliked books used to build the
+profile are scoped to that genre (falls back to the full unscoped list
+if none of the user's ratings match, to avoid an empty profile). Tested
+on the same eclectic list split into `genre='fantasy'` and
+`genre='sci_fi'` runs -- dramatically more coherent than the blended
+run: fantasy results were all grimdark/political multi-POV epic fantasy
+(A Clash of Kings, A Storm of Swords, Malice, Jade City, Rhythm of War),
+sci-fi results were all hard-SF/space-opera (Caliban's War, Project Hail
+Mary, The Dark Forest, Neuromancer). Confirms genre-scoping, not weight
+tuning, is the right fix for multi-modal taste -- it changes what data
+goes into the profile rather than reweighting an already-blended one.
+
+Product implication for the onboarding flow (step 07, still ahead): if
+"summon a book" lets a user pick fantasy/sci-fi/both at recommendation
+time, the rating flow should probably collect likes/dislikes as
+separate fantasy/sci-fi buckets too, so a user's profile is never a
+forced blend to begin with.
+
+## 2026-08-29 (later still) — structural/content field split, pov_count widened + retagged
+
+User raised two more good points on the genre split: (1) fully
+genre-siloed scoring throws away real cross-genre signal -- a small
+liked-fantasy sample can manufacture a false "likes multi-POV" signal
+that a bigger cross-genre sample (including multi-POV dislikes from the
+other genre) would correctly cancel out; (2) `pov_count` was a binary
+single/multiple, so Kings of Paradise (~3 POVs) and A Game of Thrones
+(~9 POVs) scored identically -- real information lost.
+
+Fix 1: split fields into STRUCTURAL (craft/format -- pov_count, person,
+pace_shape, book_length, etc.) vs CONTENT (tropes, darkness, romance
+heat, violence, magic/scifi hardness). `recommend()` now always profiles
+structural-field weights from the FULL unscoped liked/disliked pool
+regardless of genre filter, while content fields stay genre-scoped.
+Reran the eclectic fantasy/sci-fi test: `pov_count` dropped out of the
+dominant-factor position once profiled on the full pool (it doesn't
+actually discriminate this user's taste -- both liked and disliked sets
+include multi-POV books), while `person` stayed prominent since it's a
+genuine full-pool discriminator (dislikes skew first-person). Confirms
+the mechanism works as intended -- some structural fields are real
+signal, some are noise, and the full pool lets the data decide instead
+of assuming either way.
+
+Fix 2: widened `pov_count` from `[single, multiple]` to
+`[single, dual, few, several, ensemble]` (single=1, dual=2, few=3-4,
+several=5-7, ensemble=8+), moved from NOMINAL_FIELDS to ORDINAL_FIELDS
+in `recommend.py` so a "few" book now scores partial similarity to an
+"ensemble" book instead of flat match/no-match. Retagged all 86
+previously-`multiple` books via 4 parallel batch agents (~21-22 books
+each), instructed to count only recurring, page-time-significant POV
+characters (excluding one-off interlude/prologue chapters).
+
+Caught a real batching mistake on review: my batch prompts told agents
+to assume every book was already confirmed genuinely multi-POV (since
+the original binary tag said 'multiple'), so when several agents
+independently reported finding NO real second recurring POV for a
+specific book, they were forced to floor it at `dual` anyway rather
+than the correct `single`. Corrected 7 books to `single` based on the
+agents' own explicit findings: American Gods, The Fellowship of the
+Ring, The Lies of Locke Lamora, and 4 of the earlier Dungeon Crawler
+Carl books (Dungeon Crawler Carl, Carl's Doomsday Scenario, The Dungeon
+Anarchist's Cookbook, The Gate of the Feral Gods) -- all four DCC books
+consistently reported as still Carl-only POV at that point in the
+series, before the later books introduce other crawlers' POV chapters.
+Left the 3 later DCC entries (This Inevitable Ruin, The Eye of the
+Bedlam Bride, The Butcher's Masquerade) as the agents tagged them --
+genuine uncertainty about where the series' POV structure actually
+expands, not a clear-cut single-vs-multi error like the other four.
+
+Applied via two migrations: a widen-then-retag-then-tighten sequence
+(`20260829090000` widens the CHECK constraint to a permissive superset
+so the retagging pass can write new values without a transient
+violation, `20260829100000` consolidates the full retagged state,
+`20260829110000` tightens the constraint back down once no row was left
+at the old 'multiple' value). Verified local and hosted match exactly:
+dual=17, ensemble=10, few=31, several=21, single=88.
+
+Logged a future-fields backlog idea (not built): exact POV count
+(main-only, excluding one-off interludes) instead of the 5-bucket scale
+-- deferred, real per-book editorial judgment call, bigger effort than
+the bucket widening.
+
+## 2026-08-29 (later still) — implemented diversity/fatigue controls, gap assessment, roadmap logging
+
+Did a real assessment of recommendation-engine gaps rather than
+assuming trope density was the bottleneck: mean tropes/book is 7.4
+(median 7), so density is fine, but 31/167 books have <=3 tropes and
+1 has zero (The Martian has only `last_minute_rescue` +
+`survivalist_ingenuity` -- clearly under-tagged, not genuinely
+trope-poor, since these are pre-vocabulary-growth artifacts from early
+tagging rounds). Bigger finding: the `audiobook_native` schema module
+(`narrator_performance`, `narrator_cast`, `narration_pace_vs_prose`,
+`accent_authenticity`, `production_quality`) is 100% untagged across
+the whole catalog and isn't even wired into `recommend.py`'s scoring
+fields -- despite being marked `wedge: true` in the schema. User
+clarified this isn't actually the product's core differentiator (a
+good, calibratable recommendation engine is) and correctly pushed back
+that narrator-performance data is genuinely hard to source (subjective
+listening judgment -- pacing, theatricality, voice distinctness, cross-
+gender acting -- not ordinary retailer metadata; only quasi-reliable
+sources are professional audio critics like AudioFile Magazine/Audie
+Awards, both with real coverage gaps). Checked actual data: even the
+"easy tier" (narrator names, narrator_cast, audiobook_length) isn't
+built -- `audiobook_length` is 59% populated (98/167) and
+`books.narrators` is populated for exactly 1 book. Confirmed book/
+audiobook recommendation `medium` mode is blocked on real data, not
+just deferred by choice -- pushed to roadmap, Tier A backfill first
+whenever that happens.
+
+User also raised the echo-chamber/filter-bubble risk of pure best-match
+scoring and proposed two fixes: a "summon something different" mode and
+a "less of X" fatigue control, plus a refinement that "different" needs
+a bounded level (a grimdark reader asking for variety doesn't want the
+diametrical opposite, e.g. cozy romantasy YA). Designed and implemented
+both in `recommend.py`:
+
+- `diversity` param (0.0 default, hard-capped at `MAX_DIVERSITY = 0.5`
+  in code, not just as a UI convention): blends relevance (profile
+  match) against novelty (1 - max similarity to `recent_history` books,
+  via a new unweighted `book_similarity()` helper combining ordinal
+  closeness, nominal exact-match, and trope-set Jaccard similarity).
+  Capping below 1.0 means the relevance term never fully disappears, so
+  a diametrically-mismatched book stays capped low regardless of
+  novelty -- verified: at diversity=1.0 the result is byte-identical to
+  diversity=0.5 (silent clamp confirmed working), and a real test
+  against a grimdark-fantasy profile with 5 recent grimdark reads
+  surfaced genuinely different-but-still-fantasy picks (Perdido Street
+  Station, The Gunslinger, Warbreaker, Throne of Glass) rather than
+  anything taste-incompatible.
+- `fatigue_overrides` param: a dict of {trope_or_field: weight} that
+  directly clobbers the learned weight for that key after
+  `build_profile()` runs -- verified with `{"court_intrigue": -0.5}`:
+  A Clash of Kings dropped from #1 (0.889) to #3 (0.756) and the
+  contribution breakdown shows `trope:court_intrigue` as a visible
+  -0.5 line, not just a silent disappearance.
+
+Both are caller-supplied parameters (recent_history as an explicit
+list, same pattern as liked/disliked titles) since no real per-user
+history/ratings table exists yet -- confirmed via schema check (only
+books/book_dna/book_tropes/series/universe/tropes/content_warning_types
+exist, no users/ratings table). Real persistence is future work once
+the app has actual accounts.
+
+Also logged two more roadmap ideas per user request: a rhythm-aware TBR
+queue (insert lighter/standalone books after a heavy series run,
+calibratable -- user's example: a reader breaking up The Wheel of Time
+with standalone reads) and narrator collaborative filtering (once
+per-user audiobook/narrator ratings exist, infer narrator quality from
+correlated listener behavior instead of needing to source or judge it
+ourselves -- sidesteps the Tier-B audiobook-field sourcing problem
+entirely, though it needs the same missing ratings table plus a
+critical mass of users to avoid a cold-start problem, and is a
+deliberate collaborative-filtering hybrid rather than a v1 feature).

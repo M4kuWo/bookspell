@@ -69,7 +69,18 @@ categories:
     fields:
       pov_count:
         type: enum
-        values: [single, multiple]
+        values: [single, dual, few, several, ensemble]
+        # widened 2026-08-29 from a binary single/multiple. User
+        # feedback: Kings of Paradise (~3 POVs) and A Game of Thrones
+        # (~9 POVs) were both just "multiple" -- real information lost,
+        # and it matters for recommendation quality specifically (a
+        # reader who likes a few rotating POVs may be overwhelmed by a
+        # GRRM-scale ensemble, or vice versa). Buckets: single (1),
+        # dual (2), few (3-4), several (5-7), ensemble (8+). This is
+        # ordinal now (see recommend.py), not nominal -- a "few" book
+        # scores partial similarity to an "ensemble" book instead of a
+        # flat match/no-match. Counts recurring, page-time-significant
+        # POV characters -- see the deferred exact-count idea below.
         spoiler: false
       person:
         type: enum
@@ -374,27 +385,50 @@ categories:
     label: Audiobook-native
     scope: core
     wedge: true
+    # Split 2026-08-29 into two tiers after realizing this whole module
+    # was 100% untagged across the catalog. Tier A (narrator_cast,
+    # audiobook_length, narrator names on `books.narrators`) is ordinary
+    # publisher/retailer metadata -- cheap to source, worth completing.
+    # Tier B (narrator_performance, narration_pace_vs_prose,
+    # accent_authenticity, production_quality) is subjective listening
+    # judgment -- how theatrical, how distinct the character voices are,
+    # how well the narrator handles the opposite sex, etc. -- data that
+    # doesn't exist as ordinary metadata anywhere. The only quasi-reliable
+    # existing sources are professional audiobook critics (AudioFile
+    # Magazine reviews/Earphones Awards, the Audie Awards) or mining
+    # Audible reviews for narrator sentiment, and both have real coverage
+    # gaps (most books were never professionally audio-reviewed) plus a
+    # genuine sourcing-effort cost, unlike Book DNA content fields which
+    # mostly come from reading the book itself. Tier B deliberately
+    # deferred -- see project-log.md 2026-08-29 entry.
     fields:
       narrator_performance:
         type: enum
         values: [poor, average, good, excellent]
         spoiler: false
+        # Tier B -- deferred, see module-level note above.
       narrator_cast:
         type: enum
         values: [single_narrator, dual_narrator, full_cast]
         spoiler: false
+        # Tier A -- computable from books.narrators (array length) plus
+        # knowing whether a production is a full-cast dramatization
+        # (relevant to the deferred audiobook_editions/GraphicAudio idea).
       narration_pace_vs_prose:
         type: enum
         values: [matches, slower, faster]
         spoiler: false
+        # Tier B -- deferred, see module-level note above.
       accent_authenticity:
         type: enum
         values: [na, poor, adequate, excellent]
         spoiler: false
+        # Tier B -- deferred, see module-level note above.
       production_quality:
         type: enum
         values: [basic, standard, high]
         spoiler: false
+        # Tier B -- deferred, see module-level note above.
       audiobook_length:
         type: enum
         values: [short, standard, long, epic]
@@ -518,6 +552,9 @@ categories:
           - {id: elves, group: setting_worldbuilding, spoiler: false}  # same logic as vampires/dragons — a specific, common fantasy race readers have real preferences on, including active fatigue with the generic version (Tolkien-derivative elves/dwarves as default worldbuilding furniture) unless given a real twist. Distinct from multiple_fantasy_species (presence of several species generally) — a book can have elves specifically without that being the point, or multiple species without elves being one of them.
           - {id: dwarves, group: setting_worldbuilding, spoiler: false}  # see elves — same rationale, same fatigue pattern
           - {id: fae_or_fairies, group: setting_worldbuilding, spoiler: false}  # plain creature-presence tag, distinct from fae_courts (which specifically covers fae political/court structure as a plot element) — a book can have fae present without court politics being the focus, or vice versa
+          - {id: orcs, group: setting_worldbuilding, spoiler: false}  # same rationale as elves/dwarves — a specific, common race with its own fatigue pattern
+          - {id: werewolves, group: setting_worldbuilding, spoiler: false}  # split 2026-08-29 from the original werewolves_or_shapeshifters — specifically classic lycanthropy: a curse/bite-transmitted condition tying transformation to something involuntary (moon cycle, rage), a wolf/beast form, often silver-vulnerable or potion-restrained. Distinct from shapeshifters below — readers who want Twilight/Underworld-style werewolf pack drama are a different taste signal from readers who want doppelganger/bodyswap intrigue.
+          - {id: shapeshifters, group: setting_worldbuilding, spoiler: false}  # split 2026-08-29 — general voluntary or skill/species-based form-changing not tied to lycanthropy specifically: Animagi, kandra, dopplers, curse-based full transformations (a la Beauty-and-the-Beast retellings), mimicry powers. Distinct from werewolves above (see rationale there) and from immortal_or_ageless_character/multiple_fantasy_species (general traits, not this specific ability)
           - {id: sudden_apocalypse_event, group: setting_worldbuilding, spoiler: false}  # the unfolding, in-progress collapse of civilization itself (Cat's Cradle, Station Eleven) — distinct from post_apocalyptic, which only covers settings after collapse has already happened
           - {id: satirical_or_comedic_fantasy, group: setting_worldbuilding, spoiler: false}  # fantasy as a vehicle for parody of genre/bureaucratic/religious convention (The Colour of Magic, Good Omens) — fantasy-side equivalent of scifi_specific's satirical_or_comedic_scifi, which doesn't fit a book with no sci-fi element
           - {id: crime_family_saga, group: setting_worldbuilding, spoiler: false}  # organized-crime/clan-turf-war structure as the book's defining shape (Jade City) — distinct from court_intrigue (political scheming, not criminal-clan structure) and war_story

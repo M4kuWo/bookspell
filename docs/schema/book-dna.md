@@ -661,16 +661,32 @@ Deliberately deferred, not in v0.1:
   effort, not a quick fix, and deserves its own scoped pass.
 - **`solarpunk`** (setting_worldbuilding) — flagged during trope research
   as real but weaker/niche; not added.
-- **Retroactive tagging of `elves`/`dwarves`/`fae_or_fairies`** (added
-  2026-08-29, same precedent as `vampires`/`dragons`) across the
-  catalog — schema/lookup-table only for now, no books tagged with them
-  yet. Bundled with a broader deferred item: a real per-book
-  romance-relationship and fantastical-creature specificity pass (Rhythm
-  of War's Dalinar/Navani and Adolin/Shallan threads still flatten to
-  `found_family`; spren/chasm fiends have no vocabulary distinct from
-  `multiple_fantasy_species`) — a real residual gap even after the
-  2026-08-29 full-catalog audit, needs a dedicated pass rather than a
-  quick fix.
+- **Retroactive tagging of `elves`/`dwarves`/`fae_or_fairies`/`orcs`/
+  `werewolves`/`shapeshifters` across the catalog — done 2026-08-29**
+  (82 book_tropes rows across all 7 creature tropes, via 8 parallel
+  batch agents + one manual consistency fix for kandra shapeshifters
+  across the whole Mistborn saga). Still open: a broader deferred item,
+  a real per-book romance-relationship and fantastical-creature
+  specificity pass (Rhythm of War's Dalinar/Navani and Adolin/Shallan
+  threads still flatten to `found_family`; spren/chasm fiends have no
+  vocabulary distinct from `multiple_fantasy_species`) — a real residual
+  gap even after the 2026-08-29 full-catalog audit, needs a dedicated
+  pass rather than a quick fix.
+- **`werewolves_or_shapeshifters` split into `werewolves` + `shapeshifters`
+  — 2026-08-29.** User feedback: the original combined trope conflated
+  two genuinely different reader signals — classic lycanthropy (full
+  moon, silver vulnerability, involuntary wolf-monster transformation,
+  e.g. Twilight's Jacob pack by pop-culture reputation, Lupin in Harry
+  Potter, City of Bones' Downworlder werewolves) vs. general
+  voluntary/skill-based shapeshifting (Animagi, kandra, dopplers,
+  Beauty-and-the-Beast-style curses like Tamlin in ACOTAR or Nivellen in
+  The Last Wish). Reclassified all 19 previously-tagged books by which
+  specific mechanic actually appears — one book (Prisoner of Azkaban, for
+  Lupin's condition *and* the Sirius/Pettigrew Animagi reveal) got both.
+  One deliberate surprise: by the books' own internal mythology, Twilight's
+  wolf pack are canonically shapeshifters, not lycanthropes (no moon-tie,
+  no silver vulnerability, transform at will) — tagged `shapeshifters`
+  despite the pop-culture "werewolf" label.
 - **Content warnings deferred as too marginal for v1** —
   `religious_bigotry` (distinct from `religious_trauma_or_cults` —
   persecution *for* faith vs. harm *from* a religion/cult), `physical_abuse`
@@ -686,6 +702,125 @@ Deliberately deferred, not in v0.1:
   reads as a specific flavor of `body_horror` + `violence_intensity:
   graphic` rather than a distinct category, same reasoning that excluded
   gore/blood/injury earlier. Not added.
+- **`work_type` (novella/novel) on `books` — built 2026-08-29.** User's
+  idea, prompted by decimal `position_in_series` values (e.g. 2.5) not
+  clearly signaling "this is a short-form entry" to a newcomer, plus
+  audiobook-credit economics (a novella may not be "worth" a full Audible
+  credit). No `novelette` value — this catalog is published SFF books,
+  not magazine-length short fiction, so that category doesn't
+  realistically occur as its own entry here. Deliberately NOT computed
+  from `page_count` — checked the actual catalog data first and
+  page_count turned out to be an unreliable discriminator (Tor.com's
+  novella imprint uses a large trim/font, so *Edgedancer* at 272pp reads
+  longer on the page than full novels like *Fahrenheit 451* at 227pp or
+  *Piranesi* at 245pp; conversely *The Time Machine* at 144pp is a full
+  novel, shorter than every Murderbot novella). Set manually instead,
+  from real-world publishing classification: the four Murderbot Diaries
+  novellas (*All Systems Red*, *Artificial Condition*, *Rogue Protocol*,
+  *Exit Strategy* — *Network Effect* is the first full-length Murderbot
+  novel), *Edgedancer*, and *This Is How You Lose the Time War* (won the
+  2020 Hugo Award for Best Novella).
+- **`crucial_to_arc` (or similar) flag on interstitial series entries**
+  — future roadmap idea, raised 2026-08-29. Some novellas/standalones
+  slotted between numbered series entries (via a decimal
+  `position_in_series`) are skippable side stories, while others carry
+  plot-critical material — e.g. *Edgedancer* (Stormlight Archive)
+  deepens Nale the Herald's lore in a way some readers report skipping
+  and missing, while *Dawnshard* bridges Stormlight books 3 and 4 across
+  an in-story time jump. A flag distinguishing "skip freely" from
+  "actually matters for the main arc" would help readers (and could
+  factor into recommendation/reading-order logic) decide whether to
+  spend time/an audiobook credit on an interstitial entry. Not built —
+  logged for later.
+- **Exact POV count (main POVs only) instead of the `pov_count` bucket
+  scale** — future upgrade idea, raised 2026-08-29 alongside the
+  single/multiple → 5-bucket widening (see `pov_count` above). Even
+  `few`/`several`/`ensemble` buckets are still a compression of the real
+  number, and a "main POV" count needs its own judgment call — excluding
+  one-off/interlude chapters from a POV that otherwise never recurs
+  (e.g. a single prologue chapter from a minor character), not just a
+  raw count of every chapter's narrator. Deferred — real per-book
+  editorial judgment call, larger effort than the bucket scale, revisit
+  if the bucket scale proves too coarse in practice.
+- **Rhythm-aware TBR / reading queue, not just a flat match-probability
+  ranking** — future roadmap idea, raised 2026-08-29. Rather than only
+  ranking candidates by score, a TBR generator could sequence them:
+  insert a lighter or standalone book after a heavy book/series run
+  before returning to the next series entry, user-calibratable (e.g.
+  "give me a break book every N series entries," or a lightness/heaviness
+  alternation preference). User's example: a reader working through The
+  Wheel of Time who deliberately breaks up the series with standalone
+  reads in between. Mostly buildable from fields that already exist
+  (`darkness`, `emotional_register`, `violence_intensity`, `work_type`,
+  `book_length`) — a new sequencing/UX layer on top of existing Book DNA
+  rather than a new tagging pass. Not built — logged for later.
+- **Diversity/anti-echo-chamber controls on recommendations** — future
+  roadmap idea, raised 2026-08-29. Pure best-match scoring risks
+  narrowing a user into an echo chamber (liked one werewolf book → only
+  ever recommended more werewolf books). Two related but distinct
+  mechanisms proposed: (1) a "summon something different" mode that
+  trades some profile-match for deliberate novelty (RecSys precedent:
+  Maximal Marginal Relevance — balance relevance against distance from
+  recently-shown/rated books, on a user-tunable dial); (2) an explicit
+  "less of X" fatigue control — a manual override that temporarily
+  suppresses a specific trope/field even though the user's rating
+  history says they usually like it (a deliberate exception to their own
+  average, not a re-estimate of it). Real architectural implication:
+  both require some memory of recent recommendation/reading history,
+  which the current engine doesn't have — `recommend.py` is fully
+  stateless today (a fresh profile computed per call from the full
+  liked/disliked lists, no notion of "what have I already shown/served
+  this user recently"). Not built — logged for later, real design work
+  needed before it's buildable.
+
+  Refinement 2026-08-29: "summon something different" needs a bounded
+  *level* of different, not an unbounded toggle — a grimdark reader
+  asking for variety wants adjacent-but-fresh, not the diametrical
+  opposite (a cozy romantasy YA). This falls out of the diversity-dial
+  formula by construction as long as the dial is capped well below 1.0:
+  `final_score = (1 − diversity) × relevance + diversity × novelty` never
+  drops the relevance term to zero, so a book that doesn't match the
+  user's taste at all stays capped low regardless of how novel it is,
+  while a book that's genuinely different-but-plausible scores on both
+  terms and wins. UI should expose 2 labeled levels ("a bit different" /
+  "surprise me"), not a raw slider up to 100% — same reasoning as
+  rejecting raw star ratings for the ratings-precision discussion:
+  labeled tiers avoid calibration ambiguity, and the ceiling must never
+  reach pure-novelty (diversity = 1.0).
+- **Book vs. audiobook recommendation mode** — future roadmap idea,
+  raised 2026-08-29. Recommending a text read vs. an audio listen may
+  need different weighting, not just a different length field:
+  `prose_density`/`prose_complexity` plausibly matter more for text
+  readers, while narration quality/pace (the currently-untagged
+  `narrator_performance`/`narration_pace_vs_prose`/etc. fields) matter
+  for listeners. Proposed as a `medium` parameter on `recommend()`,
+  analogous to the `genre` parameter already built — chosen per "summon"
+  request (like genre), not locked in at onboarding, since a reader may
+  want a text pick one day and an audio pick another. Not built —
+  confirmed 2026-08-29 that this is blocked on real data, not just
+  deferred by choice: `audiobook_length` is only 59% populated (98/167)
+  and `books.narrators` is populated for 1 book out of 167 — even the
+  "easy tier" this would lean on doesn't exist yet. Backfill that first;
+  revisit medium-mode only once it's real.
+- **Post-read/listen ratings feeding narrator collaborative filtering**
+  — future roadmap idea, raised 2026-08-29. Once users can log and rate
+  a recommended book after finishing it (including, if they took the
+  audiobook, a separate rating for the audiobook/narration itself), that
+  per-narrator rating data could drive real collaborative filtering
+  between users: "listeners who rated narrator A highly also rated
+  narrator B highly" → recommend narrator B's books to someone who liked
+  A, without needing any structured narrator-quality tags at all. This
+  neatly sidesteps the Tier-B audiobook-field sourcing problem (see
+  `audiobook_native` module notes above) by inferring narrator quality
+  from correlated listener behavior instead of needing to source or
+  judge it ourselves. Two real caveats: it needs an actual per-user
+  ratings table to exist first (the same missing piece the
+  diversity/fatigue mechanism above depends on), and it has a cold-start
+  problem — useless until a critical mass of users have rated
+  audiobooks by overlapping narrators. Also a different paradigm from
+  the rest of the app: this is real collaborative filtering, which the
+  original v1 design explicitly chose to skip — would be a deliberate
+  hybrid addition later, not a v1 feature. Not built — logged for later.
 
 ## Open for review
 
