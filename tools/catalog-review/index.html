@@ -74,6 +74,7 @@
   .card .meta { min-width: 0; }
   .card .title { font-size: 13px; font-weight: 600; line-height: 1.25; margin-bottom: 2px; }
   .card .author { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .card .series-pos { font-size: 11px; color: var(--accent); margin-bottom: 4px; }
   .card .badges { display: flex; flex-wrap: wrap; gap: 4px; }
   .badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; background: var(--accent-bg); color: var(--accent); white-space: nowrap; }
   .badge.warn { background: var(--warn-bg); color: var(--warn); }
@@ -190,8 +191,8 @@ function titleCase(s) {
 }
 
 async function load() {
-  const url = `${API_URL}/books?select=id,title,author,cover_url,page_count,publication_year,` +
-    `series:series_id(name,status,book_count),universe:universe_id(name),` +
+  const url = `${API_URL}/books?select=id,title,author,cover_url,page_count,publication_year,position_in_series,` +
+    `series:series_id(name,status,book_count,parent:parent_series_id(name)),universe:universe_id(name),` +
     `book_dna(*),` +
     `book_tropes(trope:tropes(id,group_name)),` +
     `book_content_warnings(warning_id,severity,reveals_spoiler)` +
@@ -335,6 +336,7 @@ function render() {
       <div class="meta">
         <div class="title">${b.title}</div>
         <div class="author">${b.author}</div>
+        ${b.series ? `<div class="series-pos">${b.series.name}${b.position_in_series != null ? ` #${b.position_in_series}` : ''}</div>` : ''}
         <div class="badges">
           ${(b.dna.genre || []).map(g => `<span class="badge">${titleCase(g)}</span>`).join('')}
           ${b.dna.stakes_scope ? `<span class="badge">${titleCase(b.dna.stakes_scope)}</span>` : ''}
@@ -358,7 +360,9 @@ function fieldRow(field, value) {
 function openDetail(b) {
   const d = document.getElementById('detail');
   const seriesLine = b.series
-    ? `${b.series.name}${b.series.book_count ? ` (${b.series.book_count} books, ${b.series.status})` : ` (${b.series.status})`}`
+    ? `${b.series.parent ? `${b.series.parent.name} → ` : ''}${b.series.name}` +
+      `${b.position_in_series != null ? `, book ${b.position_in_series}` : ''}` +
+      `${b.series.book_count ? ` (${b.series.book_count} books, ${b.series.status})` : ` (${b.series.status})`}`
     : null;
   const groupedTropes = {};
   b.tropes.forEach(t => {

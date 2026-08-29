@@ -1016,3 +1016,80 @@ artifact's ideas backlog, not built in this pass: it needs a real
 one-to-many `audiobook_editions` table and dedicated per-book sourcing
 (Hardcover's API likely doesn't carry GraphicAudio editions at all),
 not a quick fix bundled into tonight's audit.
+
+## 2026-08-29 (morning) — Series/universe hierarchy, new creature tropes, review tool fix
+
+User reviewed the Sanderson fixes from overnight in the review tool and
+found more: correct now, but flagged that the model needed one more
+layer to express "Mistborn Era One and Era Two are both part of the
+Cosmere, and also both part of 'Mistborn' as a saga" — plus the same
+gap for Stormlight Archive (should be Era One, 5 books incl. Wind and
+Truth, completed; Era Two not yet released — was flatly modeled as one
+10-book ongoing series).
+
+Fixed by adding `parent_series_id` (self-referencing, nullable) to the
+`series` table rather than a rigid third "world" tier — lets any series
+optionally nest under a broader saga umbrella at arbitrary depth, reusing
+the existing table. Restructured:
+- Cosmere → **Mistborn** (parent, no books of its own) → Mistborn Era
+  One (3 books) / Mistborn Era Two (Wax and Wayne) (4 books)
+- Cosmere → **The Stormlight Archive** (parent) → Stormlight Archive Era
+  One (5 books, completed) / Stormlight Archive Era Two (not yet
+  released, placeholder row, 0 books)
+
+Also fixed: the review tool never displayed `position_in_series` or
+series/parent-series names at all — pure UI gap, the data
+(`position_in_series`, confirmed already correctly storing decimals like
+Edgedancer's `2.5`) was always there. Now shows on both the card grid
+and detail view (e.g. "Mistborn → Mistborn Era One, book 1 (3 books,
+completed)"). Tested end-to-end in a real browser session.
+
+Added 3 new tropes: `elves`, `dwarves`, `fae_or_fairies` — same precedent
+as `vampires`/`dragons` (a specific, common fantasy race/creature readers
+have real preferences on, including active fatigue with the generic
+version absent a real twist). Schema and lookup-table only for now;
+retroactive tagging across the catalog deliberately deferred (added to
+roadmap, see below).
+
+Checked before doing anything with two other ideas the user raised
+(Abercrombie's First Law World; Mark Lawrence's Broken Empire/Red
+Queen's War and Book of the Ancestor/Ice pairings) — the catalog
+currently has only one book each from Abercrombie and Lawrence, so
+building out that hierarchy now would have zero present benefit. Held
+off; logged as a future item instead of modeling it prematurely.
+
+Confirmed for the user, not fixed (deliberate, not missed):
+- `audiobook_duration_minutes` (real runtime) is populated for every
+  book; the full `audiobook_native` category (narrator quality, cast,
+  etc.) was never populated for any book — flagged from the start as
+  requiring real listening, not web research. The bigger audiobook-
+  editions/GraphicAudio feature is the existing roadmap item from
+  2026-08-29 (overnight).
+
+New roadmap items added to the published artifact's ideas backlog and
+`book-dna.md`'s future-fields backlog:
+- Wind and Truth is missing from the catalog entirely (Stormlight Era
+  One book 5) — a content gap, not just a metadata one.
+- Recommendation engine should discount/avoid recommending a later
+  series installment to someone who hasn't read the earlier ones — now
+  possible since series position is properly modeled, but the v1 scoring
+  prototype doesn't check it yet.
+- Deeper per-book romance/creature trope pass (Rhythm of War: Dalinar/
+  Navani and Adolin/Shallan are flattened into `found_family`; no
+  vocabulary distinguishes "fantastical creatures" like chasm fiends
+  from `multiple_fantasy_species`) — real residual gap even after the
+  overnight full-catalog audit, deliberately left for a dedicated pass.
+- Retroactively tag `elves`/`dwarves`/`fae_or_fairies` across the
+  catalog once that pass happens.
+- Self-labeled shared-world universes for Abercrombie/Lawrence, once/if
+  the catalog's coverage of those authors grows.
+- Series recap generator (possibly ElevenLabs-narrated) — explicitly a
+  far-future idea, logged and parked.
+
+On token efficiency (user is now watching spend carefully after two
+autonomous overnight windows): did all of tonight's work directly
+(schema edits, migrations, review-tool HTML edit) rather than spinning
+up agents, since every item was small and well-defined enough that
+agent overhead (tool listing, schema read, DB connect — fixed cost
+regardless of task size) wasn't worth it. Recommended reserving
+agent fan-out for genuinely large multi-book batches going forward.

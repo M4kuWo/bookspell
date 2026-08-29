@@ -661,6 +661,16 @@ Deliberately deferred, not in v0.1:
   effort, not a quick fix, and deserves its own scoped pass.
 - **`solarpunk`** (setting_worldbuilding) — flagged during trope research
   as real but weaker/niche; not added.
+- **Retroactive tagging of `elves`/`dwarves`/`fae_or_fairies`** (added
+  2026-08-29, same precedent as `vampires`/`dragons`) across the
+  catalog — schema/lookup-table only for now, no books tagged with them
+  yet. Bundled with a broader deferred item: a real per-book
+  romance-relationship and fantastical-creature specificity pass (Rhythm
+  of War's Dalinar/Navani and Adolin/Shallan threads still flatten to
+  `found_family`; spren/chasm fiends have no vocabulary distinct from
+  `multiple_fantasy_species`) — a real residual gap even after the
+  2026-08-29 full-catalog audit, needs a dedicated pass rather than a
+  quick fix.
 - **Content warnings deferred as too marginal for v1** —
   `religious_bigotry` (distinct from `religious_trauma_or_cults` —
   persecution *for* faith vs. harm *from* a religion/cult), `physical_abuse`
