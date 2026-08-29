@@ -1370,3 +1370,35 @@ ourselves -- sidesteps the Tier-B audiobook-field sourcing problem
 entirely, though it needs the same missing ratings table plus a
 critical mass of users to avoid a cold-start problem, and is a
 deliberate collaborative-filtering hybrid rather than a v1 feature).
+
+## 2026-08-29 (later still) — berserker_rage and long_journey tropes added + tagged
+
+User's two new trope proposals both resolved and added. `long_journey`
+needed clarification first: distinguishes the physical journey/travel
+itself being the narrative's structural spine (The Lord of the Rings --
+the whole point is delivering the ring across a long trek) from
+`epic_quest` (only requires an important goal, which can play out almost
+entirely in fixed locations -- The Way of Kings/Oathbringer have
+epic_quest but no central journey). `berserker_rage` was already agreed:
+a character whose combat power source is uncontrolled/building rage
+itself (Logen Ninefingers' "the Bloody-Nine" in The Blade Itself,
+Kratos-style mechanics) -- distinct from anti_hero/morally_grey_protagonist
+(moral positioning, not a mechanic).
+
+Added both to `tropes` via `20260829120000_berserker_and_long_journey_tropes.sql`,
+then ran the same 8-parallel-batch-agent retroactive tagging pattern
+across the full catalog. Results, consolidated and synced to both
+databases via `20260829130000_berserker_long_journey_tagging_pass.sql`:
+3 `berserker_rage` tags (Oathbringer -- Dalinar's "Blackthorn" berserker
+persona, a real find the agent caught independently, not something I'd
+flagged in the prompt; The Blade Itself -- Logen/the Bloody-Nine, the
+trope's namesake example; The Song of Achilles -- Achilles' battle-rage)
+and 23 `long_journey` tags (LOTR trilogy + The Hobbit, The Eye of the
+World, The Golden Compass, Eragon, Hyperion, The Alchemist, The Road,
+Parable of the Sower, and others). Agents consistently showed good
+judgment on borderline cases -- correctly declining Frankenstein and The
+Martian (real travel sequences, but not the book's overall structural
+spine), all 5 ASOIAF volumes (political/court-intrigue structured
+despite individual character travel subplots), and the Stormlight/
+Mistborn catalog (epic_quest energy without a central journey, per the
+calibration hint that was itself confirmed correct by these results).

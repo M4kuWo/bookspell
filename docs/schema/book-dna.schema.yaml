@@ -497,6 +497,7 @@ categories:
           - {id: reincarnated_protagonist, group: character_archetypes, spoiler: false}
           - {id: hidden_talent_prodigy, group: character_archetypes, spoiler: false}  # untrained character suddenly shows exceptional skill — distinct from chosen_one, which is destiny-driven rather than skill-driven
           - {id: coming_of_age, group: character_archetypes, spoiler: false}  # protagonist's growth from childhood/adolescence into adulthood is the book's central arc — distinct from hidden_talent_prodigy and underdog_rising, which are about skill/status arcs, not growing up per se
+          - {id: berserker_rage, group: character_archetypes, spoiler: false}  # added 2026-08-29 -- a character whose combat power source is uncontrolled/building rage itself (Logen Ninefingers' "the Bloody-Nine" in The Blade Itself, Kratos-style rage meters) — distinct from anti_hero/morally_grey_protagonist (moral positioning, not a power mechanic) and immortal_or_ageless_character (a trait, not a combat mechanic)
           - {id: wise_mentor, group: character_archetypes, spoiler: false}
           - {id: underdog_rising, group: character_archetypes, spoiler: false}  # powerless-to-strong arc
           - {id: dark_lord_or_evil_overlord, group: character_archetypes, spoiler: false}
@@ -561,6 +562,7 @@ categories:
 
           # -- plot devices & structure --
           - {id: epic_quest, group: plot_devices, spoiler: false}
+          - {id: long_journey, group: plot_devices, spoiler: false}  # added 2026-08-29 -- the physical journey/travel itself is the narrative's structural spine, chapter-to-chapter movement through geography (The Fellowship of the Ring/The Hobbit -- literally "there and back again"). Distinct from epic_quest, which only requires an important goal/mission and can play out almost entirely in fixed locations (The Way of Kings/Oathbringer have epic_quest but no central journey) -- many books have both, but they're separable signals for a reader who specifically wants travelogue/road-narrative structure vs. one who just wants a high-stakes mission
           - {id: court_intrigue, group: plot_devices, spoiler: false}
           - {id: heist, group: plot_devices, spoiler: false}
           - {id: rebellion_against_empire, group: plot_devices, spoiler: false}
