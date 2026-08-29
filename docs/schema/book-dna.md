@@ -641,6 +641,24 @@ Deliberately deferred, not in v0.1:
   mattering to readers already deep in romantasy-specific taxonomy rather
   than changing recommendations for a general SFF reader. Revisit if
   tagging real books shows they're needed.
+- **A real `audiobook_editions` table (one-to-many), not the current
+  single-audiobook-per-book assumption.** Surfaced 2026-08-29 alongside
+  the author/narrator field-contamination bug (`books.author` had
+  narrator names mixed in — e.g. Words of Radiance read "Brandon
+  Sanderson, Michael Kramer, Kate Reading"; fixed with a minimal
+  `narrators text[]` column for that one case). The bigger, deferred
+  idea: many books have more than one audiobook edition worth
+  distinguishing — different narrators/casts, and notably **GraphicAudio
+  full-cast dramatized productions**, which exist for a meaningful slice
+  of this catalog's SFF titles and are a distinct listening experience
+  from a standard single/dual-narrator audiobook. A real fix needs a
+  `book_id, edition_type (standard/graphicaudio/etc.), narrator(s),
+  runtime_minutes, production_company` table, not another single-value
+  column — and real per-book sourcing work (Hardcover's API likely
+  doesn't carry GraphicAudio editions at all; would need separate
+  research). Deliberately not built in the same pass as the field-value
+  audit below — it's a real schema addition plus a new data-sourcing
+  effort, not a quick fix, and deserves its own scoped pass.
 - **`solarpunk`** (setting_worldbuilding) — flagged during trope research
   as real but weaker/niche; not added.
 - **Content warnings deferred as too marginal for v1** —
