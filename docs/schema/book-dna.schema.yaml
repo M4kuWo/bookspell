@@ -579,6 +579,7 @@ categories:
           - {id: noir_detective_structure, group: plot_devices, spoiler: false}  # investigation-driven plot with a hardboiled-detective throughline, e.g. Leviathan Wakes' Miller arc
           - {id: deadly_competition_or_trial, group: plot_devices, spoiler: false}  # a formal, life-threatening competition or trial among selected participants (The Hunger Games, the Triwizard Tournament, Divergent's faction initiation) — distinct from war_story (open conflict, not a structured contest) and epic_quest (a journey, not a competition)
           - {id: survivalist_ingenuity, group: plot_devices, spoiler: false}  # solo survival through competence and improvisation against an indifferent environment as the book's central engine (The Martian) — distinct from underdog_rising (a social/status arc, not a survival-skills one)
+          - {id: revenge, group: plot_devices, spoiler: false}  # added 2026-08-30 — avenging a specific wrong against a specific target is the protagonist's driving motivation (Red Rising's Darrow avenging Eo, Six of Crows' Kaz against Pekka Rollins, Malice's Corban). Distinct from corruption_arc (a moral trajectory, not a plot motivation — a revenge-driven protagonist isn't necessarily descending into villainy) and black_and_white_morality/war_story (general conflict framing, not a personal vendetta specifically)
 
           # -- sci-fi specific --
           - {id: first_contact, group: scifi_specific, spoiler: false}

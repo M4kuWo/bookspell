@@ -1496,3 +1496,37 @@ working correctly against the new interface, no regressions.
 
 Next in the agreed sequence: the `revenge` trope, then the explanation
 layer, then Series DNA.
+
+## 2026-08-30 (later) — revenge trope added and tagged
+
+Second item in the agreed build sequence. Added `revenge` (plot_devices)
+per the schema rationale: avenging a specific wrong against a specific
+target as the protagonist's sustained driving motivation, distinct from
+`corruption_arc`/`redemption_arc` (moral trajectory, not motivation) and
+`war_story`/`black_and_white_morality` (general conflict framing, not a
+personal vendetta). Ran the same 8-parallel-batch-agent retroactive
+tagging pattern across the full catalog.
+
+Result: 16 books tagged, consolidated and synced to both databases via
+`20260830020000_revenge_tagging_pass.sql` -- A Storm of Swords (Oberyn
+vs. the Mountain), Dune, Eragon, Frankenstein, Kings of Paradise,
+Malice, Mistborn: The Final Empire, Prince of Thorns, Red Rising, Six
+of Crows, The Lies of Locke Lamora, The Poppy War, The Silent Patient,
+The Way of Kings, The Will of the Many, Words of Radiance.
+
+Agents were consistently precise about the trope's protagonist-specific
+bar, correctly declining several plausible-looking candidates: Arya's
+revenge list in ASOIAF (one thread among many POVs, not the book's
+center), Golden Son (Darrow's own arc had shifted to systemic rebellion
+by book 2, despite my own batch hint suggesting it), the Wax & Wayne
+trilogy (Wax's guilt over Lessie is self-directed, not a "make them pay"
+quest), all four later Dungeon Crawler Carl entries checked (real
+revenge subplots exist, but they belong to secondary/antagonist
+characters, not protagonist Carl), and Throne of Glass/The Name of the
+Wind (real revenge motivations exist but are established series
+backdrop, not this specific book's active plot driver). One real find
+neither I nor the batch hints anticipated: Kaladin's arc against Amaram
+in both The Way of Kings and Words of Radiance is genuine sustained
+revenge, not just the war_story/epic_quest tags Stormlight already had.
+
+Next in the agreed sequence: the explanation layer, then Series DNA.
