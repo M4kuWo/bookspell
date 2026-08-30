@@ -23,17 +23,40 @@ You need `DATABASE_URL` set to the **hosted** Bookspell Postgres
 connection string, not a local one. Ask whoever shared this project
 with you for that connection string directly (a message, a password
 manager, etc.) -- **never** paste it into chat, a commit, or any file
-that gets committed to git. Put it in your own local `.env` file at the
-repo root (already gitignored) as:
+that gets committed to git.
 
-```
-DATABASE_URL=postgresql://...
+**Set it as an exported shell variable in your own terminal session,
+not by editing a `.env` file** -- especially important if you're working
+from the same physical machine and the same repo directory as whoever
+owns this project, since their existing `.env` already points
+`DATABASE_URL` at their *local* database. Editing that shared file to
+point at hosted risks a silent collision if both of you are working at
+the same time. An exported variable takes precedence for anything
+reading it from the environment, without ever touching the file on
+disk:
+
+```bash
+export DATABASE_URL=postgresql://...
 ```
 
-Everything below assumes you're running from a clone of this repo (so
-`docs/schema/book-dna.md` and `docs/schema/book-dna.schema.yaml` are
-available to read) and have `python3` + `psycopg2` (see
+(If you're instead working from your own separate clone on a different
+machine, a `.env` file at the repo root -- already gitignored -- works
+fine too. Either way, never commit it.)
+
+You don't need to clone a separate copy of this repo if you're on the
+same machine as whoever owns it -- just work from their existing local
+directory. `CLAUDE_CONFIG_DIR` (see the main conversation this skill
+came from) only controls which Claude account is authenticated in your
+terminal; it has nothing to do with which directory you're in.
+Everything below assumes `docs/schema/book-dna.md` and
+`docs/schema/book-dna.schema.yaml` are available to read (true either
+way) and that you have `python3` + `psycopg2` (see
 `scripts/requirements.txt`) or `psql` available.
+
+If you are sharing a working directory with someone else actively using
+it: avoid running `git commit`/`git push` at the exact same moment they
+might be -- low risk here since your only local-file write is one new
+migration file (see Step 4), but worth not doing simultaneously.
 
 ## Step 1: read the schema
 
