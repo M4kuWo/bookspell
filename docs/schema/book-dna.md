@@ -904,19 +904,51 @@ Deliberately deferred, not in v0.1:
   `describe_series_trajectory()`/`phrase_field()` machinery already built
   for the explanation layer.
 
-- **Confidence + source layer on field/trope values** — external
-  suggestion, e.g. "slow pace" tagged with a 0.8 confidence level, plus
-  which source produced it. Two real uses beyond just discounting
-  uncertain tags in scoring: (1) a confidence score doubles as a triage
-  signal for us — low-confidence books are exactly the ones that need a
-  deeper research/re-tagging pass, since this session's own batch agents
-  constantly flagged real uncertainty ("borderline," "genuinely
-  uncertain") that today gets silently treated as equally-certain ground
-  truth; (2) once community self-tagging (below) exists, confidence
-  could rise specifically when community tags correlate with our
-  existing tags, and a mismatch becomes a signal worth investigating
-  rather than just noise. Real schema work (a companion confidence
-  column per field/trope), moderate effort, sequenced after Series DNA.
+- **Confidence + source layer on field/trope values — built 2026-08-30.**
+  External suggestion, e.g. "slow pace" tagged with a 0.8 confidence
+  level, plus which source produced it. `book_tropes` gained
+  `confidence`/`source` columns directly; scalar `book_dna`/`books`
+  fields use a new side table, `book_field_confidence` (book_id,
+  field_name, confidence, source), since a per-field companion column on
+  the wide `book_dna` row would mean ~29 extra columns. Source values:
+  `ai_inferred` (the vast majority — an LLM judgment call), `verified_external`
+  (a real citable authority, e.g. `work_type`'s Hugo Award backing),
+  `manual_review` (a deliberate editorial correction, not a fresh batch
+  guess), `community_tagged`/`community_confirmed` (future, not populated
+  yet — see the community-validation idea below).
+
+  Deliberately did NOT retroactively fabricate confidence numbers across
+  the whole catalog — most existing tags predate this system, and a
+  precise-looking number invented after the fact would be worse than no
+  number. Absence of a row means "unassessed," scored as full confidence
+  (1.0) by default, not penalized. Backfilled only real, traceable cases:
+  6 `work_type` novellas (`verified_external`, Hugo Award-backed), 7
+  `pov_count` values corrected during manual review (`manual_review`,
+  0.85), and 14 `pov_count` values this session's own batch agents
+  explicitly flagged as borderline/uncertain in their own reports
+  (`ai_inferred`, 0.4-0.65 depending on how uncertain). A systematic
+  confidence audit across the rest of the catalog (all other fields,
+  all other tropes) is separate, much larger future work — not
+  attempted here, logged as its own open item.
+
+  Wired into `recommend.py` scoring: `score_book()`/`explain_book()` now
+  discount a field/trope's effective weight by `get_confidence(book,
+  field)` before it contributes, for that specific book only — an
+  uncertain tag gets less voting power in the weighted average rather
+  than being trusted at face value. Both the contribution (numerator)
+  and total_weight (denominator) are discounted equally, so this is a
+  "counts for less" effect, not a bias toward match or mismatch. Verified
+  on The Bands of Mourning (pov_count confidence 0.6, in a profile where
+  pov_count carries weight 0.5): score shifts modestly (0.4423 vs. 0.4433
+  simulated full-trust) — small but real, and the right order of
+  magnitude given one moderately-uncertain field is only one of ~20
+  contributing signals for that book.
+
+  Two originally-proposed uses NOT built yet: using low confidence as a
+  triage signal to prioritize re-research, and raising confidence via
+  future community-tag correlation (both still logged, need the data --
+  more confidence-scored books, and community tagging respectively --
+  to be worth building on top of).
 
 - **Optional self-tagging + community validation + dispute flagging** —
   external suggestion: let users optionally tag books themselves via the

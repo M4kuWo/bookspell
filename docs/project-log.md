@@ -1681,3 +1681,41 @@ profile while The Well of Ascension scored 0.81 -- correctly generated
 "worth pushing through" messaging. Edge cases (last book in series,
 invalid position, invalid series_id) all handled cleanly, return None or
 an appropriate terminal note rather than erroring.
+
+## 2026-08-30 (later still) -- confidence/source layer built
+
+Fifth item in the agreed build sequence. `book_tropes` gained
+`confidence`/`source` columns directly (already one row per tag); scalar
+fields needed a side table instead (`book_field_confidence`, keyed by
+book_id + field_name) since a per-field column on book_dna's wide row
+would mean ~29 extra columns. Source enum: ai_inferred (the default for
+essentially everything), verified_external, manual_review,
+community_tagged/community_confirmed (the last two not populated yet,
+reserved for once community self-tagging exists).
+
+Deliberately did not fabricate confidence numbers across the whole
+catalog to make the feature look more complete than it is. Backfilled
+only real, traceable cases: 6 work_type novellas (verified_external,
+Hugo Award-backed, confidence 1.0), 7 pov_count values corrected during
+this session's manual review (manual_review, 0.85), and 14 pov_count
+values this session's own batch agents explicitly flagged as
+borderline/uncertain in their own reports (ai_inferred, 0.4-0.65). 27
+rows total. A full confidence audit across the rest of the catalog is
+separate, much bigger future work, not attempted -- logged as its own
+open item rather than silently declared done.
+
+Wired into scoring: `get_confidence()` added to `recommend.py`,
+defaulting to 1.0 (full trust) when no row exists -- absence must not
+read as low confidence, since that would penalize the vast majority of
+tags that were simply never flagged either way. `score_book()`/
+`explain_book()` now discount a field/trope's effective weight by this
+confidence for that specific book before it contributes to either the
+score or the match/mismatch explanation -- both the contribution and
+total_weight discounted equally, so it's a "counts for less" effect,
+not a bias toward match or mismatch. Verified on The Bands of Mourning
+(pov_count confidence 0.6): score shifted from 0.4433 (simulated full
+trust) to 0.4423 with the real discount applied -- small but real, the
+right order of magnitude for one moderately-uncertain field among ~20
+total contributing signals.
+
+Next: the post-read/DNF "why didn't it work" dropdown.

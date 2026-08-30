@@ -503,12 +503,38 @@ def load_catalog():
     """)
     tropes_by_book = {row["book_id"]: row["tropes"] for row in cur.fetchall()}
 
+    # Confidence layer (2026-08-30) -- see book_field_confidence's
+    # migration comment. Absence of a row means "unassessed"; get_confidence()
+    # below defaults to full trust (1.0) rather than penalizing the vast
+    # majority of tags that were never explicitly flagged as uncertain.
+    cur.execute("select book_id, trope_id, confidence from book_tropes where confidence is not null")
+    trope_confidence_by_book = {}
+    for row in cur.fetchall():
+        trope_confidence_by_book.setdefault(row["book_id"], {})[row["trope_id"]] = float(row["confidence"])
+
+    cur.execute("select book_id, field_name, confidence from book_field_confidence")
+    field_confidence_by_book = {}
+    for row in cur.fetchall():
+        field_confidence_by_book.setdefault(row["book_id"], {})[row["field_name"]] = float(row["confidence"])
+
     cur.close()
     conn.close()
 
     for b in books:
         b["tropes"] = tropes_by_book.get(b["id"], [])
+        b["_trope_confidence"] = trope_confidence_by_book.get(b["id"], {})
+        b["_field_confidence"] = field_confidence_by_book.get(b["id"], {})
     return {b["id"]: b for b in books}
+
+
+def get_confidence(book, field_or_trope):
+    """Confidence (0-1) in this specific book's value for this specific
+    field or trope. Defaults to 1.0 (full trust) when unassessed -- see
+    book_field_confidence's migration comment for why absence isn't
+    treated as low confidence."""
+    if field_or_trope in book.get("_trope_confidence", {}):
+        return book["_trope_confidence"][field_or_trope]
+    return book.get("_field_confidence", {}).get(field_or_trope, 1.0)
 
 
 def ordinal_position(field, value):
@@ -641,6 +667,13 @@ def build_profile(catalog, ratings, full_ratings=None):
 
 
 def score_book(book, centroid, weights):
+    """Confidence discount (2026-08-30): a field/trope's effective weight
+    for THIS book is scaled by get_confidence(book, field) before it
+    contributes -- an uncertain tag gets less voting power in the
+    weighted average rather than being trusted at face value or assumed
+    to be a mismatch. Discounting both the numerator (contribution) and
+    denominator (total_weight) equally is what keeps this a "count for
+    less" effect rather than a bias toward either match or mismatch."""
     score = 0.0
     total_weight = 0.0
     contributions = []
@@ -658,9 +691,10 @@ def score_book(book, centroid, weights):
             sim = 1 - abs(book_val - centroid[field])
         else:
             sim = 1.0 if book.get(field) == centroid[field] else 0.0
-        contribution = w * sim
+        w_eff = w * get_confidence(book, field)
+        contribution = w_eff * sim
         score += contribution
-        total_weight += abs(w)
+        total_weight += abs(w_eff)
         if w > 0.15:
             contributions.append((field, round(contribution, 3)))
 
@@ -668,10 +702,11 @@ def score_book(book, centroid, weights):
     book_tropes = set(book.get("tropes") or [])
     for t, w in trope_weights.items():
         if t in book_tropes:
-            score += w
-            total_weight += abs(w)
+            w_eff = w * get_confidence(book, t)
+            score += w_eff
+            total_weight += abs(w_eff)
             if abs(w) > 0.15:
-                contributions.append((f"trope:{t}", round(w, 3)))
+                contributions.append((f"trope:{t}", round(w_eff, 3)))
 
     normalized = score / total_weight if total_weight > 0 else 0.0
     contributions.sort(key=lambda x: -abs(x[1]))
@@ -697,7 +732,10 @@ def explain_book(book, centroid, weights, top_n=5):
 
     Returns (matches, mismatches), each a list of (label, magnitude)
     pairs sorted descending, capped at top_n, magnitude thresholded at
-    > 0.1 to exclude noise-level factors."""
+    > 0.1 to exclude noise-level factors. Same confidence discount as
+    score_book() -- see its docstring -- applied to `w` before either
+    match or mismatch magnitude is computed, so a low-confidence tag
+    shows up muted in the explanation too, not just the ranking."""
     matches, mismatches = [], []
 
     for field, w in weights.items():
@@ -710,6 +748,7 @@ def explain_book(book, centroid, weights, top_n=5):
             sim = 1 - abs(pos[0] / pos[1] - centroid[field])
         else:
             sim = 1.0 if book.get(field) == centroid[field] else 0.0
+        w = w * get_confidence(book, field)
 
         if w >= 0:
             matches.append((field, w * sim))
@@ -726,6 +765,7 @@ def explain_book(book, centroid, weights, top_n=5):
     for t, w in trope_weights.items():
         if t not in book_tropes:
             continue
+        w = w * get_confidence(book, t)
         (matches if w >= 0 else mismatches).append((f"trope:{t}", abs(w)))
 
     matches = sorted((m for m in matches if m[1] > 0.1), key=lambda x: -x[1])
