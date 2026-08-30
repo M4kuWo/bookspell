@@ -78,6 +78,13 @@ This surfaces untagged books from series like "Dungeon Crawler Carl"
 (7/8 tagged) or "Harry Potter" (7/8 tagged) before untagged books from
 series with zero existing tagged entries, and before pure standalones.
 
+If someone else might be running this same skill around the same time
+(against the same hosted database), check with them on timing first --
+two concurrent runs picking overlapping untagged books won't corrupt
+anything (book_dna's primary key just rejects a duplicate), but it does
+waste real, paid effort on books someone else already tagged in the
+few minutes since you picked your batch.
+
 ## How many books
 
 Tag **15-20 books per invocation** of this skill, then stop and report.
@@ -114,6 +121,29 @@ book:
   columns -- don't skip this when it's warranted, it's a real, used
   part of the scoring system, not decorative.
 
+**Critical: `book_dna` only requires `book_id` and `genre` to be NOT NULL
+-- every other column is nullable.** This means a partial INSERT (only a
+few fields filled in) will succeed silently, with no error, and produce
+a book_dna row that LOOKS tagged (it passes Step 2's `d.book_id is null`
+filter, so it permanently disappears from every future "find untagged
+books" query) but is mostly empty and useless to the scoring engine.
+This is worse than not tagging the book at all -- it's a silent failure
+mode, not a loud one. Your `book_dna` INSERT must include every one of
+these columns (all nullable, but all real signal -- don't skip any just
+because you can): `age_category, book_length, pov_count, person,
+narrator_reliability, timeline, form, overall_pace, pace_shape, drive,
+darkness, humor_level, emotional_register, message_intensity,
+romance_heat_frequency, romance_heat_intensity, violence_frequency,
+violence_intensity, worldbuilding_density, narrative_closure,
+emotional_resolution, ends_on_cliffhanger, audiobook_length,
+magic_system_hardness, scifi_hardness, prose_density, prose_complexity,
+intellectual_weight, stakes_scope, personal_stakes` -- plus `genre`.
+(Leave out the 5 Tier B audiobook columns mentioned above -- those stay
+null on purpose.) If a field genuinely doesn't apply to a book (e.g.
+`romance_heat_frequency` on a book with zero romance), use its `none`
+value if the schema defines one for that field -- don't just omit the
+column.
+
 Write every insert as a SCOPED statement tied to a specific book, using a
 `select id from books where title = '...'` subselect for the book_id --
 **not a raw UUID pasted from a query result.** This matters specifically
@@ -122,20 +152,60 @@ row UUIDs than anyone else's local database for the same logical books
 -- a title-keyed subselect is portable across both, a hardcoded UUID
 only works in the one database you copied it from. This is the same
 pattern every migration in this project already uses. Never a blanket
-UPDATE or DELETE across multiple rows. Example shape:
+UPDATE or DELETE across multiple rows. Complete example, every real
+column filled in (not abbreviated -- copy this shape exactly):
 
 ```sql
-insert into book_dna (book_id, overall_pace, darkness, pov_count, ..., genre)
-select id, 'fast', 'dark', 'few', ..., array['fantasy'] from books where title = 'Example Title';
+insert into book_dna (
+  book_id, genre, age_category, book_length, pov_count, person,
+  narrator_reliability, timeline, form, overall_pace, pace_shape, drive,
+  darkness, humor_level, emotional_register, message_intensity,
+  romance_heat_frequency, romance_heat_intensity, violence_frequency,
+  violence_intensity, worldbuilding_density, narrative_closure,
+  emotional_resolution, ends_on_cliffhanger, audiobook_length,
+  magic_system_hardness, scifi_hardness, prose_density, prose_complexity,
+  intellectual_weight, stakes_scope, personal_stakes
+)
+select
+  id, array['fantasy'], 'adult', 'standard', 'few', 'third_limited',
+  'reliable', 'linear', 'standard_prose', 'fast', 'consistent', 'plot_driven',
+  'dark', 'light', 'tense', 'moderate',
+  'none', 'closed_door', 'occasional',
+  'graphic', 'moderate', 'requires_series',
+  'bittersweet', 'cliffhanger', 'standard',
+  'soft', 'na', 'moderate', 'moderate',
+  'moderate', 'regional', 'high'
+from books where title = 'Example Title';
 
 insert into book_tropes (book_id, trope_id)
 select id, 'revenge' from books where title = 'Example Title';
 
-insert into book_content_warnings (book_id, warning_id)
-select id, 'graphic_violence' from books where title = 'Example Title';
+-- book_content_warnings.warning_id is a foreign key -- only the exact
+-- ids in content_warning_types are valid (check that table, or
+-- book-dna.md's content-warnings list; "graphic violence" itself is
+-- NOT one -- that's covered by the violence_intensity/violence_frequency
+-- book_dna fields instead, content_warning_types covers more specific
+-- things like war_trauma, torture, body_horror, genocide, etc.).
+-- severity is also REQUIRED (values: brief, moderate, central_theme) --
+-- this insert will fail without it, it's not optional the way it might
+-- look from a 2-column example elsewhere:
+insert into book_content_warnings (book_id, warning_id, severity, reveals_spoiler)
+select id, 'war_trauma', 'moderate', false from books where title = 'Example Title';
+
+-- only when genuinely uncertain about a specific field (see above):
+insert into book_field_confidence (book_id, field_name, confidence, source)
+select id, 'pov_count', 0.6, 'ai_inferred' from books where title = 'Example Title';
 ```
 
-Verify each book's inserts by re-querying afterward.
+Verify each book's inserts by re-querying afterward -- specifically
+check that the book_dna row actually has values in most columns, not
+just a few, given the silent-partial-insert risk above.
+
+If you genuinely don't know a book well enough to tag it confidently
+even after thinking it through, do a quick check (a web search is fine)
+before guessing -- and if you're still not confident, skip that book and
+say so in your report rather than fabricating tags for a book you don't
+actually know.
 
 ## Step 4: save your batch as a migration file, and hand it back
 
