@@ -1906,3 +1906,59 @@ in the prompt itself) and could be run verbatim from her own Claude Code
 session, given she has DB credentials and a compatible environment.
 Flagged credential-sharing as a deliberate access decision for the user
 to make, not something to assume.
+
+## 2026-08-30 (later still) -- catalog expansion + wife-outsourcing skill
+
+User pushed back further on the Goodreads-user idea (fully anonymous to
+him, no personal data requested) -- reaffirmed the decline anyway:
+picking one specific identifiable person and extracting their entire
+personal rating history is different in kind from aggregate statistics
+regardless of whether the requester ever learns who it was, and
+Goodreads' public API was discontinued for new access years ago, so it
+would mean scraping an individual profile page. Stuck with real/
+consented data (self, wife) as the path instead.
+
+Catalog roughly doubled: bumped `scripts/ingest-seed-catalog.js`'s
+Fantasy/Sci-Fi pull count from 110 to 220 each (existingHardcoverIds
+dedup means this only nets ranks 111-220, since 1-110 are already in
+the DB) and ran it. 147 new books, 50 new series -- catalog now at 314
+books / 132 series (was 167/82). Synced to hosted via a generated
+migration (`20260830040000_catalog_expansion_147_books.sql`) using the
+same hardcover_id-based `ON CONFLICT DO NOTHING` idempotency the
+ingestion script itself already relies on, with series linked via a
+hardcover_id subselect rather than the local UUID (which differs between
+environments) -- verified both databases match exactly (314/132).
+Confirmed the new books are automatically excluded from
+`recommend.py`'s scoring already (an inner join on book_dna in
+`load_catalog()`) -- no separate "hide untagged books" mechanism needed,
+per the user's question.
+
+Confirmed prioritizing partial-series completion over new standalones:
+81 of 132 series currently have some but not all books tagged, several
+very close to done (Dungeon Crawler Carl 7/8, Harry Potter 7/8,
+Stormlight Archive Era One 5/7, The Murderbot Diaries 5/7). Real
+motivation beyond tidiness: Series DNA needs >= 2 tagged books per
+series to compute a trajectory at all, so completing a partial series
+unlocks that feature for it, where adding an entirely new untagged
+standalone doesn't unlock anything yet. One nice side effect of the
+expansion: Wind and Truth (Stormlight Archive book 5, previously logged
+as a missing-from-catalog content gap) is now in the catalog.
+
+Built `.claude/skills/tag-catalog-batch/SKILL.md` for outsourcing
+tagging work to the user's wife's separate (10%-used) Claude account,
+per her being willing to help and having ample spare quota. Design:
+references the real schema docs directly (`docs/schema/book-dna.md`/
+`.schema.yaml`) rather than duplicating them inline, since a real Claude
+Code session with repo access can just read them -- unlike this
+session's background agents, which deliberately avoid repo reads for
+token efficiency. Embeds the exact partial-series-prioritization SQL
+query (verified working against local before committing) so the
+priority logic doesn't depend on whoever invokes it reinventing it.
+Explicitly scopes each invocation to 15-20 books, not the whole backlog.
+Instructs using the confidence layer (book_field_confidence /
+book_tropes.confidence+source) for genuinely uncertain calls, matching
+this session's own established practice, rather than treating it as
+decorative. Deliberately does NOT embed the hosted DB password in the
+skill file (which gets committed to git) -- instructs setting
+`DATABASE_URL` via a local, gitignored `.env`, with the actual
+connection string shared out of band, not through chat or git.

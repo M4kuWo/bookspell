@@ -225,13 +225,15 @@ async function main() {
     const fantasy = await searchBooks({
       filterBy: 'genres:=[Fantasy]',
       sort: 'users_count:desc',
-      count: 110,
+      count: 220, // bumped 2026-08-30 (110->220) to roughly double the catalog --
+      // dedup against existingHardcoverIds means ranks 1-110 (already in the DB)
+      // are skipped automatically, so this only nets ranks 111-220 as new.
     });
     console.log('Pulling top Science Fiction books...');
     const scifi = await searchBooks({
       filterBy: 'genres:=[Science Fiction]',
       sort: 'users_count:desc',
-      count: 110,
+      count: 220,
     });
 
     const seen = new Set();
