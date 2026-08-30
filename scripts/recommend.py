@@ -270,6 +270,51 @@ def match_label(score):
     return "Poor match"
 
 
+# Fields describing HOW a story is told (lead into a "told with ..."
+# clause) vs. everything else -- tone/content fields and tropes -- which
+# read naturally as a "features/also has ..." list. This split is what
+# turns a flat phrase list into an actual sentence; see natural_sentence().
+NARRATIVE_STYLE_FIELDS = {"person", "pov_count", "timeline", "narrator_reliability", "form"}
+
+
+def _join_list(items):
+    """Oxford-comma joined list: 'a', 'a and b', 'a, b, and c'."""
+    items = list(items)
+    if not items:
+        return ""
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return f"{items[0]} and {items[1]}"
+    return ", ".join(items[:-1]) + f", and {items[-1]}"
+
+
+def natural_sentence(labeled_phrases, positive):
+    """labeled_phrases: list of (label, phrase) pairs, same labels
+    explain_book() produces (paired with describe()'s phrase output) so
+    NARRATIVE_STYLE_FIELDS can be pulled out for their own clause.
+    Assembles one readable sentence instead of a flat phrase list.
+
+    Deliberately NOT attempting per-trope grammar (article/pluralization
+    -- "revenge" -> "a revenge arc", "prophecy" -> "prophecies") here --
+    that's real, separate effort (120 individual trope overrides) with
+    diminishing value before there's an actual UI to see it rendered in
+    context. This only fixes the SENTENCE STRUCTURE (a verb clause + a
+    properly joined list) around whatever phrase.py/describe() already
+    produces."""
+    style = [p for label, p in labeled_phrases if label in NARRATIVE_STYLE_FIELDS]
+    content = [p for label, p in labeled_phrases if label not in NARRATIVE_STYLE_FIELDS]
+    if not style and not content:
+        return ""
+    clauses = []
+    if style:
+        clauses.append(f"is told with {_join_list(style)}")
+    if content:
+        verb = "features" if positive else "also has"
+        clauses.append(f"{verb} {_join_list(content)}")
+    return "The book " + ", and ".join(clauses) + "."
+
+
 def load_catalog():
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -673,9 +718,11 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     scoring math recommend() uses (see explain_book()), just decomposed
     for explanation instead of collapsed into a ranking.
 
-    Returns {"title", "score", "match_label", "matches", "mismatches"} --
-    matches/mismatches are ordered lists of human-readable phrases (see
-    describe())."""
+    Returns {"title", "score", "match_label", "matches", "mismatches",
+    "summary", "mismatch_summary"} -- matches/mismatches are ordered
+    lists of human-readable phrases (see describe()); summary/
+    mismatch_summary are the same data assembled into one readable
+    sentence each (see natural_sentence()) instead of a flat list."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     if title not in title_to_id:
         raise ValueError(f"{title!r} not found in catalog")
@@ -685,12 +732,17 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     score, _ = score_book(book, centroid, weights)
     matches, mismatches = explain_book(book, centroid, weights, top_n=top_n)
 
+    matches_labeled = [(label, p) for label, _ in matches if (p := describe(label, book))]
+    mismatches_labeled = [(label, p) for label, _ in mismatches if (p := describe(label, book))]
+
     return {
         "title": title,
         "score": round(score, 3),
         "match_label": match_label(score),
-        "matches": [p for label, _ in matches if (p := describe(label, book))],
-        "mismatches": [p for label, _ in mismatches if (p := describe(label, book))],
+        "matches": [p for _, p in matches_labeled],
+        "mismatches": [p for _, p in mismatches_labeled],
+        "summary": natural_sentence(matches_labeled, positive=True),
+        "mismatch_summary": natural_sentence(mismatches_labeled, positive=False),
     }
 
 
@@ -723,13 +775,13 @@ if __name__ == "__main__":
     print(f"Why '{top_pick}' was recommended:")
     explanation = explain_match(catalog, ratings, top_pick)
     print(f"  {explanation['match_label']} ({explanation['score']})")
-    print(f"  Because of: {', '.join(explanation['matches'])}")
-    if explanation["mismatches"]:
-        print(f"  Working against it: {', '.join(explanation['mismatches'])}")
+    print(f"  {explanation['summary']}")
+    if explanation["mismatch_summary"]:
+        print(f"  However, {explanation['mismatch_summary'][0].lower()}{explanation['mismatch_summary'][1:]}")
 
     print(f"\nWhy a genuinely poor-scoring book (bottom of the full ranked list) scores poorly:")
     explanation = explain_match(catalog, ratings, "The Restaurant at the End of the Universe")
     print(f"  {explanation['match_label']} ({explanation['score']})")
-    print(f"  Because of: {', '.join(explanation['matches'])}")
-    if explanation["mismatches"]:
-        print(f"  Working against it: {', '.join(explanation['mismatches'])}")
+    print(f"  {explanation['summary']}")
+    if explanation["mismatch_summary"]:
+        print(f"  However, {explanation['mismatch_summary'][0].lower()}{explanation['mismatch_summary'][1:]}")

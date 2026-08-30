@@ -1582,3 +1582,37 @@ the explanation too -- suppressing court_intrigue moved it from
 Good, not just the raw score.
 
 Next in the agreed sequence: Series DNA.
+
+## 2026-08-30 (later still) — explanation layer: sentence assembly
+
+User feedback on the explanation layer's output: the flat comma-joined
+phrase list ("Because of: prophecy, revenge, epic quest, third-person
+limited narration, ...") wasn't natural enough to show a real
+non-internal user, with a concrete example of the wanted shape ("Because
+the book is told from third-person perspective, contains prophecies, a
+revenge arc, an epic quest and a mysterious magic system").
+
+Broke this into two separable improvements before building either:
+(1) real sentence structure -- a verb clause plus a properly joined list
+("X, and features Y, Z, and W") instead of a flat comma dump, and (2)
+per-trope grammar -- bare "revenge" -> "a revenge arc", "prophecy" ->
+"prophecies", which needs individual article/pluralization overrides
+for each of the 120 tropes. Judged (1) cheap and worth doing now --
+genuinely reusable by any future UI, not just this prototype's demo
+output -- and (2) real but lower-priority effort with diminishing value
+before an actual UI exists to observe it in context. Built (1), flagged
+(2) as deferred rather than silently shipping a half-measure.
+
+Added `NARRATIVE_STYLE_FIELDS` (person, pov_count, timeline,
+narrator_reliability, form -- fields describing HOW a story is told) vs.
+everything else (tone/content fields + tropes, describing WHAT the story
+is about), `_join_list()` (proper Oxford-comma-joined list assembly),
+and `natural_sentence()` which combines them into "The book is told with
+X, and features/also has Y." `explain_match()` now returns `summary`/
+`mismatch_summary` alongside the existing `matches`/`mismatches` lists
+(kept, not replaced -- a real UI will likely want both: the sentence for
+a one-line summary, the raw list for rendering as individual tags/chips).
+
+Verified output reads naturally and matches the requested shape structurally, e.g.:
+"The book is told with third-person limited narration, and features
+revenge, prophecy, epic quest, and a soft, mysterious magic system."
