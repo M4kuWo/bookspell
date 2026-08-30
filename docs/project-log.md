@@ -1835,3 +1835,74 @@ not a nice-to-have -- sparse-data misses like Red Rising will keep
 happening for any new user with a short rating history, and the system
 needs the correction mechanism already built, not just a bigger static
 profile.
+
+## 2026-08-30 (later still) -- dislike-reasons log, real qualitative findings
+
+User gave detailed, real reasons for the Red Rising/Poppy War misses
+above: Red Rising felt juvenile (high-school-drama execution), unoriginal
+(overlaps Hunger Games/Battle Royale), and preachy (heavy-handed anti-
+revenge messaging that felt unearned given the protagonist's loss); The
+Poppy War's author-framing of retributive violence as wrong "rubbed the
+reader the wrong way," compounded by genuine magic-school trope fatigue
+at time of reading (a reader-state factor, not the book's fault).
+
+Checked concretely whether the schema could have caught the "preachy"
+complaint: `message_intensity` carries a real, meaningful weight in this
+profile (0.30, third-highest field weight) with a centroid target near
+"subtle" (0.056). The Poppy War IS tagged `heavy_handed` -- exactly
+matching the complaint -- and this correctly showed up as a mismatch
+factor already; it just wasn't enough to overcome the revenge/
+underdog_rising overfit pull. Red Rising, however, is tagged `moderate`,
+not `heavy_handed`, despite the user experiencing its messaging as
+preachy -- flagged as a possible real tagging gap worth a second look,
+though message intensity may also just be a genuinely subjective axis
+where reasonable readers disagree.
+
+Assessed the other complaints against what Book DNA can capture by
+design: "juvenile" (execution-quality judgment, not a structural fact --
+outside scope by design, no field could capture this); "unoriginal
+relative to Hunger Games" (partially already captured --
+`deadly_competition_or_trial` correctly flags the structural kinship,
+Hunger Games is literally that trope's own definitional example -- but
+translating "shares DNA with X" into "will feel derivative to THIS
+reader" needs a reading-history-relative freshness signal, a new idea:
+compare a candidate's tropes against already-read books via the existing
+`book_similarity()` helper and surface "resembles X, which you've read"
+as its own caveat -- logged to backlog, not built); Poppy War's specific
+complaint about the author's moral stance on retributive violence
+(more granular than message_intensity -- WHAT the message argues, not
+just how much -- judged out of scope for a scalable controlled
+vocabulary, belongs to free-text/reviews instead); "magic-school trope
+fatigue" (exactly what the already-built diversity/fatigue mechanism is
+for, just not exercised in this particular test).
+
+Built `log_feedback()`/`FEEDBACK_LOG_PATH` (`scripts/feedback_log.jsonl`,
+append-only JSON Lines) per user request -- cheap, durable record of
+real dislike reasons (structured selections + free-text notes) for
+later pattern analysis, since there's no real per-user feedback table
+yet. Seeded it immediately with the two real reasons just given, rather
+than waiting for a hypothetical future user to generate the first entry.
+
+Discussed but did NOT pursue: scraping a specific identifiable Goodreads
+user's public rating history as synthetic-but-real test data -- flagged
+as a genuine privacy/consent concern (compiling one identifiable
+stranger's personal activity, even if technically public, is different
+from using an anonymized aggregate dataset or the user's own/his wife's
+consented data) rather than a purely technical question. Alternatives
+that don't carry the same concern: the user's or his wife's own
+(consented) reading history, or a proper anonymized research dataset if
+one were sourced deliberately.
+
+Discussed catalog expansion token budget (user shared usage: 4% current
+session, 24% weekly, weekly limits temporarily boosted through
+2026-08-31 -- today). Noted the temporary boost window is closing very
+soon, without pushing the user to spend against a deadline. Discussed
+outsourcing tagging batches to the user's wife's separate (lower-usage)
+Claude account: this requires manual coordination, not something
+automatable from this session -- but a real, workable idea, since this
+session's own batch-agent prompts are already fully self-contained (no
+repo access needed, DB connection string + inline definitions included
+in the prompt itself) and could be run verbatim from her own Claude Code
+session, given she has DB credentials and a compatible environment.
+Flagged credential-sharing as a deliberate access decision for the user
+to make, not something to assume.

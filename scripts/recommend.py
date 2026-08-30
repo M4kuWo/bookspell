@@ -1058,6 +1058,38 @@ def feedback_to_fatigue_overrides(selected_keys, strength=-0.6):
     }
 
 
+# Cheap, durable record of real dislike/DNF reasons for later qualitative
+# analysis -- there's no real per-user feedback table yet (no `users`
+# table exists at all), so this is deliberately NOT per-user state, just
+# an append-only log of real reasons as they come in, to build up a
+# corpus of "why don't people like this book" worth mining later (e.g.
+# for the confidence layer's triage use case, or just to sanity-check
+# whether book_feedback_options()'s structured selections are capturing
+# what people actually mean).
+FEEDBACK_LOG_PATH = os.environ.get(
+    "FEEDBACK_LOG_PATH", os.path.join(os.path.dirname(__file__), "feedback_log.jsonl")
+)
+
+
+def log_feedback(title, selected_keys=None, notes=None):
+    """Appends one JSON-lines record to FEEDBACK_LOG_PATH: title, the
+    structured book_feedback_options() selections (if any), free-text
+    notes (if any -- this is where a real, detailed reason like "felt
+    juvenile and preachy" belongs, distinct from the structured
+    trope/field checklist), and a timestamp."""
+    import json
+    from datetime import datetime, timezone
+
+    record = {
+        "title": title,
+        "selected": selected_keys or [],
+        "notes": notes,
+        "logged_at": datetime.now(timezone.utc).isoformat(),
+    }
+    with open(FEEDBACK_LOG_PATH, "a") as f:
+        f.write(json.dumps(record) + "\n")
+
+
 if __name__ == "__main__":
     catalog = load_catalog()
     print(f"Loaded {len(catalog)} books.\n")
