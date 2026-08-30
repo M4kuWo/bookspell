@@ -1402,3 +1402,59 @@ spine), all 5 ASOIAF volumes (political/court-intrigue structured
 despite individual character travel subplots), and the Stormlight/
 Mistborn catalog (epic_quest energy without a central journey, per the
 calibration hint that was itself confirmed correct by these results).
+
+## 2026-08-30 — external feedback batch (13 ideas), sequencing decided
+
+User gathered feedback from other people in their network and brought
+13 distinct ideas/questions in one batch, asking for a full triage
+before deciding what to build next. Full assessment logged to
+`book-dna.md`'s future-fields backlog (each idea given its own entry
+there); summarized here:
+
+- Two ideas turned out to already exist and needed no new work:
+  description-detail-level is already `prose_density`; "Reader DNA" is
+  already `build_profile()`'s output, just not named/productized.
+- A "recommendation debugger" and "explain the match" overlap almost
+  entirely with data already computed (`score_book()`'s `contributions`
+  list) — bundled into one "explanation layer" idea (natural-language
+  match/no-match explanations + a raw technical view), UX/wording work
+  rather than new engine capability. Deliberately avoiding a literal
+  "90% match" framing — the score is a relative ranking, not a
+  calibrated probability.
+- Confirmed missing: a `revenge` trope (real gap, should have been in
+  the original vocabulary).
+- Series DNA (a series' Book DNA can change dramatically across its own
+  run, e.g. Wheel of Time going from single-POV/fast/journey-structured
+  in book 1 to multi-POV/slow/political by book 6+) judged the strongest
+  new idea — likely computable as an aggregation/rollup over existing
+  per-book `book_dna` rows grouped by series and ordered by
+  `position_in_series`, not a fresh tagging pass.
+- Confidence/source layer on field/trope values: agreed valuable, with
+  a real dual purpose beyond scoring-discount that the user specifically
+  called out — a triage signal for flagging books that need deeper
+  research, and a way for future community-tagging correlation to raise
+  (or flag disagreement in) confidence over time.
+- Community self-tagging/dispute-flagging, character-similarity
+  recommendations, and hierarchical tropes: all judged real and valuable
+  but correctly later-stage — needs real user accounts (confirmed: no
+  `users` table exists at all) or a bigger new data model.
+
+**Important correction from the user on the held-out validation test
+idea** (originally proposed by me as an immediate, free next step):
+`recommend.py` only ever accepted flat `liked_titles`/`disliked_titles`
+lists — the 5-tier rating-magnitude scale from the earlier
+ratings-precision discussion was designed but never actually implemented.
+Without a real graduated score, there's nothing for the engine to
+*predict* as a rating, only a relative ranking — so the validation test
+isn't meaningful yet. This was a genuine gap in my own prior assessment,
+caught by the user, not something I'd flagged myself.
+
+**Agreed build sequence going forward:** rating-magnitude scoring system
+first (unblocks the validation test) → revenge trope (quick) →
+explanation layer → Series DNA → the rest of the batch (confidence/
+source layer, post-read "why didn't it work" dropdown, then the
+later-stage items: character-similarity recs, community tagging,
+hierarchical tropes). Nothing in this batch was built yet — this was a
+logging/triage/sequencing session, per explicit request.
+
+Also wrote `README.md` for the repo (previously had none).

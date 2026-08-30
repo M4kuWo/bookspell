@@ -822,6 +822,121 @@ Deliberately deferred, not in v0.1:
   original v1 design explicitly chose to skip — would be a deliberate
   hybrid addition later, not a v1 feature. Not built — logged for later.
 
+- **2026-08-30 batch — feedback gathered from external contacts, 13
+  ideas triaged.** Agreed build sequence: **rating-magnitude scoring
+  system → revenge trope → explanation layer → Series DNA → the rest**.
+  Two items turned out to already exist and needed no new work:
+  description-detail-level is already `prose_density`
+  (`sparse`/`moderate`/`lush` — its own definition already uses *The
+  Fellowship of the Ring* as the "lush" example); "Reader DNA" already
+  exists conceptually as `build_profile()`'s centroid+weights output, in
+  the same feature space as Book DNA — just never named/productized as
+  a user-facing concept.
+
+- **Rating-magnitude scoring system (build first)** — `recommend.py`
+  currently only accepts flat `liked_titles`/`disliked_titles` lists,
+  no graduated scale at all, despite the 5-tier labeled scale
+  (hated/disliked/it was okay/liked/loved) proposed earlier in the
+  ratings-precision discussion. This was caught as a real, blocking gap
+  2026-08-30: without a real score to predict, the held-out validation
+  test idea (below) isn't meaningful yet — there's nothing for the
+  system to predict *as* a rating, only a ranking. Needs to exist before
+  several other items on this list are buildable for real.
+
+- **Held-out validation test (blocked on the scoring system above)** —
+  external suggestion: once a user has logged real ratings, ask them for
+  ~10 more books they've read but haven't entered, get their honest
+  opinion first (blind), then have the engine predict and compare
+  against ground truth. Correctly identified 2026-08-30 as *not*
+  actionable yet, unlike originally proposed — needs the rating-magnitude
+  system first, otherwise there's no real predicted score to validate
+  against, only a relative ranking.
+
+- **Explanation layer ("this book is a strong match because of X, Y, Z"
+  + the reverse for poor matches + a technical debugger view)** —
+  bundles three external suggestions that all turn out to be the same
+  underlying capability at different levels of polish: a natural-language
+  "why this matches" surfaced to users, the same mechanism run in
+  reverse to explain a poor match when a user searches a specific book,
+  and a raw "recommendation debugger" view of the same data for our own
+  QA/tuning. All three are UX/wording work on data the engine already
+  computes — `score_book()` already returns a `contributions` list (top
+  weighted factors) every call. Deliberately avoid framing this as a
+  precise "90% match" — the score is a relative ranking, not a
+  calibrated probability; use qualitative labels ("strong match") plus
+  the reasons instead.
+
+- **Series DNA** — external suggestion, judged the strongest idea in the
+  batch. A series can change dramatically across its own run (The Wheel
+  of Time: book 1 is single-POV, fast-paced, journey-structured; book 6+
+  is multi-POV, slow, political, journey mostly absent) — recommending
+  or scoring against only the first entry's Book DNA can misrepresent
+  the whole commitment, including cases where a series gets darker/more
+  violent as it progresses. Key insight: this is likely NOT a fresh
+  tagging pass — it can probably be computed as an aggregation/rollup
+  over `book_dna` rows already tagged per book, grouped by `series_id`
+  and ordered by `position_in_series` (range/trajectory of `pov_count`,
+  `darkness`, `violence_intensity`, pace, etc.), rather than requiring
+  new per-book data. Directly strengthens the already-logged
+  series-position-aware recommendation idea. Not built — real design
+  work, but promising and comparatively cheap.
+
+- **Confidence + source layer on field/trope values** — external
+  suggestion, e.g. "slow pace" tagged with a 0.8 confidence level, plus
+  which source produced it. Two real uses beyond just discounting
+  uncertain tags in scoring: (1) a confidence score doubles as a triage
+  signal for us — low-confidence books are exactly the ones that need a
+  deeper research/re-tagging pass, since this session's own batch agents
+  constantly flagged real uncertainty ("borderline," "genuinely
+  uncertain") that today gets silently treated as equally-certain ground
+  truth; (2) once community self-tagging (below) exists, confidence
+  could rise specifically when community tags correlate with our
+  existing tags, and a mismatch becomes a signal worth investigating
+  rather than just noise. Real schema work (a companion confidence
+  column per field/trope), moderate effort, sequenced after Series DNA.
+
+- **Optional self-tagging + community validation + dispute flagging** —
+  external suggestion: let users optionally tag books themselves via the
+  same slider/dropdown Book DNA UI, aggregate across users as a
+  community-validated signal, and let users flag a specific tag they
+  disagree with for review (weight matters if many users flag the same
+  thing). Valuable long-term, correctly scoped as optional/non-intrusive
+  by the suggester, but needs real user accounts and a real tagging UI,
+  neither of which exist yet (no `users` table at all). Clearly post-v1.
+
+- **Post-read/DNF "why didn't it work" / "what did you love" dropdown**
+  — external suggestion, worth distinguishing from what this doc already
+  rejected elsewhere (asking users to explain field-by-field on every
+  single rating, which defeats the point of structured Book DNA
+  inference). This is different: optional, triggered only after a clear
+  miss (a low rating or a DNF), and using pre-set common reasons ("too
+  slow," "too much romance," "wasn't my mood," "DNF — couldn't get into
+  it") rather than open-ended justification — targeted error-correction
+  signal, not routine friction. Sequenced alongside the confidence layer,
+  once real usage exists to generate this signal from.
+
+- **"Recommend books with similar characters to X"** — external
+  suggestion, self-identified by the suggester as not for this early
+  stage. Correct: today's tropes describe the *book*, not individual
+  *characters* with enough granularity to match character-to-character
+  (e.g. "morally grey mentor" as its own tagged entity, not just "this
+  book contains a morally grey character somewhere"). Needs a new
+  `characters`-level data model — meaningfully bigger effort than
+  anything else on this list. Deferred.
+
+- **Hierarchical tropes** — external suggestion, term unclear to the
+  person relaying it. Likely meaning: organize the flat trope vocabulary
+  into a parent/child taxonomy (e.g. a `creature_presence` parent over
+  `elves`/`dwarves`/`orcs`/`vampires`/`werewolves`/`shapeshifters`/
+  `fae_or_fairies`) rather than unrelated flat tags. A shallow one-level
+  version already exists (`group_name` on `tropes`). A real hierarchy
+  would let scoring generalize for sparse data — someone who's liked
+  several "any fantasy race present" books but never specifically an elf
+  book could still get a sensible partial signal instead of zero.
+  Legitimate technique, real modeling work touching the whole trope
+  vocabulary and scoring code. Deferred — revisit if trope-sparsity for
+  narrower tags becomes an observed real problem, not before.
+
 ## Open for review
 
 Nothing outstanding. Both controlled vocabularies (`tropes` at 99 values,
