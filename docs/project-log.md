@@ -1458,3 +1458,41 @@ hierarchical tropes). Nothing in this batch was built yet — this was a
 logging/triage/sequencing session, per explicit request.
 
 Also wrote `README.md` for the repo (previously had none).
+
+## 2026-08-30 (later) — rating-magnitude scoring system implemented
+
+First item in the agreed build sequence from the feedback-triage
+session above. `recommend()`/`build_profile()` previously only accepted
+flat `liked_titles`/`disliked_titles` lists; replaced with a single
+`ratings` dict of `{title: label}` using a new `RATING_LABELS` 5-tier
+scale (hated=-1.0, disliked=-0.5, it_was_okay=0.0, liked=0.5, loved=1.0)
+— labeled tiers rather than raw 1-5 stars, per the earlier
+ratings-precision discussion's reasoning about calibration ambiguity.
+
+Every mean/mode computation in `build_profile()` is now a
+rating-magnitude-weighted average instead of a simple average, so a
+"loved" book pulls the centroid and weights harder than a merely
+"liked" one. `it_was_okay` (magnitude 0) is deliberately excluded from
+both the liked and disliked pools for profile-building -- it shouldn't
+pull taste in either direction -- but the book still gets excluded from
+future candidate recommendations via the ratings dict's keys, since the
+user has already read it. This was a deliberate full API replacement,
+not an additive parameter -- this is an actively-developed prototype
+script with no external callers depending on the old two-list shape, so
+maintaining both would just be two parallel code paths for no benefit.
+
+Verified with real tests: (1) uniform "liked"/"disliked" ratings (the
+old binary equivalent) reproduce byte-identical rankings to the
+pre-change eclectic-fantasy test result -- confirms this is a strict
+generalization, not a behavior change for existing usage; (2) marking
+two grimdark/political books "loved" instead of "liked" measurably
+shifted top results toward more of that specific flavor (GRRM's own
+ASOIAF sequels rose above previously-higher-ranked books); (3) marking
+a previously-liked book "it_was_okay" correctly dropped it out of the
+results entirely (still excluded as already-rated) without it
+influencing the profile; (4) genre scoping, the structural/content
+field split, `diversity`, and `fatigue_overrides` all re-verified
+working correctly against the new interface, no regressions.
+
+Next in the agreed sequence: the `revenge` trope, then the explanation
+layer, then Series DNA.

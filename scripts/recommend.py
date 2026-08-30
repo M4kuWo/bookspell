@@ -12,15 +12,21 @@ vector, no collaborative filtering for v1):
    signal to match toward. They belong in personalized hard filters
    (step 07 onboarding: "never show me X"), not in the score itself.
 
-2. A user's profile is built from books they've rated (liked/disliked),
-   not from a fixed formula: for each feature, compare the average value
-   among liked books to the average among disliked books. A feature's
-   PER-USER WEIGHT is how much it actually discriminates for that
-   specific user (liked vs. disliked differ a lot -> high weight; liked
-   and disliked look the same on this feature -> low weight, it isn't
-   telling us anything about this user's taste). This is the "per-user
-   weighted vector" the artifact specified, not a fixed global formula
-   applied identically to everyone.
+2. A user's profile is built from books they've rated on a 5-tier
+   labeled scale (hated/disliked/it_was_okay/liked/loved -- see
+   RATING_LABELS), not a binary liked/disliked, and not a fixed formula:
+   for each feature, compare the RATING-MAGNITUDE-WEIGHTED average value
+   among positively-rated books to the magnitude-weighted average among
+   negatively-rated books, so a "loved" book pulls the centroid harder
+   than a "liked" one, and "it_was_okay" (magnitude 0) contributes to
+   neither side -- it's excluded from profile-building entirely, present
+   only so the book gets excluded from future recommendations. A
+   feature's PER-USER WEIGHT is how much it actually discriminates for
+   that specific user (positive vs. negative differ a lot -> high
+   weight; look the same on this feature -> low weight, it isn't telling
+   us anything about this user's taste). This is the "per-user weighted
+   vector" the artifact specified, not a fixed global formula applied
+   identically to everyone.
 
 3. Every other catalog book is scored by weighted similarity to the
    liked-books centroid, using those per-user weights.
@@ -83,6 +89,22 @@ NOMINAL_FIELDS = [
 ]
 
 MULTI_FIELDS = ["tropes", "genre"]
+
+# Rating scale, added 2026-08-30. Labeled tiers rather than raw 1-5
+# stars, per the ratings-precision discussion -- raw numeric stars have
+# a well-known calibration problem (is a "solid but unremarkable" book a
+# 3 or a 4?), while labeled tiers map onto how people actually talk
+# about books. "it_was_okay" is a genuine neutral (magnitude 0): it
+# should pull a user's profile toward neither their liked nor disliked
+# side, but still needs to exclude the book from future recommendations
+# (they've already read it) -- see recommend()'s exclusion logic.
+RATING_LABELS = {
+    "loved": 1.0,
+    "liked": 0.5,
+    "it_was_okay": 0.0,
+    "disliked": -0.5,
+    "hated": -1.0,
+}
 
 # Which fields get their weight computed from the FULL liked/disliked
 # pool (structural/craft -- how a story is told, not what it's about;
@@ -168,40 +190,67 @@ def ordinal_position(field, value):
     return scale.index(value), len(scale) - 1
 
 
-def build_profile(catalog, liked_ids, disliked_ids, full_liked_ids=None, full_disliked_ids=None):
+def _split_by_sign(catalog, ratings):
+    """ratings: dict of {book_id: magnitude} (magnitude in [-1, 1], see
+    RATING_LABELS). Returns (liked, disliked) as lists of (book, weight)
+    pairs -- weight is the rating magnitude (always positive in both
+    lists; disliked weights are the absolute value). Magnitude-0 ratings
+    ("it_was_okay") appear in neither list -- see RATING_LABELS."""
+    liked, disliked = [], []
+    for bid, m in ratings.items():
+        book = catalog.get(bid)
+        if book is None:
+            continue
+        if m > 0:
+            liked.append((book, m))
+        elif m < 0:
+            disliked.append((book, -m))
+    return liked, disliked
+
+
+def build_profile(catalog, ratings, full_ratings=None):
     """Returns (centroid, weights) -- centroid is the target feature profile
-    (liked books' average), weights say how much each feature matters for
-    THIS user specifically.
+    (a rating-magnitude-weighted average of positively-rated books),
+    weights say how much each feature matters for THIS user specifically.
 
-    liked_ids/disliked_ids: the (possibly genre-scoped) pool used for
-    CONTENT fields and tropes. full_liked_ids/full_disliked_ids: the
-    unscoped pool used for STRUCTURAL fields (see STRUCTURAL_*_FIELDS
-    above) -- defaults to the same pool as liked_ids/disliked_ids when
+    ratings: {book_id: magnitude} (see RATING_LABELS), the (possibly
+    genre-scoped) pool used for CONTENT fields and tropes.
+    full_ratings: same shape, the unscoped pool used for STRUCTURAL
+    fields (see STRUCTURAL_*_FIELDS above) -- defaults to `ratings` when
     not given, i.e. no genre scoping in play."""
-    full_liked_ids = liked_ids if full_liked_ids is None else full_liked_ids
-    full_disliked_ids = disliked_ids if full_disliked_ids is None else full_disliked_ids
+    full_ratings = ratings if full_ratings is None else full_ratings
 
-    liked = [catalog[i] for i in liked_ids if i in catalog]
-    disliked = [catalog[i] for i in disliked_ids if i in catalog]
-    full_liked = [catalog[i] for i in full_liked_ids if i in catalog]
-    full_disliked = [catalog[i] for i in full_disliked_ids if i in catalog]
+    liked, disliked = _split_by_sign(catalog, ratings)
+    full_liked, full_disliked = _split_by_sign(catalog, full_ratings)
 
     centroid = {}
     weights = {}
 
+    def weighted_mean(pairs, positions):
+        """positions: list of (position_fraction, weight) already
+        filtered to non-None. Returns None if empty."""
+        total_w = sum(w for _, w in positions)
+        if total_w == 0:
+            return None
+        return sum(v * w for v, w in positions) / total_w
+
     for field in ORDINAL_FIELDS:
         pool_liked = full_liked if field in STRUCTURAL_ORDINAL_FIELDS else liked
         pool_disliked = full_disliked if field in STRUCTURAL_ORDINAL_FIELDS else disliked
-        liked_raw = [x for x in (ordinal_position(field, b.get(field)) for b in pool_liked) if x is not None]
-        liked_vals = [p / m for p, m in liked_raw]
-        disliked_raw = [x for x in (ordinal_position(field, b.get(field)) for b in pool_disliked) if x is not None]
-        disliked_vals = [p / m for p, m in disliked_raw]
-        if not liked_vals:
+        liked_positions = [
+            (pos[0] / pos[1], m) for b, m in pool_liked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        liked_mean = weighted_mean(pool_liked, liked_positions)
+        if liked_mean is None:
             continue
-        liked_mean = sum(liked_vals) / len(liked_vals)
         centroid[field] = liked_mean
-        if disliked_vals:
-            disliked_mean = sum(disliked_vals) / len(disliked_vals)
+        disliked_positions = [
+            (pos[0] / pos[1], m) for b, m in pool_disliked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        disliked_mean = weighted_mean(pool_disliked, disliked_positions)
+        if disliked_mean is not None:
             weights[field] = min(WEIGHT_CAP, abs(liked_mean - disliked_mean))
         else:
             # No disliked signal yet -- fall back to a modest default
@@ -212,20 +261,23 @@ def build_profile(catalog, liked_ids, disliked_ids, full_liked_ids=None, full_di
     for field in NOMINAL_FIELDS:
         pool_liked = full_liked if field in STRUCTURAL_NOMINAL_FIELDS else liked
         pool_disliked = full_disliked if field in STRUCTURAL_NOMINAL_FIELDS else disliked
-        liked_vals = [b.get(field) for b in pool_liked if b.get(field)]
+        liked_vals = [(b.get(field), m) for b, m in pool_liked if b.get(field)]
         if not liked_vals:
             continue
-        # mode
+        # magnitude-weighted mode
         counts = {}
-        for v in liked_vals:
-            counts[v] = counts.get(v, 0) + 1
+        total_m = 0.0
+        for v, m in liked_vals:
+            counts[v] = counts.get(v, 0.0) + m
+            total_m += m
         mode_val = max(counts, key=counts.get)
-        liked_share = counts[mode_val] / len(liked_vals)
-        disliked_vals = [b.get(field) for b in pool_disliked if b.get(field)]
-        disliked_share = (
-            sum(1 for v in disliked_vals if v == mode_val) / len(disliked_vals)
-            if disliked_vals else 0.0
-        )
+        liked_share = counts[mode_val] / total_m
+        disliked_vals = [(b.get(field), m) for b, m in pool_disliked if b.get(field)]
+        if disliked_vals:
+            total_dm = sum(m for _, m in disliked_vals)
+            disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
+        else:
+            disliked_share = 0.0
         centroid[field] = mode_val
         weights[field] = (
             min(WEIGHT_CAP, max(0.0, liked_share - disliked_share))
@@ -233,16 +285,23 @@ def build_profile(catalog, liked_ids, disliked_ids, full_liked_ids=None, full_di
         )
 
     # Tropes: content, always genre-scoped. Per-trope weight = how much
-    # more (or less) common it is in liked books vs. disliked books.
-    # Negative weight = actively penalize (the trope appears in disliked
-    # books, not liked ones).
+    # more (or less) common it is in liked books vs. disliked books,
+    # weighted by rating magnitude (a "loved" book's tropes count more
+    # toward defining taste than a "liked" book's). Negative weight =
+    # actively penalize (the trope appears in disliked books, not liked
+    # ones).
     trope_weights = {}
-    liked_trope_lists = [b.get("tropes") or [] for b in liked]
-    disliked_trope_lists = [b.get("tropes") or [] for b in disliked]
-    all_tropes = set(t for lst in liked_trope_lists + disliked_trope_lists for t in lst)
+    liked_trope_pairs = [(b.get("tropes") or [], m) for b, m in liked]
+    disliked_trope_pairs = [(b.get("tropes") or [], m) for b, m in disliked]
+    total_liked_m = sum(m for _, m in liked_trope_pairs) or 1.0
+    total_disliked_m = sum(m for _, m in disliked_trope_pairs)
+    all_tropes = set(t for lst, _ in liked_trope_pairs + disliked_trope_pairs for t in lst)
     for t in all_tropes:
-        liked_freq = sum(1 for lst in liked_trope_lists if t in lst) / max(1, len(liked_trope_lists))
-        disliked_freq = sum(1 for lst in disliked_trope_lists if t in lst) / max(1, len(disliked_trope_lists)) if disliked_trope_lists else 0.0
+        liked_freq = sum(m for lst, m in liked_trope_pairs if t in lst) / total_liked_m
+        disliked_freq = (
+            sum(m for lst, m in disliked_trope_pairs if t in lst) / total_disliked_m
+            if total_disliked_m else 0.0
+        )
         raw = liked_freq - disliked_freq
         trope_weights[t] = max(-WEIGHT_CAP, min(WEIGHT_CAP, raw))
     weights["tropes"] = trope_weights
@@ -321,20 +380,26 @@ def book_similarity(book_a, book_b):
     return sum(components) / len(components)
 
 
-def recommend(catalog, liked_titles, disliked_titles, top_n=10, genre=None,
+def recommend(catalog, ratings, top_n=10, genre=None,
               recent_history=None, diversity=0.0, fatigue_overrides=None):
-    """genre: None (blend everything, current default behavior), or
+    """ratings: dict of {title: rating_label}, rating_label one of
+    RATING_LABELS's keys ("hated", "disliked", "it_was_okay", "liked",
+    "loved"). Replaces the old separate liked_titles/disliked_titles
+    lists (2026-08-30) -- a flat like/dislike lost real information (see
+    RATING_LABELS's docstring), and a "loved" book should pull a user's
+    profile harder than a merely "liked" one.
+
+    genre: None (blend everything, current default behavior), or
     'fantasy'/'sci_fi' to scope the candidate pool (only books tagged
     with that genre) and CONTENT-field profiling (tropes, tone, heat,
-    violence -- see STRUCTURAL_*_FIELDS) to only the subset of
-    liked/disliked books tagged with that genre. STRUCTURAL fields
-    (pov_count, pacing, length, etc.) are always profiled from the FULL
-    unscoped liked/disliked list regardless of genre, since craft/format
-    taste plausibly doesn't depend on genre and benefits from the bigger
-    sample -- see the WEIGHT_CAP-adjacent comment above for the case
-    that motivated this split. Falls back to the unscoped liked/disliked
-    set for content profiling if none of a user's ratings happen to fall
-    in the requested genre.
+    violence -- see STRUCTURAL_*_FIELDS) to only the subset of rated
+    books tagged with that genre. STRUCTURAL fields (pov_count, pacing,
+    length, etc.) are always profiled from the FULL unscoped ratings
+    regardless of genre, since craft/format taste plausibly doesn't
+    depend on genre and benefits from the bigger sample -- see the
+    WEIGHT_CAP-adjacent comment above for the case that motivated this
+    split. Falls back to the unscoped ratings for content profiling if
+    none of a user's ratings happen to fall in the requested genre.
 
     recent_history: list of titles the user was recently recommended/has
     recently read, most-relevant for the `diversity` param below. Purely
@@ -359,22 +424,33 @@ def recommend(catalog, liked_titles, disliked_titles, top_n=10, genre=None,
     own average, not a re-estimate of it -- so it's a clobber, not a
     blend."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
-    liked_ids = [title_to_id[t] for t in liked_titles if t in title_to_id]
-    disliked_ids = [title_to_id[t] for t in disliked_titles if t in title_to_id]
-    missing = [t for t in liked_titles + disliked_titles if t not in title_to_id]
+
+    id_to_magnitude = {}
+    missing, invalid = [], []
+    for title, label in ratings.items():
+        if title not in title_to_id:
+            missing.append(title)
+            continue
+        if label not in RATING_LABELS:
+            invalid.append((title, label))
+            continue
+        id_to_magnitude[title_to_id[title]] = RATING_LABELS[label]
     if missing:
         print(f"WARNING: not found in catalog: {missing}")
+    if invalid:
+        print(f"WARNING: unknown rating label (must be one of {sorted(RATING_LABELS)}): {invalid}")
 
     def matches_genre(bid):
         return genre is None or genre in (catalog[bid].get("genre") or [])
 
     if genre is not None:
-        scoped_liked = [i for i in liked_ids if matches_genre(i)] or liked_ids
-        scoped_disliked = [i for i in disliked_ids if matches_genre(i)] or disliked_ids
+        scoped_ratings = {
+            bid: m for bid, m in id_to_magnitude.items() if matches_genre(bid)
+        } or id_to_magnitude
     else:
-        scoped_liked, scoped_disliked = liked_ids, disliked_ids
+        scoped_ratings = id_to_magnitude
 
-    centroid, weights = build_profile(catalog, scoped_liked, scoped_disliked, liked_ids, disliked_ids)
+    centroid, weights = build_profile(catalog, scoped_ratings, id_to_magnitude)
 
     if fatigue_overrides:
         for key, val in fatigue_overrides.items():
@@ -389,7 +465,7 @@ def recommend(catalog, liked_titles, disliked_titles, top_n=10, genre=None,
         catalog[title_to_id[t]] for t in (recent_history or []) if t in title_to_id
     ]
 
-    excluded = set(liked_ids) | set(disliked_ids)
+    excluded = set(id_to_magnitude.keys())
     scored = []
     for bid, book in catalog.items():
         if bid in excluded or not matches_genre(bid):
@@ -410,19 +486,22 @@ if __name__ == "__main__":
     catalog = load_catalog()
     print(f"Loaded {len(catalog)} books.\n")
 
-    liked = [
-        "The Golden Compass", "The Lies of Locke Lamora", "The Eye of the World",
-        "Kings of Paradise", "Prince of Thorns", "The Way of Kings",
-    ]
-    disliked = [
-        "Bird Box", "Assassin's Apprentice", "We Are Legion (We Are Bob)",
-        "Interview with the Vampire", "The Poppy War", "Circe",
-        "Dark Matter", "He Who Fights with Monsters",
-    ]
+    # Original 2026-08-28 pilot data was collected as plain liked/disliked
+    # (no magnitude) -- mapped straight onto the new labeled scale rather
+    # than inventing granularity that was never actually reported.
+    ratings = {
+        "The Golden Compass": "liked", "The Lies of Locke Lamora": "liked",
+        "The Eye of the World": "liked", "Kings of Paradise": "liked",
+        "Prince of Thorns": "liked", "The Way of Kings": "liked",
+        "Bird Box": "disliked", "Assassin's Apprentice": "disliked",
+        "We Are Legion (We Are Bob)": "disliked",
+        "Interview with the Vampire": "disliked", "The Poppy War": "disliked",
+        "Circe": "disliked", "Dark Matter": "disliked",
+        "He Who Fights with Monsters": "disliked",
+    }
 
-    print(f"Liked: {liked}")
-    print(f"Disliked: {disliked}\n")
-    results = recommend(catalog, liked, disliked, top_n=15)
+    print(f"Ratings: {ratings}\n")
+    results = recommend(catalog, ratings, top_n=15)
     for score, title, author, contributions in results:
         print(f"{score:.3f}  {title} ({author})")
         print(f"       top factors: {contributions}")
