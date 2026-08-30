@@ -2030,21 +2030,23 @@ accuracy both times), and the specific failure mode look like a genuine,
 repeatable pattern worth a dedicated look -- not something more data
 alone reliably fixes -- rather than confirmation the system is broken.
 
-## TODO (open, next update): enable RLS on book_field_confidence
+## TODO (resolved 2026-08-31): enable RLS on book_field_confidence
 
 Noticed via Supabase's own security advisor while looking up the
 session-pooler connection string for the wife's home-PC setup:
 `book_field_confidence` (added 2026-08-30 by the confidence/source
 layer work) never got Row Level Security enabled, unlike every other
 catalog table -- it was added after `20260829000000_enable_rls_public_read.sql`
-and simply wasn't included in that pass. Fix, matching that migration's
-exact existing pattern (public read, write stays restricted to the
-service role):
+and simply wasn't included in that pass. Fixed in
+`20260831001215_enable_rls_book_field_confidence.sql`, matching that
+migration's exact existing pattern (public read, write stays restricted
+to the service role):
 
 ```sql
 alter table book_field_confidence enable row level security;
 create policy "public read access" on book_field_confidence for select using (true);
 ```
 
-Not urgent (nothing sensitive in that table), but do this next time
-there's a migration pass so hosted stays consistent across all tables.
+Verified against hosted: `relrowsecurity = true` and the "public read
+access" SELECT policy is in place, consistent with every other catalog
+table now.
