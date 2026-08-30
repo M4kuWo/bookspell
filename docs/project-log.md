@@ -1962,3 +1962,70 @@ decorative. Deliberately does NOT embed the hosted DB password in the
 skill file (which gets committed to git) -- instructs setting
 `DATABASE_URL` via a local, gitignored `.env`, with the actual
 connection string shared out of band, not through chat or git.
+
+Also fixed a real gap in the skill the user's own question exposed
+("how will I get her tagging back to my terminal") -- it previously had
+no instructions for saving a migration file or getting it back into git
+history at all. Fixed: all inserts now use title-based subselects (not
+raw UUIDs, since hosted and any local DB have different row UUIDs for
+the same logical books -- matches the pattern every other migration in
+this project already uses), and an explicit new step to save the
+batch's SQL as a proper timestamped migration file and hand it back
+(direct push if given collaborator access, otherwise share the file
+contents for the repo owner to commit).
+
+Confirmed via the claude-code-guide subagent (not guessed): running
+`CLAUDE_CONFIG_DIR=<path> claude login` in a second terminal creates a
+fully independent, isolated credential store -- the browser-based OAuth
+step is account-agnostic and doesn't touch or invalidate the main
+terminal's or desktop app's already-stored credentials. Safe to use an
+incognito window for the second login to avoid the browser being
+already signed into the primary account.
+
+## 2026-08-30 (later still) -- larger synthetic validation test
+
+Second, larger validation round per the user's request, explicitly
+lower-weighted than real human data since a synthetic persona can't
+organically produce genuinely surprising misses the way real taste does
+(see the earlier Red Rising/Poppy War findings). Built one coherent
+grimdark-epic-fantasy + hard-SF persona (deliberately similar flavor to
+the real test, to specifically check whether more data reduces the
+overfitting pattern found there) -- 32 training books across all 5
+tiers, 7 held out (never given to the engine): The Fifth Season-loved/
+fantasy, The Dark Forest-liked/sci-fi, Kings of Paradise-it_was_okay/
+fantasy, A Court of Thorns and Roses-disliked/fantasy, We Are Legion (We
+Are Bob)-hated/sci-fi, Malice-liked/fantasy, Old Man's War-liked/sci-fi.
+
+Results (blended): 5/7 correct direction (Fifth Season, Dark Forest,
+ACOTAR, Malice, Old Man's War), 2 misses -- Kings of Paradise
+(it_was_okay, scored Strong match 0.894) and We Are Legion (We Are Bob)
+(hated, scored only Mixed match 0.541, not Poor).
+
+Real finding, more specific than "small N causes overfitting": tripling
+the training set (11 -> 32) did NOT eliminate the same failure mode
+found in the smaller real test. Kings of Paradise scored high for
+almost the identical reason Red Rising did before -- it shares
+`revenge` and dense worldbuilding/long length with the loved grimdark
+set, and the training data had no disliked/hated book sharing those
+same traits to counterbalance it. This suggests the issue isn't
+primarily about sample size -- it's that certain high-weight,
+broadly-shared signals (revenge, dense worldbuilding, epic length) will
+systematically inflate scores for ANY book that has them UNLESS the
+training set specifically includes a disliked/hated example that also
+has them. More data only helps if it happens to include that
+counter-example, not just more data in general. We Are Legion's miss was
+milder and directionally more defensible -- its mismatch reasons (light
+tone, comfort_read register, mild violence) were exactly right, just not
+strong enough in magnitude to reach "Poor" -- a magnitude problem, not a
+wrong-direction one.
+
+Genre-scoping again measurably hurt rather than helped (We Are Legion:
+0.541 Mixed blended -> 0.647 Good genre-scoped), a second, independent
+confirmation of the earlier finding -- the sci-fi training pool here had
+only 3 positively-rated books and zero disliked/hated ones, again too
+thin to produce a cleaner signal than the blended pool.
+
+Overall: consistent with the real test's hit rate (~70% directional
+accuracy both times), and the specific failure mode look like a genuine,
+repeatable pattern worth a dedicated look -- not something more data
+alone reliably fixes -- rather than confirmation the system is broken.
