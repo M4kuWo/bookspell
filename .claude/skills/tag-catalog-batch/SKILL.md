@@ -114,22 +114,61 @@ book:
   columns -- don't skip this when it's warranted, it's a real, used
   part of the scoring system, not decorative.
 
-Write every insert as a SCOPED statement tied to a specific book_id --
-never a blanket UPDATE or DELETE across multiple rows. Example shape:
+Write every insert as a SCOPED statement tied to a specific book, using a
+`select id from books where title = '...'` subselect for the book_id --
+**not a raw UUID pasted from a query result.** This matters specifically
+because you're working against the hosted database, which has different
+row UUIDs than anyone else's local database for the same logical books
+-- a title-keyed subselect is portable across both, a hardcoded UUID
+only works in the one database you copied it from. This is the same
+pattern every migration in this project already uses. Never a blanket
+UPDATE or DELETE across multiple rows. Example shape:
 
 ```sql
 insert into book_dna (book_id, overall_pace, darkness, pov_count, ..., genre)
-values ('<uuid>', 'fast', 'dark', 'few', ..., array['fantasy']);
+select id, 'fast', 'dark', 'few', ..., array['fantasy'] from books where title = 'Example Title';
 
-insert into book_tropes (book_id, trope_id) values ('<uuid>', 'revenge');
+insert into book_tropes (book_id, trope_id)
+select id, 'revenge' from books where title = 'Example Title';
 
-insert into book_content_warnings (book_id, warning_id) values ('<uuid>', 'graphic_violence');
+insert into book_content_warnings (book_id, warning_id)
+select id, 'graphic_violence' from books where title = 'Example Title';
 ```
 
 Verify each book's inserts by re-querying afterward.
 
-## Step 4: report back
+## Step 4: save your batch as a migration file, and hand it back
+
+Your inserts already went live against the hosted database the moment
+you ran them -- there's no separate "push" needed for that. But two more
+things still need to happen so your work is properly recorded and
+reaches whoever's local development database:
+
+1. Save every statement from this batch into one new file at
+   `supabase/migrations/<YYYYMMDDHHMMSS>_<short_description>.sql` (match
+   the timestamp-prefixed naming already used by every other migration
+   in `supabase/migrations/`), with a short comment at the top noting
+   what was tagged and by whom.
+2. Get that file back to whoever owns this repo, so it lands in git
+   history and can be applied to their local database (the same file,
+   unmodified -- it's portable by construction, see Step 3 above):
+   - If you've been added as a GitHub collaborator with push access,
+     just `git add`/`git commit`/`git push` it yourself.
+   - If not (the default -- this repo is public to clone but that
+     doesn't grant push access), don't try to push. Instead, hand the
+     `.sql` file's contents back directly (paste it, share the file) --
+     the repo owner will commit it on their end.
+
+Do NOT skip this step because "the data's already in the hosted
+database" -- an untracked change with no corresponding migration file
+means the next person to look at `supabase/migrations/` has no record
+of what happened or why, and their own local database silently drifts
+out of sync with hosted.
+
+## Step 5: report back
 
 For each book tagged, note anything genuinely uncertain or any
-vocabulary gap you noticed. Report the total tagged, and how many
-partial series moved closer to (or reached) full completion.
+vocabulary gap you noticed. Report the total tagged, how many partial
+series moved closer to (or reached) full completion, and confirm
+whether the migration file was pushed or handed back for the repo owner
+to commit.
