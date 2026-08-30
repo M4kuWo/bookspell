@@ -37,7 +37,7 @@ That constraint is what makes similarity scoring work at all (roadmap §05).
 | `person` | first, second, third_limited, third_omniscient, mixed |
 | `narrator_reliability` | reliable, unreliable |
 | `timeline` | linear, nonlinear, multi_timeline |
-| `form` | standard_prose, epistolary, framing_device, verse, embedded_system_text |
+| `form` | standard_prose, epistolary, framing_device, verse, embedded_system_text, script_or_stage_play |
 | `prose_density` | sparse, moderate, lush |
 | `prose_complexity` | accessible, moderate, dense |
 
@@ -50,6 +50,12 @@ a well-known, Hugo-winning structural technique, not a fluke.
 `form: embedded_system_text` closes the LitRPG game-notification-text gap
 that recurred 6+ times across three tagging rounds before being added —
 see the vocabulary growth section below.
+
+`form: script_or_stage_play` was added 2026-08-30 during a partial-series
+batch tagging pass, surfaced by *Harry Potter and the Cursed Child* — a
+stage-play script (dialogue + stage directions, no narrative prose at
+all) had no vocabulary match; every other `form` value assumes some kind
+of prose narration exists, which a script structurally doesn't have.
 
 `prose_density` (how much physical/sensory description the prose
 carries) and `prose_complexity` (vocabulary/sentence-structure

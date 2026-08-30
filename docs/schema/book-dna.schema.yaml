@@ -104,7 +104,7 @@ categories:
         spoiler: false
       form:
         type: enum
-        values: [standard_prose, epistolary, framing_device, verse, embedded_system_text]
+        values: [standard_prose, epistolary, framing_device, verse, embedded_system_text, script_or_stage_play]
         # embedded_system_text added after the same gap recurred 6+ times
         # across three tagging rounds (He Who Fights with Monsters, The
         # Gate of the Feral Gods, Carl's Doomsday Scenario, Dungeon
@@ -114,6 +114,10 @@ categories:
         # block text interleaved with standard narrative prose) had no
         # value at all; every instance was previously force-fit into
         # standard_prose.
+        # script_or_stage_play added 2026-08-30, surfaced by Harry Potter
+        # and the Cursed Child — a stage-play script (dialogue + stage
+        # directions, no narrative prose) had no vocabulary match; every
+        # other value assumes some form of prose narration exists.
         spoiler: false
       prose_density:
         type: enum
