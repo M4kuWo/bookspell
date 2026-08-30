@@ -226,6 +226,16 @@ VALUE_PHRASES = {
         "consistent": "a consistent pace throughout", "slow_burn_to_fast_finish": "a slow burn building to a fast finish",
         "front_loaded": "a front-loaded pace", "uneven": "an uneven pace",
     },
+    "ends_on_cliffhanger": {
+        "resolved": "a resolved ending", "cliffhanger": "a cliffhanger ending",
+    },
+    "drive": {
+        "character_driven": "a character-driven story", "plot_driven": "a plot-driven story",
+        "balanced": "a story balanced between character and plot", "worldbuilding_driven": "a worldbuilding-driven story",
+    },
+    "narrative_closure": {
+        "self_contained": "a self-contained story", "requires_series": "an ending that requires the rest of the series",
+    },
 }
 
 

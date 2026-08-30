@@ -1759,3 +1759,79 @@ character-similarity recommendations, community self-tagging/dispute
 flagging, hierarchical tropes -- all correctly scoped as later-stage,
 needing either a bigger new data model or real user accounts that don't
 exist yet.
+
+## 2026-08-30 (later still) -- first real held-out validation test
+
+First genuinely rigorous validation since the original 30-book pilot,
+finally possible now that the rating-magnitude scoring system exists.
+User provided 16 real, honestly-rated books spanning all 5 tiers
+(4 loved, 4 liked, 1 it_was_okay, 4 disliked, 3 hated) across both
+genres. Split into an 11-book training set and a 5-book held-out set
+chosen for genre/tier diversity (The Blade Itself-loved/fantasy, Red
+Rising-hated/sci-fi, Six of Crows-liked/fantasy, Artemis-disliked/
+sci-fi, The Poppy War-it_was_okay/fantasy) -- the held-out ratings were
+never given to the engine; only used afterward to check the predicted
+score/match_label against the real one.
+
+Results (blended, genre=None):
+- The Blade Itself: true=loved, predicted=Strong match (0.817) -- correct.
+- Six of Crows: true=liked, predicted=Strong match (0.754) -- correct
+  direction (slightly high).
+- Artemis: true=disliked, predicted=Mixed match (0.534) -- correct
+  direction, soft miss (not as low as ideal).
+- The Poppy War: true=it_was_okay, predicted=Good match (0.737) -- miss,
+  overshoots.
+- Red Rising: true=hated, predicted=Good match (0.701) -- clear miss.
+
+Genre-scoped mode did NOT improve results and made Artemis measurably
+worse (Mixed 0.534 -> Good 0.58) -- likely because the sci-fi training
+pool was thin (only 4 books: Dark Matter-hated, We Are Legion-disliked,
+Children of Time-liked, Old Man's War-liked), so genre-scoping content
+fields to that small a sample produced a noisier profile, not a cleaner
+one. Real, useful caveat: genre-scoping's earlier-demonstrated benefit
+depends on having enough books per genre to learn from -- it isn't a
+free win at every sample size.
+
+Investigated the Red Rising miss in depth rather than just noting the
+score: pulled its actual tropes (dystopia, rebellion_against_empire,
+underdog_rising, court_intrigue, major_character_death,
+deadly_competition_or_trial, found_family, revenge) and checked the
+LEARNED weight for each against this training set. Found the real cause:
+`dystopia`, `rebellion_against_empire`, and `deadly_competition_or_trial`
+-- plausibly the tropes that actually define what the user disliked
+(Red Rising's YA-dystopian, Hunger-Games-style trial structure) -- have
+ZERO learned weight, because none of the 11 training books happen to be
+tagged with them. Meanwhile `underdog_rising` (0.44) and `revenge`
+(0.44), which Red Rising shares with the grimdark epic fantasy the user
+loved (Eye of World, Way of Kings, Prince of Thorns, Blade Itself),
+pulled the score up. This is not a bug -- the algorithm correctly
+learned everything it had evidence for, but had zero information at all
+about the axis that likely actually drove the dislike. The Poppy War's
+overshoot follows the identical pattern (also shares underdog_rising +
+revenge with the loved set). With only 11 training books, a small
+number of dominant, unevenly-distributed tropes can overfit the profile
+-- a real, honest limitation of small sample size, not a design flaw.
+This also concretely validates the post-read feedback dropdown built
+earlier today: if a user flags `deadly_competition_or_trial` as a
+dislike reason after a miss like this, the system immediately learns
+that specific signal going forward -- exactly the gap this test exposed.
+
+Also found and fixed a real phrasing bug while reading Red Rising's
+explanation: `ends_on_cliffhanger`'s generic fallback produced literal
+"cliffhanger cliffhanger ending" (value "cliffhanger" + display label
+"cliffhanger ending" concatenated verbatim). Added proper VALUE_PHRASES
+overrides for `ends_on_cliffhanger`, `drive`, and `narrative_closure`
+while in the area -- all three had awkward generic-fallback phrasing.
+
+Overall verdict: directionally correct for 3 of 5 held-out books (Blade
+Itself, Six of Crows, Artemis), with 2 real misses (Poppy War, Red
+Rising) both traceable to the same specific, explainable cause -- small
+training-set overfitting on a couple of dominant tropes, not a
+fundamental flaw in the scoring approach. Recommended next steps: (1) a
+larger validation round (30-50+ rated books) to check whether the
+overfitting pattern goes away with more data, as expected; (2) treat
+this as confirmation that the feedback-dropdown loop is load-bearing,
+not a nice-to-have -- sparse-data misses like Red Rising will keep
+happening for any new user with a short rating history, and the system
+needs the correction mechanism already built, not just a bigger static
+profile.
