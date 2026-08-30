@@ -11,3 +11,6 @@ out/
 .env.local
 .env.*.local
 __pycache__/
+
+# Claude Code runtime state (not project content)
+.claude/scheduled_tasks.lock
