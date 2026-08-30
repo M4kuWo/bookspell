@@ -315,13 +315,185 @@ def natural_sentence(labeled_phrases, positive):
     return "The book " + ", and ".join(clauses) + "."
 
 
+# --- Series DNA --------------------------------------------------------
+# A series can change dramatically across its own run (The Wheel of Time:
+# book 1 is single-POV/fast/journey-structured; book 6+ is multi-POV/
+# slow/political) -- scoring or describing a series by only its first
+# entry's Book DNA can misrepresent the whole commitment. Series DNA is
+# an AGGREGATION over book_dna rows already tagged per book, grouped by
+# `series_id` and ordered by `position_in_series` -- not a fresh tagging
+# pass.
+#
+# Scope question resolved 2026-08-30: does a shared universe (the
+# Cosmere) or a parent series spanning tonally different eras (Mistborn,
+# spanning the original trilogy and the later Wax & Wayne books) merit
+# its own DNA? No to both -- the existing series hierarchy already
+# settles this for free. `books.series_id` always points at a LEAF
+# series (confirmed: Mistborn: The Final Empire etc. link to "Mistborn
+# Era One", never to the parent "Mistborn" row, which has zero books
+# linked directly). Grouping by series_id therefore naturally computes
+# trajectories only at the level a reader actually commits to reading in
+# order -- a universe or a multi-era parent series is too heterogeneous
+# to blend into one coherent centroid (same reasoning as the earlier
+# genre-split finding: blending across genuinely disjoint reading
+# experiences loses signal rather than gaining it).
+TREND_THRESHOLD = 0.2  # fraction of the ordinal scale's full range
+
+# Fields most likely to matter to a reader deciding whether to continue
+# a series -- used only to prioritize which detected shifts get
+# surfaced first when there are several (see describe_series_trajectory).
+TRAJECTORY_PRIORITY_FIELDS = [
+    "overall_pace", "pov_count", "darkness", "violence_intensity",
+    "worldbuilding_density", "book_length", "age_category", "stakes_scope",
+]
+
+
+def compute_series_dna(catalog):
+    """Groups catalog books by series_id, ordered by position_in_series.
+    Returns {series_id: {"name", "books": [(position, title), ...],
+    "trajectories": {field: {"start_value", "end_value", "trend"}}}} for
+    every series with >= 2 tagged books (a single-book series has no
+    trajectory). `trend` is "increases"/"decreases"/"stable" for ordinal
+    fields (a real directional shift, not just noise -- see
+    TREND_THRESHOLD) and "changes"/"stable" for nominal fields (no
+    direction, just "this isn't the same throughout")."""
+    by_series = {}
+    for b in catalog.values():
+        sid = b.get("series_id")
+        if sid is None:
+            continue
+        by_series.setdefault(sid, {"name": b.get("series_name"), "books": []})
+        by_series[sid]["books"].append(b)
+
+    result = {}
+    for sid, data in by_series.items():
+        books = sorted(data["books"], key=lambda b: float(b["position_in_series"] or 0))
+        if len(books) < 2:
+            continue
+
+        trajectories = {}
+        for field in ORDINAL_FIELDS:
+            positions = [ordinal_position(field, b.get(field)) for b in books]
+            valid = [(i, p[0] / p[1]) for i, p in enumerate(positions) if p is not None]
+            if len(valid) < 2:
+                continue
+            start_i, start_val = valid[0]
+            end_i, end_val = valid[-1]
+            diff = end_val - start_val
+            trend = "increases" if diff >= TREND_THRESHOLD else "decreases" if diff <= -TREND_THRESHOLD else "stable"
+            trajectories[field] = {
+                "start_value": books[start_i].get(field),
+                "end_value": books[end_i].get(field),
+                "trend": trend,
+            }
+
+        for field in NOMINAL_FIELDS:
+            valid = [(i, b.get(field)) for i, b in enumerate(books) if b.get(field)]
+            if len(valid) < 2:
+                continue
+            start_i, start_val = valid[0]
+            end_i, end_val = valid[-1]
+            trend = "stable" if start_val == end_val else "changes"
+            trajectories[field] = {
+                "start_value": start_val,
+                "end_value": end_val,
+                "trend": trend,
+            }
+
+        result[sid] = {
+            "name": data["name"],
+            "books": [(b.get("position_in_series"), b["title"]) for b in books],
+            "trajectories": trajectories,
+        }
+    return result
+
+
+def describe_series_trajectory(series_entry, max_items=3):
+    """series_entry: one value from compute_series_dna()'s result dict.
+    Returns a readable sentence describing how the series changes
+    across its run, or "" if nothing changes meaningfully (this is the
+    common case -- most series stay consistent, and that's fine, no
+    caveat needed)."""
+    changed = [(f, t) for f, t in series_entry["trajectories"].items() if t["trend"] != "stable"]
+    if not changed:
+        return ""
+    changed.sort(key=lambda x: TRAJECTORY_PRIORITY_FIELDS.index(x[0]) if x[0] in TRAJECTORY_PRIORITY_FIELDS else len(TRAJECTORY_PRIORITY_FIELDS))
+
+    phrases = []
+    for field, t in changed[:max_items]:
+        start_phrase = phrase_field(field, t["start_value"])
+        end_phrase = phrase_field(field, t["end_value"])
+        if not start_phrase or not end_phrase:
+            continue
+        phrases.append(f"{start_phrase} to {end_phrase}")
+    if not phrases:
+        return ""
+    return f"Across the series, it shifts from {_join_list(phrases)}."
+
+
+def series_dnf_outlook(catalog, ratings, series_id, current_position, genre=None, fatigue_overrides=None):
+    """For a user currently on (or considering DNFing) a specific book in
+    a series, compares how well THIS user's profile matches the current
+    entry vs. the entries still ahead -- surfaces "it gets better for
+    you" or "it may not improve" instead of silence. Unlike
+    compute_series_dna() above (objective, same for every reader), this
+    is per-user: whether a series "improves" depends on what's shifting
+    and whether that shift moves toward or away from THIS reader's
+    taste, not just whether it shifts at all.
+
+    Returns None if series_id isn't found, has < 2 books, or
+    current_position isn't in it. Otherwise: {"current": (title, score),
+    "next": (title, score) or None, "improves": bool or None, "note": str}."""
+    books = sorted(
+        (b for b in catalog.values() if b.get("series_id") == series_id),
+        key=lambda b: float(b["position_in_series"] or 0),
+    )
+    if len(books) < 2:
+        return None
+    positions = [float(b["position_in_series"]) for b in books]
+    if current_position not in positions:
+        return None
+    idx = positions.index(current_position)
+
+    centroid, weights, _, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides)
+    scores = [score_book(b, centroid, weights)[0] for b in books]
+
+    current_title, current_score = books[idx]["title"], scores[idx]
+    if idx + 1 >= len(books):
+        return {
+            "current": (current_title, round(current_score, 3)),
+            "next": None,
+            "improves": None,
+            "note": f"'{current_title}' is the last entry in this series.",
+        }
+
+    next_title, next_score = books[idx + 1]["title"], scores[idx + 1]
+    improves = next_score > current_score + 0.05  # small margin, not noise
+    if improves:
+        note = f"'{next_title}' tends to fit your taste better than '{current_title}' -- worth pushing through."
+    elif next_score < current_score - 0.05:
+        note = f"'{next_title}' fits your taste even less than '{current_title}' -- this series may not be for you."
+    else:
+        note = f"'{next_title}' is a similar fit to '{current_title}' -- don't expect it to feel very different."
+
+    return {
+        "current": (current_title, round(current_score, 3)),
+        "next": (next_title, round(next_score, 3)),
+        "improves": improves,
+        "note": note,
+    }
+
+
 def load_catalog():
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     cur.execute("""
-        select b.id, b.title, b.author, d.*
-        from books b join book_dna d on d.book_id = b.id
+        select b.id, b.title, b.author, b.series_id, s.name as series_name,
+               b.position_in_series, d.*
+        from books b
+        join book_dna d on d.book_id = b.id
+        left join series s on s.id = b.series_id
     """)
     books = [dict(row) for row in cur.fetchall()]
 
@@ -719,10 +891,15 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     for explanation instead of collapsed into a ranking.
 
     Returns {"title", "score", "match_label", "matches", "mismatches",
-    "summary", "mismatch_summary"} -- matches/mismatches are ordered
-    lists of human-readable phrases (see describe()); summary/
-    mismatch_summary are the same data assembled into one readable
-    sentence each (see natural_sentence()) instead of a flat list."""
+    "summary", "mismatch_summary", "series_note"} -- matches/mismatches
+    are ordered lists of human-readable phrases (see describe());
+    summary/mismatch_summary are the same data assembled into one
+    readable sentence each (see natural_sentence()) instead of a flat
+    list. series_note is a caveat about how the book's series changes
+    over its run (see compute_series_dna()/describe_series_trajectory()),
+    "" if the book isn't part of a multi-book series or nothing shifts
+    meaningfully -- most series stay consistent, so this is the common
+    case, not a bug."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     if title not in title_to_id:
         raise ValueError(f"{title!r} not found in catalog")
@@ -735,6 +912,13 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     matches_labeled = [(label, p) for label, _ in matches if (p := describe(label, book))]
     mismatches_labeled = [(label, p) for label, _ in mismatches if (p := describe(label, book))]
 
+    series_note = ""
+    if book.get("series_id"):
+        series_dna = compute_series_dna(catalog)
+        series_entry = series_dna.get(book["series_id"])
+        if series_entry:
+            series_note = describe_series_trajectory(series_entry)
+
     return {
         "title": title,
         "score": round(score, 3),
@@ -743,6 +927,7 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
         "mismatches": [p for _, p in mismatches_labeled],
         "summary": natural_sentence(matches_labeled, positive=True),
         "mismatch_summary": natural_sentence(mismatches_labeled, positive=False),
+        "series_note": series_note,
     }
 
 

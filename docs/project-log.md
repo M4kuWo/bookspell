@@ -1616,3 +1616,68 @@ a one-line summary, the raw list for rendering as individual tags/chips).
 Verified output reads naturally and matches the requested shape structurally, e.g.:
 "The book is told with third-person limited narration, and features
 revenge, prophecy, epic quest, and a soft, mysterious magic system."
+
+## 2026-08-30 (later still) — Series DNA built
+
+Fourth item in the agreed build sequence. User raised three
+considerations before building: (1) DNF-prevention messaging ("the
+series gets better for your taste on the next entry"), (2) recommendation
+explanations should carry series-trajectory caveats, (3) how does the
+series/universe nesting hierarchy affect scope -- does the Cosmere
+merit its own DNA, or Mistborn as a whole, or only each era?
+
+Resolved (3) first since it structurally determined everything else:
+checked the actual data and found `books.series_id` already always
+points at a LEAF series -- Mistborn's books link to "Mistborn Era One"/
+"Era Two" specifically, never to the parent "Mistborn" row (confirmed:
+0 books link to it directly), same for "The Stormlight Archive" parent
+vs. its "Era One"/"Era Two" children. This means grouping book_dna by
+`series_id` to compute a trajectory automatically operates at exactly
+the right scope with zero extra logic needed: a universe (Cosmere) is
+excluded because it's not even in the series hierarchy; a multi-era
+parent series (Mistborn) is excluded because it has no books linked
+directly; each leaf era gets its own trajectory correctly. This matches
+the same reasoning as the earlier genre-split finding -- blending across
+genuinely disjoint reading experiences (different eras, different
+universes) loses signal rather than gaining it.
+
+Built in `recommend.py`:
+- `compute_series_dna(catalog)` -- groups books by `series_id`, ordered
+  by `position_in_series`, computes a start-value/end-value/trend for
+  every ordinal field (directional: increases/decreases/stable, gated
+  by `TREND_THRESHOLD = 0.2` of the field's scale range to avoid noise)
+  and every nominal field (non-directional: changes/stable). Returns
+  nothing for single-book series (no trajectory to speak of).
+- `describe_series_trajectory()` -- reuses the explanation layer's
+  `phrase_field()`/`_join_list()` to turn the top 3 most reader-relevant
+  shifts (prioritized: pace, pov_count, darkness, violence, worldbuilding,
+  length, age_category, stakes) into one readable sentence.
+- `series_dnf_outlook()` -- point 1, per-user (unlike the two above,
+  which are objective/same for everyone): given a series and the book a
+  user is currently on, compares that book's score against their profile
+  to the NEXT book's score, with a small margin (0.05) to avoid noise,
+  and returns a concrete "worth pushing through" / "may not improve" /
+  "expect a similar fit" note.
+- `explain_match()` extended with a `series_note` field -- point 2, pulls
+  in `describe_series_trajectory()` for whichever series the explained
+  book belongs to, "" if the book isn't part of a multi-book series or
+  nothing shifts meaningfully (the common case).
+
+Sanity-checked across all 18 multi-book series currently in the catalog
+(printed every trajectory) -- every single one read as a real, credible,
+independently-verifiable shift: Harry Potter light-to-dark/mild-to-graphic
+violence, Percy Jackson's stakes narrowing back to regional in book 2 (a
+real, minor beat), LOTR opening from single-POV Frodo-centric to several
+POVs once the Fellowship splits, Murderbot's stakes/worldbuilding
+widening from novella to novel scope, Mistborn Era One/Two both showing
+real, distinct pace/POV/violence shifts. No spurious or noise-level
+results found. Wheel of Time/First Law/Broken Empire correctly produced
+no trajectory (only 1 book each currently in the catalog -- not enough
+data, not a bug).
+
+Verified `series_dnf_outlook()` on a real case: for an eclectic grimdark/
+hard-SF profile, Mistborn: The Final Empire scored 0.626 against the
+profile while The Well of Ascension scored 0.81 -- correctly generated
+"worth pushing through" messaging. Edge cases (last book in series,
+invalid position, invalid series_id) all handled cleanly, return None or
+an appropriate terminal note rather than erroring.

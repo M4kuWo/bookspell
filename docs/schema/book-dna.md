@@ -866,20 +866,43 @@ Deliberately deferred, not in v0.1:
   calibrated probability; use qualitative labels ("strong match") plus
   the reasons instead.
 
-- **Series DNA** — external suggestion, judged the strongest idea in the
-  batch. A series can change dramatically across its own run (The Wheel
-  of Time: book 1 is single-POV, fast-paced, journey-structured; book 6+
-  is multi-POV, slow, political, journey mostly absent) — recommending
-  or scoring against only the first entry's Book DNA can misrepresent
-  the whole commitment, including cases where a series gets darker/more
-  violent as it progresses. Key insight: this is likely NOT a fresh
-  tagging pass — it can probably be computed as an aggregation/rollup
-  over `book_dna` rows already tagged per book, grouped by `series_id`
-  and ordered by `position_in_series` (range/trajectory of `pov_count`,
-  `darkness`, `violence_intensity`, pace, etc.), rather than requiring
-  new per-book data. Directly strengthens the already-logged
-  series-position-aware recommendation idea. Not built — real design
-  work, but promising and comparatively cheap.
+- **Series DNA — built 2026-08-30.** External suggestion, judged the
+  strongest idea in the batch. A series can change dramatically across
+  its own run (Harry Potter: light tone/mild violence in book 1 to dark
+  tone/graphic violence by book 7) — recommending or scoring against
+  only the first entry's Book DNA can misrepresent the whole commitment.
+  Confirmed the key insight: NOT a fresh tagging pass — computed as an
+  aggregation over `book_dna` rows already tagged per book, grouped by
+  `series_id` (`compute_series_dna()` in `recommend.py`) and ordered by
+  `position_in_series`.
+
+  Scope question resolved: does a shared universe (the Cosmere) or a
+  parent series spanning tonally different eras (Mistborn, spanning the
+  original trilogy and the later Wax & Wayne books) merit its own DNA?
+  No to both, and the existing series hierarchy already settles this for
+  free — `books.series_id` always points at a LEAF series (confirmed:
+  Mistborn's books link to "Mistborn Era One"/"Era Two", never to the
+  parent "Mistborn" row, which has zero books linked directly), so
+  grouping by `series_id` naturally computes trajectories only at the
+  level a reader actually commits to reading in order. No special-casing
+  needed. Verified across all 18 multi-book series currently in the
+  catalog: every trajectory read as genuine and well-known (Harry
+  Potter's darkening, Percy Jackson's stakes narrowing in book 2, LOTR's
+  POV structure opening up once the Fellowship splits, Murderbot's
+  stakes widening from novella to novel scope).
+
+  Two more pieces built alongside the core aggregation, both from user
+  feedback: (1) `series_dnf_outlook()` — per-user (unlike the objective
+  trajectory above): compares how well the CURRENT book in a series
+  scores against a specific user's profile vs. the NEXT one, to answer
+  "will this series get better for me if I keep going" instead of
+  silence when a reader is on the fence about DNFing; (2) `explain_match()`
+  now includes a `series_note` field — when a book's explanation is
+  shown, it's paired with an objective caveat about how the series shifts
+  over its run (e.g. "Across the series, it shifts from several POV
+  characters to a large ensemble cast..."), reusing the same
+  `describe_series_trajectory()`/`phrase_field()` machinery already built
+  for the explanation layer.
 
 - **Confidence + source layer on field/trope values** — external
   suggestion, e.g. "slow pace" tagged with a 0.8 confidence level, plus
