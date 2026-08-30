@@ -31,6 +31,16 @@ vector, no collaborative filtering for v1):
 3. Every other catalog book is scored by weighted similarity to the
    liked-books centroid, using those per-user weights.
 
+4. explain_match() surfaces WHY a book scored the way it did, in
+   readable language, for any book in the catalog -- not just
+   recommend()'s top results. The same scoring math is decomposed into
+   "matches" (factors pulling the score up) and "mismatches" (factors
+   pulling it down), so the same mechanism explains both a strong
+   recommendation and a poor one (e.g. a user searching a specific book
+   that isn't for them). Deliberately avoids a bare "90% match" framing
+   -- the score is a relative ranking, not a calibrated probability --
+   in favor of a qualitative label (see match_label()) plus the reasons.
+
 This is intentionally a standalone, runnable prototype (not wired into
 the DB as a stored function/API yet) -- that's step 06+ work, once the
 app itself exists. Reads directly from Postgres (DATABASE_URL in .env,
@@ -154,6 +164,110 @@ WEIGHT_CAP = 0.5
 # doesn't match the user's taste at all stays capped low regardless of
 # how novel it is -- see book-dna.md's 2026-08-29 refinement note.
 MAX_DIVERSITY = 0.5
+
+# --- Explanation layer: field/value -> human-readable phrase ---------------
+# Generic fallback is "{value} {display name}" (e.g. "dark tone"); override
+# below only where that reads awkwardly or a field's raw values need real
+# rewording to make sense as a phrase. Not every field needs an entry here.
+FIELD_DISPLAY_NAMES = {
+    "overall_pace": "pacing", "darkness": "tone", "humor_level": "humor",
+    "emotional_register": "emotional register", "message_intensity": "messaging",
+    "intellectual_weight": "intellectual weight", "romance_heat_frequency": "romance frequency",
+    "romance_heat_intensity": "romance heat", "violence_frequency": "violence frequency",
+    "violence_intensity": "violence", "worldbuilding_density": "worldbuilding density",
+    "stakes_scope": "stakes", "personal_stakes": "personal stakes",
+    "book_length": "length", "audiobook_length": "audiobook length",
+    "prose_density": "prose", "prose_complexity": "prose complexity",
+    "age_category": "age category", "pov_count": "POV structure",
+    "person": "narrative person", "narrator_reliability": "narrator reliability",
+    "timeline": "timeline", "form": "narrative form", "pace_shape": "pacing shape",
+    "drive": "story drive", "narrative_closure": "ending closure",
+    "emotional_resolution": "emotional resolution", "ends_on_cliffhanger": "cliffhanger ending",
+    "magic_system_hardness": "magic system", "scifi_hardness": "sci-fi rigor",
+}
+
+VALUE_PHRASES = {
+    "stakes_scope": {
+        "intimate": "intimate, personal stakes", "regional": "regional-scale stakes",
+        "global": "world-spanning stakes", "cosmic": "cosmic-scale stakes",
+    },
+    "darkness": {
+        "light": "a light tone", "moderate": "a moderate tone",
+        "dark": "a dark tone", "grimdark": "a grimdark tone",
+    },
+    "pov_count": {
+        "single": "a single POV", "dual": "dual POV",
+        "few": "a handful of POV characters", "several": "several POV characters",
+        "ensemble": "a large ensemble cast",
+    },
+    "violence_intensity": {
+        "mild": "mild violence", "moderate": "moderate violence",
+        "graphic": "graphic violence", "brutal": "brutal, unflinching violence",
+    },
+    "book_length": {
+        "short": "a short length", "standard": "a standard length",
+        "long": "a long length", "epic": "an epic length",
+    },
+    "prose_density": {
+        "sparse": "sparse, lean prose", "moderate": "moderately descriptive prose",
+        "lush": "lush, immersive prose",
+    },
+    "magic_system_hardness": {
+        "hard": "a hard, rules-based magic system", "soft": "a soft, mysterious magic system",
+        "none": None, "na": None,
+    },
+    "scifi_hardness": {"hard": "hard science-fiction rigor", "soft": "soft science fiction", "na": None},
+    "person": {
+        "first": "first-person narration", "second": "second-person narration",
+        "third_limited": "third-person limited narration", "third_omniscient": "third-person omniscient narration",
+        "mixed": "mixed narrative person",
+    },
+    "pace_shape": {
+        "consistent": "a consistent pace throughout", "slow_burn_to_fast_finish": "a slow burn building to a fast finish",
+        "front_loaded": "a front-loaded pace", "uneven": "an uneven pace",
+    },
+}
+
+
+def phrase_field(field, value):
+    """None return means "don't show this" -- either no value, or an
+    explicit na/none override above (e.g. scifi_hardness: na on a pure
+    fantasy book isn't a meaningful phrase to surface)."""
+    if value is None or value in NA_VALUES:
+        return None
+    field_overrides = VALUE_PHRASES.get(field, {})
+    if value in field_overrides:
+        return field_overrides[value]
+    label = FIELD_DISPLAY_NAMES.get(field, field.replace("_", " "))
+    return f"{value.replace('_', ' ')} {label}"
+
+
+def phrase_trope(trope_id):
+    return trope_id.replace("_", " ")
+
+
+def describe(label, book):
+    """label: a contribution key as produced by explain_book() -- either
+    a bare field name or "trope:<id>". Returns a human-readable phrase,
+    or None if this shouldn't be shown (see phrase_field)."""
+    if label.startswith("trope:"):
+        return phrase_trope(label[len("trope:"):])
+    return phrase_field(label, book.get(label))
+
+
+def match_label(score):
+    """Qualitative label instead of a bare percentage -- score is a
+    relative ranking, not a calibrated probability, and a precise-looking
+    number like "90% match" implies more rigor than the model has.
+    Thresholds are a rough first-pass calibration, not derived from real
+    user data yet -- revisit once real ratings exist to check against."""
+    if score >= 0.75:
+        return "Strong match"
+    if score >= 0.55:
+        return "Good match"
+    if score >= 0.35:
+        return "Mixed match"
+    return "Poor match"
 
 
 def load_catalog():
@@ -347,6 +461,61 @@ def score_book(book, centroid, weights):
     return normalized, contributions[:5]
 
 
+def explain_book(book, centroid, weights, top_n=5):
+    """Splits scoring factors into what's pulling the score UP (matches)
+    vs. DOWN (mismatches) for this book against this profile -- the same
+    math score_book() uses, decomposed for human explanation instead of
+    collapsed into one number.
+
+    Why this needs its own pass rather than just re-reading
+    score_book()'s contributions: a field can have a small raw
+    contribution (w * sim) for two very different reasons -- either the
+    user doesn't weight it much (w is small), or it matters a lot AND
+    this book misses on it (sim is small). Those look identical in
+    score_book()'s output but need opposite wording ("doesn't matter to
+    you" vs. "this is specifically why it's a mismatch"). `deviation`
+    (w * (1 - sim)) disambiguates: a field can score low on
+    contribution yet high on deviation, and that's exactly the
+    "mismatch" case worth surfacing.
+
+    Returns (matches, mismatches), each a list of (label, magnitude)
+    pairs sorted descending, capped at top_n, magnitude thresholded at
+    > 0.1 to exclude noise-level factors."""
+    matches, mismatches = [], []
+
+    for field, w in weights.items():
+        if field == "tropes" or field not in centroid:
+            continue
+        if field in ORDINAL_FIELDS:
+            pos = ordinal_position(field, book.get(field))
+            if pos is None:
+                continue
+            sim = 1 - abs(pos[0] / pos[1] - centroid[field])
+        else:
+            sim = 1.0 if book.get(field) == centroid[field] else 0.0
+
+        if w >= 0:
+            matches.append((field, w * sim))
+            mismatches.append((field, w * (1 - sim)))
+        else:
+            # Negative weight only comes from a fatigue override --
+            # matching the profile here IS the mismatch (the user asked
+            # to suppress this specifically), not matching it is the win.
+            matches.append((field, abs(w) * (1 - sim)))
+            mismatches.append((field, abs(w) * sim))
+
+    trope_weights = weights.get("tropes", {})
+    book_tropes = set(book.get("tropes") or [])
+    for t, w in trope_weights.items():
+        if t not in book_tropes:
+            continue
+        (matches if w >= 0 else mismatches).append((f"trope:{t}", abs(w)))
+
+    matches = sorted((m for m in matches if m[1] > 0.1), key=lambda x: -x[1])
+    mismatches = sorted((m for m in mismatches if m[1] > 0.1), key=lambda x: -x[1])
+    return matches[:top_n], mismatches[:top_n]
+
+
 def book_similarity(book_a, book_b):
     """Objective book-to-book resemblance (NOT personalized -- no
     per-user weights involved), used only to compute novelty against
@@ -380,9 +549,12 @@ def book_similarity(book_a, book_b):
     return sum(components) / len(components)
 
 
-def recommend(catalog, ratings, top_n=10, genre=None,
-              recent_history=None, diversity=0.0, fatigue_overrides=None):
-    """ratings: dict of {title: rating_label}, rating_label one of
+def _resolve_profile(catalog, ratings, genre=None, fatigue_overrides=None):
+    """Shared by recommend() and explain_match(): resolves rating titles
+    to ids, applies genre scoping, builds the profile, applies fatigue
+    overrides. Returns (centroid, weights, id_to_magnitude, matches_genre).
+
+    ratings: dict of {title: rating_label}, rating_label one of
     RATING_LABELS's keys ("hated", "disliked", "it_was_okay", "liked",
     "loved"). Replaces the old separate liked_titles/disliked_titles
     lists (2026-08-30) -- a flat like/dislike lost real information (see
@@ -390,31 +562,15 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     profile harder than a merely "liked" one.
 
     genre: None (blend everything, current default behavior), or
-    'fantasy'/'sci_fi' to scope the candidate pool (only books tagged
-    with that genre) and CONTENT-field profiling (tropes, tone, heat,
-    violence -- see STRUCTURAL_*_FIELDS) to only the subset of rated
-    books tagged with that genre. STRUCTURAL fields (pov_count, pacing,
-    length, etc.) are always profiled from the FULL unscoped ratings
-    regardless of genre, since craft/format taste plausibly doesn't
-    depend on genre and benefits from the bigger sample -- see the
-    WEIGHT_CAP-adjacent comment above for the case that motivated this
-    split. Falls back to the unscoped ratings for content profiling if
-    none of a user's ratings happen to fall in the requested genre.
-
-    recent_history: list of titles the user was recently recommended/has
-    recently read, most-relevant for the `diversity` param below. Purely
-    caller-supplied for now (no real per-user history table exists yet
-    -- see book-dna.md's 2026-08-29 diversity/fatigue design note).
-
-    diversity: 0.0 (default, today's pure-relevance behavior) up to
-    MAX_DIVERSITY. Blends relevance (profile match) against novelty
-    (distance from recent_history) via
-    `final = (1 - diversity) * relevance + diversity * novelty`.
-    Silently clamped to MAX_DIVERSITY -- diversity never reaches 1.0, so
-    the relevance term never disappears entirely and a book that's a
-    diametrical mismatch for the user's taste (not just "different from
-    recent picks") stays capped low regardless of how novel it is. This
-    is "summon something different," not "ignore my taste."
+    'fantasy'/'sci_fi' to scope CONTENT-field profiling (tropes, tone,
+    heat, violence -- see STRUCTURAL_*_FIELDS) to only the subset of
+    rated books tagged with that genre. STRUCTURAL fields (pov_count,
+    pacing, length, etc.) are always profiled from the FULL unscoped
+    ratings regardless of genre, since craft/format taste plausibly
+    doesn't depend on genre and benefits from the bigger sample -- see
+    the WEIGHT_CAP-adjacent comment above for the case that motivated
+    this split. Falls back to the unscoped ratings for content profiling
+    if none of a user's ratings happen to fall in the requested genre.
 
     fatigue_overrides: optional dict of {trope_id_or_field_name: weight}
     that directly overrides the LEARNED weight for that key after
@@ -460,6 +616,32 @@ def recommend(catalog, ratings, top_n=10, genre=None,
             else:
                 weights.setdefault("tropes", {})[key] = val
 
+    return centroid, weights, id_to_magnitude, matches_genre
+
+
+def recommend(catalog, ratings, top_n=10, genre=None,
+              recent_history=None, diversity=0.0, fatigue_overrides=None):
+    """See _resolve_profile() for ratings/genre/fatigue_overrides.
+
+    recent_history: list of titles the user was recently recommended/has
+    recently read, most-relevant for the `diversity` param below. Purely
+    caller-supplied for now (no real per-user history table exists yet
+    -- see book-dna.md's 2026-08-29 diversity/fatigue design note).
+
+    diversity: 0.0 (default, today's pure-relevance behavior) up to
+    MAX_DIVERSITY. Blends relevance (profile match) against novelty
+    (distance from recent_history) via
+    `final = (1 - diversity) * relevance + diversity * novelty`.
+    Silently clamped to MAX_DIVERSITY -- diversity never reaches 1.0, so
+    the relevance term never disappears entirely and a book that's a
+    diametrical mismatch for the user's taste (not just "different from
+    recent picks") stays capped low regardless of how novel it is. This
+    is "summon something different," not "ignore my taste."""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    centroid, weights, id_to_magnitude, matches_genre = _resolve_profile(
+        catalog, ratings, genre, fatigue_overrides
+    )
+
     diversity = max(0.0, min(diversity, MAX_DIVERSITY))
     recent_books = [
         catalog[title_to_id[t]] for t in (recent_history or []) if t in title_to_id
@@ -480,6 +662,36 @@ def recommend(catalog, ratings, top_n=10, genre=None,
 
     scored.sort(key=lambda x: -x[0])
     return scored[:top_n]
+
+
+def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, top_n=5):
+    """Why does/doesn't `title` match this user's profile, in readable
+    language? Works for ANY book in the catalog, not just ones
+    recommend() would surface as a top result -- including a deliberately
+    poor match, so a user searching a specific book gets an honest "why
+    this probably isn't for you" instead of silence. Same underlying
+    scoring math recommend() uses (see explain_book()), just decomposed
+    for explanation instead of collapsed into a ranking.
+
+    Returns {"title", "score", "match_label", "matches", "mismatches"} --
+    matches/mismatches are ordered lists of human-readable phrases (see
+    describe())."""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    if title not in title_to_id:
+        raise ValueError(f"{title!r} not found in catalog")
+    book = catalog[title_to_id[title]]
+
+    centroid, weights, _, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides)
+    score, _ = score_book(book, centroid, weights)
+    matches, mismatches = explain_book(book, centroid, weights, top_n=top_n)
+
+    return {
+        "title": title,
+        "score": round(score, 3),
+        "match_label": match_label(score),
+        "matches": [p for label, _ in matches if (p := describe(label, book))],
+        "mismatches": [p for label, _ in mismatches if (p := describe(label, book))],
+    }
 
 
 if __name__ == "__main__":
@@ -505,3 +717,19 @@ if __name__ == "__main__":
     for score, title, author, contributions in results:
         print(f"{score:.3f}  {title} ({author})")
         print(f"       top factors: {contributions}")
+
+    print("\n--- explanation layer demo ---\n")
+    top_pick = results[0][1]
+    print(f"Why '{top_pick}' was recommended:")
+    explanation = explain_match(catalog, ratings, top_pick)
+    print(f"  {explanation['match_label']} ({explanation['score']})")
+    print(f"  Because of: {', '.join(explanation['matches'])}")
+    if explanation["mismatches"]:
+        print(f"  Working against it: {', '.join(explanation['mismatches'])}")
+
+    print(f"\nWhy a genuinely poor-scoring book (bottom of the full ranked list) scores poorly:")
+    explanation = explain_match(catalog, ratings, "The Restaurant at the End of the Universe")
+    print(f"  {explanation['match_label']} ({explanation['score']})")
+    print(f"  Because of: {', '.join(explanation['matches'])}")
+    if explanation["mismatches"]:
+        print(f"  Working against it: {', '.join(explanation['mismatches'])}")

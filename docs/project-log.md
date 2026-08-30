@@ -1530,3 +1530,55 @@ in both The Way of Kings and Words of Radiance is genuine sustained
 revenge, not just the war_story/epic_quest tags Stormlight already had.
 
 Next in the agreed sequence: the explanation layer, then Series DNA.
+
+## 2026-08-30 (later) — explanation layer implemented
+
+Third item in the agreed build sequence. Bundles the three external
+ideas that turned out to be one capability at different levels of
+polish: "why was this recommended," "why is this a poor match" (for a
+user searching a specific book), and a raw debugger view -- all now one
+mechanism, `explain_match()`.
+
+Key design decision: `score_book()`'s existing `contributions` list
+wasn't enough on its own, because a field can have a small raw
+contribution (weight * similarity) for two different reasons -- low
+weight (doesn't matter to the user) or low similarity despite high
+weight (matters a lot AND this book misses) -- and those look identical
+in the old output but need opposite wording. Added `explain_book()`,
+which tracks `deviation` (weight * (1 - similarity)) separately to
+disambiguate, splitting every scoring factor into `matches` (pulling the
+score up) and `mismatches` (pulling it down) rather than one
+undifferentiated list.
+
+Added a natural-language layer (`FIELD_DISPLAY_NAMES`, `VALUE_PHRASES`,
+`phrase_field`/`phrase_trope`/`describe`) translating internal field/value
+pairs into readable phrases ("cosmic-scale stakes", "a grimdark tone",
+"third-person limited narration"), with a generic fallback for fields
+without a custom override. Deliberately did NOT implement a literal
+"90% match" framing -- added `match_label()` instead (Strong/Good/Mixed/
+Poor match, rough first-pass thresholds not yet calibrated against real
+user data) -- the score is a relative ranking, not a calibrated
+probability, and a precise percentage overclaims rigor the model
+doesn't have.
+
+Refactored `recommend()`'s profile-building logic into a shared
+`_resolve_profile()` helper so `explain_match()` reuses the exact same
+genre-scoping/fatigue-override logic rather than duplicating it --
+`explain_match()` works on ANY book in the catalog, not just
+recommend()'s top results, so a user can search an arbitrary book and
+get an honest explanation either way.
+
+Verified: found and fixed an awkward phrasing gap during testing
+(`person`/`pace_shape` enum values read poorly with the generic
+fallback -- "third limited narrative person" -- added explicit
+overrides). Also caught a bad demo choice on first pass: picked "Fourth
+Wing" as a "deliberately mismatched" example, but it actually scored
+0.806 ("Strong match") against the pilot profile -- not a bug, just a
+wrong assumption about what would score poorly. Found a real bottom-of-
+the-list book (The Restaurant at the End of the Universe, 0.221) and
+used that instead. Confirmed fatigue_overrides now visibly show up in
+the explanation too -- suppressing court_intrigue moved it from
+`matches` to `mismatches` and dropped the match_label from Strong to
+Good, not just the raw score.
+
+Next in the agreed sequence: Series DNA.
