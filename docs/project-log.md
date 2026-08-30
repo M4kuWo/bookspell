@@ -1719,3 +1719,43 @@ right order of magnitude for one moderately-uncertain field among ~20
 total contributing signals.
 
 Next: the post-read/DNF "why didn't it work" dropdown.
+
+## 2026-08-30 (later still) -- post-read/DNF feedback dropdown built
+
+Sixth item in the agreed build sequence. Instead of inventing a
+separate fixed reason taxonomy, reused the explanation layer's own
+`describe()` output: `book_feedback_options()` returns the book's own
+already-tagged tropes/fields as a "which of these bothered you?"
+checklist, plus a small fixed `NEUTRAL_FEEDBACK_REASONS` set (mood/
+timing, general disengagement) that are explicitly not about the book's
+content.
+
+Caught a real design bug before shipping it, not after: my first
+instinct was to translate ANY selected reason (trope or field) into a
+`fatigue_overrides` entry via `feedback_to_fatigue_overrides()`. On
+reflection this is wrong for fields -- `fatigue_overrides` flips a
+field's weight relative to the user's own CENTROID ("avoid being similar
+to your average"), not "avoid this book's specific value." If the
+disliked book's pace was already far from centroid, applying the
+existing mechanism would perversely reward other far-from-centroid
+books instead of steering away from slow pacing. Only TROPE selections
+translate correctly (tropes are presence-based, so "penalize this trope"
+is exactly what the existing mechanism already means). Scoped
+`feedback_to_fatigue_overrides()` to tropes only; field-level selections
+are still captured for triage/logging but don't drive calibration --
+the correct mechanism there is just rating the book hated/disliked,
+which `build_profile()` already handles correctly once a field-level
+dislike recurs across several books.
+
+Verified end-to-end: selecting `court_intrigue` as a dislike reason on
+A Clash of Kings correctly demoted court-intrigue-heavy candidates
+(A Clash of Kings, A Storm of Swords, Malice) and promoted others (The
+Gunslinger, The Two Towers, Eragon) through a real `recommend()` call.
+
+This closes out the build sequence agreed after the 2026-08-30 roadmap
+triage (scoring system -> revenge trope -> explanation layer -> Series
+DNA -> confidence/source layer -> this). Remaining open items:
+character-similarity recommendations, community self-tagging/dispute
+flagging, hierarchical tropes -- all correctly scoped as later-stage,
+needing either a bigger new data model or real user accounts that don't
+exist yet.

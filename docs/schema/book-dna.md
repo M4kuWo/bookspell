@@ -959,16 +959,43 @@ Deliberately deferred, not in v0.1:
   by the suggester, but needs real user accounts and a real tagging UI,
   neither of which exist yet (no `users` table at all). Clearly post-v1.
 
-- **Post-read/DNF "why didn't it work" / "what did you love" dropdown**
-  — external suggestion, worth distinguishing from what this doc already
-  rejected elsewhere (asking users to explain field-by-field on every
-  single rating, which defeats the point of structured Book DNA
-  inference). This is different: optional, triggered only after a clear
-  miss (a low rating or a DNF), and using pre-set common reasons ("too
-  slow," "too much romance," "wasn't my mood," "DNF — couldn't get into
-  it") rather than open-ended justification — targeted error-correction
-  signal, not routine friction. Sequenced alongside the confidence layer,
-  once real usage exists to generate this signal from.
+- **Post-read/DNF "why didn't it work" dropdown — built 2026-08-30.**
+  External suggestion, distinguished from what this doc already rejected
+  elsewhere (asking users to explain field-by-field on every single
+  rating, which defeats the point of structured Book DNA inference).
+  Design choice: rather than inventing a separate fixed reason taxonomy
+  ("too slow," "too much romance," ...), reuse the book's OWN
+  already-tagged tropes/fields (via the explanation layer's `describe()`)
+  as a dynamic checklist — "here's what we tagged this book with, tell
+  us which of these worked against you" — plus a small fixed set of
+  `NEUTRAL_FEEDBACK_REASONS` (wasn't the mood, didn't click with
+  characters, lost interest, life got in the way) that are explicitly
+  NOT about the book's content and produce no calibration signal.
+
+  Real design catch made during implementation, worth recording: only
+  TROPE selections translate into a `fatigue_overrides` entry.
+  Field-level selections (e.g. "overall_pace" was the problem)
+  deliberately do NOT, because `fatigue_overrides` flips a field's
+  weight relative to the user's own CENTROID ("avoid being similar to
+  your average"), which is a different statement from "avoid this
+  specific book's slow-pace value" — if the disliked book's pace was
+  already far from the user's centroid, force-applying the existing
+  mechanism would perversely reward OTHER far-from-centroid books
+  instead of steering away from slow pacing specifically. The correct
+  existing mechanism for field-level dislikes is just rating the book
+  itself hated/disliked (already built, see the rating-magnitude
+  scoring system entry) — `build_profile()` already learns whether pace
+  is a real discriminator once it recurs across several disliked books,
+  which is the right way to learn a pattern, not a single-book override.
+  Field-level selections are still captured by `book_feedback_options()`
+  for triage/logging value, just not wired into calibration yet.
+
+  Verified end-to-end: selecting `court_intrigue` as a dislike reason on
+  *A Clash of Kings* correctly demoted court-intrigue-heavy books
+  (A Clash of Kings, A Storm of Swords, Malice) and promoted others
+  (The Gunslinger, The Two Towers, Eragon) in a real `recommend()` call,
+  while a simultaneously-selected neutral reason ("wasn't my mood")
+  correctly produced no calibration change on its own.
 
 - **"Recommend books with similar characters to X"** — external
   suggestion, self-identified by the suggester as not for this early
