@@ -2124,3 +2124,49 @@ dangling, the leaf-series-only aggregation fact), safety/credentials
 example SQL in a rolled-back transaction before trusting it), agent
 efficiency (non-forked for batches, direct for small fixes), and the
 logging habit itself.
+
+## 2026-08-31 (later) -- self-tests against the expanded catalog
+
+User asked for the valuable self-tests before redoing the original
+16-book real test against the now-larger catalog (307 tagged, up from
+167). Four checks run:
+
+1. **Catalog health**: tropes/book overall now 6.6 mean (was 7.4) --
+   looks like a regression, but it's actually the new batch still not
+   at full parity even after enrichment: original 167 books average
+   7.73 tropes/book, the new 140 average 5.24 -- enrichment moved this
+   up from ~4.70 but didn't close the gap. Worth another enrichment
+   pass at some point, not urgent.
+2. **Series DNA coverage**: series with >=2 tagged books (the threshold
+   for a trajectory to compute at all) went from 18 to 38 -- genuinely
+   more than doubled, a clean, concrete win from the expansion.
+3. **Held-out scores, same profile**: reran the exact same 39-book
+   synthetic test (32 training / 7 held-out) from 2026-08-30 against the
+   expanded catalog. Scores barely moved (mostly exactly unchanged, a
+   couple of +-0.02 drifts) -- clarifies an important mechanism point:
+   `score_book()` depends only on a book's own tags and the learned
+   profile, not on how many other candidates exist in the catalog.
+   Catalog size alone does NOT fix the earlier overfitting pattern
+   (Kings of Paradise still scores Strong match at 0.894 despite being
+   rated it_was_okay, identically to before) -- that needs the
+   *training set itself* to include the right counter-examples, not
+   just a bigger pool to recommend from. Sets an honest expectation for
+   the upcoming redo of the user's own real 16-book test: it will very
+   likely reproduce the same Red Rising/Poppy War misses for the exact
+   same reason, since nothing about that specific rated list changes
+   just because the catalog got bigger.
+4. **The actual recommend() ranking, same profile**: this is where the
+   expansion's real value shows up. 9 of the top 15 recommendations are
+   brand-new books that didn't exist as candidates before 2026-08-30,
+   and they're genuinely well-targeted: Before They Are Hanged (First
+   Law book 2 -- a direct sequel to loved The Blade Itself, impossible
+   to recommend before since only book 1 was tagged), Wind and Truth
+   (the previously-flagged missing Stormlight book 5, now correctly
+   surfacing given loved The Way of Kings), Tiamat's Wrath/Persepolis
+   Rising (Expanse sequels, given loved Leviathan Wakes), Iron Gold (Red
+   Rising sequel). Confirms the expansion's value is in candidate
+   breadth/sequel coverage, not in fixing the known scoring-overfit
+   issue -- a different, real kind of improvement.
+
+Next: redo the user's original real 16-book liked/disliked test against
+this expanded catalog, per the user's own explicit next step.
