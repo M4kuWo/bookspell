@@ -2098,3 +2098,29 @@ depth). Synced to hosted via the same hardcover_id-based idempotent
 migration pattern as the first expansion. Catalog now: 606 books total,
 307 tagged (untouched) + 299 newly held untagged for later, verified
 matching hosted exactly.
+
+## 2026-08-31 (later) -- added CLAUDE.md
+
+User's own observation: working across multiple machines/Claude
+accounts on this project had already caused a real issue that same
+day (the home-PC session applying migrations via direct SQL instead of
+`supabase db push`, desyncing hosted's migration-tracking table --
+see the entry above). Asked for a durable, uniform-procedure document
+so a different Claude instance or a different person picking this
+project up wouldn't repeat the same class of mistake.
+
+Added `CLAUDE.md` at the repo root -- automatically loaded into context
+by any Claude Code session working in this directory, regardless of
+machine or account, which is exactly the right mechanism for this
+problem. Distilled into concrete, actionable rules (not a narrative --
+that's what this log is for): migration workflow (versioned files only,
+local+hosted sync procedure, the exact `supabase migration repair` fix
+for tracking desync, idempotent SQL, title-based subselects not raw
+UUIDs), data quality (controlled vocabulary discipline, the trope
+vocabulary-growth bar, density-audit habit, partial-series-first
+prioritization), catalog scope (out-of-scope books get deleted not left
+dangling, the leaf-series-only aggregation fact), safety/credentials
+(never commit secrets, shared-directory env-var-not-.env rule, test
+example SQL in a rolled-back transaction before trusting it), agent
+efficiency (non-forked for batches, direct for small fixes), and the
+logging habit itself.
