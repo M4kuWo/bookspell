@@ -331,9 +331,12 @@ similarity math regardless of grouping.
   relativistic_time_dilation, mutual_human_alien_war,
   aging_reversal_or_rejuvenation, satirical_or_comedic_scifi, uplift,
   multiple_alien_species
-- **Craft & narrative devices** (9) — twist_ending, twist_filled,
+- **Craft & narrative devices** (14) — twist_ending, twist_filled,
   sanderlanche, redemption_arc, villain_turns_ally, major_character_death,
-  mentor_death, mythological_retelling, shadow_self_confrontation
+  mentor_death, mythological_retelling, shadow_self_confrontation,
+  corruption_arc, mythological_pantheon_as_characters,
+  tragic_reversal_of_fortune, amnesia_driven_narrative,
+  retrospective_memoir_narration
 
 The 13 entries added across these groups all came from the 30-book blind
 tagging pilot — real books whose defining device had no vocabulary match,

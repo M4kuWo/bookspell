@@ -2428,3 +2428,84 @@ field's weight by how much relative "voting share" it has given how
 many other fields are also active, not a flat per-field multiplier) --
 logged as the next real priority on this rather than shipped as a quick
 patch.
+
+## 2026-08-31 (later still) -- new trope, category-budget scoring prototype (evaluated, NOT yet landed), and a data-adaptive weighting question raised
+
+**New trope, applied narrowly:** `retrospective_memoir_narration`
+(craft_devices) -- the protagonist-narrator recounting their own past
+from a later vantage point (The Name of the Wind's Kvothe telling his
+life story to the Chronicler), distinct from `form: framing_device` in
+general, which is a broad umbrella also covering frames where the
+narrator isn't the protagonist recounting their own life. Applied only
+to The Name of the Wind and The Wise Man's Fear (same confirmed frame
+device throughout the duology). 31 other books currently tagged
+`framing_device` were deliberately NOT touched -- several clearly use a
+different frame pattern (third-party storyteller, footnoted-historian
+voice, found manuscript) and this list is flagged for a real audit
+rather than guessed from memory. Also fixed two pre-existing doc/schema
+count mismatches found in passing: book-dna.md's craft_devices list was
+missing 4 tropes that already existed in schema.yaml (corruption_arc,
+mythological_pantheon_as_characters, tragic_reversal_of_fortune,
+amnesia_driven_narrative) and its scifi_specific list was missing
+`uplift` -- both corrected to match schema.yaml, which was always the
+source of truth.
+
+**Category-budget scoring redesign: prototyped, evaluated, deliberately
+NOT landed yet.** Following up on the WEIGHT_CAP conflict from the
+previous entry, built a redesign that groups the ~30 book_dna fields
+into 4 categories (structure: person/pov_count/narrator_reliability/
+form/timeline/pace_shape; tone_content: darkness/humor_level/
+emotional_register/message_intensity/intellectual_weight/romance_heat_*/
+violence_*; shape_stakes: stakes_scope/personal_stakes/drive/
+narrative_closure/emotional_resolution/ends_on_cliffhanger/
+worldbuilding_density/magic_system_hardness/scifi_hardness;
+length_format: book_length/audiobook_length/prose_density/
+prose_complexity/age_category/overall_pace) plus tropes as a 5th
+category, each given a target BUDGET share of the final score
+(structure 15%, tone_content 30%, shape_stakes 25%, length_format 10%,
+tropes 20% -- a first-pass hypothesis, not yet empirically tuned beyond
+this one test). Within a category, per-field weight is still computed
+from this user's own liked/disliked data exactly as today; what changes
+is that a category's overall share of the total score is pulled toward
+its budget by a blend parameter alpha, rather than left to whatever
+the raw per-field magnitudes happen to add up to.
+
+Tested alpha from 0 (pure data, no budget influence) to 1 (hard fixed
+budget) against the same 11-book held-out set from the previous entry.
+alpha=1 was WORSE than baseline across the board -- forcing a category
+to claim its full budget slice even when it has almost no real signal
+for this user steals weight from categories that DO have strong signal.
+alpha=0.3 (a light nudge, mostly data-driven) was the best config found:
+every single miss moved in the correct direction with no regressions on
+already-correct predictions, and two genuinely flipped a match-label
+bucket (Interview with the Vampire and Assassin's Quest both moved
+Good match -> Mixed match, still wrong but much closer). Also tested a
+"concentration bonus" (a field gets extra within-category share if it
+stays constant in the disliked pool while its category-mates vary) --
+made essentially no difference in this test, likely underpowered given
+only 1-2 disliked examples exist per category right now, not disproven.
+
+NOT landed into recommend.py yet -- see below, a live design question
+came up (should alpha itself scale with how much/how varied a user's
+rating data is, rather than being a fixed 0.3) that should be resolved
+before shipping a hardcoded value.
+
+**Open design question raised, not yet resolved:** should the
+category-budget blend (alpha) -- and by extension the whole weighting
+scheme -- adapt to how much and how varied a given user's rating data
+is? The intuition: alpha=0.3 was tuned against a fairly large, varied
+42-book training set; a brand-new user with 5-10 ratings, or a lopsided
+one (mostly loved, almost no disliked), has much thinner evidence, and
+may need MORE reliance on the category-budget prior (higher alpha) to
+avoid overfitting noise, converging toward more reliance on their own
+data (lower alpha) as real, varied evidence accumulates. This is the
+same underlying principle as HIGH_RISK_FIELD_DEFAULT and the earlier
+(unsuccessful) sample-size shrinkage experiment, but applied at the
+category-blend level instead of the individual-field level -- and
+unlike that earlier attempt, alpha has now been shown to genuinely
+move outcomes in the right direction, so there's a real lever to make
+data-adaptive this time. Not yet tested against a deliberately small/
+sparse synthetic profile -- that's the next concrete step before
+landing anything, rather than assuming the shrinkage logic applies
+without checking it the way this project has learned to check
+everything else.
