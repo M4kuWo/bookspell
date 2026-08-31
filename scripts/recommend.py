@@ -537,21 +537,31 @@ def load_catalog():
     return {b["id"]: b for b in books}
 
 
-# Fields where a real, confirmed tagging error has now shown up more
-# than once (2026-08-31 external reader feedback: Dungeon Crawler Carl's
-# person, Empire of Silence's now-removed first_contact) -- mechanical/
-# factual details easy to get wrong via genre-pattern-matching rather
-# than genuine judgment calls. An unassessed value on these fields
-# defaults BELOW full trust, so that a `manual_review`-sourced
-# correction (confidence 1.0, the same ceiling every field already
+# Fields with at least one CONFIRMED real tagging error from external
+# reader feedback so far (2026-08-31, two rounds). An unassessed value on
+# these fields defaults BELOW full trust, so that a `manual_review`-
+# sourced correction (confidence 1.0, the ceiling every field already
 # nominally has) can actually outrank an unverified guess instead of
 # tying with it -- confidence is capped at 1.0, so "verified" only means
 # something if "unverified" doesn't already sit at the same ceiling.
-# Deliberately narrow: most fields are subjective judgment calls with no
-# similar evidence of a systematic blind spot, and don't get this
-# discount.
+# Policy: membership is evidence-driven, not a priori guesswork -- a
+# field joins this set once a real reader has caught a real error on it,
+# not because it "sounds" error-prone. Round 1: person, pov_count,
+# narrator_reliability (Dungeon Crawler Carl). Round 2: magic_system_hardness,
+# overall_pace, romance_heat_intensity, drive, stakes_scope,
+# narrative_closure, humor_level (Yumi and the Nightmare Painter, Tress
+# of the Emerald Sea, Jade City, This Is How You Lose the Time War,
+# Speaker for the Dead, Slaughterhouse-Five). Round 2 alone matching
+# round 1's error rate across 7 more fields is real evidence that
+# tagging errors aren't confined to a narrow "mechanical fields" category
+# -- expect this set to keep growing as more real feedback comes in,
+# not to stabilize at some small fixed list.
 HIGH_RISK_FIELD_DEFAULT = 0.85
-HIGH_RISK_FIELDS = {"person", "pov_count", "narrator_reliability"}
+HIGH_RISK_FIELDS = {
+    "person", "pov_count", "narrator_reliability",
+    "magic_system_hardness", "overall_pace", "romance_heat_intensity",
+    "drive", "stakes_scope", "narrative_closure", "humor_level",
+}
 
 
 def get_confidence(book, field_or_trope):
