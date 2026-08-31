@@ -461,6 +461,21 @@ categories:
         # na = the concept doesn't apply at all — a pure sci-fi book with
         # no fantasy element (use scifi_hardness instead). Left undefined
         # until the pilot forced an inference — now documented.
+        #
+        # Tagged per-book based on what THIS BOOK actually reveals to the
+        # reader, not omniscient full-series knowledge -- confirmed
+        # 2026-08-31 via external reader feedback questioning why The Eye
+        # of the World (Wheel of Time book 1) is "soft" when the One
+        # Power is a well-defined, rule-based system by later books. It's
+        # soft in book 1 specifically because the reader hasn't been
+        # shown the rules yet (weaves, the Five Powers, the taint) --
+        # channeling is experienced as mysterious, not mechanical, at
+        # this point in the story. Checked: every subsequently-tagged WoT
+        # book is "hard" (The Great Hunt onward) -- this progression was
+        # already being applied consistently, just never written down.
+        # Same principle as spoiler gating and Series DNA trajectories:
+        # Book DNA reflects the reader's experience of THIS book, not
+        # meta-knowledge from the rest of the series.
         spoiler: false
       scifi_hardness:
         type: enum

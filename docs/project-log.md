@@ -2170,3 +2170,62 @@ User asked for the valuable self-tests before redoing the original
 
 Next: redo the user's original real 16-book liked/disliked test against
 this expanded catalog, per the user's own explicit next step.
+
+## 2026-08-31 (later) -- first external reader feedback: a real tool bug + a real mistag + a documented principle
+
+First feedback batch from the friend who received the catalog-review
+tool. Five items, checked against real data rather than assumed:
+
+1. **"Some Wheel of Time books have no tropes at all."** Real bug, not
+   a tagging gap: the catalog-review tool's query used `book_dna(*)`
+   (PostgREST's default left join), so untagged reserve-batch books
+   showed up with every field blank -- indistinguishable from
+   genuinely under-tagged ones. Fixed to `book_dna!inner(*)`, verified
+   against the local REST API (307 rows returned, down from 606).
+   Confirmed all 9 "tropeless" WoT books (New Spring, Lord of Chaos,
+   The Path of Daggers, Winter's Heart, Crossroads of Twilight, Knife
+   of Dreams, The Gathering Storm, Towers of Midnight, A Memory of
+   Light) are from the untagged reserve batch, now correctly hidden.
+   The 6 genuinely tagged WoT books all have healthy trope counts
+   (8-13 each) -- this feedback item was entirely a tool bug, not a
+   real tagging problem, and would have kept generating false signal
+   for every future reviewer if not caught now.
+2. **"Is The Eye of the World's soft magic system tagging right, given
+   how much is revealed later?"** Checked: yes, and it's a real,
+   already-consistent pattern that was never written down. Every
+   subsequently-tagged WoT book (The Great Hunt onward) is "hard" --
+   book 1 alone is "soft" because the reader hasn't been shown the
+   rules yet (weaves, Five Powers, the taint) at that point in the
+   story. Documented this explicitly in book-dna.schema.yaml: Book DNA
+   fields are tagged per-book based on what THAT book reveals to the
+   reader, not omniscient full-series knowledge -- same principle
+   already governing spoiler gating and Series DNA trajectories, just
+   never stated for magic_system_hardness/scifi_hardness specifically
+   until this question forced it into the open.
+3. **"major_character_death is a major spoiler."** Checked: it's
+   already tagged `spoiler: true` in the tropes table -- this was
+   already correct. The friend saw it plainly displayed because the
+   catalog-review tool is an internal, intentionally-unfiltered QA
+   tool, not a spoiler-gated end-user surface (that gating is still
+   deferred to a real frontend, per the original schema design).
+4. **"Empire of Silence tagged first_contact, but the story starts well
+   past that -- many alien races already known."** Confirmed correct
+   and fixed: the book's `mutual_human_alien_war` tag (already present)
+   correctly captures the ongoing conflict; first_contact requires
+   depicting the actual initial-encounter beat, which this book
+   doesn't. Removed via `20260831030000_fix_empire_of_silence_first_contact.sql`,
+   applied to both databases. Reviewed all 23 books currently tagged
+   first_contact for the same possible pattern (a later book in an
+   already-contact-established universe inheriting the tag) -- most
+   hold up (2001, Blindsight, Childhood's End, Solaris, The Left Hand
+   of Darkness, etc. all genuinely depict a first encounter), but 2-3
+   are genuinely borderline (So Long and Thanks for All the Fish, Cibola
+   Burn, Abaddon's Gate) without strong enough confidence to fix
+   unilaterally -- logged as a future targeted audit rather than forcing
+   a guess on the ambiguous ones.
+5. **"Could the tool be showing untagged reserve books?"** Yes -- this
+   was the root cause of item 1, fixed as described there.
+
+All from a single friend, one message, before even getting to the
+ratings ask -- concrete early evidence the external-reader pilot idea
+was worth doing.
