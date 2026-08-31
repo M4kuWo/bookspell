@@ -191,9 +191,14 @@ function titleCase(s) {
 }
 
 async function load() {
+  // book_dna!inner (not book_dna(*)) -- forces an inner join so untagged
+  // reserve-batch books (no book_dna row at all) are excluded entirely,
+  // rather than showing up with every field blank. Left-join here was a
+  // real bug: it made untagged holding-pen books indistinguishable from
+  // genuinely under-tagged ones during external reviewer feedback.
   const url = `${API_URL}/books?select=id,title,author,cover_url,page_count,publication_year,position_in_series,` +
     `series:series_id(name,status,book_count,parent:parent_series_id(name)),universe:universe_id(name),` +
-    `book_dna(*),` +
+    `book_dna!inner(*),` +
     `book_tropes(trope:tropes(id,group_name)),` +
     `book_content_warnings(warning_id,severity,reveals_spoiler)` +
     `&order=title.asc`;
