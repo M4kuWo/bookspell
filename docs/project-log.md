@@ -2229,3 +2229,119 @@ tool. Five items, checked against real data rather than assumed:
 All from a single friend, one message, before even getting to the
 ratings ask -- concrete early evidence the external-reader pilot idea
 was worth doing.
+
+## 2026-08-31 (later still) -- second round of external feedback, narrator_reliability's `ambiguous` value, and the first real held-out test on reader-supplied ratings
+
+**Second batch of friend catches, both confirmed and fixed:**
+1. Dungeon Crawler Carl was tagged `person: third_limited` -- wrong, the
+   book is narrated in first person by Carl throughout (one of the
+   series' defining stylistic features). Corrected to `first`.
+2. Dungeon Crawler Carl was tagged `narrator_reliability: reliable`, but
+   the reader reports it's genuinely left up to interpretation. Rather
+   than force it into the existing reliable/unreliable binary, added a
+   third enum value, `ambiguous`, distinct from `unreliable`: unreliable
+   means the text gives grounds to think the narrator is wrong/lying;
+   ambiguous means the book deliberately withholds what's needed to
+   judge either way and reasonable readers land on different answers.
+   Retagged Dungeon Crawler Carl as `ambiguous`. See
+   `book-dna.schema.yaml` for the full definition/guardrail against
+   overusing it for "narrator just has a strong voice."
+
+Both fixed in `20260831040000_dcc_fixes_and_new_vocab.sql`, applied to
+both databases.
+
+**Empire of Silence follow-up:** the earlier `first_contact` fix (see
+previous entry) removed a wrong trope but didn't add a replacement.
+Checked for existing vocabulary covering "several distinct, established
+alien species/civilizations coexisting" -- no match (`species_divergence`
+is humanity splitting into new species; `uplift` is a single species
+elevated by humans). Added `multiple_alien_species` as the sci-fi analog
+to `multiple_fantasy_species` and applied it to Empire of Silence, same
+migration as above.
+
+**New reader ratings, verified against the catalog before use:** the
+reader supplied a 20-item explicit list plus several series/aggregate
+statements ("all of First Law world, loved," "Farseer book 3, disliked,"
+etc.), on top of the original 16-book list from the first test round.
+Checked every title rather than trusting the aggregate statements at
+face value:
+- All 20 explicitly-numbered titles are tagged and usable as-is.
+- First Law world: only the original trilogy (Blade Itself, Before They
+  Are Hanged, Last Argument of Kings) is tagged. The standalones (Best
+  Served Cold, etc.) and the Age of Madness trilogy are still untagged
+  -- "all loved" only applies to those 3 books here.
+- Farseer book 3 (Assassin's Quest) is tagged -- used directly.
+- Dresden Files: only Storm Front (book 1) is tagged; Fool Moon, Grave
+  Peril, Blood Rites are not. The reader's "read at least 3, liked them
+  all" can only contribute Storm Front -- the other 2+ can't be
+  identified or used.
+- Black Prism/Lightbringer: only book 1 (The Black Prism) exists in the
+  catalog at all -- books 2-4 (The Blinding Knife, The Broken Eye, The
+  Blood Mirror) aren't in the catalog yet, so the reader's ratings for
+  those (2=it_was_okay, 3=it_was_okay, 4=hated/DNF) can't be used this
+  round.
+- Stormlight Archive Era One: all 6 books tagged, including Wind and
+  Truth. Used the other 5 (Way of Kings through Rhythm of War) per the
+  reader's explicit "loved all of them except Wind and Truth (no
+  spoilers please)" -- Wind and Truth excluded from ratings and not
+  discussed.
+- Mistborn Era One (3 main books) and Era Two (4 books): all 7 tagged,
+  used directly. The two Era One novellas (The Eleventh Metal, Mistborn:
+  Secret History) weren't mentioned by the reader and weren't assumed.
+- Wheel of Time "up to A Crown of Swords": Lord of Chaos (book 6) is
+  still untagged (known gap, noted in the previous entry) -- excluded
+  from the range; the other 6 books (Eye of the World through A Crown of
+  Swords) used.
+
+Net: 53 usable ratings (16 original + 37 new), combining the numbered
+list, the resolvable aggregate statements, and the original list with no
+conflicts between them.
+
+**Held-out validation test, first real test against the expanded
+catalog and real (not synthetic) reader ratings:** trained the profile
+on 42 of the 53 ratings, held out 11 spanning all five rating labels and
+both genres, and checked whether `score_book`/`match_label`'s predicted
+direction agreed with the reader's actual rating.
+
+Result: **4/11 correct** -- worse than hoped, but genuinely informative
+now that it's real data instead of a synthetic test. `explain_match()`
+on the misses shows a specific, reproducible pattern:
+- **Royal Assassin and Assassin's Quest** (Farseer books 2 and 3,
+  reader disliked both) both scored "Good match." `explain_match` shows
+  the profile *did* learn a negative signal on first-person/single-POV
+  narration (from Assassin's Apprentice, book 1, disliked and in the
+  training set) -- it shows up correctly as a mismatch factor for both.
+  But it's outvoted: a large pile of unrelated loved epic fantasy in
+  training (Blade Itself, Way of Kings, Prince of Thorns, the Wheel of
+  Time run, etc.) shares surface traits with these two books -- dense
+  worldbuilding, epic length, dark tone, court intrigue/epic quest --
+  and that shared-trait volume pushes the score up despite the
+  correctly-learned narrative-style mismatch. One book's worth of
+  negative signal doesn't stand up against a dozen books' worth of
+  positive signal on incidental shared traits.
+- **The Wise Man's Fear** (reader hated it) shows the same shape: a
+  correctly-learned mismatch on "mixed narrative person"/"framing
+  device," outvoted by matches on hard magic system, dense
+  worldbuilding, epic length -- traits shared with a training set
+  dominated by loved epic fantasy.
+- **Old Man's War** (reader liked it) is the mirror-image failure: it
+  scored only "Mixed match" because it's a first-person, self-contained,
+  hard-sci-fi standalone in a training pool whose positive ratings skew
+  heavily toward multi-book, third-person, soft-magic epic fantasy.
+  Since structural fields (person, pov_count, form, etc.) are profiled
+  from the *full* unscoped rating pool by design (see the WEIGHT_CAP
+  comment in recommend.py), the majority fantasy cluster's structural
+  preferences penalize a minority-cluster book the reader actually
+  liked.
+
+This sharpens, with real data, the profile-overfitting gap already
+flagged after the synthetic re-test against the doubled catalog: when a
+rating pool is lopsided toward one genre/style cluster, a single
+counter-example (either a disliked book inside an otherwise-loved
+series, or a liked book outside the dominant cluster) gets swamped by
+volume rather than treated as a real signal. Catalog size and even
+having "the right counter-example" tagged isn't enough by itself -- the
+scoring math needs some way to weight a specific, targeted counter-
+example more heavily than incidental shared surface traits. Not fixed
+here -- this is a scoring-design question, flagged for the next
+priority discussion rather than patched unilaterally.

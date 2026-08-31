@@ -35,7 +35,7 @@ That constraint is what makes similarity scoring work at all (roadmap §05).
 |---|---|
 | `pov_count` | single, multiple |
 | `person` | first, second, third_limited, third_omniscient, mixed |
-| `narrator_reliability` | reliable, unreliable |
+| `narrator_reliability` | reliable, unreliable, ambiguous |
 | `timeline` | linear, nonlinear, multi_timeline |
 | `form` | standard_prose, epistolary, framing_device, verse, embedded_system_text, script_or_stage_play |
 | `prose_density` | sparse, moderate, lush |
@@ -321,7 +321,7 @@ similarity math regardless of grouping.
   parallel_universe_or_multiverse, prophecy, war_story,
   ancient_evil_awakens, powerful_artifact_macguffin, last_minute_rescue,
   black_and_white_morality, child_soldiers_in_warfare, noir_detective_structure
-- **Sci-fi specific** (21) — first_contact, generation_ship, dying_earth,
+- **Sci-fi specific** (23) — first_contact, generation_ship, dying_earth,
   alien_invasion, ai_consciousness, cloning,
   terraforming_or_space_colonization, cryosleep,
   mind_uploading_or_digital_immortality, virtual_reality_or_simulated_world,
@@ -329,7 +329,8 @@ similarity math regardless of grouping.
   cybernetic_enhancement, hive_mind, mecha_or_giant_robots,
   self_replicating_consciousness, species_divergence,
   relativistic_time_dilation, mutual_human_alien_war,
-  aging_reversal_or_rejuvenation, satirical_or_comedic_scifi
+  aging_reversal_or_rejuvenation, satirical_or_comedic_scifi, uplift,
+  multiple_alien_species
 - **Craft & narrative devices** (9) — twist_ending, twist_filled,
   sanderlanche, redemption_arc, villain_turns_ally, major_character_death,
   mentor_death, mythological_retelling, shadow_self_confrontation

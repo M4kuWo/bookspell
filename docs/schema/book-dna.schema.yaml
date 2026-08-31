@@ -92,8 +92,17 @@ categories:
         spoiler: false
       narrator_reliability:
         type: enum
-        values: [reliable, unreliable]
+        values: [reliable, unreliable, ambiguous]
         spoiler: false
+        # ambiguous added 2026-08-31 (external reader feedback, Dungeon Crawler
+        # Carl): distinct from unreliable -- unreliable means the text gives
+        # readers grounds to believe the narrator is wrong/lying (Fight Club,
+        # Gone Girl); ambiguous means the book deliberately withholds the
+        # information needed to judge either way, and reasonable readers land
+        # on different answers. Don't default to ambiguous for "narrator has a
+        # strong voice/bias" -- that's just reliable narration with
+        # personality; only use it when the text itself won't resolve the
+        # question.
       timeline:
         type: enum
         values: [linear, nonlinear, multi_timeline]
@@ -623,6 +632,7 @@ categories:
           - {id: aging_reversal_or_rejuvenation, group: scifi_specific, spoiler: false}  # elderly protagonist restored to a younger, enhanced body (Old Man's War)
           - {id: satirical_or_comedic_scifi, group: scifi_specific, spoiler: false}  # sci-fi as vehicle for parody/satire of genre or bureaucratic conventions, not just humor_level's amount-of-comedy axis (Hitchhiker's Guide)
           - {id: uplift, group: scifi_specific, spoiler: false}  # a species deliberately or accidentally granted human-level intelligence via technology (Children of Time) — distinct from species_divergence, which covers humanity itself splitting into new species, not a different species being uplifted
+          - {id: multiple_alien_species, group: scifi_specific, spoiler: false}  # added 2026-08-31 (external reader feedback, Empire of Silence): several distinct, established alien species/civilizations coexisting in the setting — sci-fi analog to multiple_fantasy_species. Distinct from mutual_human_alien_war (a specific conflict shape, not species-count) and uplift (one species elevated by humans, not multiple independently-evolved civilizations already present)
 
           # -- craft & narrative devices --
           - {id: twist_ending, group: craft_devices, spoiler: true}
