@@ -2050,3 +2050,51 @@ create policy "public read access" on book_field_confidence for select using (tr
 Verified against hosted: `relrowsecurity = true` and the "public read
 access" SELECT policy is in place, consistent with every other catalog
 table now.
+
+## 2026-08-31 (later) -- pulled home-PC progress, deleted out-of-scope rows, round-2 catalog expansion
+
+Pulled the 10 new commits pushed from the user's home PC (via the wife's
+Claude session, using the `tag-catalog-batch` skill): the full 147-book
+backlog cleared to 307/314 tagged, two density-audit enrichment passes
+(58 tropes across 49 books, 13 content warnings across 13 books -- the
+new batch was measurably thinner than the pre-existing catalog and this
+caught it rather than leaving it), a catalog-wide trope consistency
+sweep (31 additions across 28 books, found via direct sibling
+comparison -- Dune missing space_opera on 3/5 books, Wheel of Time
+missing multiple_fantasy_species on all but book 1, Discworld/ASOIAF
+both inconsistent across siblings), the RLS fix, `form:
+script_or_stage_play` (surfaced by Harry Potter and the Cursed Child),
+and data-quality fixes (curly apostrophes, a zero-width space breaking
+title lookups). Applied all 14 migrations to local, verified byte-for-
+byte matching hosted across all 8 tables.
+
+Hit a real migration-tracking desync applying a follow-up migration:
+`supabase db push` tried to re-apply all 14 of the home-PC session's
+migrations (since they were applied via direct SQL, same pattern this
+session uses, not through the CLI's own tracking) and failed on a
+non-idempotent `CREATE POLICY` that already existed for real. Fixed
+correctly via `supabase migration repair --status applied --linked
+<14 versions>` -- marks them applied in hosted's tracking without
+re-executing, rather than working around the error some other way.
+
+Deleted the 7 confirmed-out-of-scope dangling rows (6 non-SFF books,
+1 duplicate omnibus) after verifying zero dependent rows in book_dna/
+book_tropes/book_content_warnings/book_field_confidence. Also deleted 4
+series rows this left with zero books (single-book series named after
+the deleted book) -- deliberately left the legitimate zero-book parent
+groupings (Stormlight Archive, Stormlight Archive Era Two, Mistborn)
+alone, since those are intentional per the series-hierarchy design.
+307 books / 128 series remain, verified matching hosted.
+
+Round 2 catalog expansion: bumped `ingest-seed-catalog.js`'s per-genre
+pull count 220->420 to fetch the next tier ahead of the next real
+tagging pass -- bibliographic data only, deliberately not tagged yet,
+per the user's request ("fetching is cheap, tagging isn't, keep them
+handy"). First attempt hit a 5-minute HTTP/2 headers timeout on
+Hardcover's API (transient -- confirmed nothing was written before the
+failure, retried cleanly). Netted 299 new books, 123 new series (more
+than the requested ~200, given the actual yield rate at this pagination
+depth). Synced to hosted via the same hardcover_id-based idempotent
+migration pattern as the first expansion. Catalog now: 606 books total,
+307 tagged (untouched) + 299 newly held untagged for later, verified
+matching hosted exactly.
