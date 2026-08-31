@@ -2345,3 +2345,86 @@ scoring math needs some way to weight a specific, targeted counter-
 example more heavily than incidental shared surface traits. Not fixed
 here -- this is a scoring-design question, flagged for the next
 priority discussion rather than patched unilaterally.
+
+## 2026-08-31 (later still) -- third round of reader feedback, confidence policy made evidence-driven, and a real conflict found before landing the structural-field weight fix
+
+**Confidence layer refined per a direct suggestion:** a human-verified
+correction to a field should outrank an unassessed AI guess, not just
+tie with it. Confidence was already capped at 1.0 with unassessed
+fields defaulting to full trust, so this needed real headroom, not just
+setting corrections to 1.0. Added `HIGH_RISK_FIELD_DEFAULT = 0.85` in
+recommend.py: unassessed values on fields with at least one *confirmed*
+real tagging error default to 0.85 instead of 1.0, so a `manual_review`-
+sourced correction (1.0) genuinely outranks an unverified guess on the
+same field elsewhere in the catalog. Round 1 (previous entry):
+person, pov_count, narrator_reliability. This entry's feedback batch
+added 7 more fields with confirmed real errors -- magic_system_hardness,
+overall_pace, romance_heat_intensity, drive, stakes_scope,
+narrative_closure, humor_level -- enough that membership in this set is
+now explicitly evidence-driven policy (a field joins once a real error
+is caught on it, not from a priori guessing about which fields "sound"
+risky) and is expected to keep growing, not stabilize at a small fixed
+list.
+
+**Third round of reader corrections, all verified against current tags
+first, applied via `20260831060000_second_round_reader_corrections.sql`:**
+- Yumi and the Nightmare Painter: narrator_reliability corrected
+  unreliable -> reliable (same failure shape as Dungeon Crawler Carl --
+  defaulted off the frame-narrative device rather than the book's actual
+  trustworthiness; the schema's own guardrail already says a strong-
+  voiced narrator isn't automatically unreliable/ambiguous). Missing
+  `sanderlanche` added (a real omission -- vanishingly rare for a
+  Sanderson book not to have one). magic_system_hardness corrected
+  hard -> soft (reader placed it between hard/soft; schema has no medium
+  value, so soft per his own stated fallback).
+- Tress of the Emerald Sea: overall_pace corrected medium -> fast.
+- Jade City: missing sexual_assault content warning added (severity
+  judgment-called as moderate). romance_heat_intensity corrected
+  closed_door -> explicit. drive corrected balanced -> character_driven.
+- This Is How You Lose the Time War: person checked via web search
+  before touching it -- I had a specific but wrong recollection that the
+  book uses second person (actually a Broken Earth trilogy feature I
+  was conflating it with); it genuinely intercuts third-person present-
+  tense narrative with first-person epistolary letters, so `mixed` was
+  already correct and was NOT changed, flagged back to the reader
+  instead of force-corrected. romance_heat_intensity corrected
+  moderate -> low. stakes_scope corrected cosmic -> intimate (no literal
+  "personal" value exists; intimate is the smallest-scope option and
+  matches what he described).
+- Ender's Game: the genocide content warning is the book's final twist
+  and wasn't flagged as a spoiler -- corrected reveals_spoiler to true.
+- Speaker for the Dead: narrative_closure corrected self_contained ->
+  requires_series (reader compared it to Mistborn: The Final Empire,
+  confirmed tagged requires_series).
+- Slaughterhouse-Five: humor_level corrected light -> heavy.
+
+All applied to both databases, manual_review confidence recorded for
+every corrected field/trope in `20260831070000_manual_review_confidence_round2.sql`.
+
+**Scoring fix (person/pov/narrator_reliability underweighted, from the
+previous entry): prototyped, found real improvement, then found a real
+conflict -- NOT landed.** Tested a "structural-field prior boost"
+(person/pov_count/narrator_reliability/form weighted 1.8x-3x, cap
+raised) against the same held-out set. It moved every disliked/hated
+miss substantially in the correct direction (Royal Assassin,
+Assassin's Quest, Interview with the Vampire all dropped a full
+match-label bucket) with no measured downside on already-correct
+predictions -- but plateaued quickly (boost=3.0 barely outperforms
+boost=1.8) and never crossed into fully-correct verdicts, because
+boosting 3-4 fields out of ~30 can only pull a normalized average so
+far no matter how hard those 3-4 are boosted.
+
+Before landing it anyway, checked WEIGHT_CAP's own history and found a
+direct conflict: WEIGHT_CAP (0.5) exists *specifically* because an
+earlier real test produced pov_count/person weights of 0.89/0.54 that
+dwarfed every trope weight and made those two structural fields the de
+facto sole decision-maker for every recommendation -- the exact opposite
+problem from today's case (structural signal too WEAK, drowned out by
+volume). Raising structural-field weight/cap again risks reintroducing
+the exact failure WEIGHT_CAP was built to prevent, just for a different
+specific rating profile. Not landed pending a properly careful fix that
+addresses both directions at once (most likely something that scales a
+field's weight by how much relative "voting share" it has given how
+many other fields are also active, not a flat per-field multiplier) --
+logged as the next real priority on this rather than shipped as a quick
+patch.
