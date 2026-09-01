@@ -230,6 +230,53 @@ before guessing -- and if you're still not confident, skip that book and
 say so in your report rather than fabricating tags for a book you don't
 actually know.
 
+**The more common and more dangerous failure isn't "I don't know this
+book" -- it's being confidently WRONG on one specific mechanical
+detail while genuinely knowing the book well overall.** Every real
+tagging error caught by external readers so far came from exactly this:
+over-pattern-matching to genre convention instead of checking the
+actual book. Two real examples, already fixed: Dungeon Crawler Carl was
+tagged `person: third_limited` because LitRPG "usually reads that way,"
+when it's actually first-person throughout (one of the series' defining
+stylistic choices); Empire of Silence was tagged with the `first_contact`
+trope because space-opera-with-aliens "is usually" a first-contact
+story, when the war in it has been going on for a long time before the
+narrative even starts. Neither of these felt uncertain to tag -- that's
+exactly the problem, and "if uncertain, check" doesn't catch it.
+
+**For these specific fields -- `person`, `pov_count`,
+`narrator_reliability`, `magic_system_hardness`, `overall_pace`,
+`romance_heat_intensity`, `drive`, `stakes_scope`, `narrative_closure`,
+`humor_level` -- do a quick check (a synopsis, a web search) even when
+you feel confident**, not just when you feel unsure. This list has a
+confirmed real-error track record and is expected to keep growing, not
+shrink -- treat any field on it as worth the extra 30 seconds. The same
+applies to any trope asserting a specific plot beat actually happens in
+the book (not just a general theme or setting) -- verify the beat
+itself occurs, don't infer it from the setting being the kind of place
+where it commonly would.
+
+**Check the book's `author` field before trusting it, if it looks like
+`"Name, Name, Name"`.** A real, widespread data-quality issue (65 of 606
+books, from Hardcover's ingestion pulling in every "contributor" credit,
+not just the author) means a second or third name is very often an
+illustrator, translator, or narrator, not a co-author -- distinguish
+genuine multi-author books (which are real and common) before assuming
+either way, and flag it in your report if you spot a contaminated one
+rather than silently working around it.
+
+**Two schema values were added recently (2026-09-01) that are easy to
+default past out of habit** if you're recalling the schema from memory
+rather than reading it fresh: `narrator_reliability` now has a third
+value, `ambiguous` (distinct from `unreliable` -- use it when the text
+deliberately withholds what's needed to judge the narrator's honesty
+either way, not just because the narrator has a strong voice), and two
+new craft_devices tropes exist (`retrospective_memoir_narration` for a
+protagonist recounting their own past from a later vantage point, and
+`multiple_alien_species`, the sci-fi analog to `multiple_fantasy_species`).
+Re-read `docs/schema/book-dna.schema.yaml` fresh rather than relying on
+a previous session's memory of it.
+
 ## Step 4: save your batch as a migration file, and hand it back
 
 Your inserts already went live against the hosted database the moment

@@ -80,6 +80,36 @@ re-litigate decisions already made there.
   (`book_field_confidence`, or `book_tropes.confidence`/`.source`) to
   record that uncertainty. It's real, used input to scoring, not
   decorative.
+- **The real tagging failure mode isn't "I don't know this book" — it's
+  being confidently WRONG on a specific mechanical detail.** Every real
+  tagging error caught by external readers so far (two separate rounds)
+  came from confidently recalling a book well overall but getting one
+  specific, checkable fact wrong — usually by over-pattern-matching to
+  genre convention instead of the actual book (Dungeon Crawler Carl
+  tagged third-person because LitRPG "usually is," when it's actually
+  first-person; Empire of Silence tagged `first_contact` because
+  space-opera-with-aliens "usually is" a first-contact story, when the
+  war in it long predates the narrative). "If uncertain, check" doesn't
+  catch this, because the tagger doesn't feel uncertain. **Fields with a
+  confirmed track record of this failure — `person`, `pov_count`,
+  `narrator_reliability`, `magic_system_hardness`, `overall_pace`,
+  `romance_heat_intensity`, `drive`, `stakes_scope`, `narrative_closure`,
+  `humor_level` (see `HIGH_RISK_FIELDS` in `scripts/recommend.py`, and
+  this list is expected to keep growing) — deserve a quick check
+  (re-reading a synopsis, a web search) even when you feel sure,** and
+  any trope asserting a specific plot beat happened (not just a general
+  theme/setting) warrants the same treatment. This is a standing policy,
+  not a one-off note — add a field to that list the next time a real
+  error surfaces on it, rather than assuming this list is now complete.
+- **A book's `author` field must contain only genuine author(s) — not
+  illustrators, translators, narrators, or editors.** This has already
+  been a real, widespread problem (65 of 606 books had a contaminated
+  author field from Hardcover's bibliographic ingestion carrying every
+  "contributor" credit into one string) and can recur on any newly
+  ingested book. If an author field looks like `"Name, Name, Name"`,
+  check whether the later names are genuine co-authors (real, and
+  common — don't assume contamination) or contributors before trusting
+  or further propagating it.
 - **When adding a batch of new books, compare tropes/book and content
   warnings/book against the existing catalog's average.** A fresh batch
   that's meaningfully thinner than the existing catalog is a real
@@ -105,6 +135,36 @@ re-litigate decisions already made there.
   should just group by `series_id` directly — no special-casing needed
   to exclude parent series or shared universes, the data model already
   does it for free.
+
+## Recommendation engine (`scripts/recommend.py`)
+
+- **Read `docs/scoring-test-protocol.md` before changing any scoring
+  logic** (`build_profile`, `score_book`, `explain_book`, or anything
+  that computes a weight). It has a running table of every idea tried
+  so far — landed, rejected, and deferred — and why. Several ideas that
+  looked like clear wins under an incomplete test turned out not to be;
+  don't re-litigate a rejected idea, or claim a win, without checking
+  that table first.
+- **Every scoring change must be checked against at least two failure
+  scenarios before landing**, not just the one that motivated it: a
+  fix that helps a real signal from getting diluted by many unrelated
+  agreeing fields has repeatedly turned out to reopen a different,
+  previously-fixed bug where one field dominates everything else
+  (or vice versa). `scripts/scoring_tests.py` has both scenarios ready
+  to run.
+- **A discount/adjustment must be conditional on the specific book
+  being scored, never a blanket adjustment applied regardless of
+  context.** A real bug shipped briefly because of this: a redundancy
+  discount between two correlated fields was applied as a flat
+  per-profile weight reduction, which wrongly discounted a field for
+  candidate books where the correlation didn't actually apply. Fixed by
+  moving the discount into `score_book()`/`explain_book()`, applied
+  per-book. See `REDUNDANCY_DISCOUNTS` for the pattern.
+- **Rater data lives in `data/ratings/{name}.json`**, not hardcoded in
+  test scripts — there's no real user/account system yet, so this is
+  the durable stand-in. See `data/ratings/README.md` for the current
+  roster. Add a new person's file there, then a new scenario in
+  `scripts/scoring_tests.py`, rather than replacing existing data.
 
 ## Safety / credentials
 
