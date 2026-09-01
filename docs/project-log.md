@@ -2859,3 +2859,48 @@ of book she's already well-represented by.
 
 `scripts/scoring_tests.py` scenario 4 upgraded from a leave-one-out
 diagnostic to a real held-out test now that there's enough data.
+
+## 2026-09-01 (later still) -- targeted ingestion of 7 books flagged by Osnat's ratings
+
+Built `scripts/ingest-targeted-titles.js`, a companion to
+`ingest-seed-catalog.js` for adding specific known-missing titles
+(confirmed via a search-only helper script first) instead of bulk
+genre-popularity pulls. Motivated directly by the negative-signal gap
+found in Osnat's held-out test: her tagged books are almost all
+positive, and her actual dislikes were mostly missing from the catalog.
+
+Searched for 10 candidate titles from her list; 7 had confident,
+unambiguous matches and were inserted (bibliographic only, no DNA yet):
+Magic Bites, Magic Burns, A Questionable Client (all Ilona Andrews,
+Kate Daniels), Daughter of No Worlds (Carissa Broadbent), When the Moon
+Hatched (Sarah A. Parker), Ruthless Vows (Rebecca Ross, correctly linked
+to the existing Letters of Enchantment series alongside Divine Rivals,
+not a duplicate), The Assassin and the Healer (Sarah J. Maas). 3 new
+series created (Kate Daniels, The War of Lost Hearts, Moonfall).
+
+Deliberately skipped rather than guessed: two "Curran POV" Kate Daniels
+side-story novellas (Unicorn Lane, Fernando's POV) -- extremely obscure
+on Hardcover (1-2 users, no author metadata, likely free blog serials
+rather than real standalone works) -- and "Mate," which had no
+confident match among search results (a pile of unrelated low-
+visibility werewolf romances, none clearly the book Osnat meant).
+
+Caught a real bug while building this: Hardcover's search API returns
+`id` as a string, not a number -- a strict `===` comparison against the
+numeric ids confirmed via the search-only script silently failed for
+every single title on the first run (0 inserted). Fixed by normalizing
+to `Number()` once, right where docs are fetched.
+
+Applied to local, verified (Ruthless Vows correctly shares Letters of
+Enchantment with Divine Rivals, not a new duplicate series). NOT yet
+applied to hosted -- this session doesn't have the hosted connection
+string (by design, never committed); handed back to the repo owner to
+either run `ingest-targeted-titles.js` themselves against hosted or
+share the connection string out-of-band.
+
+Handed off a priority tagging batch to the wife's ongoing tag-catalog-batch
+session: the 7 new books plus 5 already-in-catalog-but-untagged titles
+from the same source (Divine Rivals, Sweep of the Heart, From Blood and
+Ash, The Serpent and the Wings of Night, An Absolutely Remarkable Thing)
+-- ahead of the skill's usual partial-series-priority query, specifically
+to fix the negative-signal gap once tagged.
