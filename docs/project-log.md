@@ -2993,3 +2993,44 @@ equivalent mechanism for that direction -- possibly can't be built from
 DNA fields alone if two books in a series genuinely don't differ on the
 fields tracked. Logged as an open question in docs/scoring-test-
 protocol.md, not treated as a bug to patch reflexively.
+
+## 2026-09-01 (later) -- closed the content-warning/trope under-tagging gap flagged above
+
+Acted on the under-tagging signal from the "sanity-check" entry above
+(~1.02-1.08 CW/book vs 1.83 baseline, declining trope density across
+successive batches). Queried the precise affected set directly rather
+than re-scanning the whole catalog: books tagged today with either
+zero content warnings or fewer than 4 tropes -- 149 of 256 books tagged
+today qualified.
+
+Given the size, split the review across 5 non-forked background
+research agents (no DB access, pure knowledge review), each handed a
+~30-book slice plus that book's *current* tropes/CWs so they proposed
+only genuine additions, never duplicates or padding. Compiled and
+hand-reviewed all 5 chunks' findings before writing anything: dropped
+a couple of weak-fit proposals that didn't hold up (a "soulmate_bond"
+trope for Kell/Rhy in *A Gathering of Shadows* -- an adoptive-brother
+magical bond, not a romantic one; an over-metaphorical content warning
+on *Our Wives Under the Sea* that stretched a literal transformation
+into a "chronic illness" tag). Cross-referenced against an earlier,
+differently-scoped audit pass for extra corroboration on overlapping
+titles, folding in well-supported specifics (e.g. *The Wicked King*'s
+missed torture/dubious-consent content, *City of Glass*'s missed
+genocide-plot and incest-reveal warnings) that the primary pass alone
+hadn't caught.
+
+Result: 112 of the 149 flagged books got genuine additions (59 new
+tropes, 150 new content warnings) via
+`20260901234500_enrich_todays_undertagged_batch.sql`, scoped per-book
+via title subselects, idempotent via `on conflict do nothing`. Today's
+batch average moved from 1.08 to 1.66 CW/book (catalog baseline: 1.83)
+and 4.43 to 4.66 tropes/book. The remaining 37 flagged books were left
+untouched deliberately -- the research agents either judged them
+already adequately covered by existing tags or explicitly flagged
+their content as unfamiliar/uncertain rather than guess, consistent
+with this project's standing "don't guess, don't pad" tagging policy.
+One exact-title gotcha hit again: "Dawn" (Octavia Butler) is stored in
+`books.title` with a trailing space -- the enrichment script resolves
+titles via a live DB lookup rather than typed strings, same fix
+pattern as the earlier "A Court of Silver Flames" zero-width-space
+issue.
