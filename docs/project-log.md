@@ -2919,3 +2919,48 @@ found in the catalog** -- it wasn't one of the 7 titles confirmed via
 its own targeted-ingestion pass (search + confirm + insert) before it
 can be tagged. Not attempted here -- flagged for the repo owner to
 decide whether/how to source it.
+
+## 2026-09-02 -- tagging-density sanity check, catalog-growth retest
+
+**Sanity check on the new batch-tagging (real finding, not a false
+alarm)**: compared tropes/book and content-warnings/book across the
+523-book catalog's pre-session baseline (307 books) vs. the ~216 books
+tagged in parallel today. Content warnings landed at ~1.02/book across
+ALL new batches vs. 1.83/book baseline -- consistently thin, not one
+bad batch. Trope density shows a real declining trend as the session
+progressed: 6.47 -> 4.27 -> 3.20 tropes/book across three successive
+batches (45, 151, then 20 books). Flagged back for enrichment rather
+than assumed fine, matching this project's own established convention.
+Caught and fixed a real bug of my own while computing this: an earlier
+per-batch breakdown attempt used a pre-aggregated subquery
+(`group by book_id` on the child table alone) that silently drops
+zero-count books when later averaged -- `AVG()` skips NULLs, and a book
+with no matching child rows never appears in that subquery at all, so
+it's excluded rather than counted as 0. Caught by cross-checking two
+independently-written queries against each other rather than trusting
+either one, which is exactly why the second one existed as a check.
+
+**Reran all 4 scoring-test-protocol.md scenarios against the grown
+catalog (523 tagged, up from 307).** Bit-for-bit identical results.
+Confirmed this is expected, not a failure to detect real change: none
+of `build_profile`/`score_book` reference catalog-wide statistics,
+only the specific rated/held-out books passed in -- growing the
+candidate pool doesn't touch a held-out test that never looks at the
+candidate pool. Where catalog growth actually matters is the live
+`recommend()` ranking (more competing candidates) and series-
+completion-dependent mechanics (series-position gating, the
+series-repeat signal) -- not this methodology.
+
+**Catalog growth did fill 5 real gaps from the original ratings
+collection**, though: Lord of Chaos (WoT book 6, was untagged, blocked
+the "up to A Crown of Swords" range), A Little Hatred and Best Served
+Cold (First Law World extras, cover "all of First Law world, loved"),
+and Fool Moon/Grave Peril (Dresden books 2-3, resolving the earlier
+"at least 3, liked all" ambiguity -- combined with the already-rated
+Storm Front, almost certainly the 3 titles meant). Added all 5 to
+`data/ratings/mathias.json` (58 ratings now) and reran scenario 1:
+mixed, modest movement -- The Wise Man's Fear improved substantially
+(0.630 -> 0.522), a couple of other misses moved slightly the wrong
+direction, net correct-count unchanged at 4/11. Honest, expected
+result: richer data moves individual scores around, doesn't guarantee
+uniform improvement.

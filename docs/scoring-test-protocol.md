@@ -126,6 +126,43 @@ Mate) fall in this same gap -- ingesting and tagging them would directly
 address the negative-signal shortage above, not just grow the catalog
 generically.
 
+## Catalog growth re-check (2026-09-02)
+
+The catalog grew from 307 to 523 tagged books via parallel batch-tagging
+sessions. Before rerunning anything, sanity-checked tagging quality on
+the new batches (per this project's own "compare a fresh batch against
+the existing catalog's average" convention): a real, confirmed
+under-tagging signal, not a bug -- content warnings landed at ~1.02/book
+across ALL new batches vs. 1.83/book baseline, and trope density shows a
+clear declining trend WITHIN the session as it progressed (6.47 -> 4.27
+-> 3.20 tropes/book across three successive batches). Worth flagging
+back for enrichment; not blocking, since none of the specific books used
+in scenarios 1/3/4 come from the thin batches.
+
+Reran all 4 scenarios as-is: bit-for-bit identical results to before
+catalog growth (same scores to 3 decimals). This is expected, not a null
+result -- none of these scenarios reference catalog-wide statistics;
+they only use the specific rated/held-out titles' own tags, none of
+which changed. Catalog growth genuinely doesn't touch this held-out
+methodology by design -- it matters for the live `recommend()` candidate
+pool and for series-completion-dependent mechanics (series-position
+gating, the series-repeat signal), not for these fixed-book accuracy
+numbers.
+
+Catalog growth DID fill 5 real gaps from the original ratings
+collection: Lord of Chaos (WoT book 6), A Little Hatred/Best Served Cold
+(First Law World extras), and Fool Moon/Grave Peril (Dresden books 2-3,
+resolving the earlier "at least 3, liked all" ambiguity -- combined with
+Storm Front, almost certainly the 3 meant). Added to
+`data/ratings/mathias.json` and reran scenario 1 with the enriched
+58-book pool: mixed, modest movement -- The Wise Man's Fear improved
+substantially (0.630 -> 0.522, still "Mixed" not "Poor" but meaningfully
+closer), Skyward and Old Man's War moved slightly in the correct
+direction, but Royal Assassin/Interview with the Vampire/Assassin's
+Quest moved slightly the WRONG direction (still same bucket). Net
+correct-count unchanged (4/11) -- more relevant, complete data doesn't
+guarantee improvement on every individual book, and isn't expected to.
+
 ## Sparse-data check (2026-09-01)
 
 Added scenario 3 (`SPARSE_RATINGS`, the repo owner's original 16-book
