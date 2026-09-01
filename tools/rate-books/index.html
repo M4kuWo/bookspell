@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookspell — Rate Books</title>
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #faf9f5;
+    --ink: #1d211b;
+    --ink-soft: #565c50;
+    --accent: #35573b;
+    --accent-strong: #24402a;
+    --line: #d8dace;
+    --surface: #ffffff;
+    --loved: #2f6b3a;
+    --liked: #6a8f4e;
+    --okay: #8a8060;
+    --disliked: #b06a3a;
+    --hated: #a13f3f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    padding: 16px;
+    padding-bottom: 80px;
+  }
+  .wrap { max-width: 520px; margin: 0 auto; }
+  h1 {
+    font-size: 1.4rem;
+    margin: 8px 0 4px;
+  }
+  .sub {
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    margin: 0 0 20px;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin: 0 0 6px;
+  }
+  input[type="text"] {
+    width: 100%;
+    font-size: 1rem;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--ink);
+  }
+  input[type="text"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .field { margin-bottom: 18px; }
+  #results {
+    margin-top: 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+    display: none;
+  }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-row:active, .result-row:hover { background: #f0efe8; }
+  .result-title { font-weight: 600; }
+  .result-author { color: var(--ink-soft); font-size: 0.85rem; white-space: nowrap; }
+  #picked {
+    display: none;
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  #picked .book-title { font-weight: 700; font-size: 1.05rem; }
+  #picked .book-author { color: var(--ink-soft); font-size: 0.9rem; margin-bottom: 14px; }
+  .rating-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  .rating-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .rating-btn:active { transform: scale(0.96); }
+  .rating-btn.loved { background: var(--loved); }
+  .rating-btn.liked { background: var(--liked); }
+  .rating-btn.it_was_okay { background: var(--okay); }
+  .rating-btn.disliked { background: var(--disliked); }
+  .rating-btn.hated { background: var(--hated); }
+  #toast {
+    position: fixed;
+    left: 16px; right: 16px; bottom: 16px;
+    max-width: 520px;
+    margin: 0 auto;
+    background: var(--accent-strong);
+    color: #fff;
+    padding: 14px 16px;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    display: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }
+  #toast.error { background: var(--hated); }
+  #session {
+    margin-top: 28px;
+  }
+  #session h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ink-soft);
+    margin: 0 0 10px;
+  }
+  .session-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.92rem;
+  }
+  .session-row:last-child { border-bottom: none; }
+  .session-rating { color: var(--ink-soft); font-size: 0.85rem; }
+  .name-locked {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    margin-bottom: 18px;
+  }
+  .name-locked button {
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  .empty-state {
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    padding: 14px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Rate some books</h1>
+  <p class="sub">Type your name once, then search for books you've read and rate them. Each rating saves the moment you tap it — nothing to submit at the end.</p>
+
+  <div id="name-entry" class="field">
+    <label for="rater-name">Your name</label>
+    <input type="text" id="rater-name" placeholder="e.g. Osnat" autocomplete="off">
+  </div>
+  <div id="name-locked" class="name-locked" style="display:none">
+    <span>Rating as <strong id="name-locked-text"></strong></span>
+    <button id="change-name">change</button>
+  </div>
+
+  <div class="field">
+    <label for="book-search">Find a book</label>
+    <input type="text" id="book-search" placeholder="Start typing a title..." autocomplete="off" disabled>
+  </div>
+  <div id="results"></div>
+
+  <div id="picked">
+    <div class="book-title" id="picked-title"></div>
+    <div class="book-author" id="picked-author"></div>
+    <div class="rating-grid">
+      <button class="rating-btn hated" data-rating="hated">Hated</button>
+      <button class="rating-btn disliked" data-rating="disliked">Disliked</button>
+      <button class="rating-btn it_was_okay" data-rating="it_was_okay">It was okay</button>
+      <button class="rating-btn liked" data-rating="liked">Liked</button>
+      <button class="rating-btn loved" data-rating="loved">Loved</button>
+    </div>
+  </div>
+
+  <div id="session">
+    <h2>Rated this session</h2>
+    <div id="session-list"><div class="empty-state">Nothing yet — search above to start.</div></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API_URL = 'https://yhvubjqstswxvctdikbc.supabase.co/rest/v1';
+const ANON_KEY = 'sb_publishable_DXG7hpWr3UEnDGT60DcKZg_hbRNDUXI';
+
+const RATING_LABELS = {
+  loved: 'Loved', liked: 'Liked', it_was_okay: 'It was okay',
+  disliked: 'Disliked', hated: 'Hated',
+};
+
+let raterName = '';
+let selectedBook = null; // { id, title, author }
+let searchDebounce = null;
+const sessionRatings = []; // { title, author, rating }
+
+const nameEntry = document.getElementById('name-entry');
+const nameInput = document.getElementById('rater-name');
+const nameLocked = document.getElementById('name-locked');
+const nameLockedText = document.getElementById('name-locked-text');
+const changeNameBtn = document.getElementById('change-name');
+const searchInput = document.getElementById('book-search');
+const resultsEl = document.getElementById('results');
+const pickedEl = document.getElementById('picked');
+const pickedTitle = document.getElementById('picked-title');
+const pickedAuthor = document.getElementById('picked-author');
+const sessionListEl = document.getElementById('session-list');
+const toastEl = document.getElementById('toast');
+
+function lockName(name) {
+  raterName = name.trim();
+  if (!raterName) return;
+  nameEntry.style.display = 'none';
+  nameLocked.style.display = 'flex';
+  nameLockedText.textContent = raterName;
+  searchInput.disabled = false;
+  searchInput.focus();
+}
+
+nameInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') lockName(nameInput.value);
+});
+nameInput.addEventListener('blur', () => {
+  if (nameInput.value.trim()) lockName(nameInput.value);
+});
+changeNameBtn.addEventListener('click', () => {
+  nameEntry.style.display = 'block';
+  nameLocked.style.display = 'none';
+  searchInput.disabled = true;
+  searchInput.value = '';
+  resultsEl.style.display = 'none';
+  pickedEl.style.display = 'none';
+  nameInput.value = raterName;
+  nameInput.focus();
+});
+
+async function searchBooks(query) {
+  if (!query || query.trim().length < 2) {
+    resultsEl.style.display = 'none';
+    resultsEl.innerHTML = '';
+    return;
+  }
+  const q = encodeURIComponent(`%${query.trim()}%`);
+  const url = `${API_URL}/books?select=id,title,author&or=(title.ilike.${q},author.ilike.${q})&limit=12&order=title`;
+  try {
+    const res = await fetch(url, {
+      headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` },
+    });
+    const books = await res.json();
+    renderResults(Array.isArray(books) ? books : []);
+  } catch (err) {
+    renderResults([]);
+  }
+}
+
+function renderResults(books) {
+  if (books.length === 0) {
+    resultsEl.innerHTML = '<div class="empty-state">No matches — try a different spelling, or it might not be in the catalog yet.</div>';
+    resultsEl.style.display = 'block';
+    return;
+  }
+  resultsEl.innerHTML = books.map((b) => `
+    <div class="result-row" data-id="${b.id}" data-title="${escapeAttr(b.title)}" data-author="${escapeAttr(b.author || '')}">
+      <span class="result-title">${escapeHtml(b.title)}</span>
+      <span class="result-author">${escapeHtml(b.author || '')}</span>
+    </div>
+  `).join('');
+  resultsEl.style.display = 'block';
+  resultsEl.querySelectorAll('.result-row').forEach((row) => {
+    row.addEventListener('click', () => {
+      selectedBook = { id: row.dataset.id, title: row.dataset.title, author: row.dataset.author };
+      pickedTitle.textContent = selectedBook.title;
+      pickedAuthor.textContent = selectedBook.author;
+      pickedEl.style.display = 'block';
+      resultsEl.style.display = 'none';
+      searchInput.value = '';
+      pickedEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+}
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchDebounce);
+  const val = searchInput.value;
+  searchDebounce = setTimeout(() => searchBooks(val), 250);
+});
+
+pickedEl.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.rating-btn');
+  if (!btn || !selectedBook) return;
+  const rating = btn.dataset.rating;
+  await submitRating(selectedBook, rating);
+});
+
+async function submitRating(book, rating) {
+  const body = {
+    rater_name: raterName,
+    book_id: book.id,
+    book_title: book.title,
+    rating: rating,
+  };
+  try {
+    const res = await fetch(`${API_URL}/rating_submissions`, {
+      method: 'POST',
+      headers: {
+        apikey: ANON_KEY,
+        Authorization: `Bearer ${ANON_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      showToast(`Saved: ${book.title} — ${RATING_LABELS[rating]}`);
+      sessionRatings.unshift({ title: book.title, author: book.author, rating });
+      renderSession();
+      pickedEl.style.display = 'none';
+      selectedBook = null;
+      searchInput.focus();
+    } else {
+      showToast('Something went wrong saving that — try again?', true);
+    }
+  } catch (err) {
+    showToast('Network error — check your connection and try again.', true);
+  }
+}
+
+function renderSession() {
+  if (sessionRatings.length === 0) {
+    sessionListEl.innerHTML = '<div class="empty-state">Nothing yet — search above to start.</div>';
+    return;
+  }
+  sessionListEl.innerHTML = sessionRatings.map((r) => `
+    <div class="session-row">
+      <span>${escapeHtml(r.title)}</span>
+      <span class="session-rating">${RATING_LABELS[r.rating]}</span>
+    </div>
+  `).join('');
+}
+
+let toastTimer = null;
+function showToast(msg, isError) {
+  clearTimeout(toastTimer);
+  toastEl.textContent = msg;
+  toastEl.className = isError ? 'error' : '';
+  toastEl.style.display = 'block';
+  toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, 3200);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) {
+  return escapeHtml(s).replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>
