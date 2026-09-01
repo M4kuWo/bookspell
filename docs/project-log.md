@@ -2587,3 +2587,42 @@ its two real co-authors). Applied for real to local via autocommit
 psycopg2, then `supabase db push` to hosted. Verified afterward on both:
 606 total books, identical sample rows, and identical remaining
 multi-name count of 9 on both sides.
+
+## 2026-09-01 -- WEIGHT_CAP tension confirmed reproducible, category-budget idea logged (not landed) for retest later, Steelheart YA tag confirmed correct
+
+Reconstructed the original WEIGHT_CAP-motivating test (2026-08-29's exact
+titles weren't logged verbatim, only the structural shape: "grimdark/
+political fantasy + hard SF liked, all multi-POV/third-person; assorted
+single-POV/first-person disliked") using real catalog books matching
+that same shape (liked: A Game of Thrones/A Clash of Kings/A Storm of
+Swords/The Blade Itself/Mistborn: The Final Empire/Caliban's War/
+Leviathan Wakes/Children of Time/The Three-Body Problem/Dune; disliked:
+Assassin's Apprentice/Prince of Thorns/Red Rising/Storm Front). Uncapped,
+`person`'s raw weight comes out to 0.900 -- matching almost exactly the
+original logged 0.889 -- and `pov_count` to 0.675, both dwarfing the
+largest raw trope weight (0.600). Confirms the previous entry's category-
+budget test (which found alpha=0, i.e. no cap at all, scoring best on
+the Farseer/Kingkiller-type cases) would directly reopen this original
+bug for an eclectic-taste user. Neither extreme -- full WEIGHT_CAP
+enforcement nor none at all -- is correct on its own; a real fix needs
+to handle both directions in the same mechanism, which is why nothing
+from the category-budget/structural-boost work gets landed as-is.
+
+**Decision: log the category-budget/alpha idea for a future retest,
+don't discard it.** It isn't a confirmed win, but it isn't confirmed
+useless either -- every earlier test of it (structural-field boost,
+category budgets at various alpha) used the same modest, mostly-single-
+scenario dataset (either this session's real 53-book set or the
+reconstructed WEIGHT_CAP case), never both failure directions checked
+together against the same candidate fix. Worth a real retest once the
+tagged catalog and real reader-rating pool are both meaningfully larger
+-- there may be a working design in here (e.g. category budgets sized
+to handle both directions, or budgets that themselves adapt with
+evidence) that a small dataset just can't discriminate reliably.
+
+**Steelheart's age_category='ya' tag confirmed correct**, not an error --
+checked via web search (multiple sources: Wikipedia's Reckoners page,
+Deseret News, others) confirming it's consistently marketed/categorized
+as YA. Reader's recollection that it "didn't feel YA" doesn't make the
+tag wrong -- it's a real, common pattern for adult-appealing YA, not a
+tagging mistake to fix.
