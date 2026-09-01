@@ -604,6 +604,29 @@ def _split_by_sign(catalog, ratings):
     return liked, disliked
 
 
+def _series_deduped(pool):
+    """pool: list of (book, magnitude) pairs. Returns the same shape, but
+    a book sharing a series_id with others IN THIS POOL has its magnitude
+    split evenly among its series-mates present here -- an N-book series
+    a user rated collectively contributes the same total weight as ONE
+    standalone book would, not N times as much. Added 2026-09-01: a real
+    test set's 27 raw "liked" books collapsed to just 13 truly
+    independent series/standalone clusters -- without this, a heavily-
+    clustered series (e.g. a 6-book run all loved) systematically
+    overstates how much real, independent evidence backs whatever
+    field values that series happens to share, at every other pool
+    member's expense. Standalones (or a series with only one rated
+    member in this specific pool) are unaffected (divide by 1)."""
+    counts = {}
+    for b, _ in pool:
+        key = b.get("series_id") or f"standalone:{b['id']}"
+        counts[key] = counts.get(key, 0) + 1
+    return [
+        (b, m / counts[b.get("series_id") or f"standalone:{b['id']}"])
+        for b, m in pool
+    ]
+
+
 def build_profile(catalog, ratings, full_ratings=None):
     """Returns (centroid, weights) -- centroid is the target feature profile
     (a rating-magnitude-weighted average of positively-rated books),
@@ -618,6 +641,10 @@ def build_profile(catalog, ratings, full_ratings=None):
 
     liked, disliked = _split_by_sign(catalog, ratings)
     full_liked, full_disliked = _split_by_sign(catalog, full_ratings)
+    liked = _series_deduped(liked)
+    disliked = _series_deduped(disliked)
+    full_liked = _series_deduped(full_liked)
+    full_disliked = _series_deduped(full_disliked)
 
     centroid = {}
     weights = {}
