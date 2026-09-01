@@ -2626,3 +2626,39 @@ Deseret News, others) confirming it's consistently marketed/categorized
 as YA. Reader's recollection that it "didn't feel YA" doesn't make the
 tag wrong -- it's a real, common pattern for adult-appealing YA, not a
 tagging mistake to fix.
+
+## 2026-09-01 (later) -- two real engine fixes landed: series-position gating and series-aware weighting
+
+Both flagged by the repo owner as higher priority than further scoring-
+weight experiments, since they're correctness bugs rather than tuning
+questions.
+
+**Series-position gating** (`series_position_ready()`, wired into
+`recommend()`'s exclusion filter): a series installment past its entry
+point is now excluded unless every EARLIER position in that series has
+been rated, grouped by distinct position rather than by row -- a
+duplicate catalog entry at the same position (found while testing: The
+Lord of the Rings exists as both an omnibus AND alongside The Fellowship
+of the Ring, both at position 1) only needs ONE representative rated,
+not both. Verified against the original 2026-08-29 bug report (HP/LOTR
+mid-series entries surfacing for a reader who'd only rated book 1 --
+confirmed fixed) and against deeper cases (WoT/First Law book 3 correctly
+blocked with only book 1 rated, correctly unblocked once book 2 is also
+rated).
+
+**Series-aware weighting** (`_series_deduped()`, wired into
+`build_profile()`): a book's rating magnitude is now split evenly among
+its series-mates present in the same liked/disliked pool, so an N-book
+series a user rated contributes the same total weight as one standalone
+book, not N times as much. Motivated by a real, quantified gap: this
+session's own 53-book test set had 27 raw "liked" ratings collapsing to
+just 13 truly independent series/standalone clusters. Tested on the same
+held-out set as every other scoring experiment this session: moved every
+disliked/hated miss in the correct direction with no regressions (though
+not enough alone to flip any match-label bucket to fully correct).
+Crucially, also tested against the reconstructed WEIGHT_CAP case (see
+previous entry) and confirmed it does NOT interact with that failure mode
+-- person/pov_count still hit the same 0.5 cap there either way. This is
+an orthogonal, safe fix, unlike every scoring-weight idea tried so far
+this session (structural boost, category budgets) which all either
+plateaued or reopened the original bug.
