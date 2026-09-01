@@ -15,15 +15,19 @@ to be a signed-in member of the owner's organization, which rules out
 genuinely external, account-less friends. A static page calling our own
 Supabase project directly has no such restriction.
 
-## Why not the same live-fetch pattern as catalog-review, hosted the same way
+## Hosting
 
-It is the same pattern (plain `fetch()` against the public REST API) --
-the difference is hosting. `catalog-review` only needs to run when the
-repo owner is actively reviewing tagging quality, so a local
-`python3 -m http.server` is fine. This tool needs to be reachable
-whenever a friend gets around to rating books, without depending on
-anyone's machine staying on -- so it's deployed to GitHub Pages instead
-(see the `gh-pages` branch), a stable, always-on URL.
+Same live-fetch pattern as catalog-review (plain `fetch()` against the
+public REST API) -- and, discovered while building this, the SAME
+hosting too: this whole repo is already served by GitHub Pages from the
+`main` branch root (Settings -> Pages), which is how `catalog-review`
+has been reaching friends this whole time. This tool needs that same
+always-on reachability -- friends rate books whenever they get around to
+it, with no dependency on anyone's machine staying on -- and it gets it
+for free, live at
+https://m4kuwo.github.io/bookspell/tools/rate-books/ a minute or two
+after any push to `main` touches this directory. No separate deploy step,
+no `gh-pages` branch needed.
 
 ## Data flow
 
@@ -41,12 +45,6 @@ anyone's machine staying on -- so it's deployed to GitHub Pages instead
 
 ## Redeploying after an edit
 
-```
-git subtree split --prefix=tools/rate-books -b gh-pages-update
-git push origin gh-pages-update:gh-pages --force
-git branch -D gh-pages-update
-```
-
-(`--force` is safe here specifically because `gh-pages` holds no
-history worth keeping -- it's a deploy target, regenerated from
-`tools/rate-books/` on `main` every time, never edited directly.)
+Nothing to do beyond the normal `git push origin main` -- GitHub Pages
+rebuilds automatically from `main` on every push, same as any other
+file in this repo.
