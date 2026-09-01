@@ -71,34 +71,60 @@ change is considered safe to land.
 | Field-pairing/interaction effects (e.g. "dislikes slow pace unless grimdark") | Not tested | Not tested | **Deferred, not attempted** -- ~435 possible field pairs is too many to reliably estimate from a single rater's 10-50 ratings; revisit only for a SPECIFIC pattern that recurs in real feedback, not as a general mechanism |
 | Series-repeat signal (disliking an earlier book in a series should weigh heavily on a later one, unless its own DNA diverges a lot) | Real improvement -- Royal Assassin and Assassin's Quest both move substantially toward correct (0.539->0.427, 0.575->0.476), no effect on anything without an actual disliked series-mate | No interaction -- no shared series between liked/disliked books in this scenario | **Landed** (`SERIES_REPEAT_WEIGHT`, `series_repeat_worst_similarity()`) -- honest limitation: even at full weight, doesn't always cross all the way to "Poor match" (book_similarity()'s trope-overlap component dilutes it, since same-series books naturally differ on plot-specific tropes even when narrative style stays consistent); correctly produces NO effect on the sparse (16-book) scenario, since that training set doesn't include the disliked Farseer book needed to trigger it -- confirms the mechanism only acts on evidence that's actually present, not a coincidence |
 
-## Second rater: Osnat (2026-09-01)
+## Second rater: Osnat (2026-09-01, two rounds)
 
-Only a partial list available (no full Fable export). Of 22 titles,
-only 4 are both in the catalog and tagged (Iron Flame, A Court of Frost
-and Starlight, Fourth Wing, The Midnight Library) -- far too few for a
-real held-out test (can't fairly split 4 points into train/test, and 2
-of the 4, Iron Flame and Fourth Wing, share a series/author, so it's
-really closer to 3 independent clusters of evidence). Used a
-leave-one-out diagnostic instead (`run_leave_one_out_diagnostic()`):
-hold out one rating, train on the other 3, check direction. Result: not
-degenerate -- both loved titles predict as "Strong match," both hated
-titles lean toward the low end ("Mixed," not "Strong"/"Good") without
-fully reaching "Poor." **This is a sanity check that the pipeline
-behaves reasonably for a second rater with a very different taste
-profile (romantasy vs. the first rater's epic fantasy/hard sci-fi), NOT
-a real accuracy measurement** -- n=4 (really ~3 independent clusters)
-can't support drawing conclusions about scoring quality.
+**Round 1** (partial list, no full Fable export): only 4 of 22 titles
+both in the catalog and tagged -- too few for a real held-out test, used
+a leave-one-out diagnostic instead. Not degenerate, but not a real
+accuracy measurement either given the tiny n.
 
-Real catalog-breadth finding, not a scoring finding: 16 of Osnat's 22
-titles aren't in the catalog at all. Several are genuinely out of v1
-scope (pure contemporary romance -- Book Lovers, Beach Read, etc.), but
-several are paranormal/fantasy romance that IS in v1 scope and simply
-hasn't been ingested (the Kate Daniels/Magic Bites urban fantasy series,
+**Round 2** (a fuller star-rated reading history, ~131 more titles):
+merged with round 1 per explicit repo-owner decisions (see
+`data/ratings/osnat.json`'s `_meta` -- the newer star-rated list
+supersedes round 1 wherever they overlap, which resolved a direct
+contradiction on A Court of Frost and Starlight: hated vs. 4.0/liked;
+stars map to our tiers via an even linear split). Usable tagged set grew
+to 18 -- big enough for a real held-out test this time (5 held out: A
+Court of Wings and Ruin, Harry Potter and the Half-Blood Prince, Harry
+Potter and the Goblet of Fire, Divergent, Iron Flame).
+
+Result: 3/5 correct on the surface, but the honest finding is more
+important than that number -- **every single held-out prediction landed
+in the same narrow "Strong match" band (0.79-0.89) regardless of
+whether the true rating was loved, liked, or merely it_was_okay.** The
+engine isn't actually discriminating between her preference gradations
+right now; it's defaulting to uniformly high because of a real,
+structural data problem: of her 18 tagged/in-catalog books, 17 are
+positive (loved/liked/it_was_okay) and only 1 (The Midnight Library,
+hated) is negative -- and that one outlier is a completely different
+style of book (literary speculative fiction) from the YA-fantasy/magic-
+school cluster (Harry Potter, ACOTAR, Fourth Wing/Iron Flame) that makes
+up the rest, so it doesn't give the model anything to contrast against
+for THAT cluster specifically. This is the same "no disliked signal ->
+weights fall back to flat defaults" limitation documented early in this
+project's history (2026-08-29, the wife's first real test), now
+reconfirmed concretely with a second real rater rather than a synthetic
+case. Not a new bug -- a real, expected consequence of a one-sided
+rating pool, and a strong argument for getting some genuine dislikes
+into her tagged set specifically (which currently isn't possible: none
+of her actually-disliked titles are in the catalog at all -- see the
+catalog-breadth finding below).
+
+Real catalog-breadth finding, not a scoring finding: the large majority
+of Osnat's ~145 total unique titles aren't in the catalog at all.
+Several are genuinely out of v1 scope (pure contemporary romance --
+Book Lovers, Beach Read, the Calendar Girl series, etc.), but several
+are paranormal/fantasy romance that IS in v1 scope and simply hasn't
+been ingested (the Kate Daniels/Magic Bites urban fantasy series,
 Daughter of No Worlds, Ruthless Vows, Sweep of the Heart, When the Moon
 Hatched, Mate, a Throne of Glass novella). The catalog's Hardcover-
 sourced "top fantasy/sci-fi" ingestion likely under-represents this
 subgenre specifically -- worth a targeted ingestion/tagging pass, not
-just "more of the same books."
+just "more of the same books." Notably, several of her DISLIKED titles
+specifically (Daughter of No Worlds, Magic Burns, When the Moon Hatched,
+Mate) fall in this same gap -- ingesting and tagging them would directly
+address the negative-signal shortage above, not just grow the catalog
+generically.
 
 ## Sparse-data check (2026-09-01)
 

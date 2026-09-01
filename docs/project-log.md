@@ -2815,3 +2815,47 @@ surfaced by a real reader's list rather than assumed.
 `scripts/scoring_tests.py` updated: scenario 4 (Osnat, leave-one-out
 diagnostic) added alongside the existing 3 scenarios, and
 `load_rater()`/`data/ratings/` now used consistently for all raters.
+
+## 2026-09-01 (later still) -- Osnat's fuller list merged, real held-out test run, a real limitation reconfirmed
+
+Received a second, much larger list from Osnat (~131 titles, 1-5 star
+ratings, her fuller reading history rather than an SFF-filtered one).
+Found a direct contradiction with the first list before touching
+anything: A Court of Frost and Starlight was "hated" in list 1 but
+4.0/5.0 (positive) in list 2 for the identical title. Flagged this to
+the repo owner rather than silently picking a side or inventing a
+calibration that papered over it -- explicit decisions came back: trust
+the newer list where the two overlap, and map stars to our tiers via an
+even linear split (5=loved, 4-4.5=liked, 3-3.75=it_was_okay,
+2-2.75=disliked, 1=hated). Also caught and normalized a US/UK title
+variant (Harry Potter and the "Sorcerer's" vs "Philosopher's" Stone --
+same book, catalog uses the UK title) rather than letting it silently
+count as "not in catalog."
+
+Merged dataset in `data/ratings/osnat.json`: usable tagged set grew from
+4 to 18. Ran a real held-out test this time (5 held out: A Court of
+Wings and Ruin, Harry Potter and the Half-Blood Prince, Harry Potter
+and the Goblet of Fire, Divergent, Iron Flame). 3/5 correct on its face,
+but caught something more important while checking the raw scores: every
+single prediction landed in the same narrow "Strong match" band
+(0.79-0.89) regardless of whether the true rating was loved, liked, or
+merely it_was_okay -- the engine isn't discriminating her preference
+gradations at all right now. Root cause: 17 of her 18 usable ratings are
+positive, and the one negative one (The Midnight Library) is stylistically
+unrelated to the YA-fantasy/magic-school cluster the rest belong to, so
+it provides no real contrast for that cluster specifically. This is the
+same "no disliked signal -> flat default weights" limitation documented
+on 2026-08-29 with the wife's first real test, now reconfirmed with a
+second independent real rater rather than assumed to generalize from one
+case.
+
+Also surfaced (again, more concretely): several of Osnat's actually-
+disliked titles (Daughter of No Worlds, Magic Burns, When the Moon
+Hatched, Mate) fall in the same paranormal/fantasy-romance catalog gap
+already flagged from her first list -- ingesting and tagging these
+specifically would both grow the catalog AND directly fix the
+negative-signal shortage found here, not just add more of the same kind
+of book she's already well-represented by.
+
+`scripts/scoring_tests.py` scenario 4 upgraded from a leave-one-out
+diagnostic to a real held-out test now that there's enough data.
