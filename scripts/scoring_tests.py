@@ -80,26 +80,37 @@ SPARSE_RATINGS = {t: REAL_RATINGS[t] for t in SPARSE_TITLES}
 # specifically (it's still held out for scenario 1's richer set).
 SPARSE_HELD_OUT = [t for t in REAL_HELD_OUT if t not in SPARSE_RATINGS]
 
-# --- Scenario 4: second rater, Osnat -- only a partial list available
-# (no full Fable export), and most of it turned out to be either out of
-# v1 scope (pure contemporary romance) or in-scope-but-not-yet-ingested
-# (paranormal/fantasy romance -- a real catalog-breadth gap, see
-# data/ratings/osnat.json's _meta). Only 4 of 22 titles are both in the
-# catalog and tagged -- far too few for a real held-out test (can't
-# fairly split 4 points into train/test), so this uses a leave-one-out
-# diagnostic instead: hold out ONE rating, train on the other 3, check
-# direction. This is a sanity check that the pipeline behaves sanely for
-# a brand-new rater with a very different taste profile (romantasy vs.
-# the repo owner's epic fantasy/hard sci-fi), NOT a real accuracy
-# measurement -- don't draw conclusions about scoring quality from this,
-# only "does anything look broken." ---
+# --- Scenario 4: second rater, Osnat -- grew from a 4-book usable set
+# to 18 once she sent her fuller star-rated reading history (2026-09-01).
+# Merged per explicit repo-owner decisions: where a title appeared in
+# both her lists, the newer star-rated list superseded the older
+# qualitative one (resolved a direct contradiction on A Court of Frost
+# and Starlight: hated vs. 4.0/liked), and stars map to our tiers via an
+# even linear split (5=loved, 4-4.5=liked, 3-3.75=it_was_okay,
+# 2-2.75=disliked, 1=hated). See data/ratings/osnat.json's _meta for the
+# full merge notes.
+#
+# Real, honest limitation: none of her 18 tagged-and-in-catalog books
+# are rated disliked/hated -- her negative ratings all fall on titles
+# that aren't in the catalog. This scenario can only test whether the
+# engine correctly predicts the POSITIVE end of her taste (loved/liked/
+# it_was_okay), not whether it can catch a real dislike for her. ---
 OSNAT_RATINGS = load_rater("osnat")
-OSNAT_USABLE = {
-    "Iron Flame": "loved",
-    "A Court of Frost and Starlight": "hated",
-    "Fourth Wing": "loved",
-    "The Midnight Library": "hated",
-}
+OSNAT_TAGGED_TITLES = [
+    "A Court of Frost and Starlight", "A Court of Mist and Fury", "A Court of Silver Flames",
+    "A Court of Thorns and Roses", "A Court of Wings and Ruin", "A Wrinkle in Time",
+    "Divergent", "Eclipse", "Ender's Game", "Fourth Wing",
+    "Harry Potter and the Chamber of Secrets", "Harry Potter and the Deathly Hallows",
+    "Harry Potter and the Goblet of Fire", "Harry Potter and the Half-Blood Prince",
+    "Harry Potter and the Order of the Phoenix", "Harry Potter and the Prisoner of Azkaban",
+    "Harry Potter and the Philosopher's Stone", "Iron Flame",
+    "The Midnight Library",  # from List 1 -- her only usable negative-tier rating
+]
+OSNAT_USABLE = {t: OSNAT_RATINGS[t] for t in OSNAT_TAGGED_TITLES}
+OSNAT_HELD_OUT = [
+    "A Court of Wings and Ruin", "Harry Potter and the Half-Blood Prince",
+    "Harry Potter and the Goblet of Fire", "Divergent", "Iron Flame",
+]
 
 
 def run_leave_one_out_diagnostic(catalog, ratings, label):
@@ -210,8 +221,8 @@ def run_all():
     run_held_out_test(catalog, REAL_RATINGS, SPARSE_HELD_OUT, "sparse (16 ratings)",
                        train_ratings=SPARSE_RATINGS)
 
-    print("\n=== Scenario 4: second rater (Osnat) -- leave-one-out diagnostic, NOT a real accuracy test ===")
-    run_leave_one_out_diagnostic(catalog, OSNAT_USABLE, "Osnat (n=4 usable)")
+    print("\n=== Scenario 4: second rater (Osnat) -- held-out validation (18 usable ratings) ===")
+    run_held_out_test(catalog, OSNAT_USABLE, OSNAT_HELD_OUT, "Osnat held-out")
 
 
 if __name__ == "__main__":
