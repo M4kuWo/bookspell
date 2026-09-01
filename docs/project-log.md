@@ -2748,3 +2748,33 @@ consistent. A same-series-specific similarity measure (weighting
 narrative style higher, discounting plot-specific tropes) would likely
 close more of the remaining gap -- logged as a real follow-up, not
 built yet.
+
+## 2026-09-01 (later) -- rater roster established, Goodreads/StoryGraph import flagged as a likely adoption blocker
+
+**Rater roster set up.** No real user/account system exists yet, so
+introduced `data/ratings/{name}.json` as the durable, versioned stand-in
+-- one file per person with a `_meta` block and a `ratings` map.
+Migrated the repo owner's existing 53-book combined list into
+`data/ratings/mathias.json` and updated `scripts/scoring_tests.py` to
+load from it instead of a hardcoded literal. Roster established for 5
+more expected raters (Osnat, Dandan, Omri, Irael, Shahar) in
+`data/ratings/README.md` -- their files get added as their lists come
+in, each becoming a new scenario in scoring_tests.py per the existing
+"every rater's data should extend the test suite, not replace it"
+principle in docs/scoring-test-protocol.md.
+
+**Real product insight from a friend (Osnat), flagged as likely
+critical, not just a nice idea:** she used Goodreads for most of her
+adult life and moved to Fable, but said directly she wouldn't have
+switched at all if Fable hadn't let her bring her reading history with
+her. Since Bookspell's target audience is specifically avid readers --
+people who, almost by definition, already have years of reading history
+logged somewhere else -- this is very plausibly the actual adoption
+blocker for onboarding, not a peripheral feature. Added to the
+published roadmap artifact (tagged Step 07, `core` not `ext` given its
+likely severity) and to the README's roadmap as item 3, ahead of the
+dilution-problem and author-affinity items. The real design cost isn't
+the import mechanics (Goodreads/StoryGraph both export CSVs) -- it's
+mapping an imported star rating onto Book DNA fields with none of our
+structured signal, and matching imported titles against a catalog that
+won't have every book a long-time reader has logged.

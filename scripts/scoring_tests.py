@@ -13,6 +13,7 @@ that shape, not fabricated ratings.
 """
 import sys
 import os
+import json
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 import recommend as R
@@ -20,32 +21,26 @@ import recommend as R
 EXPECT_GOOD = {"loved", "liked"}
 EXPECT_POOR = {"hated", "disliked"}
 
+DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "ratings")
+
+
+def load_rater(name):
+    """Loads {name}.json from data/ratings/ -- see data/ratings/README.md
+    for the roster and why this lives as durable, versioned files rather
+    than hardcoded literals: a new rater's data should extend this test
+    suite, not require rewriting it."""
+    path = os.path.join(DATA_DIR, f"{name}.json")
+    with open(path) as f:
+        return json.load(f)["ratings"]
+
+
 # --- Scenario 1: the repo owner's real ratings, combined across both
 # test rounds this session (16-book original list + 20-item numbered
 # list + resolved series/aggregate statements). Currently the ONLY real
 # rater we have -- see the protocol doc for why every conclusion drawn
-# from this scenario alone is provisional. ---
-REAL_RATINGS = {
-    "The Eye of the World": "loved", "The Way of Kings": "loved", "Dark Matter": "hated",
-    "Circe": "hated", "Six of Crows": "liked", "Prince of Thorns": "loved",
-    "The Blade Itself": "loved", "Red Rising": "hated", "The Gunslinger": "liked",
-    "We Are Legion (We Are Bob)": "disliked", "The Poppy War": "it_was_okay",
-    "Artemis": "disliked", "Children of Time": "liked", "Interview with the Vampire": "disliked",
-    "Old Man's War": "liked", "The Lion, the Witch and the Wardrobe": "disliked",
-    "Before They Are Hanged": "loved", "Empire of Silence": "disliked", "Storm Front": "liked",
-    "The Black Prism": "it_was_okay", "The Emperor's Soul": "liked", "The Name of the Wind": "it_was_okay",
-    "The Subtle Knife": "loved", "The Wise Man's Fear": "hated", "Warbreaker": "loved",
-    "The Shadow of What Was Lost": "liked", "The Last Wish": "liked", "Steelheart": "loved",
-    "Skyward": "disliked", "Royal Assassin": "disliked", "Ready Player One": "liked",
-    "Eragon": "it_was_okay", "Assassin's Apprentice": "disliked", "A Wizard of Earthsea": "it_was_okay",
-    "A Clash of Kings": "loved", "The Great Hunt": "loved", "The Dragon Reborn": "loved",
-    "The Shadow Rising": "loved", "The Fires of Heaven": "loved", "A Crown of Swords": "loved",
-    "Last Argument of Kings": "loved", "Assassin's Quest": "disliked", "Words of Radiance": "loved",
-    "Edgedancer": "loved", "Oathbringer": "loved", "Rhythm of War": "loved",
-    "Mistborn: The Final Empire": "loved", "The Well of Ascension": "loved", "The Hero of Ages": "loved",
-    "The Alloy of Law": "liked", "Shadows of Self": "liked", "The Bands of Mourning": "liked",
-    "The Lost Metal": "liked",
-}
+# from this scenario alone is provisional. See data/ratings/ for the
+# full roster of raters expected to contribute lists next. ---
+REAL_RATINGS = load_rater("mathias")
 REAL_HELD_OUT = [
     "Warbreaker", "A Clash of Kings", "Rhythm of War", "The Wise Man's Fear",
     "Royal Assassin", "Skyward", "Eragon", "Interview with the Vampire",
@@ -73,14 +68,13 @@ WEIGHT_CAP_RATINGS = {
 # 53-book set) -- a fix tuned/validated only on the richer set could
 # behave differently (better OR worse) with less evidence, and that's
 # exactly the kind of gap real new users will sit in. ---
-SPARSE_RATINGS = {
-    "The Eye of the World": "loved", "The Way of Kings": "loved", "Dark Matter": "hated",
-    "Circe": "hated", "Six of Crows": "liked", "Prince of Thorns": "loved",
-    "The Blade Itself": "loved", "Red Rising": "hated", "The Gunslinger": "liked",
-    "We Are Legion (We Are Bob)": "disliked", "The Poppy War": "it_was_okay",
-    "Artemis": "disliked", "Children of Time": "liked", "Interview with the Vampire": "disliked",
-    "Old Man's War": "liked", "The Lion, the Witch and the Wardrobe": "disliked",
-}
+SPARSE_TITLES = [
+    "The Eye of the World", "The Way of Kings", "Dark Matter", "Circe", "Six of Crows",
+    "Prince of Thorns", "The Blade Itself", "Red Rising", "The Gunslinger",
+    "We Are Legion (We Are Bob)", "The Poppy War", "Artemis", "Children of Time",
+    "Interview with the Vampire", "Old Man's War", "The Lion, the Witch and the Wardrobe",
+]
+SPARSE_RATINGS = {t: REAL_RATINGS[t] for t in SPARSE_TITLES}
 # Interview with the Vampire is IN the sparse set as training, not
 # held-out there -- exclude it from this scenario's held-out list
 # specifically (it's still held out for scenario 1's richer set).

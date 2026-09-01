@@ -125,17 +125,29 @@ Near-term, roughly in order:
 2. **Recruit more real readers.** Every scoring conclusion so far is
    based on exactly one real rater's ratings (mine) — see "Currently
    being worked on" below for why that matters.
-3. **Fix the dilution problem properly.** One structural field getting
+3. **Import an existing reading history on signup — likely a real
+   adoption blocker, not just a nice-to-have.** Raised directly by a
+   friend who said she wouldn't have switched from Goodreads to Fable
+   at all if Fable hadn't let her bring her history with her. Our
+   target audience (avid readers with years of history already logged
+   elsewhere) is in exactly that position — asking them to start from
+   zero is a real reason not to switch. The import mechanics
+   (Goodreads/StoryGraph both export a CSV) are the easy part; mapping
+   an imported star rating onto Book DNA fields with none of our
+   structured signal, and matching imported titles against a catalog
+   that won't have every book a long-time reader has logged, is the
+   real design work. Not started.
+4. **Fix the dilution problem properly.** One structural field getting
    correctly detected but outvoted by many unrelated agreeing fields —
    several approaches tried, none has fully solved it yet (see below).
-4. **Author-affinity**, tempered by which specific sub-style of an
+5. **Author-affinity**, tempered by which specific sub-style of an
    author's catalog a reader actually responds to, not a flat "you like
    this author" boost. Logically validated, not yet landed.
-5. **Fix spoiler leakage** in the explanation layer — some
+6. **Fix spoiler leakage** in the explanation layer — some
    spoiler-flagged fields have already shown up in generated
    explanations.
-6. Real app: onboarding flow, UI, accounts. Not started.
-7. (Further out) A guide-character UX — a witch/wizard leading the
+7. Real app: onboarding flow, UI, accounts. Not started.
+8. (Further out) A guide-character UX — a witch/wizard leading the
    reader through "summoning" a book recommendation, with matching
    illustrated art. Purely presentation-layer, deliberately deferred
    until recommendation quality is proven.
