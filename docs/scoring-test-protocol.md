@@ -126,6 +126,33 @@ Mate) fall in this same gap -- ingesting and tagging them would directly
 address the negative-signal shortage above, not just grow the catalog
 generically.
 
+## Catalog growth re-check, round 2 (2026-09-02, later)
+
+Rechecked both raters against the catalog after another round of
+tagging. Mathias: no change -- the only titles still missing (Black
+Prism sequels) haven't been ingested. Osnat: usable set grew 18 -> 30,
+importantly adding 3 more negative-rated titles (When the Moon Hatched,
+Daughter of No Worlds, Magic Burns, all hated) on top of the one
+available before.
+
+Tested Daughter of No Worlds and Magic Burns as new held-out cases.
+Both wrong; Magic Burns badly so -- 0.895 ("Strong match") despite
+being hated, higher than most of her actually-loved books.
+`explain_match()` shows almost no real mismatch against her profile.
+Root cause, confirmed via series lookup: Magic Bites (liked) and Magic
+Burns (hated) are books 1 and 2 of the same series (Kate Daniels), and
+their DNA fields genuinely don't differ enough to explain the dislike.
+
+This is the mirror image of the Farseer case, and it sharpens a real
+asymmetry the repo owner identified independently: disliking a
+predecessor is strong, reliable evidence for distrusting a sequel
+(what the series-repeat signal exploits) -- but liking a predecessor is
+NOT equally reliable evidence FOR a sequel, and there's no equivalent
+mechanism for that direction, nor an obvious way to build one from DNA
+fields alone if the two books don't differ on the fields tracked. May
+be a genuine limit of a field-based system, not a gap to patch --
+logged as an open question, not a bug to fix reflexively.
+
 ## Catalog growth re-check (2026-09-02)
 
 The catalog grew from 307 to 523 tagged books via parallel batch-tagging

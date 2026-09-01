@@ -2964,3 +2964,32 @@ mixed, modest movement -- The Wise Man's Fear improved substantially
 direction, net correct-count unchanged at 4/11. Honest, expected
 result: richer data moves individual scores around, doesn't guarantee
 uniform improvement.
+
+## 2026-09-02 (later) -- retest round 2: fixed a title-key bug, and a real new failure mode surfaced
+
+Rechecked both raters against the catalog again. Mathias: no change --
+Black Prism sequels are still the only missing titles and remain
+un-ingested. Osnat: usable tagged set grew from 18 to 30 (`data/ratings/
+osnat.json`) -- caught and fixed a real bug of my own along the way, a
+mismatched dict key ("A Questionable Client (Kate Daniels #0.5)" instead
+of the catalog's plain "A Questionable Client") that would have silently
+made that title unusable.
+
+Crucially, 3 more negative-rated titles are now tagged (When the Moon
+Hatched, Daughter of No Worlds, Magic Burns, all hated), addressing part
+of the negative-signal gap flagged earlier. Tested two as new held-out
+cases -- both wrong, Magic Burns badly so (0.895 "Strong match" despite
+being hated, higher than most of her loved books).
+
+Investigated rather than just reported: Magic Bites (liked, in training)
+and Magic Burns (hated, held out) are books 1-2 of the same series
+(Kate Daniels), and their DNA fields genuinely don't differ enough to
+explain the dislike -- `explain_match()` finds almost no real mismatch.
+This is the mirror image of the Farseer case, and sharpens a real
+asymmetry: disliking a predecessor reliably predicts distrust of a
+sequel (what the series-repeat signal exploits), but liking a
+predecessor does NOT reliably predict liking the sequel, and there's no
+equivalent mechanism for that direction -- possibly can't be built from
+DNA fields alone if two books in a series genuinely don't differ on the
+fields tracked. Logged as an open question in docs/scoring-test-
+protocol.md, not treated as a bug to patch reflexively.

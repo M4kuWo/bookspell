@@ -80,21 +80,21 @@ SPARSE_RATINGS = {t: REAL_RATINGS[t] for t in SPARSE_TITLES}
 # specifically (it's still held out for scenario 1's richer set).
 SPARSE_HELD_OUT = [t for t in REAL_HELD_OUT if t not in SPARSE_RATINGS]
 
-# --- Scenario 4: second rater, Osnat -- grew from a 4-book usable set
-# to 18 once she sent her fuller star-rated reading history (2026-09-01).
-# Merged per explicit repo-owner decisions: where a title appeared in
-# both her lists, the newer star-rated list superseded the older
-# qualitative one (resolved a direct contradiction on A Court of Frost
-# and Starlight: hated vs. 4.0/liked), and stars map to our tiers via an
-# even linear split (5=loved, 4-4.5=liked, 3-3.75=it_was_okay,
-# 2-2.75=disliked, 1=hated). See data/ratings/osnat.json's _meta for the
-# full merge notes.
+# --- Scenario 4: second rater, Osnat -- grew from 4 usable books, to 18
+# once she sent her fuller star-rated reading history, to 30 now that
+# catalog-growth tagging caught up with several previously-untagged or
+# not-yet-ingested titles (2026-09-02). Merged per explicit repo-owner
+# decisions: where a title appeared in both her lists, the newer
+# star-rated list superseded the older qualitative one (resolved a
+# direct contradiction on A Court of Frost and Starlight: hated vs.
+# 4.0/liked), and stars map to our tiers via an even linear split
+# (5=loved, 4-4.5=liked, 3-3.75=it_was_okay, 2-2.75=disliked, 1=hated).
+# See data/ratings/osnat.json's _meta for the full merge notes.
 #
-# Real, honest limitation: none of her 18 tagged-and-in-catalog books
-# are rated disliked/hated -- her negative ratings all fall on titles
-# that aren't in the catalog. This scenario can only test whether the
-# engine correctly predicts the POSITIVE end of her taste (loved/liked/
-# it_was_okay), not whether it can catch a real dislike for her. ---
+# The negative-signal gap flagged in the 18-book version is now
+# partially closed: When the Moon Hatched, Daughter of No Worlds, and
+# Magic Burns are all newly tagged and all rated hated -- 4 negative
+# examples total now (with The Midnight Library), instead of 1. ---
 OSNAT_RATINGS = load_rater("osnat")
 OSNAT_TAGGED_TITLES = [
     "A Court of Frost and Starlight", "A Court of Mist and Fury", "A Court of Silver Flames",
@@ -104,12 +104,17 @@ OSNAT_TAGGED_TITLES = [
     "Harry Potter and the Goblet of Fire", "Harry Potter and the Half-Blood Prince",
     "Harry Potter and the Order of the Phoenix", "Harry Potter and the Prisoner of Azkaban",
     "Harry Potter and the Philosopher's Stone", "Iron Flame",
-    "The Midnight Library",  # from List 1 -- her only usable negative-tier rating
+    "The Midnight Library",  # from List 1
+    "An Absolutely Remarkable Thing", "Divine Rivals", "From Blood and Ash",
+    "When the Moon Hatched", "The Assassin and the Healer", "Magic Bites",
+    "Ruthless Vows", "Daughter of No Worlds", "The Serpent and the Wings of Night",
+    "Magic Burns", "A Questionable Client",
 ]
 OSNAT_USABLE = {t: OSNAT_RATINGS[t] for t in OSNAT_TAGGED_TITLES}
 OSNAT_HELD_OUT = [
     "A Court of Wings and Ruin", "Harry Potter and the Half-Blood Prince",
     "Harry Potter and the Goblet of Fire", "Divergent", "Iron Flame",
+    "Daughter of No Worlds", "Magic Burns",  # new: test the newly-available negative signal
 ]
 
 
