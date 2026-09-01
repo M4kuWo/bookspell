@@ -71,6 +71,35 @@ change is considered safe to land.
 | Field-pairing/interaction effects (e.g. "dislikes slow pace unless grimdark") | Not tested | Not tested | **Deferred, not attempted** -- ~435 possible field pairs is too many to reliably estimate from a single rater's 10-50 ratings; revisit only for a SPECIFIC pattern that recurs in real feedback, not as a general mechanism |
 | Series-repeat signal (disliking an earlier book in a series should weigh heavily on a later one, unless its own DNA diverges a lot) | Real improvement -- Royal Assassin and Assassin's Quest both move substantially toward correct (0.539->0.427, 0.575->0.476), no effect on anything without an actual disliked series-mate | No interaction -- no shared series between liked/disliked books in this scenario | **Landed** (`SERIES_REPEAT_WEIGHT`, `series_repeat_worst_similarity()`) -- honest limitation: even at full weight, doesn't always cross all the way to "Poor match" (book_similarity()'s trope-overlap component dilutes it, since same-series books naturally differ on plot-specific tropes even when narrative style stays consistent); correctly produces NO effect on the sparse (16-book) scenario, since that training set doesn't include the disliked Farseer book needed to trigger it -- confirms the mechanism only acts on evidence that's actually present, not a coincidence |
 
+## Second rater: Osnat (2026-09-01)
+
+Only a partial list available (no full Fable export). Of 22 titles,
+only 4 are both in the catalog and tagged (Iron Flame, A Court of Frost
+and Starlight, Fourth Wing, The Midnight Library) -- far too few for a
+real held-out test (can't fairly split 4 points into train/test, and 2
+of the 4, Iron Flame and Fourth Wing, share a series/author, so it's
+really closer to 3 independent clusters of evidence). Used a
+leave-one-out diagnostic instead (`run_leave_one_out_diagnostic()`):
+hold out one rating, train on the other 3, check direction. Result: not
+degenerate -- both loved titles predict as "Strong match," both hated
+titles lean toward the low end ("Mixed," not "Strong"/"Good") without
+fully reaching "Poor." **This is a sanity check that the pipeline
+behaves reasonably for a second rater with a very different taste
+profile (romantasy vs. the first rater's epic fantasy/hard sci-fi), NOT
+a real accuracy measurement** -- n=4 (really ~3 independent clusters)
+can't support drawing conclusions about scoring quality.
+
+Real catalog-breadth finding, not a scoring finding: 16 of Osnat's 22
+titles aren't in the catalog at all. Several are genuinely out of v1
+scope (pure contemporary romance -- Book Lovers, Beach Read, etc.), but
+several are paranormal/fantasy romance that IS in v1 scope and simply
+hasn't been ingested (the Kate Daniels/Magic Bites urban fantasy series,
+Daughter of No Worlds, Ruthless Vows, Sweep of the Heart, When the Moon
+Hatched, Mate, a Throne of Glass novella). The catalog's Hardcover-
+sourced "top fantasy/sci-fi" ingestion likely under-represents this
+subgenre specifically -- worth a targeted ingestion/tagging pass, not
+just "more of the same books."
+
 ## Sparse-data check (2026-09-01)
 
 Added scenario 3 (`SPARSE_RATINGS`, the repo owner's original 16-book

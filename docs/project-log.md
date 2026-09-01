@@ -2778,3 +2778,40 @@ the import mechanics (Goodreads/StoryGraph both export CSVs) -- it's
 mapping an imported star rating onto Book DNA fields with none of our
 structured signal, and matching imported titles against a catalog that
 won't have every book a long-time reader has logged.
+
+## 2026-09-01 (later) -- second rater (Osnat), and a real catalog-breadth gap surfaced
+
+Received a partial ratings list from Osnat (no full Fable export
+available) -- 22 titles, saved in full to `data/ratings/osnat.json`
+regardless of catalog coverage, same principle as the repo owner's own
+list starting small and growing.
+
+Checked every title against the catalog before running anything.
+Result: only 4 of 22 are both present and tagged (Iron Flame, A Court
+of Frost and Starlight, Fourth Wing, The Midnight Library) -- far too
+few for a real held-out test, so used a leave-one-out diagnostic
+instead (see docs/scoring-test-protocol.md for the full writeup and the
+explicit caveat that this is a sanity check, not an accuracy
+measurement). Result was not degenerate: both loved titles predicted
+"Strong match," both hated titles leaned toward "Mixed" rather than
+"Strong"/"Good."
+
+The more important finding is about catalog breadth, not scoring: 16 of
+Osnat's 22 titles aren't in the catalog at all. Most of those are
+genuinely out of v1 scope (pure contemporary romance -- Book Lovers,
+Beach Read, The Worst Best Man, Below Zero, Icebreaker, Santa Please
+Bring Me a Boyfriend, The Summer of Broken Rules), correctly absent, not
+a gap to fix. But several are paranormal/fantasy romance that IS in
+scope and simply hasn't been ingested: the Kate Daniels/Magic Bites
+urban fantasy series and its novellas (Ilona Andrews), Daughter of No
+Worlds, Ruthless Vows, Sweep of the Heart, When the Moon Hatched, Mate,
+and a Throne of Glass novella. Two more (The Serpent and the Wings of
+Night, From Blood and Ash) are already in the catalog but untagged.
+This suggests the catalog's Hardcover-sourced "top fantasy/sci-fi"
+ingestion under-represents the romantasy/paranormal-romance subgenre
+specifically -- a real target for a future ingestion + tagging pass,
+surfaced by a real reader's list rather than assumed.
+
+`scripts/scoring_tests.py` updated: scenario 4 (Osnat, leave-one-out
+diagnostic) added alongside the existing 3 scenarios, and
+`load_rater()`/`data/ratings/` now used consistently for all raters.

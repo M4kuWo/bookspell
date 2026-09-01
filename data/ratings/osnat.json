@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "rater": "Osnat",
+    "collected": "2026-09-01, partial list (full Fable profile export not available)",
+    "notes": "Only 4 of 22 titles are both in the catalog AND tagged (Iron Flame, A Court of Frost and Starlight, Fourth Wing, The Midnight Library) -- too few for a real held-out test on their own. 2 more are in the catalog but untagged (The Serpent and the Wings of Night, From Blood and Ash). The other 16 aren't in the catalog at all -- most are pure contemporary romance, genuinely out of v1 scope (sci-fi/fantasy only): Book Lovers, Beach Read, The Worst Best Man, Below Zero, Icebreaker, Santa Please Bring Me a Boyfriend, The Summer of Broken Rules. But several are paranormal/fantasy romance that IS in v1 scope and just hasn't been ingested yet -- a real catalog-breadth gap, not an out-of-scope one: the Kate Daniels/Magic Bites urban fantasy series (Ilona Andrews), Daughter of No Worlds, Ruthless Vows, When the Moon Hatched, Mate, Sweep of the Heart, The Assassin and the Healer (a Throne of Glass novella). Osnat's ratings never use the 'disliked' tier -- only loved/liked/it_was_okay/hated -- preserved exactly as given, not filled in."
+  },
+  "ratings": {
+    "Iron Flame": "loved",
+    "Book Lovers": "liked",
+    "When the Moon Hatched": "hated",
+    "The Summer of Broken Rules": "loved",
+    "The Assassin and the Healer": "it_was_okay",
+    "Magic Bites": "liked",
+    "A Court of Frost and Starlight": "hated",
+    "Fourth Wing": "loved",
+    "Beach Read": "liked",
+    "Mate": "hated",
+    "Ruthless Vows": "liked",
+    "Santa, Please Bring Me a Boyfriend": "it_was_okay",
+    "Magic Bites - Unicorn Lane (Curran POV #1)": "liked",
+    "Daughter of No Worlds": "hated",
+    "The Serpent and the Wings of Night": "liked",
+    "Magic Burns": "hated",
+    "Icebreaker": "liked",
+    "A Questionable Client (Kate Daniels #0.5)": "liked",
+    "The Worst Best Man": "hated",
+    "Below Zero": "liked",
+    "Magic Bites - Fernando's POV (Curran POV #2)": "liked",
+    "The Midnight Library": "hated",
+    "Sweep of the Heart": "liked",
+    "From Blood and Ash": "liked"
+  }
+}

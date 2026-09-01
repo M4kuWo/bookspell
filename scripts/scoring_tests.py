@@ -80,6 +80,45 @@ SPARSE_RATINGS = {t: REAL_RATINGS[t] for t in SPARSE_TITLES}
 # specifically (it's still held out for scenario 1's richer set).
 SPARSE_HELD_OUT = [t for t in REAL_HELD_OUT if t not in SPARSE_RATINGS]
 
+# --- Scenario 4: second rater, Osnat -- only a partial list available
+# (no full Fable export), and most of it turned out to be either out of
+# v1 scope (pure contemporary romance) or in-scope-but-not-yet-ingested
+# (paranormal/fantasy romance -- a real catalog-breadth gap, see
+# data/ratings/osnat.json's _meta). Only 4 of 22 titles are both in the
+# catalog and tagged -- far too few for a real held-out test (can't
+# fairly split 4 points into train/test), so this uses a leave-one-out
+# diagnostic instead: hold out ONE rating, train on the other 3, check
+# direction. This is a sanity check that the pipeline behaves sanely for
+# a brand-new rater with a very different taste profile (romantasy vs.
+# the repo owner's epic fantasy/hard sci-fi), NOT a real accuracy
+# measurement -- don't draw conclusions about scoring quality from this,
+# only "does anything look broken." ---
+OSNAT_RATINGS = load_rater("osnat")
+OSNAT_USABLE = {
+    "Iron Flame": "loved",
+    "A Court of Frost and Starlight": "hated",
+    "Fourth Wing": "loved",
+    "The Midnight Library": "hated",
+}
+
+
+def run_leave_one_out_diagnostic(catalog, ratings, label):
+    """For each title in `ratings`, trains on the rest and scores it --
+    a sanity check for a rater with too few usable ratings for a real
+    held-out split (see scenario 4's comment above for why n this small
+    can't support a real accuracy test)."""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    print(f"  {label}:")
+    for held_out_title, true in ratings.items():
+        train = {t: r for t, r in ratings.items() if t != held_out_title}
+        centroid, weights, id_to_mag, _ = R._resolve_profile(catalog, train)
+        book = catalog[title_to_id[held_out_title]]
+        score, _ = R.score_book(book, centroid, weights)
+        score = R._apply_series_repeat(catalog, id_to_mag, book, score)
+        pred = R.match_label(score)
+        v = verdict(true, pred)
+        print(f"    {held_out_title:<35} true={true:<12} {score:.3f} ({pred}) {v}")
+
 
 def verdict(true_label, predicted_label):
     if true_label in EXPECT_GOOD:
@@ -170,6 +209,9 @@ def run_all():
     print("\n=== Scenario 3: sparse-data check (original 16-book list) ===")
     run_held_out_test(catalog, REAL_RATINGS, SPARSE_HELD_OUT, "sparse (16 ratings)",
                        train_ratings=SPARSE_RATINGS)
+
+    print("\n=== Scenario 4: second rater (Osnat) -- leave-one-out diagnostic, NOT a real accuracy test ===")
+    run_leave_one_out_diagnostic(catalog, OSNAT_USABLE, "Osnat (n=4 usable)")
 
 
 if __name__ == "__main__":
