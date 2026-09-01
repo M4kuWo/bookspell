@@ -3111,3 +3111,38 @@ unchanged from the last run. Also fixed a stale hardcoded "18 usable
 ratings" label in `scoring_tests.py`'s Scenario 4 print statement (the
 real number has been 30 since the last Osnat re-check) to compute from
 `len(OSNAT_USABLE)` instead of drifting out of sync again.
+
+## 2026-09-02 (later) -- follow-up enrichment pass closes most of the trope-density gap
+
+Acted on the remaining half of the density gap from earlier today: the
+same 60-book batch, content warnings now fixed but tropes still at
+3.58/book vs. 5.72 catalog-wide. Split the work across 4 non-forked
+background research agents (15 books each, no DB access), each handed
+the full controlled trope vocabulary plus each book's current tropes
+inline so they proposed only genuine, non-duplicate additions rather
+than re-reading the schema file per agent.
+
+Hand-reviewed all 4 chunks before writing anything, matching the
+process the last enrichment pass used. Dropped one weak-fit proposal
+the researching agent had itself flagged as uncertain: The Dragonbone
+Chair's "dragons" was backed only by legend/backstory (King John's
+dragon-slaying myth), no live dragon appears in book 1, which doesn't
+meet the "defining creature/setting element" bar the trope's own
+definition sets. Everything else held up -- specific, checkable plot
+details (Sphere's future-spacecraft time-travel reveal, The City of
+Brass's secret-royalty/immortal-character reveals, Wizard's First
+Rule's Kahlan/Richard forbidden-love mechanic and Rahl-bloodline twist),
+not generic genre pattern-matching. Several books legitimately got zero
+or one addition where an agent judged them already adequately covered
+or too sparse in this specific vocabulary (The Andromeda Strain, The
+Bad Beginning, The City & The City, The Lovely Bones, others) --
+consistent with "some books really are just sparse," not under-tagged.
+
+Result: 88 new trope rows across 48 of the 60 books, via
+`20260902010000_enrich_trope_density_followup.sql`, applied to both
+local and hosted (row counts verified to match: 3310 both sides).
+Batch average moved from 3.58 to 5.05 tropes/book against a catalog-wide
+average of 5.88 (catalog average itself ticked up slightly from the new
+rows) -- 61% of average to 86%. Not fully closed, but a real, substantial
+improvement; the remaining gap is mostly genuinely-sparse books rather
+than an under-tagging signal at this point.
