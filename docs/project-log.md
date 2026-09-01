@@ -3034,3 +3034,80 @@ One exact-title gotcha hit again: "Dawn" (Octavia Butler) is stored in
 titles via a live DB lookup rather than typed strings, same fix
 pattern as the earlier "A Court of Silver Flames" zero-width-space
 issue.
+
+## 2026-09-02 -- synced enrichment, re-checked density, third ratings round
+
+**Sync.** Pulled `81d94e7` (the enrichment migration above) and applied
+it to local via the standard psycopg2 script. While reconciling
+`supabase migration list`, found 4 migrations (the enrichment one plus
+the 3 preceding `batch_tag_20_more_books` ones) recorded as applied
+locally but with an empty hosted tracking entry -- the same "applied
+directly against hosted's Postgres instead of via `supabase db push`"
+issue CLAUDE.md already documents one instance of. Confirmed the data
+was genuinely present on both sides first (row counts matched
+exactly: 3222 tropes, 988 content warnings, both local and hosted),
+then repaired all 4 with `supabase migration repair --status applied`
+rather than force-pushing over them.
+
+**Density recheck.** Re-measured the specific 60-book batch flagged
+thin in the 2026-09-01 sanity check (the 3 `batch_tag_20_more_books`
+migrations), post-enrichment: content warnings are now 1.80/book,
+matching the catalog-wide average (1.75) -- that gap is closed. Tropes
+are now 3.58/book vs. catalog-wide 5.72 -- still meaningfully thinner
+(~37% below average), though the earlier steep per-sub-batch decline
+(6.47 -> 4.27 -> 3.20) is gone; the three sub-batches now sit at a
+flatter 3.4 / 3.25 / 4.1. Consistent with the enrichment migration's
+own comment, which explicitly prioritized content warnings over tropes
+because that gap was assessed as worse. **Verdict: content-warning
+quality is fixed; trope density still needs another enrichment pass.**
+(Note: this 60-book denominator is narrower than the enrichment
+commit's own reported "149 of 256 books tagged that day" scope, so the
+two sets of before/after numbers describe overlapping but not
+identical populations -- not a contradiction.)
+
+**Title bug fix.** Confirmed and fixed a repo-owner-reported bug: "The
+Warded Man" (Demon Cycle #1) was stored as "The Warded Man: Book One of
+The Demon Cycle" -- a Hardcover subtitle baked into the title field,
+unlike every other book in the series. Scanned the whole catalog for
+the same `: Book N of` pattern; this was the only instance. Fixed via
+`20260902000000_fix_warded_man_title.sql` (single-row, title+author
+scoped), applied to both local and hosted.
+
+**Third ratings round.** Added 24 new ratings to
+`data/ratings/mathias.json` (58 -> 82 total) from a list covering the
+now-larger catalog: Arcanum Unbounded, 5 more Witcher-saga books,
+Brisingr/Inheritance, Crooked Kingdom, Ender's Shadow, Firefight,
+Malice, Red Sister, The Golden Compass + The Amber Spyglass, 3 more
+Dark Tower books, The Eleventh Metal, 2 more Wheel of Time books, The
+Time Traveler's Wife, The Warded Man, and Theft of Swords. Several
+titles named in the same message aren't in the catalog yet and were
+left unadded rather than guessed at (see `mathias.json`'s `_meta` for
+the full list) -- most notably the entire back half of the Demon Cycle,
+including the "hated" final-book rating, has nowhere to attach until
+those books are ingested.
+
+Two open questions raised by the repo owner, deliberately NOT resolved
+unilaterally:
+- Whether comics/graphic novels are in v1 scope at all -- prompted by
+  finding *Saga, Vol. 1* already in the catalog, tagged, and enjoyed.
+  The schema has no format/medium field distinguishing it from prose,
+  and several fields (page/word count as a pacing signal, in
+  particular) mean different things for a visual medium. Left
+  unrated pending a real scope decision, not silently added or
+  excluded.
+- Whether "evolving taste over time" should factor into the data model
+  or test methodology -- raised because Brisingr/Inheritance were
+  rated from a high-school memory the repo owner isn't sure still
+  holds. Not actioned; no mechanism currently exists for a rating's
+  "confidence decays with time since reading," and it's unclear this
+  single-rater dataset is rich enough yet to justify building one.
+
+Reran all 4 scoring-test scenarios. Scenario 1 (held-out, still the
+same fixed 11-title list) is unchanged at 4/11 -- expected, since the
+24 new ratings are training data, not held-out, and per the
+2026-09-02 catalog-growth entry above, more/better training data isn't
+guaranteed to move the fixed held-out numbers. Scenarios 2-4 also
+unchanged from the last run. Also fixed a stale hardcoded "18 usable
+ratings" label in `scoring_tests.py`'s Scenario 4 print statement (the
+real number has been 30 since the last Osnat re-check) to compute from
+`len(OSNAT_USABLE)` instead of drifting out of sync again.

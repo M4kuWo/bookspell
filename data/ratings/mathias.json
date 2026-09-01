@@ -3,7 +3,7 @@
     "rater": "Mathias",
     "role": "repo owner",
     "collected": "2026-08-30 through 2026-08-31, two rounds (an initial 16-book list, then a 20-item numbered list plus resolved series/aggregate statements)",
-    "notes": "The only rater used for every scoring test in docs/scoring-test-protocol.md so far. See that doc's opening section on why conclusions from a single rater are provisional. 5 ratings added 2026-09-02 once catalog growth filled gaps that blocked them at collection time: Lord of Chaos (WoT book 6, previously untagged, now fills the 'up to A Crown of Swords' range) and A Little Hatred/Best Served Cold (First Law World extras, previously untagged, now cover 'all of First Law world, loved'). Fool Moon and Grave Peril (Dresden Files books 2-3, previously untagged) resolve the earlier 'at least 3, liked all' ambiguity -- combined with Storm Front (book 1, already rated), these are almost certainly the 3 he meant."
+    "notes": "The only rater used for every scoring test in docs/scoring-test-protocol.md so far. See that doc's opening section on why conclusions from a single rater are provisional. 5 ratings added 2026-09-02 once catalog growth filled gaps that blocked them at collection time: Lord of Chaos (WoT book 6, previously untagged, now fills the 'up to A Crown of Swords' range) and A Little Hatred/Best Served Cold (First Law World extras, previously untagged, now cover 'all of First Law world, loved'). Fool Moon and Grave Peril (Dresden Files books 2-3, previously untagged) resolve the earlier 'at least 3, liked all' ambiguity -- combined with Storm Front (book 1, already rated), these are almost certainly the 3 he meant. 24 more ratings added 2026-09-02 (later same day) from a third round covering the now-larger catalog. Two required judgment calls, both flagged to the repo owner rather than silently resolved: (1) Sword of Destiny included as 'liked' under 'the witcher books... up to Lady of the Lake, liked all but the last' -- reasonable given reading order, but not explicitly named; (2) The Golden Compass and The Amber Spyglass both set to 'loved' by analogy with The Subtle Knife (already 'loved' on file) -- no prior 'Golden Compass' rating was ever actually found on file or in the session transcript despite the repo owner believing he'd given one, so this is an assumption, not a recovered fact. Several titles mentioned this round are NOT in the catalog yet and were NOT added (nothing to guess from): The Lady of the Lake (Witcher 5, would be it_was_okay), Calamity (Reckoners 3, loved), King of Thorns/Emperor of Thorns (Broken Empire 2-3, loved), Grey Sister/Holy Sister (Book of the Ancestor 2-3, loved), Valor (Malice's actual sequel, loved), The Desert Spear/The Daylight War/The Skull Throne/The Core (Demon Cycle 2-5 -- notably the last-book 'hated' rating has nowhere to attach yet), Rise of Empire (Theft of Swords' sequel, disliked). Also NOT added: Saga, Vol. 1 (graphic novel, loved) -- genuinely in-catalog and tagged, but whether comics are in v1 scope at all is an open product question raised by the repo owner, not a rating decision. 'The Devils' (Joe Abercrombie) is its own standalone series, not First Law world, so 'any First Law I hadn't rated' added nothing new -- all catalog First Law titles were already rated."
   },
   "ratings": {
     "The Eye of the World": "loved",
@@ -63,6 +63,30 @@
     "A Little Hatred": "loved",
     "Best Served Cold": "loved",
     "Fool Moon": "liked",
-    "Grave Peril": "liked"
+    "Grave Peril": "liked",
+    "Arcanum Unbounded: The Cosmere Collection": "loved",
+    "Blood of Elves": "liked",
+    "Sword of Destiny": "liked",
+    "The Time of Contempt": "liked",
+    "Baptism of Fire": "liked",
+    "The Tower of the Swallow": "liked",
+    "Brisingr": "it_was_okay",
+    "Inheritance": "it_was_okay",
+    "Crooked Kingdom": "liked",
+    "Ender's Shadow": "loved",
+    "Firefight": "loved",
+    "Malice": "loved",
+    "Red Sister": "loved",
+    "The Golden Compass": "loved",
+    "The Amber Spyglass": "loved",
+    "The Drawing of the Three": "loved",
+    "The Waste Lands": "loved",
+    "Wizard And Glass": "loved",
+    "The Eleventh Metal": "it_was_okay",
+    "The Path of Daggers": "loved",
+    "Winter's Heart": "loved",
+    "The Time Traveler's Wife": "liked",
+    "The Warded Man": "loved",
+    "Theft of Swords": "it_was_okay"
   }
 }

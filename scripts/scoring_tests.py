@@ -226,7 +226,7 @@ def run_all():
     run_held_out_test(catalog, REAL_RATINGS, SPARSE_HELD_OUT, "sparse (16 ratings)",
                        train_ratings=SPARSE_RATINGS)
 
-    print("\n=== Scenario 4: second rater (Osnat) -- held-out validation (18 usable ratings) ===")
+    print(f"\n=== Scenario 4: second rater (Osnat) -- held-out validation ({len(OSNAT_USABLE)} usable ratings) ===")
     run_held_out_test(catalog, OSNAT_USABLE, OSNAT_HELD_OUT, "Osnat held-out")
 
 
