@@ -915,6 +915,43 @@ def _resolve_profile(catalog, ratings, genre=None, fatigue_overrides=None):
     return centroid, weights, id_to_magnitude, matches_genre
 
 
+def series_position_ready(catalog, id_to_magnitude, book):
+    """False if `book` is a non-entry-point installment in a series and
+    the user hasn't confirmed (rated) every earlier installment --
+    recommending book 3 of a trilogy to someone who's only read book 1
+    is useless at best, a spoiler risk at worst. True for standalones and
+    for a series' entry point (its lowest position_in_series, so a
+    prequel novella doesn't wrongly gate book 1 -- reading order nuance
+    some readers skip anyway, a known simplification, not a bug).
+
+    id_to_magnitude: {book_id: rating_magnitude} for books the user has
+    actually rated (see _resolve_profile) -- being "read" for this check
+    means "rated," not any weaker signal."""
+    series_id = book.get("series_id")
+    if series_id is None:
+        return True
+    position = book.get("position_in_series")
+    if position is None:
+        return True
+    series_books = [b for b in catalog.values() if b.get("series_id") == series_id]
+    earlier = [b for b in series_books if b.get("position_in_series") is not None
+               and b["position_in_series"] < position]
+    if not earlier:
+        return True
+    # Group by exact position, not by row -- a duplicate catalog entry at
+    # the same position (e.g. an omnibus edition alongside the standalone
+    # volume) is an alternate edition of the same slot, not a distinct
+    # earlier installment, so only ONE representative per position needs
+    # to be rated, not every row that happens to share that position.
+    by_position = {}
+    for b in earlier:
+        by_position.setdefault(b["position_in_series"], []).append(b)
+    return all(
+        any(b["id"] in id_to_magnitude for b in books_at_pos)
+        for books_at_pos in by_position.values()
+    )
+
+
 def recommend(catalog, ratings, top_n=10, genre=None,
               recent_history=None, diversity=0.0, fatigue_overrides=None):
     """See _resolve_profile() for ratings/genre/fatigue_overrides.
@@ -947,6 +984,8 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     scored = []
     for bid, book in catalog.items():
         if bid in excluded or not matches_genre(bid):
+            continue
+        if not series_position_ready(catalog, id_to_magnitude, book):
             continue
         relevance, contributions = score_book(book, centroid, weights)
         if diversity > 0 and recent_books:
