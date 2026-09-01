@@ -70,6 +70,21 @@ change is considered safe to land.
 | Author-affinity (two-layer: base + per-author exception profile) | N/A | N/A | **Validated logically, not landed** -- correctly explains a known outlier once it's rated, but can't be predictively tested with held-out methodology (its value is learning-after-the-fact); needs live data, not a synthetic split |
 | Field-pairing/interaction effects (e.g. "dislikes slow pace unless grimdark") | Not tested | Not tested | **Deferred, not attempted** -- ~435 possible field pairs is too many to reliably estimate from a single rater's 10-50 ratings; revisit only for a SPECIFIC pattern that recurs in real feedback, not as a general mechanism |
 
+## Sparse-data check (2026-09-01)
+
+Added scenario 3 (`SPARSE_RATINGS`, the repo owner's original 16-book
+list) specifically to check whether the landed fixes -- series-aware
+weighting, the redundancy discount -- behave consistently with less
+data, not just on the fuller 42-book training set they were tuned
+against. Result: consistent. Royal Assassin, Skyward, and Assassin's
+Quest score almost identically whether trained on 16 or 42 books.
+Overall accuracy is a bit lower with less data (3/9 vs. 4/11), as
+expected, and one book (The Last Wish) flips from a correct prediction
+to an incorrect one with less evidence to go on -- a real, expected
+degradation, not a sign either landed fix behaves differently or
+unpredictably at this smaller scale. No case yet where a fix helps one
+data regime and backfires in the other.
+
 ## Other correlated field pairs found (2026-09-01 scan)
 
 A systematic Cramer's V scan across all ~30 structural/content fields

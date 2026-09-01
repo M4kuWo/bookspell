@@ -66,6 +66,26 @@ WEIGHT_CAP_RATINGS = {
     "Red Rising": "disliked", "Storm Front": "disliked",
 }
 
+# --- Scenario 3: sparse-data check -- the repo owner's ORIGINAL 16-book
+# list (the very first real test round, before the 20-item follow-up),
+# a genuine smaller dataset, not a synthetic contrivance. Every scoring
+# change should be checked against both this AND scenario 1 (the full
+# 53-book set) -- a fix tuned/validated only on the richer set could
+# behave differently (better OR worse) with less evidence, and that's
+# exactly the kind of gap real new users will sit in. ---
+SPARSE_RATINGS = {
+    "The Eye of the World": "loved", "The Way of Kings": "loved", "Dark Matter": "hated",
+    "Circe": "hated", "Six of Crows": "liked", "Prince of Thorns": "loved",
+    "The Blade Itself": "loved", "Red Rising": "hated", "The Gunslinger": "liked",
+    "We Are Legion (We Are Bob)": "disliked", "The Poppy War": "it_was_okay",
+    "Artemis": "disliked", "Children of Time": "liked", "Interview with the Vampire": "disliked",
+    "Old Man's War": "liked", "The Lion, the Witch and the Wardrobe": "disliked",
+}
+# Interview with the Vampire is IN the sparse set as training, not
+# held-out there -- exclude it from this scenario's held-out list
+# specifically (it's still held out for scenario 1's richer set).
+SPARSE_HELD_OUT = [t for t in REAL_HELD_OUT if t not in SPARSE_RATINGS]
+
 
 def verdict(true_label, predicted_label):
     if true_label in EXPECT_GOOD:
@@ -75,11 +95,16 @@ def verdict(true_label, predicted_label):
     return "OK" if predicted_label == "Mixed match" else "SOFT-MISS"
 
 
-def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False):
-    """Trains on all_ratings minus held_out, scores each held-out title,
-    reports directional correctness. Returns (correct, total, rows)."""
+def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_ratings=None):
+    """Trains on all_ratings minus held_out (or on train_ratings directly,
+    if given -- for a fixed smaller training set like SPARSE_RATINGS,
+    where all_ratings is only used to look up held-out titles' true
+    labels, not as the training pool itself). Scores each held-out
+    title, reports directional correctness. Returns (correct, total, rows)."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
-    train = {t: r for t, r in all_ratings.items() if t not in held_out}
+    train = train_ratings if train_ratings is not None else {
+        t: r for t, r in all_ratings.items() if t not in held_out
+    }
     centroid, weights, _, _ = R._resolve_profile(catalog, train)
     correct = wrong = soft = 0
     rows = []
@@ -146,6 +171,10 @@ def run_all():
 
     print("\n=== Scenario 2: WEIGHT_CAP domination check ===")
     run_weight_cap_check(catalog, "current formula")
+
+    print("\n=== Scenario 3: sparse-data check (original 16-book list) ===")
+    run_held_out_test(catalog, REAL_RATINGS, SPARSE_HELD_OUT, "sparse (16 ratings)",
+                       train_ratings=SPARSE_RATINGS)
 
 
 if __name__ == "__main__":
