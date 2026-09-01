@@ -43,6 +43,14 @@ re-litigate decisions already made there.
   **The fix is `supabase migration repair --status applied --linked
   <version...>`** (marks the version as applied without re-executing
   it) — never force through the resulting error, never skip/bypass it.
+  **Before repairing, confirm the data actually matches on both sides**
+  (row counts on the affected tables, or spot-check one specific row) —
+  repair only records that a version is applied, it doesn't apply
+  anything, so repairing a version whose data ISN'T really on hosted
+  yet just hides a real gap instead of fixing it. This has recurred
+  more than once (not a one-off), so check for it routinely via
+  `supabase migration list --linked` (entries with a `local` timestamp
+  but no matching `remote` one), not just when something breaks loudly.
 - **Write idempotent SQL**: `insert ... on conflict do nothing` for
   inserts, so a migration can be safely reapplied without duplicating
   data if something goes wrong partway through.
