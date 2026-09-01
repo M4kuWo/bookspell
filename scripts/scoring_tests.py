@@ -105,12 +105,13 @@ def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_
     train = train_ratings if train_ratings is not None else {
         t: r for t, r in all_ratings.items() if t not in held_out
     }
-    centroid, weights, _, _ = R._resolve_profile(catalog, train)
+    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
     correct = wrong = soft = 0
     rows = []
     for title in held_out:
         book = catalog[title_to_id[title]]
         score, _ = R.score_book(book, centroid, weights)
+        score = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
         pred = R.match_label(score)
         true = all_ratings[title]
         v = verdict(true, pred)

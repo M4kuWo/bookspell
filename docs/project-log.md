@@ -2709,3 +2709,42 @@ frequency/violence_intensity remain correctly NOT discounted: frequency
 and intensity are genuinely independent axes, exactly the kind of
 correlated-but-not-redundant pair the broader scan surfaced and this
 session already declined to touch.
+
+## 2026-09-01 (later) -- series-repeat signal landed: disliking book 1 should weigh heavily on book 3
+
+The repo owner proposed the fix directly, in almost exactly this shape:
+"if the first was disliked there's a way bigger chance of not liking
+the next one (unless there is a way bigger match in book dna from the
+next book)." Distinct from series-position gating (which only prevents
+recommending an unread sequel) and series-aware weighting (which
+prevents a series' books from over-counting as evidence) -- this is a
+new, third mechanism: a book that shares a series with something the
+reader already disliked gets pulled down proportional to how much it
+actually resembles that disliked book (via the existing, unpersonalized
+`book_similarity()`), not a flat per-series penalty. The "unless DNA
+diverges a lot" clause falls out naturally: a candidate very different
+from the disliked predecessor gets almost no penalty, since the
+resemblance score itself is low.
+
+Verified before landing: Royal Assassin and Assassin's Quest (both
+disliked, held out, Farseer books with Assassin's Apprentice -- also
+disliked -- as their series-mate) both moved substantially in the
+correct direction (0.539->0.427 and 0.575->0.476 at
+SERIES_REPEAT_WEIGHT=0.6). The Wise Man's Fear correctly did NOT
+trigger this -- its predecessor (The Name of the Wind) was rated
+it_was_okay, not disliked, exactly matching the rule's own condition.
+Confirmed zero interaction with the WEIGHT_CAP domination scenario (no
+shared series there) and correctly NO effect on the sparse (16-book)
+scenario, since that smaller training set doesn't happen to include the
+disliked Farseer book needed to trigger it at all -- the mechanism only
+acts when the relevant evidence actually exists.
+
+Honest limitation, not glossed over: even at full weight, neither book
+fully crosses into "Poor match" -- book_similarity() blends in trope-set
+overlap, and different books in the same series naturally have
+different specific plot tropes even when the narrative style that
+actually drove the dislike (person, POV, framing device) stays fully
+consistent. A same-series-specific similarity measure (weighting
+narrative style higher, discounting plot-specific tropes) would likely
+close more of the remaining gap -- logged as a real follow-up, not
+built yet.

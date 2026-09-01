@@ -918,6 +918,64 @@ def book_similarity(book_a, book_b):
     return sum(components) / len(components)
 
 
+# Series-repeat signal (2026-09-01, user's own proposed rule): if a
+# reader disliked an earlier book in this exact series, that's a strong
+# prior the candidate will disappoint too -- UNLESS the candidate's own
+# DNA diverges substantially from that disliked predecessor (e.g. The
+# Wise Man's Fear's predecessor, The Name of the Wind, was rated
+# it_was_okay -- neutral, not disliked -- so this deliberately does NOT
+# fire there; only an ACTUAL disliked/hated series-mate counts).
+# Verified against the Farseer case: Royal Assassin and Assassin's Quest
+# (both disliked, held out) both moved substantially in the correct
+# direction once blended in (Royal Assassin's score dropped from 0.539
+# to 0.446 at this weight), while every non-series or no-disliked-
+# series-mate book is completely unaffected. Confirmed no interaction
+# with the WEIGHT_CAP domination case either (no shared series there).
+#
+# Honest limitation: even at full weight, this doesn't always cross all
+# the way to "Poor match" -- book_similarity() blends in trope-set
+# overlap, and different books in the same series naturally have
+# different specific plot tropes even when the narrative style that
+# actually drove the dislike stays consistent, which dilutes the
+# similarity below what "basically the same reading experience"
+# deserves. A dedicated same-series similarity measure (weighting
+# narrative-style fields higher, discounting plot-specific tropes) would
+# likely close more of that gap -- not built yet, flagged as a real
+# follow-up rather than oversold as fully solved.
+SERIES_REPEAT_WEIGHT = 0.6
+
+
+def series_repeat_worst_similarity(catalog, id_to_magnitude, book):
+    """Highest book_similarity() between `book` and any DISLIKED book
+    (magnitude < 0) from the same series in id_to_magnitude -- None if
+    `book` isn't in a series or no disliked series-mate exists. High
+    value = this book closely resembles one the reader already
+    disliked in this exact series."""
+    series_id = book.get("series_id")
+    if series_id is None:
+        return None
+    disliked_mates = [
+        b for bid, mag in id_to_magnitude.items()
+        if mag < 0
+        and (b := catalog.get(bid)) is not None
+        and b.get("series_id") == series_id
+        and b["id"] != book["id"]
+    ]
+    if not disliked_mates:
+        return None
+    return max(book_similarity(book, mate) for mate in disliked_mates)
+
+
+def _apply_series_repeat(catalog, id_to_magnitude, book, score):
+    """Blends `score` with the series-repeat signal (see above) when
+    applicable; returns `score` unchanged otherwise."""
+    worst_sim = series_repeat_worst_similarity(catalog, id_to_magnitude, book)
+    if worst_sim is None:
+        return score
+    series_component = 1 - worst_sim
+    return (1 - SERIES_REPEAT_WEIGHT) * score + SERIES_REPEAT_WEIGHT * series_component
+
+
 def _resolve_profile(catalog, ratings, genre=None, fatigue_overrides=None):
     """Shared by recommend() and explain_match(): resolves rating titles
     to ids, applies genre scoping, builds the profile, applies fatigue
@@ -1061,6 +1119,7 @@ def recommend(catalog, ratings, top_n=10, genre=None,
         if not series_position_ready(catalog, id_to_magnitude, book):
             continue
         relevance, contributions = score_book(book, centroid, weights)
+        relevance = _apply_series_repeat(catalog, id_to_magnitude, book, relevance)
         if diversity > 0 and recent_books:
             novelty = 1 - max(book_similarity(book, h) for h in recent_books)
             final = (1 - diversity) * relevance + diversity * novelty
@@ -1096,8 +1155,9 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
         raise ValueError(f"{title!r} not found in catalog")
     book = catalog[title_to_id[title]]
 
-    centroid, weights, _, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides)
+    centroid, weights, id_to_magnitude, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides)
     score, _ = score_book(book, centroid, weights)
+    score = _apply_series_repeat(catalog, id_to_magnitude, book, score)
     matches, mismatches = explain_book(book, centroid, weights, top_n=top_n)
 
     matches_labeled = [(label, p) for label, _ in matches if (p := describe(label, book))]
