@@ -729,6 +729,32 @@ def build_profile(catalog, ratings, full_ratings=None):
         trope_weights[t] = max(-WEIGHT_CAP, min(WEIGHT_CAP, raw))
     weights["tropes"] = trope_weights
 
+    # Correlation discount (2026-09-01): person and pov_count aren't two
+    # independent facts about a book -- across the tagged catalog,
+    # P(pov_count=single | person=first) is 0.88 vs. a 0.44 baseline.
+    # When a user's ratings split cleanly on POV structure, BOTH fields
+    # get near-identical high weight for what's really one underlying
+    # signal counted twice, which is what originally motivated WEIGHT_CAP
+    # (see its own comment) -- discounting the redundant half fixes that
+    # without capping either field's ability to carry real signal when
+    # it's NOT redundant with anything else in play (see the Farseer/
+    # Kingkiller case, where person's mismatch is real and isn't diluted
+    # by this discount). Deliberately narrow to this one pair for now --
+    # a broader scan across all fields found several other strongly
+    # correlated pairs (violence_frequency/violence_intensity 0.65,
+    # romance_heat_frequency/romance_heat_intensity 0.59,
+    # narrative_closure/ends_on_cliffhanger 0.60, darkness/emotional_
+    # register 0.55) but most of those are two genuinely distinct axes a
+    # reader could reasonably hold separate opinions on (frequency vs.
+    # graphicness of violence, closure vs. literal cliffhanger), not one
+    # fact stated twice -- discounting those risks throwing away real,
+    # independent signal rather than removing double-counted redundancy.
+    # person/pov_count is the one pair checked closely enough to be
+    # confident it's genuinely the same underlying fact.
+    PERSON_POV_REDUNDANCY = 0.44
+    if "person" in weights and "pov_count" in weights:
+        weights["pov_count"] = weights["pov_count"] * (1 - PERSON_POV_REDUNDANCY)
+
     return centroid, weights
 
 
