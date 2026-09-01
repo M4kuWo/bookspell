@@ -2509,3 +2509,81 @@ sparse synthetic profile -- that's the next concrete step before
 landing anything, rather than assuming the shrinkage logic applies
 without checking it the way this project has learned to check
 everything else.
+
+## 2026-09-01 -- contaminated books.author fields cleaned up
+
+Root cause: bibliographic ingestion pulled every "contributor" credit
+from Hardcover's API into `books.author` as one comma-separated string,
+so illustrators, translators, cover artists, audiobook narrators, and
+introduction/afterword writers ended up indistinguishable from actual
+authors. Confirmed starting example: Royal Assassin was `"Robin Hobb,
+Stephen Youll, John Howe"` (the latter two are cover illustrators).
+
+Queried `author like '%,%' or author ilike '% and %' or author like
+'%&%'` (comma was the dominant separator; no additional " and "/"&"-only
+cases turned up beyond what commas already caught) and found 73 books
+with a multi-name author field. Checked each individually -- from known
+publishing facts, or a web search where not already confident, per the
+project's standing rule against guessing on factual questions -- rather
+than applying a blanket "keep only the first name," since that would
+have wrongly broken real co-authored books.
+
+**8 were genuine multi-author/co-creator credit and left untouched:**
+A Memory of Light, The Gathering Storm, and Towers of Midnight
+(Brandon Sanderson completing Robert Jordan's own drafts/notes for the
+last three Wheel of Time books); Good Omens (Gaiman & Pratchett
+co-wrote it); Illuminae (Kaufman & Kristoff co-wrote the Illuminae
+Files); This Is How You Lose the Time War (El-Mohtar & Gladstone
+co-wrote it, alternating chapters); Harry Potter and the Cursed Child
+(the published playscript is consistently billed "J.K. Rowling, John
+Tiffany, and Jack Thorne" across publisher and retailer listings -- all
+three are credited as originating the story, not just Thorne as
+scriptwriter); and Saga, Vol. 1 (writer Brian K. Vaughan and artist
+Fiona Staples are both universally credited co-creators of the series,
+including on its Hugo Award for Best Graphic Story -- for a comic the
+artist is intrinsic to the narrative itself, not a decorative
+cover-illustrator credit the way it would be for a prose novel).
+
+**65 were genuinely contaminated and fixed** via
+`supabase/migrations/20260901000000_clean_contaminated_author_fields.sql`,
+one individually-scoped `UPDATE ... WHERE title = '...'` per book.
+Examples by contributor type:
+- translators: Blood of Elves / The Last Wish / Sword of Destiny / The
+  Time of Contempt / The Tower of the Swallow / Baptism of Fire (all
+  Danusia Stok or David French off the Witcher series), 1Q84 / Kafka on
+  the Shore / The Wind-Up Bird Chronicle / Hard-Boiled Wonderland and
+  the End of the World (Murakami's various English translators), Death's
+  End / The Dark Forest (Ken Liu / Joel Martinsen)
+- illustrators/cover artists: the four illustrated Narnia books plus The
+  Complete Chronicles of Narnia (all Pauline Baynes), the three Mary
+  GrandPré Harry Potter volumes, Royal Assassin (Stephen Youll, John
+  Howe), Tress of the Emerald Sea (Howard Lyon)
+- audiobook narrators: Binti (Robin Miles), City of Fallen Angels (Ed
+  Westwick, Molly C. Quinn), The Strange Case of Dr Jekyll and Mr Hyde
+  (Richard Armitage)
+- introduction/afterword/editor credits: A Clockwork Orange (Blake
+  Morrison), Atlas Shrugged (Leonard Peikoff), The Silmarillion --
+  Christopher Tolkien is credited as *editor* of his father's posthumous
+  notes on every edition checked, not co-author, despite doing
+  substantial compilation work
+- two edge cases that weren't a "contributor" credit at all but were
+  still wrong: Dune listed Brian Herbert as co-author, but he did not
+  co-write the original 1965 novel (his Dune collaborations with Kevin
+  J. Anderson are later, separate prequel/sequel books) -- corrected to
+  Frank Herbert alone; The Long Walk listed `"Richard Bachman, Stephen
+  King"` as if two people, but Bachman is King's own pen name for that
+  book -- normalized to "Stephen King" to match every other King book
+  already in the catalog
+- one mixed case: Roadside Picnic had `"Arkady Strugatsky, Boris
+  Strugatsky, Olena Bormashenko, Ursula K. Le Guin"` -- the Strugatsky
+  brothers are genuine co-authors and were kept, but Bormashenko
+  (translator) and Le Guin (foreword writer) were stripped
+
+Tested the full migration in a rolled-back psycopg2 transaction first
+(606 books before and after, sample rows all showed the expected
+cleaned/kept values, remaining multi-name count dropped from 73 to the
+expected 9 -- the 8 genuine cases plus Roadside Picnic reduced to just
+its two real co-authors). Applied for real to local via autocommit
+psycopg2, then `supabase db push` to hosted. Verified afterward on both:
+606 total books, identical sample rows, and identical remaining
+multi-name count of 9 on both sides.
