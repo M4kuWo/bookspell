@@ -729,33 +729,53 @@ def build_profile(catalog, ratings, full_ratings=None):
         trope_weights[t] = max(-WEIGHT_CAP, min(WEIGHT_CAP, raw))
     weights["tropes"] = trope_weights
 
-    # Correlation discount (2026-09-01): person and pov_count aren't two
-    # independent facts about a book -- across the tagged catalog,
-    # P(pov_count=single | person=first) is 0.88 vs. a 0.44 baseline.
-    # When a user's ratings split cleanly on POV structure, BOTH fields
-    # get near-identical high weight for what's really one underlying
-    # signal counted twice, which is what originally motivated WEIGHT_CAP
-    # (see its own comment) -- discounting the redundant half fixes that
-    # without capping either field's ability to carry real signal when
-    # it's NOT redundant with anything else in play (see the Farseer/
-    # Kingkiller case, where person's mismatch is real and isn't diluted
-    # by this discount). Deliberately narrow to this one pair for now --
-    # a broader scan across all fields found several other strongly
-    # correlated pairs (violence_frequency/violence_intensity 0.65,
-    # romance_heat_frequency/romance_heat_intensity 0.59,
-    # narrative_closure/ends_on_cliffhanger 0.60, darkness/emotional_
-    # register 0.55) but most of those are two genuinely distinct axes a
-    # reader could reasonably hold separate opinions on (frequency vs.
-    # graphicness of violence, closure vs. literal cliffhanger), not one
-    # fact stated twice -- discounting those risks throwing away real,
-    # independent signal rather than removing double-counted redundancy.
-    # person/pov_count is the one pair checked closely enough to be
-    # confident it's genuinely the same underlying fact.
-    PERSON_POV_REDUNDANCY = 0.44
-    if "person" in weights and "pov_count" in weights:
-        weights["pov_count"] = weights["pov_count"] * (1 - PERSON_POV_REDUNDANCY)
-
     return centroid, weights
+
+
+# Redundancy discounts (2026-09-01, revised): a field pair where knowing
+# one value makes the other near-certain, in ONE direction only -- these
+# are asymmetric implications, not a symmetric correlation, so the
+# discount can't correctly be a blanket per-profile weight scaling
+# (that would wrongly discount the field for every candidate book, even
+# ones where the implication doesn't hold and the field carries full,
+# independent information). Applied per-book, inside score_book()/
+# explain_book(), conditional on the SPECIFIC triggering value being
+# present on THAT book:
+#   - person=first implies pov_count=single 88% of the time (vs. a 44%
+#     baseline) -- but pov_count=single does NOT strongly imply
+#     person=first (61% vs. a 31% baseline, a much weaker reverse
+#     implication -- plenty of single-POV books are third-person). So
+#     pov_count is only discounted on books that are actually
+#     person=first; a third-person single-POV book keeps pov_count's
+#     full weight, since nothing there is redundant.
+#   - ends_on_cliffhanger=cliffhanger implies narrative_closure=
+#     requires_series 98.6% of the time (nearly a hard rule) -- but
+#     requires_series does NOT imply cliffhanger (51.5% vs. a 44.3%
+#     baseline, barely above chance -- a book can need the series to
+#     continue for all sorts of reasons besides ending on a literal
+#     cliffhanger). So narrative_closure is only discounted on books
+#     that actually end on a cliffhanger.
+# A broader scan found several other correlated pairs (violence
+# frequency/intensity, romance heat frequency/intensity, darkness/
+# emotional_register) deliberately left alone -- see
+# docs/scoring-test-protocol.md for why those are two genuinely
+# distinct axes, not the same fact stated twice.
+REDUNDANCY_DISCOUNTS = {
+    # (dependent_field, triggering_field, triggering_value): discount
+    ("pov_count", "person", "first"): 0.44,
+    ("narrative_closure", "ends_on_cliffhanger", "cliffhanger"): 0.60,
+}
+
+
+def _redundancy_adjusted_weight(book, field, w):
+    """w with any applicable REDUNDANCY_DISCOUNTS applied, conditional on
+    this specific book's own value for the triggering field -- see
+    REDUNDANCY_DISCOUNTS's comment above for why this must be per-book,
+    not a blanket per-profile scaling."""
+    for (dependent, trigger_field, trigger_value), discount in REDUNDANCY_DISCOUNTS.items():
+        if field == dependent and book.get(trigger_field) == trigger_value:
+            w = w * (1 - discount)
+    return w
 
 
 def score_book(book, centroid, weights):
@@ -783,7 +803,7 @@ def score_book(book, centroid, weights):
             sim = 1 - abs(book_val - centroid[field])
         else:
             sim = 1.0 if book.get(field) == centroid[field] else 0.0
-        w_eff = w * get_confidence(book, field)
+        w_eff = _redundancy_adjusted_weight(book, field, w) * get_confidence(book, field)
         contribution = w_eff * sim
         score += contribution
         total_weight += abs(w_eff)
@@ -840,7 +860,7 @@ def explain_book(book, centroid, weights, top_n=5):
             sim = 1 - abs(pos[0] / pos[1] - centroid[field])
         else:
             sim = 1.0 if book.get(field) == centroid[field] else 0.0
-        w = w * get_confidence(book, field)
+        w = _redundancy_adjusted_weight(book, field, w) * get_confidence(book, field)
 
         if w >= 0:
             matches.append((field, w * sim))

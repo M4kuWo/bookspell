@@ -2662,3 +2662,50 @@ previous entry) and confirmed it does NOT interact with that failure mode
 an orthogonal, safe fix, unlike every scoring-weight idea tried so far
 this session (structural boost, category budgets) which all either
 plateaued or reopened the original bug.
+
+## 2026-09-01 (later) -- redundancy discount corrected: per-book conditional, not blanket per-profile
+
+The repo owner caught a real flaw in the just-landed correlation
+discount: person=first implies pov_count=single 88% of the time, but
+pov_count=single does NOT strongly imply person=first (61% vs. a 31%
+baseline -- plenty of single-POV books are third-person). The discount
+was asymmetric, but implemented as a symmetric, blanket per-profile
+weight scaling -- discounting pov_count for EVERY candidate book scored
+against a profile once person was active anywhere, even for a
+third-person candidate where pov_count isn't redundant with anything
+and deserves its full weight.
+
+Checked narrative_closure/ends_on_cliffhanger the same way (raised as a
+hypothesis by the repo owner) and found an even starker asymmetry:
+ends_on_cliffhanger=cliffhanger implies narrative_closure=
+requires_series 98.6% of the time (essentially a hard rule), but
+requires_series does NOT imply cliffhanger (51.5% vs. a 44.3%
+baseline -- a book can need the series to continue for all sorts of
+reasons besides a literal cliffhanger).
+
+Fixed properly: moved the discount out of `build_profile()` (which
+returns a context-free weights dict) and into `score_book()`/
+`explain_book()`, applied per-book, conditional on whether THAT SPECIFIC
+candidate has the triggering value (`REDUNDANCY_DISCOUNTS`,
+`_redundancy_adjusted_weight()`). A third-person candidate now keeps
+pov_count's full weight; only a first-person candidate gets it
+discounted. Same for narrative_closure, discounted only on candidates
+that actually end on a cliffhanger.
+
+Result: strictly better on both scoring-test-protocol.md scenarios.
+Domination check: person's mismatch (0.425) now lands roughly at trope
+scale, pov_count's (0.149) correctly suppressed and below it -- more
+precise than the blanket version's flat 0.5/0.28. Dilution check: two
+MORE books flip a match-label bucket than the blanket version achieved
+(Royal Assassin and Interview with the Vampire both Good match -> Mixed
+match). Confirms the blanket version's improvement wasn't the ceiling --
+being more precise about WHEN redundancy actually applies helped
+further, not just the domination case it was originally built for.
+
+Also confirmed (per the repo owner's own worked example -- Joe
+Abercrombie's Best Served Cold, a book that could plausibly have one
+extremely graphic scene and otherwise be non-violent) that violence_
+frequency/violence_intensity remain correctly NOT discounted: frequency
+and intensity are genuinely independent axes, exactly the kind of
+correlated-but-not-redundant pair the broader scan surfaced and this
+session already declined to touch.

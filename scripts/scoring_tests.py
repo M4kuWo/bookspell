@@ -107,15 +107,35 @@ def run_weight_cap_check(catalog, label):
     """Reports person/pov_count weight vs. the largest trope weight --
     the domination check. person/pov_count each dwarfing every trope
     (as in the original 2026-08-29 bug) is a FAIL; both landing near or
-    below typical trope magnitude (~0.4-0.5) is a PASS."""
+    below typical trope magnitude (~0.4-0.5) is a PASS.
+
+    Since 2026-09-01's conditional redundancy discount, the raw weights
+    dict from build_profile() is context-free (undiscounted) -- the
+    discount only applies per-candidate inside score_book()/
+    explain_book(), conditional on that specific book's own field
+    values. So this checks the ACTUAL per-book contribution for a
+    representative person=first candidate (Assassin's Apprentice, one
+    of this scenario's own disliked ratings -- fine for checking the
+    mechanism fires correctly, even though it's not a fair held-out
+    prediction test), not the raw weights dict."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     ids = {title_to_id[t]: R.RATING_LABELS[r] for t, r in WEIGHT_CAP_RATINGS.items()}
     centroid, weights = R.build_profile(catalog, ids)
     max_trope = max((abs(w) for w in weights.get("tropes", {}).values()), default=0)
-    person = weights.get("person", 0)
-    pov = weights.get("pov_count", 0)
-    print(f"  {label}: person={person:.3f}  pov_count={pov:.3f}  max_trope={max_trope:.3f}")
-    return person, pov, max_trope
+    candidate = catalog[title_to_id["Assassin's Apprentice"]]
+    # Assassin's Apprentice mismatches person/pov_count against this
+    # profile's (multi-POV/third-person) centroid -- score_book()'s
+    # "contribution" measures the MATCH pull (w_eff * sim), which is
+    # near-zero here simply because sim is near-zero, not because the
+    # weight is suppressed. explain_book()'s mismatch magnitude
+    # (w_eff * (1-sim)) is what actually reflects the field's real,
+    # dominance-relevant weight.
+    matches, mismatches = R.explain_book(candidate, centroid, weights, top_n=30)
+    mismatch_map = dict(mismatches)
+    person_mismatch = mismatch_map.get("person", 0)
+    pov_mismatch = mismatch_map.get("pov_count", 0)
+    print(f"  {label}: person mismatch={person_mismatch:.3f}  pov_count mismatch={pov_mismatch:.3f}  max_trope weight={max_trope:.3f}")
+    return person_mismatch, pov_mismatch, max_trope
 
 
 def run_all():
