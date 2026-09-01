@@ -2904,3 +2904,18 @@ from the same source (Divine Rivals, Sweep of the Heart, From Blood and
 Ash, The Serpent and the Wings of Night, An Absolutely Remarkable Thing)
 -- ahead of the skill's usual partial-series-priority query, specifically
 to fix the negative-signal gap once tagged.
+
+**Update (same day, wife's session):** `ingest-targeted-titles.js` run
+against hosted -- all 7 books inserted cleanly (613 total books; 3 new
+series created: Kate Daniels, The War of Lost Hearts, Moonfall). Of the
+5 handoff titles, 4 existed and were tagged in this priority batch
+(migration `20260901214505_priority_tag_osnat_gap_books.sql`): Magic
+Bites, Magic Burns, A Questionable Client, Daughter of No Worlds, When
+the Moon Hatched, Ruthless Vows, The Assassin and the Healer, Divine
+Rivals, From Blood and Ash, The Serpent and the Wings of Night, An
+Absolutely Remarkable Thing (11 total). **Sweep of the Heart was not
+found in the catalog** -- it wasn't one of the 7 titles confirmed via
+`search-targeted-titles.js` in the ingestion above, so it still needs
+its own targeted-ingestion pass (search + confirm + insert) before it
+can be tagged. Not attempted here -- flagged for the repo owner to
+decide whether/how to source it.
