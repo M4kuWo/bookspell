@@ -3500,3 +3500,67 @@ before/after tables and reasoning in `docs/scoring-test-protocol.md`'s
 zero impact on scoring throughout -- `scoring_tests.py`'s benchmark
 scorecard output is identical before and after every change in this
 entry.
+
+## 2026-09-02 (later still) -- landed the veto/cap mechanism, after catching and fixing a real regression
+
+Built option #2 from the aggregation-shape design discussion:
+`_apply_dealbreaker_veto()` (`scripts/recommend.py`), wired into BOTH
+`recommend()` and `explain_match()`. When a book mismatches on a field
+statistically validated as a dealbreaker for that user, the score is
+capped below Good-match -- this is what `dealbreaker_flags()` (landed
+earlier the same day) never did: that only ever displayed a callout,
+score unchanged. The veto only fires through the validated path, never
+the fixed-threshold fallback for low-data users. Extracted
+`match_label()`'s inline 0.55/0.75 boundaries into named constants
+(`GOOD_MATCH_THRESHOLD`/`STRONG_MATCH_THRESHOLD`) while at it.
+
+**Caught a real regression before considering this landed, exactly by
+following the discipline this project already has a track record of
+needing.** Wired the veto into `scoring_tests.py`'s scoring pipeline too
+(a new shared `_full_score()` helper, replacing duplicated score+series-
+repeat chains across 4 functions) so the benchmark reflects real
+production behavior, then reran the full suite. Mathias's SPARSE
+scenario collapsed: loved_recall 75% -> 0%, bucket accuracy 56% -> 33%.
+Root cause: with only 8 liked/7 disliked ratings, six fields "validated"
+at the existing 0.5 separation threshold, five of them landing
+suspiciously right at that line (0.500-0.523) -- classic multiple-
+comparisons noise from testing ~30 fields against a small sample. With
+6 fields eligible to trigger a veto, almost every held-out book
+mismatched on at least one, capping nearly everything regardless of true
+rating.
+
+**Fixed by raising `STAT_SEPARATION_THRESHOLD` from 0.5 to 0.65**,
+chosen empirically by sweeping 0.5-0.75 against Mathias full/sparse and
+the WEIGHT_CAP_RATINGS domination scenario: 0.65 is where full and
+sparse converge on the same single real field (`person`, 0.75-0.82 in
+both) and where the domination scenario's validated set stops shrinking
+(stable at 3 fields through 0.75). Safe to raise purely upward -- both
+`dealbreaker_flags()` and the veto only get MORE conservative as the bar
+rises, never less safe. Rerunning the full suite confirmed the sparse
+regression is completely gone, matching pre-veto baseline, with zero
+regressions across all 8 scorecard rows and a real pairwise-accuracy
+gain for 3 of Mathias's 4 variants (67%->73%, 67%->78%, 64%->73%).
+Osnat/Dandan/Gabriel unaffected either way (none currently clear the
+raised bar).
+
+**Domination stress test re-checked directly** (not just its own
+existing weight-magnitude metric, which the veto doesn't touch): mostly
+behaved correctly (third-person candidates that agree stay unaffected,
+first-person candidates get capped), but surfaced one genuine, honest,
+PRE-EXISTING limitation -- nominal fields like `person` match all-or-
+nothing, so `third_omniscient` vs. `third_limited` count as a full
+mismatch even though both are "third person." The veto makes this more
+consequential (a hard cap vs. a smaller averaged contribution) but
+didn't create it -- it's a property of `score_book()`'s existing nominal
+similarity logic. Not fixed here (would need restructuring nominal-field
+matching to recognize "close" categorical groups, real scope beyond
+this task) -- logged as a known, deferred limitation, not blocking, since
+it doesn't appear in any real rater's data, only the deliberately
+extreme synthetic domination scenario.
+
+Verified live end-to-end through `explain_match()`/`recommend()`
+directly: Royal Assassin now scores 0.323 (down from ~0.34-0.40
+pre-veto), correctly "Poor match," dealbreaker_summary still naming
+first-person narration as the reason. `recommend()`'s top-5 list ran
+clean, no first-person titles. Full writeup and numbers in
+`docs/scoring-test-protocol.md`'s "Veto/cap mechanism -- LANDED" section.

@@ -266,15 +266,17 @@ def describe(label, book):
 
 
 DEFAULT_POOR_THRESHOLD = 0.35
+GOOD_MATCH_THRESHOLD = 0.55
+STRONG_MATCH_THRESHOLD = 0.75
 
 
 def match_label(score, poor_threshold=DEFAULT_POOR_THRESHOLD):
     """Qualitative label instead of a bare percentage -- score is a
     relative ranking, not a calibrated probability, and a precise-looking
     number like "90% match" implies more rigor than the model has. The
-    Good (0.55) and Strong (0.75) boundaries are a rough first-pass
-    calibration, not derived from real user data yet -- revisit once
-    real ratings exist to check against.
+    Good/Strong boundaries (GOOD_MATCH_THRESHOLD/STRONG_MATCH_THRESHOLD)
+    are a rough first-pass calibration, not derived from real user data
+    yet -- revisit once real ratings exist to check against.
 
     poor_threshold defaults to a fixed 0.35, but callers with a resolved
     profile should pass user_calibrated_poor_threshold()'s result instead
@@ -285,9 +287,9 @@ def match_label(score, poor_threshold=DEFAULT_POOR_THRESHOLD):
     2026-09-02). Kept as the default here (not removed) so a caller with
     no resolved profile -- or no disliked ratings to calibrate from --
     still gets a sane, non-crashing value."""
-    if score >= 0.75:
+    if score >= STRONG_MATCH_THRESHOLD:
         return "Strong match"
-    if score >= 0.55:
+    if score >= GOOD_MATCH_THRESHOLD:
         return "Good match"
     if score >= poor_threshold:
         return "Mixed match"
@@ -994,16 +996,31 @@ DEALBREAKER_THRESHOLD = 0.3
 MIN_DEALBREAKER_SAMPLE = 3
 
 # STAT_SEPARATION_THRESHOLD: how strong a field's separation must be to
-# count as "validated." 0.5 borrows the standard behavioral-science
-# convention for a "large" effect size (point-biserial correlation:
-# small=0.1, medium=0.3, large=0.5) for ORDINAL fields' r_pb. NOMINAL
-# fields and tropes use a structurally different statistic (a
-# liked-vs-disliked proportion gap, not a true correlation coefficient
-# -- unordered categorical values have no natural axis to correlate
-# against), but it lives on a comparable [-1, 1]-ish scale by
-# construction, so sharing one threshold is a reasonable first pass, not
-# a claim the two statistics are mathematically equivalent.
-STAT_SEPARATION_THRESHOLD = 0.5
+# count as "validated." Originally set to 0.5 (the standard behavioral-
+# science "large effect size" convention for point-biserial correlation:
+# small=0.1, medium=0.3, large=0.5), but RAISED to 0.65 after landing the
+# veto/cap mechanism (_apply_dealbreaker_veto(), 2026-09-02) exposed a
+# real problem at 0.5: Mathias's SPARSE scenario (8 liked/7 disliked)
+# validated 6 fields at 0.5, five of them landing suspiciously close to
+# the threshold itself (0.500-0.523) -- a classic multiple-comparisons
+# artifact (testing ~30 fields against a small sample means several will
+# cross a fixed bar by chance alone, not because they're real). With 6
+# fields eligible to trigger a veto, the mechanism capped EVERY loved/
+# liked held-out book in that scenario (loved_recall 75% -> 0%) -- caught
+# by rerunning the full benchmark suite before treating the veto as
+# landed, exactly the "check against >= 2 scenarios" discipline this
+# project already has a track record of needing (see WEIGHT_CAP,
+# redundancy discounts). 0.65 was picked empirically, not by convention:
+# it's the point where Mathias's full AND sparse scenarios converge on
+# the SAME single field (`person`, separation 0.75-0.82 in both --
+# genuinely robust, unlike the marginal ones it filters out), and where
+# the WEIGHT_CAP_RATINGS domination-stress-test's validated set stabilizes
+# (5 fields at 0.6, 3 fields at 0.65-0.75, no further change) rather than
+# continuing to shrink -- a real plateau, not an arbitrary round number.
+# This was safe to do PURELY because dealbreaker_flags()'s VALIDATED path
+# (and now the veto) requires clearing this bar -- raising it only makes
+# both mechanisms MORE conservative, never introduces a new failure mode.
+STAT_SEPARATION_THRESHOLD = 0.65
 
 # Once a field IS statistically validated for this user, a mismatch on
 # it only needs to clear this much LOWER bar to be flagged -- we already
@@ -1297,6 +1314,61 @@ def _apply_series_repeat(catalog, id_to_magnitude, book, score):
     return (1 - SERIES_REPEAT_WEIGHT) * score + SERIES_REPEAT_WEIGHT * series_component
 
 
+# Veto/cap ceiling: just under GOOD_MATCH_THRESHOLD, so a vetoed book can
+# never read as "Good match" or "Strong match" no matter how far above
+# this its raw weighted-average score sits. Deliberately NOT capped down
+# to "Poor match" -- see _apply_dealbreaker_veto()'s docstring for why a
+# validated dealbreaker means "don't confidently recommend this," not
+# "this is certainly a bad match."
+DEALBREAKER_VETO_CAP = GOOD_MATCH_THRESHOLD - 0.001
+
+
+def _apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, score):
+    """ELECTRE-style veto (option #2 from the aggregation-shape design
+    discussion, 2026-09-02): if `book` mismatches on a field/trope
+    that's statistically validated as a dealbreaker for THIS user (see
+    validated_dealbreaker_fields()), caps `score` so it can never read
+    as Good/Strong match -- this is what actually moves the RANKING,
+    unlike dealbreaker_flags()/dealbreaker_summary (landed earlier the
+    same day), which only ever added a displayed callout next to an
+    unchanged score. Directly closes the gap that left open: Royal
+    Assassin's flag correctly named "first-person narration" as the
+    reason it's not for Mathias, but the score itself (0.339-0.65
+    depending on scenario) never moved because of it.
+
+    Deliberately conservative, unlike the 2026-08-29 "structural-field
+    prior boost" this project already tried and rejected for reopening
+    the WEIGHT_CAP_RATINGS domination bug (a blanket boost applied to
+    every candidate regardless of evidence):
+    - Only fires when `validated_fields` is non-empty -- i.e. real,
+      per-user statistical evidence exists (see MIN_DEALBREAKER_SAMPLE/
+      STAT_SEPARATION_THRESHOLD). NEVER fires from dealbreaker_flags()'s
+      fixed-threshold fallback for low-data users -- that fallback is
+      already documented as noisy (see the dealbreaker-flag sanity
+      check) and isn't trustworthy enough to move a score, only to
+      display a flag. A low-data user's ranking is completely unaffected
+      by this function -- score in, score out, unchanged.
+    - Caps at "just below Good match" (DEALBREAKER_VETO_CAP), not "forced
+      to Poor match." A validated dealbreaker means the model shouldn't
+      confidently recommend the book, not that it's certainly a bad
+      match -- real exceptions exist in every rater's own data (Mathias
+      liked Old Man's War despite `person` -- his single most validated
+      dealbreaker field -- mismatching on it).
+    - Does NOT stack across multiple flagged fields in this version --
+      one validated mismatch is enough to cap; a second doesn't cap
+      further. A scope decision, not a finding from testing -- revisit
+      if real evidence says the cap needs to go lower.
+
+    Returns `score` unchanged if validated_fields is empty or nothing
+    flags."""
+    if not validated_fields:
+        return score
+    flags = dealbreaker_flags(book, centroid, weights, validated_fields=validated_fields)
+    if not flags:
+        return score
+    return min(score, DEALBREAKER_VETO_CAP)
+
+
 def _resolve_profile(catalog, ratings, genre=None, fatigue_overrides=None):
     """Shared by recommend() and explain_match(): resolves rating titles
     to ids, applies genre scoping, builds the profile, applies fatigue
@@ -1426,6 +1498,7 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     centroid, weights, id_to_magnitude, matches_genre = _resolve_profile(
         catalog, ratings, genre, fatigue_overrides
     )
+    validated_fields = validated_dealbreaker_fields(catalog, id_to_magnitude)
 
     diversity = max(0.0, min(diversity, MAX_DIVERSITY))
     recent_books = [
@@ -1441,6 +1514,7 @@ def recommend(catalog, ratings, top_n=10, genre=None,
             continue
         relevance, contributions = score_book(book, centroid, weights)
         relevance = _apply_series_repeat(catalog, id_to_magnitude, book, relevance)
+        relevance = _apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, relevance)
         if diversity > 0 and recent_books:
             novelty = 1 - max(book_similarity(book, h) for h in recent_books)
             final = (1 - diversity) * relevance + diversity * novelty
@@ -1494,11 +1568,12 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     book = catalog[title_to_id[title]]
 
     centroid, weights, id_to_magnitude, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides)
+    validated = validated_dealbreaker_fields(catalog, id_to_magnitude)
     score, _ = score_book(book, centroid, weights)
     score = _apply_series_repeat(catalog, id_to_magnitude, book, score)
+    score = _apply_dealbreaker_veto(catalog, id_to_magnitude, validated, book, centroid, weights, score)
     poor_threshold = user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
     matches, mismatches = explain_book(book, centroid, weights, top_n=top_n)
-    validated = validated_dealbreaker_fields(catalog, id_to_magnitude)
     flags = dealbreaker_flags(book, centroid, weights, validated_fields=validated)
 
     matches_labeled = [(label, p) for label, _ in matches if (p := describe(label, book))]

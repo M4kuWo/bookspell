@@ -162,15 +162,31 @@ def run_leave_one_out_diagnostic(catalog, ratings, label, quiet=False):
         train = {t: r for t, r in ratings.items() if t != held_out_title}
         centroid, weights, id_to_mag, _ = R._resolve_profile(catalog, train)
         poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_mag, centroid, weights)
+        validated = R.validated_dealbreaker_fields(catalog, id_to_mag)
         book = catalog[title_to_id[held_out_title]]
-        score, _ = R.score_book(book, centroid, weights)
-        score = R._apply_series_repeat(catalog, id_to_mag, book, score)
+        score = _full_score(catalog, id_to_mag, validated, centroid, weights, book)
         pred = R.match_label(score, poor_threshold)
         v = verdict(true, pred)
         rows.append((held_out_title, true, score, pred, v))
         if not quiet:
             print(f"    {held_out_title:<35} true={true:<12} {score:.3f} ({pred}) {v}")
     return rows
+
+
+def _full_score(catalog, id_to_magnitude, validated_fields, centroid, weights, book):
+    """score_book() + _apply_series_repeat() + _apply_dealbreaker_veto()
+    (2026-09-02, the veto/cap mechanism -- option #2 from the
+    aggregation-shape design discussion), in the same order
+    recommend()/explain_match() apply them. Centralized here so every
+    scenario in this file reflects the real production scoring pipeline
+    -- the same gap that was caught and fixed for the calibrated
+    threshold applies here too: a benchmark that doesn't call the veto
+    would silently test a DIFFERENT pipeline than what a live user
+    actually sees."""
+    score, _ = R.score_book(book, centroid, weights)
+    score = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
+    score = R._apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, score)
+    return score
 
 
 def verdict(true_label, predicted_label):
@@ -204,12 +220,12 @@ def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_
     }
     centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
     poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
+    validated = R.validated_dealbreaker_fields(catalog, id_to_magnitude)
     correct = wrong = soft = 0
     rows = []
     for title in held_out:
         book = catalog[title_to_id[title]]
-        score, _ = R.score_book(book, centroid, weights)
-        score = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
+        score = _full_score(catalog, id_to_magnitude, validated, centroid, weights, book)
         pred = R.match_label(score, poor_threshold)
         true = all_ratings[title]
         v = verdict(true, pred)
@@ -565,11 +581,11 @@ def run_ablation_held_out(catalog, all_ratings, held_out, train_ratings, ablate_
     centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
     weights = _apply_ablation(weights, ablate_fields)
     poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
+    validated = R.validated_dealbreaker_fields(catalog, id_to_magnitude)
     rows = []
     for title in held_out:
         book = catalog[title_to_id[title]]
-        score, _ = R.score_book(book, centroid, weights)
-        score = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
+        score = _full_score(catalog, id_to_magnitude, validated, centroid, weights, book)
         pred = R.match_label(score, poor_threshold)
         true = all_ratings[title]
         rows.append((title, true, score, pred, verdict(true, pred)))
@@ -673,12 +689,12 @@ def run_threshold_diagnostic(catalog, all_ratings, held_out, train_ratings):
         t: r for t, r in all_ratings.items() if t not in held_out
     }
     centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
+    validated = R.validated_dealbreaker_fields(catalog, id_to_magnitude)
 
     raw = {}
     for title in held_out:
         book = catalog[title_to_id[title]]
-        score, _ = R.score_book(book, centroid, weights)
-        raw[title] = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
+        raw[title] = _full_score(catalog, id_to_magnitude, validated, centroid, weights, book)
 
     def rows_for(threshold):
         rows = []

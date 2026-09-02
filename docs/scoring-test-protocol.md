@@ -576,10 +576,8 @@ proposed, roughly in order of risk:
    range for a curve-shape change to matter. Deprioritized relative to
    1-3.
 
-**#1 landed 2026-09-02** (see below). #2-4 not attempted -- #3 is the
-natural next step if a validated dealbreaker signal is wanted (it would
-also make #1's flag threshold data-driven instead of the fixed heuristic
-described below), #2 only after #3 exists to feed it, #4 deprioritized.
+**#1 and #3 landed 2026-09-02, #2 landed 2026-09-02 (later)** -- see
+below for each. #4 remains deprioritized, not attempted.
 
 ## Dealbreaker flags -- LANDED (2026-09-02)
 
@@ -695,3 +693,93 @@ Net: the statistical-validation fix is real and correctly conservative
 to the (noisier, but honest) fixed threshold otherwise, and its benefit
 for the 3 newer/smaller raters should grow automatically as more
 submissions arrive, without any further code change.
+
+## Veto/cap mechanism -- LANDED (2026-09-02, after a caught regression)
+
+Option #2 from the design discussion above: `_apply_dealbreaker_veto()`
+in `scripts/recommend.py`, wired into BOTH `recommend()` (so it actually
+changes rankings, not just an explanation) and `explain_match()`. If a
+book mismatches on a field/trope that's in `validated_dealbreaker_fields()`
+for that user, the final score is capped at `DEALBREAKER_VETO_CAP` (just
+under `GOOD_MATCH_THRESHOLD`) -- it can never read as Good/Strong match
+regardless of how well everything else agrees. This is what
+`dealbreaker_flags()` (landed earlier the same day) never did: that
+mechanism only ever displayed a callout next to an unchanged score. The
+veto only fires via the STATISTICALLY VALIDATED path -- never from
+`dealbreaker_flags()`'s fixed-threshold fallback for low-data users,
+which is already documented as noisy and untrustworthy enough to move a
+score. `match_label()`'s Good/Strong boundaries were extracted into
+named constants (`GOOD_MATCH_THRESHOLD`/`STRONG_MATCH_THRESHOLD`) as
+part of this, replacing inline magic numbers.
+
+**A real regression was caught before this was considered landed, by
+running the full benchmark suite rather than just the domination stress
+test that motivated the design.** First version used
+`STAT_SEPARATION_THRESHOLD = 0.5` (already landed for `dealbreaker_flags()`
+that morning). Rerunning `scoring_tests.py`'s scorecard with the veto
+wired into `run_held_out_test()`/`run_ablation_held_out()`/
+`run_leave_one_out_diagnostic()`/`run_threshold_diagnostic()` (all
+updated to call scoring through a new shared `_full_score()` helper, so
+every scenario reflects the real production pipeline -- the same gap
+already caught once for the calibrated threshold) showed Mathias's
+SPARSE scenario collapsing: loved_recall 75% -> 0%, bucket accuracy
+56% -> 33%, pairwise 67% -> 43%. Root cause, found by inspecting
+`validated_dealbreaker_fields()` directly: with only 8 liked/7 disliked
+ratings, SIX fields validated at 0.5, five of them landing suspiciously
+right at the threshold (0.500-0.523) -- a textbook multiple-comparisons
+artifact (~30 fields tested against a small sample means several cross
+a fixed bar by chance, not because they're real). With 6 fields eligible
+to trigger a veto, nearly every held-out book mismatched on at least one,
+capping almost everything regardless of true rating.
+
+**Fixed by raising `STAT_SEPARATION_THRESHOLD` to 0.65** (from the
+originally-landed 0.5), picked empirically by sweeping 0.5-0.75 across
+Mathias full/sparse and the WEIGHT_CAP_RATINGS domination scenario: 0.65
+is where Mathias's full AND sparse scenarios converge on the SAME single
+field (`person`, separation 0.75-0.82 in both -- genuinely robust) and
+where the domination scenario's validated set stabilizes (3 fields,
+unchanged through 0.75) rather than continuing to shrink -- a real
+plateau, not an arbitrary round number. Safe to raise purely upward:
+since both `dealbreaker_flags()`'s validated path and the new veto
+require clearing this bar, raising it only makes each MORE conservative,
+never introduces a new failure mode. Re-running the full suite after the
+fix confirmed the sparse regression is completely gone (56%/70%/75%/50%,
+matching pre-veto baseline almost exactly) with zero regressions across
+all 8 scorecard rows, and Mathias's full/series-isolated/author-isolated
+scenarios show a real, clean pairwise-accuracy gain (67%->73%, 67%->78%,
+64%->73%) with no cost anywhere else. Osnat/Dandan/Gabriel unaffected
+(none currently clear the raised bar), consistent with everything
+already documented about their data.
+
+**Domination stress test (WEIGHT_CAP_RATINGS) re-checked directly, not
+just via its own existing weight-magnitude metric** (which the veto
+doesn't touch and remains unaffected): scored several first-person and
+third-person candidates not in that scenario's training set, before and
+after the veto. Third-person candidates that AGREE with the profile's
+validated fields are correctly unaffected (The Dark Forest, Revelation
+Space -- scores unchanged). First-person candidates get correctly capped
+(Morning Star: 0.766 -> 0.549). **Found one genuine, pre-existing
+limitation this exposed more sharply, not a new bug**: a FEW third-person
+candidates (Persepolis Rising, Children of Ruin) also got capped, via
+`pov_count` (a real, graduated ordinal mismatch -- an ensemble cast
+against a profile whose validated POV pattern sits elsewhere, legitimate
+signal) and one (Children of Dune) via `person` itself, despite being
+third-person -- because `person`'s values (`third_limited` vs.
+`third_omniscient`) match on an ALL-OR-NOTHING basis (nominal fields have
+no partial credit for "similar" categorical values), a property of
+`score_book()` that predates the veto entirely. The veto just makes this
+particular pre-existing limitation more consequential (a hard cap
+instead of a smaller weighted-average contribution). Not fixed here --
+would require restructuring nominal-field similarity to recognize
+"close" categorical groups, real scope beyond building the veto itself.
+Logged as a known, deferred limitation, not blocking, because it doesn't
+manifest in any real rater's data across this entire testing pass, only
+in the deliberately extreme synthetic domination scenario.
+
+Verified live end-to-end through `explain_match()`/`recommend()`
+directly, not just the test harness: Royal Assassin (trained on
+Mathias's real ratings minus itself and Skyward) now scores 0.323 (down
+from ~0.34-0.40 pre-veto depending on training set), still correctly
+"Poor match," with `dealbreaker_summary` still showing "Possible
+dealbreaker: first-person narration." `recommend()`'s top-5 ranked list
+ran without error and contained no first-person titles.
