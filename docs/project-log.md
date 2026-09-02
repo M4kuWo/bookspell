@@ -3802,3 +3802,79 @@ Rewritten to say explicitly that this is not an after-the-fact audit,
 point at the skill's new concrete step as where the mechanism actually
 lives, and name the real, already-happened cost (a full second
 enrichment pass) rather than leaving the stakes abstract.
+
+## 2026-09-02 (later still) -- a real enjoyment-vs-quality rating correction, plus a full retest
+
+Follow-up from the qualitative `recommend()` review above (10 real
+recommendations, repo owner's own reaction to each). 9 of 10 landed well
+(one already-read-and-loved book he'd missed rating, several genuine
+TBR-list matches, one he'd started and set aside for mood reasons, not
+dislike). The one real miss, Katabasis (R.F. Kuang), led somewhere more
+useful than "the system got it wrong": checking his actual ratings
+showed The Poppy War (same author) was rated `it_was_okay` -- a genuine
+neutral that contributes zero signal in either direction -- and The
+Dragon Republic (DNF'd a quarter in, same reason) wasn't rated at all.
+The system was never told about the real negative reaction; the field
+that should catch it (`message_intensity: heavy_handed`, tagged
+correctly on both The Poppy War and Katabasis already) had no real data
+behind it.
+
+**Repo owner raised a genuine methodological point while explaining
+this**: this project's rating scale measures ENJOYMENT, not perceived
+literary quality, and his own instinct sometimes conflates the two --
+he'd rated The Poppy War `it_was_okay` partly out of respect for its
+craft, even though his actual enjoyment (especially in retrospect, after
+DNFing the sequel for the same reason) was lower. This is worth keeping
+in mind as a real, likely-recurring rating-collection risk, not
+unique to him -- flagged here rather than only fixed for this one book.
+
+**Ratings updated** (`data/ratings/mathias.json`, full reasoning in its
+own `_meta`): The Poppy War `it_was_okay` -> `disliked`; The Dragon
+Republic added as `disliked` (its first rating, and independently
+corroborated -- a friend who'd read Babel, same author but a different
+book, unprompted noticed the same heavy-handed-message pattern); Promise
+of Blood (Powder Mage #1) added as `loved` -- read and loved the whole
+original trilogy plus a novella, but this specific title had never
+actually been rated (missed reviewing the catalog earlier, despite it
+appearing in his OWN top-10 recommend() results above). 84 ratings now,
+up from 81.
+
+**Catalog**: added the rest of the Powder Mage trilogy (The Crimson
+Campaign, The Autumn Republic -- confirmed via Hardcover, same pattern
+as the earlier targeted-ingestion rounds) as untagged bibliographic
+rows, ready for the upcoming tagging pass but not yet ratable (untagged
+books are invisible to scoring). The novella he also read was NOT added
+-- he named "one of the novellas" without specifying which, and there
+are several real candidates tied to different sub-series (Ghosts of the
+Tristan Basin, tied to this original trilogy; The Mad Lancers, tied to
+a later trilogy instead; more obscure ones besides) -- not guessed at.
+913 books total now (up from 911), verified matching hosted
+(`20260902060000_targeted_ingestion_powder_mage_sequels.sql`).
+
+**Full retest, per repo owner's request.** Real, meaningful movement on
+exactly the metric this session has spent the most effort chasing:
+
+| Scenario | Metric | Before | After |
+|---|---|---|---|
+| Mathias, full | bucket accuracy | 64% | **73%** |
+| Mathias, full | hated_rejection | 60% | **80%** |
+| Mathias, series-isolated | bucket accuracy | 36% | **55%** |
+| Mathias, series-isolated | hated_rejection | 0% | **60%** |
+
+Skyward specifically flipped from a MISS to correctly "Poor match"
+(0.529, down from ~0.53-0.55 depending on scenario) -- this happened
+WITHOUT the new ratings touching Skyward's own training data directly
+(Poppy War/Dragon Republic are unrelated books); the richer overall
+negative-signal pool shifted the calibrated threshold and weights
+enough to tip it, general evidence that more real disliked ratings
+help broadly, not just for the specific books added.
+
+**Real, honest cost, not an unambiguous win**: Mathias-full's pairwise
+accuracy dipped 73%->67% (just below its 70% target), and series-
+isolated's loved_recall dropped 80%->60% (now just below its 65%
+target) -- traced to The Last Wish crossing from Good match (0.554) to
+Mixed match (0.549) in that specific scenario, a genuine boundary-noise
+flip, not a new systematic problem. Sparse/Osnat/Dandan/Gabriel scenarios
+unaffected, as expected -- none of them depend on Mathias's ratings.
+Full scorecard, ablation, and threshold-diagnostic output all rerun
+clean, no errors.

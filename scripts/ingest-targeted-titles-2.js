@@ -139,6 +139,16 @@ const TARGETS = [
   { query: 'The Handmaid\'s Tale Margaret Atwood', hardcoverId: 377799 },
   // Osnat's one remaining flagged catalog gap (see data/ratings/osnat.json's _meta)
   { query: 'Sweep of the Heart Ilona Andrews', hardcoverId: 589890 },
+  // Rest of Mathias's Powder Mage trilogy (Promise of Blood, #1, was
+  // already in the catalog) -- confirmed missing during a ratings
+  // update, 2026-09-02. The novella he also read is deliberately NOT
+  // included here -- he named "one of the novellas" without specifying
+  // which, and there are several real candidates (Ghosts of the Tristan
+  // Basin, tied to this original trilogy; The Mad Lancers, tied to the
+  // later Gods of Blood and Powder trilogy instead; a couple of even
+  // more obscure ones) -- not guessed at.
+  { query: 'The Crimson Campaign Brian McClellan', hardcoverId: 437922 },
+  { query: 'The Autumn Republic Brian McClellan', hardcoverId: 437920 },
 ];
 
 async function main() {
