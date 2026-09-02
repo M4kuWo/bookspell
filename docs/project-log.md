@@ -3432,3 +3432,71 @@ the domination bug this project already shipped and walked back once --
 needs its own two-scenario validation before landing, not attempted
 here). Since this feature only adds metadata and never changes a score,
 it didn't need that same gauntlet to ship.
+
+## 2026-09-02 (later still) -- dealbreaker-flag sanity check found a real FP problem, fixed by building option #3 properly
+
+Started the promised follow-up: checking the fixed `DEALBREAKER_THRESHOLD`
+against Osnat/Dandan/Gabriel, not just Mathias. Added
+`run_dealbreaker_sanity_check()` and friends to `scripts/scoring_tests.py`,
+reporting false-positive rate (flagged on a truly loved book) and
+true-positive rate (flagged on a truly disliked book) per rater.
+
+**Found a real problem the original landing missed**: checked properly
+(the full held-out set, not just 3 known dislikes), the fixed threshold
+has a high false-positive rate -- 60% for Mathias, 100% for Dandan and
+Gabriel. Root cause: a field's raw weight estimated from a handful of
+ratings is noisy, and noise crosses a fixed magnitude bar as easily as
+a real signal does. Dandan's Words of Radiance (loved) and The Way of
+Kings (it_was_okay) both tripped a "court intrigue" flag despite her
+rating them fine -- exactly the kind of false alarm that would erode
+trust in this feature fast if shipped as-is.
+
+Moved straight into building option #3 (statistical per-user
+dealbreaker detection) to fix it, since that was the planned next step
+anyway. Added to `scripts/recommend.py`: `field_or_trope_separation()`
+(dispatches to a point-biserial-style correlation for ORDINAL fields,
+a modal-agreement gap for NOMINAL fields, and a liked-vs-disliked
+frequency gap for tropes -- three different statistics for three
+structurally different value types, unified on a comparable scale),
+gated by `MIN_DEALBREAKER_SAMPLE=3` observations in each group and
+`STAT_SEPARATION_THRESHOLD=0.5` (the standard "large effect size"
+convention). `validated_dealbreaker_fields()` returns the set of
+fields/tropes that clear both bars for a given user.
+
+**First draft had a real bug, caught before shipping by rerunning the
+same sanity check with it wired in**: it only ADDED a lower magnitude
+bar for validated fields on top of the untouched fixed threshold --
+which cannot reduce false positives, since noisy crossings above 0.3
+still cleared the unchanged fixed bar regardless. Fixed by making
+validation REPLACE the fixed-threshold check when a user has enough
+data (`dealbreaker_flags()`), falling back to the original fixed
+threshold only when nothing can be validated yet.
+
+**Re-run after the fix**: Mathias -- false positives cut 60% -> 20%
+(3/5 -> 1/5), true positives unchanged at 100% (5/5). Clean, real
+improvement, no tradeoff. The one remaining false positive (Old Man's
+War) is a legitimate exception in his own pattern, not a mechanism
+failure -- `person` is his most validated dealbreaker field and this is
+simply a first-person book he liked anyway despite that.
+
+Osnat/Dandan/Gabriel showed no change in the held-out test -- verified
+this is a real, honest data limit rather than a bug by checking
+`validated_dealbreaker_fields()` against each rater's FULL profile (not
+the reduced held-out-split training): Osnat has enough sample (4
+disliked) but genuinely no field separates her groups strongly, matching
+the already-documented Magic Bites/Magic Burns finding; Dandan's full
+32-rating profile DOES validate one field (`pace_shape`, separation
+0.565) that her held-out split's reduced training set couldn't reach --
+confirmed her actual disliked books just don't happen to mismatch on
+that specific field, so no flag fires, which is correct, not a
+contradiction; Gabriel has exactly 1 disliked rating, which can never
+clear the 3-sample gate no matter how the data is split -- a real limit
+until he rates more disliked books.
+
+Net: this should keep improving automatically for the newer raters as
+more submissions come in, with no further code change needed. Full
+before/after tables and reasoning in `docs/scoring-test-protocol.md`'s
+"Dealbreaker-flag sanity check across all 4 raters" section. Verified
+zero impact on scoring throughout -- `scoring_tests.py`'s benchmark
+scorecard output is identical before and after every change in this
+entry.

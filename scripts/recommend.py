@@ -969,28 +969,241 @@ def explain_book(book, centroid, weights, top_n=5):
 # docs/scoring-test-protocol.md's design-discussion entry.
 DEALBREAKER_THRESHOLD = 0.3
 
+# --- Statistical per-user dealbreaker validation (2026-09-02) ----------
+# Option #3 from the design discussion: instead of trusting
+# DEALBREAKER_THRESHOLD's fixed magnitude everywhere, measure per USER,
+# per FIELD, how well that field alone separates THEIR OWN loved/liked
+# books from their disliked/hated ones, and only trust a field as a
+# validated dealbreaker candidate once there's real evidence AND enough
+# of it. This directly answers what the stakes_drive/craft_density
+# investigation got wrong: that was a blanket category removal, not
+# conditioned on being a genuine per-user dealbreaker -- see
+# docs/scoring-test-protocol.md's design-discussion entry.
+#
+# MIN_DEALBREAKER_SAMPLE: minimum observations required in EACH group
+# (liked, disliked) before trusting a field's separation at all -- below
+# this, a large-looking gap is as likely to be noise from a handful of
+# ratings as a real pattern (the same "too few ratings" problem this
+# project already handles elsewhere via leave-one-out instead of a real
+# held-out split). 3 is a low bar deliberately: even Gabriel (7 ratings
+# total, usually only 1 disliked) won't clear it for most fields, which
+# is the INTENDED behavior -- validated_dealbreaker_fields() returns an
+# empty set for him, and dealbreaker_flags() gracefully falls back to
+# the fixed threshold rather than validating nothing and flagging
+# nothing.
+MIN_DEALBREAKER_SAMPLE = 3
 
-def dealbreaker_flags(book, centroid, weights, top_n=5, threshold=DEALBREAKER_THRESHOLD):
-    """A subset of explain_book()'s mismatches whose magnitude clears
-    `threshold` -- strong enough to plausibly function as a personal
-    dealbreaker for this book/user, not just one of several things
-    slightly off. Computed over explain_book()'s FULL mismatch list
-    (top_n=100, well above any realistic field count), not its
-    caller-facing top_n cap, so a real dealbreaker can never be silently
-    dropped by that cap the way the human-readable mismatch list can be.
+# STAT_SEPARATION_THRESHOLD: how strong a field's separation must be to
+# count as "validated." 0.5 borrows the standard behavioral-science
+# convention for a "large" effect size (point-biserial correlation:
+# small=0.1, medium=0.3, large=0.5) for ORDINAL fields' r_pb. NOMINAL
+# fields and tropes use a structurally different statistic (a
+# liked-vs-disliked proportion gap, not a true correlation coefficient
+# -- unordered categorical values have no natural axis to correlate
+# against), but it lives on a comparable [-1, 1]-ish scale by
+# construction, so sharing one threshold is a reasonable first pass, not
+# a claim the two statistics are mathematically equivalent.
+STAT_SEPARATION_THRESHOLD = 0.5
 
-    This is purely additive -- score/match_label/matches/mismatches are
-    all computed exactly as before. It exists because folding a single
-    strong signal into the weighted-average score keeps failing: the
-    average is compensatory by construction, so one real mismatch (e.g.
-    disliking first-person narration) gets outvoted by several unrelated
-    fields that happen to agree with the user's general taste (see
+# Once a field IS statistically validated for this user, a mismatch on
+# it only needs to clear this much LOWER bar to be flagged -- we already
+# have real evidence the field matters to them, so we trust a smaller
+# mismatch on it more than an unvalidated field's. 0.15 sits just above
+# explain_book()'s own noise floor (0.1, the cutoff for appearing in
+# `mismatches` at all).
+VALIDATED_DEALBREAKER_MAGNITUDE = 0.15
+
+
+def _ordinal_field_separation(catalog, id_to_magnitude, field):
+    """Point-biserial-style correlation between group membership (loved/
+    liked=1, disliked/hated=0; it_was_okay excluded, same split
+    build_profile() uses) and this ORDINAL field's position, for THIS
+    user's own rated books. None if fewer than MIN_DEALBREAKER_SAMPLE
+    observations exist in either group."""
+    liked, disliked = [], []
+    for bid, mag in id_to_magnitude.items():
+        if mag == 0:
+            continue
+        book = catalog.get(bid)
+        if book is None:
+            continue
+        pos = ordinal_position(field, book.get(field))
+        if pos is None:
+            continue
+        (liked if mag > 0 else disliked).append(pos[0] / pos[1])
+    if len(liked) < MIN_DEALBREAKER_SAMPLE or len(disliked) < MIN_DEALBREAKER_SAMPLE:
+        return None
+    all_vals = liked + disliked
+    n, n1, n0 = len(all_vals), len(liked), len(disliked)
+    mean_all = sum(all_vals) / n
+    variance = sum((v - mean_all) ** 2 for v in all_vals) / n
+    sn = variance ** 0.5
+    if sn == 0:
+        return 0.0
+    m1, m0 = sum(liked) / n1, sum(disliked) / n0
+    p, q = n1 / n, n0 / n
+    return (m1 - m0) / sn * (p * q) ** 0.5
+
+
+def _nominal_field_separation(catalog, id_to_magnitude, field):
+    """Modal-agreement gap for one NOMINAL field: the liked group's own
+    most-common value, minus how common that SAME value is in the
+    disliked group. Not a true correlation coefficient (nominal values
+    have no natural order to correlate against) -- the natural analogous
+    measure for unordered categorical data, structurally the same
+    statistic build_profile() already computes as a nominal field's raw
+    weight, isolated here for gating rather than feeding the score
+    directly. None if fewer than MIN_DEALBREAKER_SAMPLE observations
+    exist in either group."""
+    liked_vals, disliked_vals = [], []
+    for bid, mag in id_to_magnitude.items():
+        if mag == 0:
+            continue
+        book = catalog.get(bid)
+        if book is None:
+            continue
+        val = book.get(field)
+        if not val:
+            continue
+        (liked_vals if mag > 0 else disliked_vals).append(val)
+    if len(liked_vals) < MIN_DEALBREAKER_SAMPLE or len(disliked_vals) < MIN_DEALBREAKER_SAMPLE:
+        return None
+    counts = {}
+    for v in liked_vals:
+        counts[v] = counts.get(v, 0) + 1
+    mode_val = max(counts, key=counts.get)
+    liked_share = counts[mode_val] / len(liked_vals)
+    disliked_share = sum(1 for v in disliked_vals if v == mode_val) / len(disliked_vals)
+    return liked_share - disliked_share
+
+
+def _trope_separation(catalog, id_to_magnitude, trope_id):
+    """Liked-frequency minus disliked-frequency for one trope's presence
+    -- same statistic build_profile() already computes as a trope's raw
+    weight, isolated here for gating. Sample-size gate uses TOTAL
+    liked/disliked books rated (the frequency denominators), not just
+    books that happen to have this trope -- a trope's absence is exactly
+    as informative as its presence. None if fewer than
+    MIN_DEALBREAKER_SAMPLE liked or disliked books exist at all."""
+    liked_n = disliked_n = liked_hits = disliked_hits = 0
+    for bid, mag in id_to_magnitude.items():
+        if mag == 0:
+            continue
+        book = catalog.get(bid)
+        if book is None:
+            continue
+        has = trope_id in (book.get("tropes") or [])
+        if mag > 0:
+            liked_n += 1
+            liked_hits += has
+        else:
+            disliked_n += 1
+            disliked_hits += has
+    if liked_n < MIN_DEALBREAKER_SAMPLE or disliked_n < MIN_DEALBREAKER_SAMPLE:
+        return None
+    return liked_hits / liked_n - disliked_hits / disliked_n
+
+
+def field_or_trope_separation(catalog, id_to_magnitude, key):
+    """Dispatches to the right separation statistic for `key` (a bare
+    field name, or "trope:<id>" as used throughout explain_book()'s
+    output). None for anything not a known field/trope, or with too few
+    observations to trust (see each helper's own docstring)."""
+    if key.startswith("trope:"):
+        return _trope_separation(catalog, id_to_magnitude, key[len("trope:"):])
+    if key in ORDINAL_FIELDS:
+        return _ordinal_field_separation(catalog, id_to_magnitude, key)
+    if key in NOMINAL_FIELDS:
+        return _nominal_field_separation(catalog, id_to_magnitude, key)
+    return None
+
+
+def validated_dealbreaker_fields(catalog, id_to_magnitude, min_strength=STAT_SEPARATION_THRESHOLD):
+    """The set of field/trope keys that clear BOTH the minimum-sample
+    gate and min_strength -- a per-user, statistically grounded set of
+    genuine dealbreaker candidates for this specific person, rather than
+    a fixed magnitude threshold applied uniformly to everyone.
+
+    Only checks fields/tropes that appear at least once among this
+    user's OWN rated books (liked or disliked) -- scanning the full
+    catalog vocabulary would be wasted work and meaningless for anything
+    this user has no rating evidence about. Returns an empty set for a
+    user without enough liked AND disliked ratings to validate anything
+    -- see dealbreaker_flags()'s fallback behavior for what happens then.
+
+    Known simplification: unlike build_profile(), this doesn't apply
+    STRUCTURAL_*_FIELDS genre-scoping (structural fields from the full
+    rating pool, content fields/tropes from the genre-scoped pool) --
+    always uses the full id_to_magnitude. A reasonable v1 scope limit,
+    not revisited here; flagged in case it matters once more rater data
+    exists."""
+    keys = set()
+    for bid, mag in id_to_magnitude.items():
+        if mag == 0:
+            continue
+        book = catalog.get(bid)
+        if book is None:
+            continue
+        keys.update(f for f in ORDINAL_FIELDS if book.get(f) is not None)
+        keys.update(f for f in NOMINAL_FIELDS if book.get(f) is not None)
+        keys.update(f"trope:{t}" for t in (book.get("tropes") or []))
+
+    validated = set()
+    for key in keys:
+        sep = field_or_trope_separation(catalog, id_to_magnitude, key)
+        if sep is not None and abs(sep) >= min_strength:
+            validated.add(key)
+    return validated
+
+
+def dealbreaker_flags(book, centroid, weights, top_n=5, threshold=DEALBREAKER_THRESHOLD,
+                       validated_fields=None):
+    """A subset of explain_book()'s mismatches strong enough to plausibly
+    function as a personal dealbreaker for this book/user, not just one
+    of several things slightly off. Computed over explain_book()'s FULL
+    mismatch list (top_n=100, well above any realistic field count), not
+    its caller-facing top_n cap, so a real dealbreaker can never be
+    silently dropped by that cap the way the human-readable mismatch
+    list can be.
+
+    validated_fields: optional set from validated_dealbreaker_fields().
+    When given AND NON-EMPTY, this REPLACES the fixed-threshold check
+    rather than adding to it: only fields/tropes actually IN the set are
+    eligible to be flagged at all, at a lower magnitude bar
+    (VALIDATED_DEALBREAKER_MAGNITUDE) since real per-user statistical
+    evidence already backs them -- an unvalidated field's mismatch,
+    however large, is NOT flagged in this mode. This matters concretely:
+    a sanity check across all 4 real raters (2026-09-02) found the fixed
+    threshold ALONE has a high false-positive rate (books the user
+    LOVED still tripping a "dealbreaker" flag -- 60% for Mathias, 100%
+    for two smaller-data raters), because a field/trope's raw weight
+    from only a handful of ratings is noisy, and noise can cross 0.3 by
+    chance as easily as a real pattern can. Restricting to the validated
+    set is what actually suppresses that -- adding a lower bar on top of
+    the untouched fixed threshold would only add MORE flags, not remove
+    the noisy ones. When validated_fields is None or empty (too few
+    ratings to validate anything for this user -- see
+    MIN_DEALBREAKER_SAMPLE), falls back to the original fixed-threshold
+    behavior applied to every field -- noisier, but something is better
+    than nothing when there's no evidence yet to be more selective with.
+
+    This is purely additive to the SCORING side -- score/match_label/
+    matches/mismatches are all computed exactly as before, regardless of
+    this parameter. It exists because folding a single strong signal
+    into the weighted-average score keeps failing: the average is
+    compensatory by construction, so one real mismatch (e.g. disliking
+    first-person narration) gets outvoted by several unrelated fields
+    that happen to agree with the user's general taste (see
     docs/scoring-test-protocol.md's "stakes_drive/craft_density:
     investigated, not a real lever" and the design discussion that
     followed it). Surfacing the strong mismatch as an explicit flag next
     to the score sidesteps that math problem instead of re-fighting it."""
     _, mismatches = explain_book(book, centroid, weights, top_n=100)
-    return [(field, m) for field, m in mismatches if m >= threshold][:top_n]
+    if validated_fields:
+        flags = [(f, m) for f, m in mismatches if f in validated_fields and m >= VALIDATED_DEALBREAKER_MAGNITUDE]
+    else:
+        flags = [(f, m) for f, m in mismatches if m >= threshold]
+    return flags[:top_n]
 
 
 def book_similarity(book_a, book_b):
@@ -1262,7 +1475,11 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     callout instead of a strong dealbreaker reading as just one more
     item in a list of minor notes, and so a caller doesn't have to
     re-derive "which of these mismatches is actually the important one"
-    itself. dealbreaker_flags is [] (and dealbreaker_summary "") on the
+    itself. What counts as "strong enough" is per-user where there's
+    enough evidence to say so (validated_dealbreaker_fields() -- a lower
+    bar for a field with real statistical separation in THIS user's own
+    liked-vs-disliked history) and a fixed fallback threshold otherwise.
+    dealbreaker_flags is [] (and dealbreaker_summary "") on the
     common case where nothing crosses the threshold -- most books don't
     hit a real dealbreaker, so an empty flag list is the expected
     default, not a sign anything's wrong. series_note is a caveat about
@@ -1281,7 +1498,8 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     score = _apply_series_repeat(catalog, id_to_magnitude, book, score)
     poor_threshold = user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
     matches, mismatches = explain_book(book, centroid, weights, top_n=top_n)
-    flags = dealbreaker_flags(book, centroid, weights)
+    validated = validated_dealbreaker_fields(catalog, id_to_magnitude)
+    flags = dealbreaker_flags(book, centroid, weights, validated_fields=validated)
 
     matches_labeled = [(label, p) for label, _ in matches if (p := describe(label, book))]
     mismatches_labeled = [(label, p) for label, _ in mismatches if (p := describe(label, book))]

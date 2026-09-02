@@ -615,3 +615,83 @@ two-scenario gauntlet before landing. Worth revisiting once option #3
 (statistical per-user detection) exists, both to validate 0.3 as a
 reasonable default and to make the threshold adapt per user instead of
 staying fixed.
+
+## Dealbreaker-flag sanity check across all 4 raters (2026-09-02)
+
+Closed the gap flagged above: `check_dealbreaker_flags()`/
+`run_leave_one_out_flags_check()`/`run_dealbreaker_sanity_check()` in
+`scripts/scoring_tests.py` run the fixed `DEALBREAKER_THRESHOLD` against
+Osnat, Dandan, and Gabriel's held-out/LOO sets (Mathias re-checked too,
+for a full false-positive-rate reading he didn't get before), reporting
+a false-positive rate (flagged on a truly loved/liked book -- should be
+rare) and true-positive rate (flagged on a truly disliked/hated book)
+per rater.
+
+**Result: the fixed threshold has a real false-positive problem the
+original spot-check against Mathias's 3 known dislikes never surfaced,
+because it only checked true positives, never the full held-out set for
+false ones.** Measured properly: Mathias 3/5 (60%) false-positive rate,
+Osnat 1/3 (33%), Dandan 3/3 (100%), Gabriel 5/5 (100%) -- e.g. Dandan's
+Words of Radiance (loved) and The Way of Kings (it_was_okay) both
+tripped a "court intrigue" dealbreaker flag despite her actually rating
+them fine. Root cause: a field/trope's raw weight from only a handful
+of ratings is genuinely noisy, and noise crosses a fixed 0.3 magnitude
+threshold just as easily as a real pattern does -- the fixed threshold
+has no sample-size awareness at all.
+
+**This directly motivated fixing the statistical-validation design
+(see below) before it shipped as originally planned.** The first draft
+of `validated_dealbreaker_fields()` only ADDED a lower magnitude bar for
+validated fields on top of the untouched fixed threshold -- which cannot
+fix a false-positive problem, since every already-noisy crossing above
+0.3 still cleared the (unchanged) fixed bar regardless. Caught before
+landing by running this exact sanity check with the statistical layer
+wired in and seeing zero improvement in false-positive rate. Fixed by
+making validation REPLACE the fixed-threshold check when enough data
+exists (see `dealbreaker_flags()`'s current docstring) rather than
+supplementing it.
+
+**Re-run with the fix, same 4 raters:**
+
+| Rater | Fixed threshold FP/TP | Validated FP/TP | Change |
+|---|---|---|---|
+| Mathias | 3/5 FP, 5/5 TP | **1/5 FP**, 5/5 TP | FP cut 60%->20%, TP unchanged |
+| Osnat | 1/3 FP, 0/2 TP | 1/3 FP, 0/2 TP | No change |
+| Dandan | 3/3 FP, 1/1 TP | 3/3 FP, 1/1 TP | No change |
+| Gabriel | 5/5 FP, 0/1 TP | 5/5 FP, 0/1 TP | No change |
+
+Mathias is a clean, real win: false positives cut from 60% to 20% with
+zero loss of true-positive recall -- the one remaining false positive
+(Old Man's War, liked, flagged for first-person narration) is a
+legitimate exception in his own rating pattern, not a mechanism failure:
+`person` is his single most statistically validated dealbreaker field
+(separation well above the 0.5 bar), and this is simply a first-person
+book he happened to like anyway. No per-field mechanism can predict
+every individual exception to someone's own general pattern.
+
+**Why the other 3 show zero change -- verified this is a real data
+limit, not a bug**, by checking `validated_dealbreaker_fields()` against
+each rater's FULL rating set (not the reduced held-out-split training
+the sanity check uses):
+- **Osnat**: FULL profile has 4 disliked ratings (enough sample) but
+  STILL validates nothing -- her disliked/liked split genuinely doesn't
+  separate strongly on any single tracked field, consistent with the
+  already-documented Magic Bites/Magic Burns finding (her actual hated
+  books' DNA doesn't differ enough from her liked profile to separate
+  on ANY field, not just the ones tested before).
+- **Dandan**: FULL profile (32 ratings) DOES validate one field --
+  `pace_shape` (separation 0.565) -- that the held-out test's reduced
+  training set (2 disliked, below the 3-sample gate once her one hated
+  book is held out) couldn't reach. Confirmed live against her real
+  profile: her actual disliked/hated books don't happen to mismatch
+  specifically on pace_shape, so no flag fires for them regardless --
+  correct, expected behavior, not a contradiction.
+- **Gabriel**: FULL profile has exactly 1 disliked rating -- can never
+  clear `MIN_DEALBREAKER_SAMPLE=3` no matter how the data is split. A
+  real, unavoidable limit until he rates more books he disliked.
+
+Net: the statistical-validation fix is real and correctly conservative
+-- it only engages where there's genuine evidence, degrades gracefully
+to the (noisier, but honest) fixed threshold otherwise, and its benefit
+for the 3 newer/smaller raters should grow automatically as more
+submissions arrive, without any further code change.

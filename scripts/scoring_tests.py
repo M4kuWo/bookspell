@@ -718,6 +718,97 @@ def print_threshold_diagnostic(catalog):
           f"({'falls back to default, as intended' if calibrated == 0.35 else 'DID NOT FALL BACK -- BUG'})")
 
 
+# --- Dealbreaker-flag sanity check --------------------------------------
+# dealbreaker_flags() (recommend.py, 2026-09-02) was validated only
+# against Mathias before landing -- purely additive metadata, never
+# touches score/match_label, so it shipped without the full two-scenario
+# gauntlet a real scoring change needs. This closes that gap: checks the
+# same fixed DEALBREAKER_THRESHOLD against the other 3 real raters'
+# held-out/leave-one-out sets, reporting a false-positive rate (flags on
+# truly liked/loved books -- should be rare) and a true-positive rate
+# (flags on truly disliked/hated books -- the whole point of the
+# feature) per rater, plus the actual flagged phrases for a manual read.
+
+def check_dealbreaker_flags(catalog, all_ratings, held_out, train_ratings, label,
+                             validated_fields_fn=None):
+    """Runs dealbreaker_flags() over one scenario's held-out/LOO set.
+    validated_fields_fn: optional callable(id_to_magnitude) -> set, for
+    checking the statistically-validated variant (see
+    validated_dealbreaker_fields() in recommend.py) instead of the fixed
+    threshold alone. Returns (fp_count, fp_total, tp_count, tp_total,
+    detail_rows) where detail_rows is [(title, true, flagged_phrases)]."""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    train = train_ratings if train_ratings is not None else {
+        t: r for t, r in all_ratings.items() if t not in held_out
+    }
+    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
+    validated = validated_fields_fn(id_to_magnitude) if validated_fields_fn else None
+
+    fp = fp_total = tp = tp_total = 0
+    rows = []
+    for title in held_out:
+        book = catalog[title_to_id[title]]
+        true = all_ratings[title]
+        flags = R.dealbreaker_flags(book, centroid, weights, validated_fields=validated)
+        phrases = [p for f, _ in flags if (p := R.describe(f, book))]
+        rows.append((title, true, phrases))
+        if true in EXPECT_GOOD:
+            fp_total += 1
+            if flags:
+                fp += 1
+        elif true in EXPECT_POOR:
+            tp_total += 1
+            if flags:
+                tp += 1
+    print(f"  {label}: false-positive rate {fp}/{fp_total} (flagged on a liked/loved book) -- "
+          f"true-positive rate {tp}/{tp_total} (flagged on a disliked/hated book)")
+    for title, true, phrases in rows:
+        if phrases:
+            print(f"    {title:<35} true={true:<12} -> {'; '.join(phrases)}")
+    return fp, fp_total, tp, tp_total, rows
+
+
+def run_leave_one_out_flags_check(catalog, ratings, label, validated_fields_fn=None):
+    """Same idea as check_dealbreaker_flags(), but leave-one-out (for a
+    rater too small for a real held-out split, e.g. Gabriel)."""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    fp = fp_total = tp = tp_total = 0
+    rows = []
+    for held_out_title, true in ratings.items():
+        train = {t: r for t, r in ratings.items() if t != held_out_title}
+        centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
+        validated = validated_fields_fn(id_to_magnitude) if validated_fields_fn else None
+        book = catalog[title_to_id[held_out_title]]
+        flags = R.dealbreaker_flags(book, centroid, weights, validated_fields=validated)
+        phrases = [p for f, _ in flags if (p := R.describe(f, book))]
+        rows.append((held_out_title, true, phrases))
+        if true in EXPECT_GOOD:
+            fp_total += 1
+            if flags:
+                fp += 1
+        elif true in EXPECT_POOR:
+            tp_total += 1
+            if flags:
+                tp += 1
+    print(f"  {label}: false-positive rate {fp}/{fp_total} (flagged on a liked/loved book) -- "
+          f"true-positive rate {tp}/{tp_total} (flagged on a disliked/hated book)")
+    for title, true, phrases in rows:
+        if phrases:
+            print(f"    {title:<35} true={true:<12} -> {'; '.join(phrases)}")
+    return fp, fp_total, tp, tp_total, rows
+
+
+def run_dealbreaker_sanity_check(catalog, validated_fields_fn=None):
+    check_dealbreaker_flags(catalog, REAL_RATINGS, REAL_HELD_OUT, None, "Mathias",
+                             validated_fields_fn=validated_fields_fn)
+    check_dealbreaker_flags(catalog, OSNAT_USABLE, OSNAT_HELD_OUT, None, "Osnat",
+                             validated_fields_fn=validated_fields_fn)
+    check_dealbreaker_flags(catalog, DANDAN_RATINGS, DANDAN_HELD_OUT, None, "Dandan",
+                             validated_fields_fn=validated_fields_fn)
+    run_leave_one_out_flags_check(catalog, GABRIEL_RATINGS, "Gabriel (LOO)",
+                                   validated_fields_fn=validated_fields_fn)
+
+
 def run_all():
     catalog = R.load_catalog()
 
@@ -754,6 +845,15 @@ def run_all():
 
     print("\n=== Scenario 7: Poor-match threshold diagnostic ===")
     print_threshold_diagnostic(catalog)
+
+    print("\n=== Scenario 8: dealbreaker-flag sanity check (fixed threshold, all 4 raters) ===")
+    run_dealbreaker_sanity_check(catalog)
+
+    print("\n=== Scenario 9: dealbreaker-flag sanity check (statistically validated, all 4 raters) ===")
+    run_dealbreaker_sanity_check(
+        catalog,
+        validated_fields_fn=lambda id_to_mag: R.validated_dealbreaker_fields(catalog, id_to_mag),
+    )
 
 
 if __name__ == "__main__":
