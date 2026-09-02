@@ -530,3 +530,88 @@ exists) remains unsolved and is not a small change to attempt casually
 -- any future attempt needs to check against BOTH scenario 1 and
 scenario 2 from the very first test, per this doc's standing rule, not
 just Mathias's held-out set.
+
+## Design discussion: aggregation shape, not weights (2026-09-02)
+
+Repo owner shared the dilution finding above with an outside technical
+contact, who correctly reframed the whole class of problem: a weighted
+arithmetic mean is COMPENSATORY by construction -- any deficit on one
+field can always be offset by surplus on others. Every weight-tuning
+idea this project has tried for this failure mode (WEIGHT_CAP,
+redundancy discounts, structural-field boosts, alpha-blending, Bayesian
+shrinkage) either did nothing or turned into a de facto hard filter,
+which is exactly what that framing predicts -- you can't fix a shape
+problem by turning a dial inside that shape. Four candidate fixes were
+proposed, roughly in order of risk:
+
+1. **Split display: keep the blended score for taste-fit, surface a
+   strong single-field mismatch as a separate flag/badge instead of
+   forcing it into one number.** Lowest risk -- `explain_book()` already
+   computes matches/mismatches separately; this promotes the strongest
+   mismatch to a distinct, explicit callout instead of a subordinate
+   "however" clause.
+2. **Non-compensatory veto/cap**: compute the normal weighted average,
+   then separately cap the final score if any field's mismatch exceeds a
+   per-user "veto threshold" (an ELECTRE-style outranking method).
+   Flagged as carrying real risk specific to this project: the closest
+   thing already tried -- boosting a structural field's weight so it
+   could dominate -- was REJECTED for reopening the domination/scenario-2
+   bug. A veto cap has the same failure shape if the threshold is too
+   aggressive; landable only via the same per-book-conditional pattern
+   `REDUNDANCY_DISCOUNTS` already uses, and only after testing against
+   BOTH scenario 1 and scenario 2, same as any scoring change.
+3. **Statistical per-user dealbreaker detection** (AUC/point-biserial
+   separation of a user's own loved vs. hated books on each field,
+   gated by a minimum sample size) instead of hardcoded field
+   categories -- directly answers why the stakes_drive/craft_density
+   ablation was wrong (it wasn't conditional on being a REAL per-user
+   dealbreaker, just a blunt category removal). More tractable than the
+   already-deferred field-PAIR interaction idea: ~30 single fields to
+   estimate, not ~435 pairs.
+4. **Soft non-linear penalty** (power mean with p<1, or squaring the
+   mismatch before averaging) instead of a hard cap. Flagged as the
+   weakest fit for THIS project specifically: a close cousin (BM25-style
+   saturating curve) was already tried and rejected for a documented
+   reason -- our [0,1]-bounded field weights don't have enough dynamic
+   range for a curve-shape change to matter. Deprioritized relative to
+   1-3.
+
+**#1 landed 2026-09-02** (see below). #2-4 not attempted -- #3 is the
+natural next step if a validated dealbreaker signal is wanted (it would
+also make #1's flag threshold data-driven instead of the fixed heuristic
+described below), #2 only after #3 exists to feed it, #4 deprioritized.
+
+## Dealbreaker flags -- LANDED (2026-09-02)
+
+`dealbreaker_flags()`/`dealbreaker_sentence()` in `scripts/recommend.py`,
+wired into `explain_match()`'s return value as two new keys
+(`dealbreaker_flags`, `dealbreaker_summary`), additive only -- `score`,
+`match_label`, `matches`, and `mismatches` are all computed exactly as
+before, unchanged. A flag is any mismatch (field or trope) whose
+magnitude clears `DEALBREAKER_THRESHOLD = 0.3`, computed over
+`explain_book()`'s FULL mismatch list (not its `top_n`-capped one), so a
+real dealbreaker can't be silently cut by the human-readable summary's
+cap.
+
+**0.3 is a first-pass fixed heuristic, not yet a statistically validated
+per-user threshold** (that's what option #3 above would provide) --
+picked from a real, consistent, unambiguous gap found across Mathias's 5
+disliked/hated held-out mispredictions: their top 1-2 mismatches
+(`person`, `magic_system_hardness`, `scifi_hardness`) always clustered
+>= 0.34, while every other mismatch in the same lists sat <= 0.211 --
+zero ambiguous cases in between. Verified live against his real profile
+(training on his full ratings minus 3 disliked titles): Royal Assassin,
+Skyward, and Interview with the Vampire all correctly surface "Possible
+dealbreaker: first-person narration," while Warbreaker (loved) gets no
+flag at all -- the common case, not a sign anything's wrong. Verified
+this doesn't touch scoring: reran the full `scoring_tests.py` suite
+before and after, benchmark scorecard output identical byte-for-byte.
+
+Not yet tested against Osnat/Dandan/Gabriel's profiles or tuned
+per-user -- since this is purely additive metadata (never changes score
+or match_label), the blast radius of an imperfect threshold is much
+lower than an actual scoring change, so it didn't need the full
+two-scenario gauntlet before landing. Worth revisiting once option #3
+(statistical per-user detection) exists, both to validate 0.3 as a
+reasonable default and to make the threshold adapt per user instead of
+staying fixed.

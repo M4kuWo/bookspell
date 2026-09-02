@@ -379,6 +379,21 @@ def natural_sentence(labeled_phrases, positive):
     return "The book " + ", and ".join(clauses) + "."
 
 
+def dealbreaker_sentence(labeled_phrases):
+    """Phrasing for dealbreaker_flags()'s output -- deliberately NOT
+    natural_sentence()'s "also has" framing, which reads as one item in
+    a list of minor notes. This needs to read as a distinct, standalone
+    callout ("Good match, but: ...") rather than get lost among ordinary
+    mismatches -- that's the whole point of surfacing it separately.
+    "Possible" (not "known") because DEALBREAKER_THRESHOLD is currently a
+    fixed magnitude heuristic, not yet a per-user statistically validated
+    pattern -- see that constant's docstring."""
+    phrases = [p for _, p in labeled_phrases]
+    if not phrases:
+        return ""
+    return f"Possible dealbreaker: {_join_list(phrases)}."
+
+
 # --- Series DNA --------------------------------------------------------
 # A series can change dramatically across its own run (The Wheel of Time:
 # book 1 is single-POV/fast/journey-structured; book 6+ is multi-POV/
@@ -939,6 +954,45 @@ def explain_book(book, centroid, weights, top_n=5):
     return matches[:top_n], mismatches[:top_n]
 
 
+# A mismatch magnitude this large is treated as a likely personal
+# dealbreaker, surfaced as its own flag alongside the blended score
+# rather than folded into it -- see dealbreaker_flags()'s docstring for
+# why. 0.3 is a first-pass heuristic, not yet a statistically validated
+# per-user threshold: picked from a real, consistent gap found across
+# Mathias's 5 disliked/hated held-out mispredictions (2026-09-02) -- in
+# every one, the top 1-2 mismatches (person, magic_system_hardness,
+# scifi_hardness) clustered >= 0.34, while every other mismatch in the
+# same lists sat <= 0.211, a clean, unambiguous split. Revisit once
+# per-user statistical dealbreaker detection (AUC/point-biserial
+# separation of a user's own loved vs. hated books, gated by a minimum
+# sample size) replaces this fixed constant -- see
+# docs/scoring-test-protocol.md's design-discussion entry.
+DEALBREAKER_THRESHOLD = 0.3
+
+
+def dealbreaker_flags(book, centroid, weights, top_n=5, threshold=DEALBREAKER_THRESHOLD):
+    """A subset of explain_book()'s mismatches whose magnitude clears
+    `threshold` -- strong enough to plausibly function as a personal
+    dealbreaker for this book/user, not just one of several things
+    slightly off. Computed over explain_book()'s FULL mismatch list
+    (top_n=100, well above any realistic field count), not its
+    caller-facing top_n cap, so a real dealbreaker can never be silently
+    dropped by that cap the way the human-readable mismatch list can be.
+
+    This is purely additive -- score/match_label/matches/mismatches are
+    all computed exactly as before. It exists because folding a single
+    strong signal into the weighted-average score keeps failing: the
+    average is compensatory by construction, so one real mismatch (e.g.
+    disliking first-person narration) gets outvoted by several unrelated
+    fields that happen to agree with the user's general taste (see
+    docs/scoring-test-protocol.md's "stakes_drive/craft_density:
+    investigated, not a real lever" and the design discussion that
+    followed it). Surfacing the strong mismatch as an explicit flag next
+    to the score sidesteps that math problem instead of re-fighting it."""
+    _, mismatches = explain_book(book, centroid, weights, top_n=100)
+    return [(field, m) for field, m in mismatches if m >= threshold][:top_n]
+
+
 def book_similarity(book_a, book_b):
     """Objective book-to-book resemblance (NOT personalized -- no
     per-user weights involved), used only to compute novelty against
@@ -1195,15 +1249,28 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     for explanation instead of collapsed into a ranking.
 
     Returns {"title", "score", "match_label", "matches", "mismatches",
-    "summary", "mismatch_summary", "series_note"} -- matches/mismatches
-    are ordered lists of human-readable phrases (see describe());
+    "summary", "mismatch_summary", "dealbreaker_flags",
+    "dealbreaker_summary", "series_note"} -- matches/mismatches are
+    ordered lists of human-readable phrases (see describe());
     summary/mismatch_summary are the same data assembled into one
     readable sentence each (see natural_sentence()) instead of a flat
-    list. series_note is a caveat about how the book's series changes
-    over its run (see compute_series_dna()/describe_series_trajectory()),
-    "" if the book isn't part of a multi-book series or nothing shifts
-    meaningfully -- most series stay consistent, so this is the common
-    case, not a bug."""
+    list. dealbreaker_flags/dealbreaker_summary are a SEPARATE view of
+    strong mismatches specifically (see dealbreaker_flags()) -- these
+    already appear inside `mismatches` too (this doesn't remove or
+    change anything there), but are called out on their own here so a
+    caller can render "Good match, but: X" as a distinct, prominent
+    callout instead of a strong dealbreaker reading as just one more
+    item in a list of minor notes, and so a caller doesn't have to
+    re-derive "which of these mismatches is actually the important one"
+    itself. dealbreaker_flags is [] (and dealbreaker_summary "") on the
+    common case where nothing crosses the threshold -- most books don't
+    hit a real dealbreaker, so an empty flag list is the expected
+    default, not a sign anything's wrong. series_note is a caveat about
+    how the book's series changes over its run (see
+    compute_series_dna()/describe_series_trajectory()), "" if the book
+    isn't part of a multi-book series or nothing shifts meaningfully --
+    most series stay consistent, so this is the common case, not a
+    bug."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     if title not in title_to_id:
         raise ValueError(f"{title!r} not found in catalog")
@@ -1214,9 +1281,11 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     score = _apply_series_repeat(catalog, id_to_magnitude, book, score)
     poor_threshold = user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
     matches, mismatches = explain_book(book, centroid, weights, top_n=top_n)
+    flags = dealbreaker_flags(book, centroid, weights)
 
     matches_labeled = [(label, p) for label, _ in matches if (p := describe(label, book))]
     mismatches_labeled = [(label, p) for label, _ in mismatches if (p := describe(label, book))]
+    flags_labeled = [(label, p) for label, _ in flags if (p := describe(label, book))]
 
     series_note = ""
     if book.get("series_id"):
@@ -1233,6 +1302,8 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
         "mismatches": [p for _, p in mismatches_labeled],
         "summary": natural_sentence(matches_labeled, positive=True),
         "mismatch_summary": natural_sentence(mismatches_labeled, positive=False),
+        "dealbreaker_flags": [p for _, p in flags_labeled],
+        "dealbreaker_summary": dealbreaker_sentence(flags_labeled),
         "series_note": series_note,
     }
 
@@ -1378,6 +1449,8 @@ if __name__ == "__main__":
     print(f"  {explanation['summary']}")
     if explanation["mismatch_summary"]:
         print(f"  However, {explanation['mismatch_summary'][0].lower()}{explanation['mismatch_summary'][1:]}")
+    if explanation["dealbreaker_summary"]:
+        print(f"  ⚠ {explanation['dealbreaker_summary']}")
 
     print(f"\nWhy a genuinely poor-scoring book (bottom of the full ranked list) scores poorly:")
     explanation = explain_match(catalog, ratings, "The Restaurant at the End of the Universe")
@@ -1385,3 +1458,14 @@ if __name__ == "__main__":
     print(f"  {explanation['summary']}")
     if explanation["mismatch_summary"]:
         print(f"  However, {explanation['mismatch_summary'][0].lower()}{explanation['mismatch_summary'][1:]}")
+    if explanation["dealbreaker_summary"]:
+        print(f"  ⚠ {explanation['dealbreaker_summary']}")
+
+    print(f"\nDealbreaker-flag demo -- a book that mostly matches this profile but hits a known dislike:")
+    explanation = explain_match(catalog, ratings, "Royal Assassin")
+    print(f"  {explanation['match_label']} ({explanation['score']})")
+    print(f"  {explanation['summary']}")
+    if explanation["dealbreaker_summary"]:
+        print(f"  ⚠ {explanation['dealbreaker_summary']}")
+    else:
+        print("  (no dealbreaker flag -- nothing crossed DEALBREAKER_THRESHOLD for this profile/book)")

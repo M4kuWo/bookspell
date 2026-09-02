@@ -3394,3 +3394,41 @@ rater_name='test' AND book_title, same pattern as the earlier
 row only ever existed on hosted, via the live form) and hosted (`db
 push`, verified: only Gabriel Lempert and דנדן remain in
 `rating_submissions` afterward).
+
+## 2026-09-02 (later still) -- landed dealbreaker flags, from an outside design suggestion
+
+Repo owner shared the stakes_drive/craft_density dilution finding with
+an outside technical contact, who correctly reframed the underlying
+problem: a weighted arithmetic mean is compensatory by construction, so
+no amount of weight-tuning can stop a real single-field signal from
+being outvoted by several unrelated agreeing fields -- exactly matching
+this project's own history (WEIGHT_CAP, redundancy discounts,
+structural-field boosts, alpha-blending, Bayesian shrinkage all either
+did nothing or became de facto hard filters). Four fixes were proposed;
+evaluated all four against this project's specific documented history
+in `docs/scoring-test-protocol.md`'s new "Design discussion: aggregation
+shape, not weights" section -- landed the lowest-risk one (surface a
+strong mismatch as a separate flag instead of forcing it into the
+blended score), left the other three (a non-compensatory veto/cap,
+statistical per-user dealbreaker detection, a soft non-linear penalty)
+as a prioritized, reasoned backlog rather than building all of them.
+
+**Landed:** `dealbreaker_flags()`/`dealbreaker_sentence()` in
+`scripts/recommend.py`, wired into `explain_match()` as two new,
+purely-additive return keys (`dealbreaker_flags`, `dealbreaker_summary`)
+-- score/match_label/matches/mismatches are all unchanged. A flag is any
+mismatch clearing a fixed `DEALBREAKER_THRESHOLD = 0.3`, chosen from a
+real, unambiguous gap in Mathias's 5 disliked-book mismatch lists (top
+mismatches always >= 0.34, everything else <= 0.211). Verified live:
+Royal Assassin/Skyward/Interview with the Vampire (all disliked) now
+correctly surface "Possible dealbreaker: first-person narration," while
+Warbreaker (loved) gets no flag. Confirmed zero scoring impact -- full
+`scoring_tests.py` scorecard output identical before/after.
+
+Explicitly NOT built yet: a statistically-validated per-user threshold
+(needs the deferred per-field AUC/point-biserial idea from the same
+design discussion), and the veto/cap approach (real risk of reopening
+the domination bug this project already shipped and walked back once --
+needs its own two-scenario validation before landing, not attempted
+here). Since this feature only adds metadata and never changes a score,
+it didn't need that same gauntlet to ship.
