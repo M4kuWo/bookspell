@@ -265,19 +265,73 @@ def describe(label, book):
     return phrase_field(label, book.get(label))
 
 
-def match_label(score):
+DEFAULT_POOR_THRESHOLD = 0.35
+
+
+def match_label(score, poor_threshold=DEFAULT_POOR_THRESHOLD):
     """Qualitative label instead of a bare percentage -- score is a
     relative ranking, not a calibrated probability, and a precise-looking
-    number like "90% match" implies more rigor than the model has.
-    Thresholds are a rough first-pass calibration, not derived from real
-    user data yet -- revisit once real ratings exist to check against."""
+    number like "90% match" implies more rigor than the model has. The
+    Good (0.55) and Strong (0.75) boundaries are a rough first-pass
+    calibration, not derived from real user data yet -- revisit once
+    real ratings exist to check against.
+
+    poor_threshold defaults to a fixed 0.35, but callers with a resolved
+    profile should pass user_calibrated_poor_threshold()'s result instead
+    (see its docstring) -- a fixed 0.35 can mathematically never fire on
+    this project's real data: every genuinely disliked/hated held-out
+    book tested so far scored 0.397-0.895, never below 0.35 (see
+    docs/scoring-test-protocol.md's "Poor-match threshold diagnostic,"
+    2026-09-02). Kept as the default here (not removed) so a caller with
+    no resolved profile -- or no disliked ratings to calibrate from --
+    still gets a sane, non-crashing value."""
     if score >= 0.75:
         return "Strong match"
     if score >= 0.55:
         return "Good match"
-    if score >= 0.35:
+    if score >= poor_threshold:
         return "Mixed match"
     return "Poor match"
+
+
+def user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
+                                    default=DEFAULT_POOR_THRESHOLD):
+    """A per-user replacement for match_label()'s fixed Poor/Mixed
+    boundary: the midpoint between THIS user's own mean score on their
+    liked/loved training books and their disliked/hated ones (both
+    rescored against their own freshly-built profile -- i.e. how the
+    model scores the very evidence it was built from).
+
+    Falls back to `default` (unchanged) if the user has no disliked/hated
+    ratings to calibrate against -- deliberately: with zero negative
+    training signal there's no genuine dealbreaker pattern to locate, and
+    inventing a cutoff from liked-book score variance alone would risk
+    exactly the failure mode a purely relative/percentile threshold has
+    (see the design discussion in docs/scoring-test-protocol.md,
+    2026-09-02) -- labeling a user's merely-less-loved books "Poor" when
+    nothing in their real history is actually a dealbreaker. Verified
+    directly against a synthetic all-positive rating set in
+    scripts/scoring_tests.py's threshold diagnostic.
+
+    Capped to [0.20, 0.54] -- the ceiling sits just under the Good-match
+    boundary (0.55) so a high midpoint can't collapse the "Mixed match"
+    bucket entirely; the floor guards a tiny disliked-score outlier
+    dragging the midpoint implausibly low."""
+    liked_scores, disliked_scores = [], []
+    for bid, mag in id_to_magnitude.items():
+        book = catalog.get(bid)
+        if book is None:
+            continue
+        score, _ = score_book(book, centroid, weights)
+        if mag > 0:
+            liked_scores.append(score)
+        elif mag < 0:
+            disliked_scores.append(score)
+    if not liked_scores or not disliked_scores:
+        return default
+    mean_liked = sum(liked_scores) / len(liked_scores)
+    mean_disliked = sum(disliked_scores) / len(disliked_scores)
+    return max(0.20, min(0.54, (mean_liked + mean_disliked) / 2))
 
 
 # Fields describing HOW a story is told (lead into a "told with ..."
@@ -1158,6 +1212,7 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     centroid, weights, id_to_magnitude, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides)
     score, _ = score_book(book, centroid, weights)
     score = _apply_series_repeat(catalog, id_to_magnitude, book, score)
+    poor_threshold = user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
     matches, mismatches = explain_book(book, centroid, weights, top_n=top_n)
 
     matches_labeled = [(label, p) for label, _ in matches if (p := describe(label, book))]
@@ -1173,7 +1228,7 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     return {
         "title": title,
         "score": round(score, 3),
-        "match_label": match_label(score),
+        "match_label": match_label(score, poor_threshold),
         "matches": [p for _, p in matches_labeled],
         "mismatches": [p for _, p in mismatches_labeled],
         "summary": natural_sentence(matches_labeled, positive=True),

@@ -152,19 +152,28 @@ def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_
     title, reports directional correctness. Returns (correct, total, rows).
     summary=False also suppresses the trailing "N/M correct" line, for
     callers (e.g. build_scorecard) collecting rows into their own report
-    rather than printing this test's output directly."""
+    rather than printing this test's output directly.
+
+    Uses R.user_calibrated_poor_threshold() (2026-09-02 landed fix) for
+    the Poor/Mixed boundary rather than the flat 0.35 default -- this is
+    now real production behavior (explain_match() uses the same
+    function), so the benchmark should reflect what a live user actually
+    sees, not the pre-fix baseline. See docs/scoring-test-protocol.md's
+    "Poor-match threshold diagnostic" section for the numbers that
+    justified this."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     train = train_ratings if train_ratings is not None else {
         t: r for t, r in all_ratings.items() if t not in held_out
     }
     centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
+    poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
     correct = wrong = soft = 0
     rows = []
     for title in held_out:
         book = catalog[title_to_id[title]]
         score, _ = R.score_book(book, centroid, weights)
         score = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
-        pred = R.match_label(score)
+        pred = R.match_label(score, poor_threshold)
         true = all_ratings[title]
         v = verdict(true, pred)
         if v == "OK":
@@ -497,19 +506,27 @@ def _apply_ablation(weights, fields):
 def run_ablation_held_out(catalog, all_ratings, held_out, train_ratings, ablate_fields):
     """Same mechanics as run_held_out_test, but zeroes ablate_fields'
     weight(s) right after the profile is built. Returns rows in the same
-    shape run_held_out_test does."""
+    shape run_held_out_test does.
+
+    Recalibrates the Poor threshold AFTER ablation, against the ablated
+    weights -- not reused from the un-ablated baseline. This measures
+    "if this field group didn't exist at all, could the (re-calibrated)
+    system still separate this rater's dislikes," which is the fair
+    question when the whole point is checking whether a field group is
+    load-bearing for that separation."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     train = train_ratings if train_ratings is not None else {
         t: r for t, r in all_ratings.items() if t not in held_out
     }
     centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
     weights = _apply_ablation(weights, ablate_fields)
+    poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
     rows = []
     for title in held_out:
         book = catalog[title_to_id[title]]
         score, _ = R.score_book(book, centroid, weights)
         score = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
-        pred = R.match_label(score)
+        pred = R.match_label(score, poor_threshold)
         true = all_ratings[title]
         rows.append((title, true, score, pred, verdict(true, pred)))
     return rows
@@ -558,6 +575,105 @@ def print_ablation_table(baselines, results):
             print("  " + "  ".join(cells))
 
 
+# --- Poor-match threshold diagnostic ------------------------------------
+# Follows directly from the ablation study's finding: hated_rejection was
+# 0% no matter which field group was zeroed, so the fix wasn't in weight
+# composition -- it was in match_label()'s fixed 0.35 "Poor match" cutoff
+# itself. Disliked/hated held-out books scored 0.397-0.895 across every
+# scenario tested (see docs/scoring-test-protocol.md) -- NEVER below
+# 0.35 -- so a fixed threshold that low could mathematically never fire
+# on this project's real data.
+#
+# LANDED 2026-09-02: R.user_calibrated_poor_threshold() (in
+# scripts/recommend.py) is now real production behavior, used by
+# explain_match() and, via run_held_out_test()/run_ablation_held_out()
+# above, by every scenario/scorecard/ablation number in this file. This
+# section keeps the comparison sweep as a permanent regression/rationale
+# check, not a one-off diagnostic -- it's what justified picking
+# "calibrated" over a simpler fixed-value change, and rerunning it after
+# a future scoring change confirms the calibrated approach still wins.
+#
+# Two families compared:
+#  - A fixed-value sweep (0.35 old default, 0.40, 0.45, 0.50, 0.54) --
+#    the simplest possible fix, but a single global constant either
+#    overfits to Mathias's score range or does nothing for Osnat's
+#    (whose disliked scores run much higher, 0.72-0.90 -- no fixed
+#    constant in a plausible range fixes both raters at once).
+#  - The landed per-user CALIBRATED threshold (R.user_calibrated_poor_
+#    threshold()): the midpoint between this specific user's own mean
+#    TRAINING score on their liked/loved books vs. their disliked/hated
+#    books. This is the repo owner's original idea, refined: rather than
+#    a threshold relative to the CATALOG's score distribution (the repo
+#    owner's initial "bottom N% of scored books" framing), it's relative
+#    to THIS USER's own liked-vs-disliked score gap -- self-calibrating
+#    per profile without needing a full candidate-pool scoring pass, and
+#    it naturally satisfies the repo owner's own caveat: if a user has
+#    rated nothing as disliked/hated, there's no disliked-score mean to
+#    calibrate against, so it falls back to the fixed 0.35 default
+#    rather than inventing a cutoff from pure liked-book variance (which
+#    would risk exactly what the repo owner flagged -- labeling a user's
+#    merely-less-loved books "Poor" when nothing in their history is
+#    actually a dealbreaker). Verified below (see run_all()'s printed
+#    "no-negative-signal fallback check").
+
+FIXED_THRESHOLD_SWEEP = [0.35, 0.40, 0.45, 0.50, 0.54]
+
+
+def run_threshold_diagnostic(catalog, all_ratings, held_out, train_ratings):
+    """Returns {variant_label: metrics} for one base scenario, across the
+    fixed-threshold sweep and the (landed) calibrated threshold, all
+    derived from ONE set of raw scores (computed once) so every variant
+    is compared on identical underlying predictions."""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    train = train_ratings if train_ratings is not None else {
+        t: r for t, r in all_ratings.items() if t not in held_out
+    }
+    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
+
+    raw = {}
+    for title in held_out:
+        book = catalog[title_to_id[title]]
+        score, _ = R.score_book(book, centroid, weights)
+        raw[title] = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
+
+    def rows_for(threshold):
+        rows = []
+        for title, score in raw.items():
+            true = all_ratings[title]
+            pred = R.match_label(score, threshold)
+            rows.append((title, true, score, pred, verdict(true, pred)))
+        return rows
+
+    variants = {f"fixed {t:.2f}" + (" (old default)" if t == 0.35 else ""): t for t in FIXED_THRESHOLD_SWEEP}
+    calibrated = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
+    variants[f"calibrated ({calibrated:.3f}) -- LANDED"] = calibrated
+
+    return {name: _metrics_from_rows(rows_for(t)) for name, t in variants.items()}
+
+
+def print_threshold_diagnostic(catalog):
+    cols = ["bucket_accuracy", "pairwise_accuracy", "loved_recall", "hated_rejection"]
+    headers = ["Base", "Threshold variant", "Bucket acc.", "Pairwise acc.", "Loved recall", "Hated reject."]
+    widths = [16, 28, 13, 13, 13, 13]
+    print("  " + "  ".join(h.ljust(w) for h, w in zip(headers, widths)))
+    print("  " + "-" * (sum(widths) + 2 * (len(widths) - 1)))
+    for base_name, all_ratings, held_out, train in ABLATION_BASES:
+        for variant, metrics in run_threshold_diagnostic(catalog, all_ratings, held_out, train).items():
+            cells = [base_name.ljust(widths[0]), variant.ljust(widths[1])]
+            for col, w in zip(cols, widths[2:]):
+                cells.append(_fmt_pct(metrics[col]).ljust(w))
+            print("  " + "  ".join(cells))
+        print()
+
+    print("  No-negative-signal fallback check (repo owner's caveat):")
+    all_positive = {t: r for t, r in REAL_RATINGS.items() if r in ("loved", "liked", "it_was_okay")}
+    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, all_positive)
+    calibrated = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
+    print(f"    {len(all_positive)} all-positive ratings (no disliked/hated) -> "
+          f"calibrated threshold = {calibrated:.3f} "
+          f"({'falls back to default, as intended' if calibrated == 0.35 else 'DID NOT FALL BACK -- BUG'})")
+
+
 def run_all():
     catalog = R.load_catalog()
 
@@ -585,6 +701,9 @@ def run_all():
     print("\n=== Scenario 6: DNA ablation (post-hoc field-group zeroing) ===")
     baselines, results = run_ablation_study(catalog)
     print_ablation_table(baselines, results)
+
+    print("\n=== Scenario 7: Poor-match threshold diagnostic ===")
+    print_threshold_diagnostic(catalog)
 
 
 if __name__ == "__main__":

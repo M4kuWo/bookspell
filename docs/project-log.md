@@ -3215,12 +3215,14 @@ to ever land a truly hated/disliked held-out book below the "Poor
 match" threshold. That rules out the brainstorm's original framing
 (ablation reveals which field to reweight) for this specific metric --
 the fix isn't in weight composition. Most likely next suspects, neither
-tested yet: `match_label()`'s fixed 0.35 threshold may be too high given
-how the weighted-average formula actually behaves (disliked books have
-consistently landed in the 0.40-0.90 range across every scenario run so
-far, never below ~0.33), or the averaging mechanism itself structurally
-resists low scores whenever a book happens to match on enough
-uncorrelated fields, independent of which fields those are. Logged as
+tested yet: `match_label()`'s fixed 0.35 threshold may be too LOW given
+how the weighted-average formula actually behaves (disliked/hated books
+have consistently landed in the 0.397-0.895 range across every scenario
+run so far -- lowest ever observed: Royal Assassin, 0.397 -- never once
+dipping under the 0.35 cutoff needed to be labeled "Poor"), or the
+averaging mechanism itself structurally resists low scores whenever a
+book happens to match on enough uncorrelated fields, independent of
+which fields those are. Logged as
 the next thing to investigate -- not actioned in this session.
 
 Two secondary, non-contradictory-with-standing-policy findings: tropes
@@ -3237,3 +3239,72 @@ moved for any group (mostly +0pp) while pairwise accuracy was
 consistently sensitive -- retroactively validates adding pairwise
 accuracy as a metric, since bucket accuracy alone would have made this
 entire ablation study look like a null result.
+
+## 2026-09-02 (later still) -- landed a per-user calibrated Poor-match threshold
+
+Repo owner independently proposed the right shape of the fix for the
+ablation study's hated_rejection finding: make `match_label()`'s fixed
+0.35 "Poor match" cutoff relative instead of a hardcoded constant. Also
+flagged the real risk up front: a threshold relative to the CATALOG's
+score distribution (bottom N% of scored books) would force some books
+into "Poor" on every profile, even a purely-positive one where nothing
+is actually a dealbreaker -- correctly anticipating a failure mode
+before it was ever built.
+
+Refined and landed instead: `user_calibrated_poor_threshold()`
+(`scripts/recommend.py`) calibrates relative to the USER's own
+liked-vs-disliked score gap (midpoint between mean training scores on
+their own liked/loved vs. disliked/hated books, capped to [0.20, 0.54]),
+not the catalog's distribution. Falls back to the original fixed 0.35
+when the user has no disliked/hated ratings -- this isn't a special
+case, it falls out naturally from having no disliked-score mean to
+calibrate against, and was verified concretely (a synthetic all-positive
+69-rating Mathias subset returns exactly 0.350). Wired into
+`match_label()` (now takes an optional `poor_threshold` param, default
+unchanged) and `explain_match()` (the only place in `recommend.py` that
+actually calls `match_label()` -- `recommend()`'s ranked list uses raw
+scores, no bucket label). Also compared against a plain fixed-value
+sweep (0.40-0.54) to confirm the calibrated approach earns its
+complexity: no single fixed constant serves both raters, since
+Mathias's disliked scores cluster around 0.40-0.65 while Osnat's run
+0.72-0.90 -- a constant high enough for her would misclassify most of
+the catalog as "Poor" for everyone else.
+
+**Checked across 3 base scenarios before landing** (Mathias full/sparse,
+Osnat full), per this project's standing rule: real, clean improvement
+for Mathias with zero regression elsewhere -- full: bucket accuracy
+36%->64%, hated_rejection 0%->60%; sparse: 33%->56%, 0%->50%; pairwise
+accuracy and loved recall unchanged in both. Correct no-op for Osnat
+(still 0% hated_rejection) and for Mathias's series-isolated scenario --
+both are honest limitations, not bugs: Osnat's actual disliked books
+(Magic Burns 0.895, Daughter of No Worlds 0.724) score far above any
+sane threshold, the same root cause already documented in the Magic
+Bites/Magic Burns DNA-similarity gap; Mathias's series-isolated Royal
+Assassin/Skyward scores (0.556-0.560) sit just inside the Good-match
+boundary itself, a gap only the series-repeat signal (which needs series
+evidence this scenario deliberately strips out) can close. Verified live
+end-to-end via `explain_match()` directly (not just the test harness):
+Royal Assassin, trained on Mathias's real ratings minus itself, now
+returns "Poor match" (0.321) instead of "Mixed match".
+
+Re-ran the ablation study under the new threshold -- it surfaces sharper
+signal now that hated_rejection isn't pinned at 0% everywhere:
+`stakes_drive` and `craft_density` removal each IMPROVE Mathias-full's
+hated_rejection (+20pp) and bucket accuracy (+9pp) -- candidates worth a
+closer look as possibly net-negative noise in his profile, not acted on
+yet. Tropes removal for Mathias's sparse scenario cuts the opposite
+way on different metrics simultaneously: better pairwise/loved_recall,
+but hated_rejection collapses back to 0% -- tropes are doing real work
+catching his dislikes there specifically, even while adding noise
+elsewhere on that same small training set. Both logged as candidates for
+a future scoring-change proposal, to be re-checked against all 3
+scenarios before anything is touched, not acted on unilaterally here.
+
+Full evidence table and reasoning in `docs/scoring-test-protocol.md`'s
+new "Poor-match threshold diagnostic -- LANDED" section, including a
+correction to that doc's own earlier (2026-09-02, ablation entry)
+mis-statement: it previously said disliked-book scores "never dipped
+below ~0.33," which was actually referencing a liked book (Old Man's
+War) scored low, not a disliked one -- corrected to the real minimum,
+0.397 (Royal Assassin, Mathias's full scenario), in both that doc and
+the corresponding entry earlier in this log.
