@@ -1,0 +1,41 @@
+{
+  "_meta": {
+    "rater": "Dandan",
+    "collected": "2026-09-02, via tools/rate-books/ public intake form",
+    "notes": "Submitted directly through the live catalog-search form (rater_name stored as דנדן in rating_submissions, transliterated to 'Dandan' here to match the roster/filename convention) -- every title was picked from the real catalog's own autocomplete, so unlike hand-typed lists there are no typos/near-misses to reconcile against book titles. Two titles were tapped twice (The Eye of the World, Wind and Truth) with the SAME rating both times, so no conflict to resolve -- deduped to one entry each. Heavily Wheel of Time / Mistborn / Ender's Saga, skewed positive (18 loved, 9 liked, 5 it_was_okay, 2 disliked, 1 hated) -- repo owner's own assessment going in was 'I don't think they are very good lists,' logged here rather than silently smoothed over, but used as real data per explicit repo-owner instruction rather than excluded."
+  },
+  "ratings": {
+    "Empire of Silence": "liked",
+    "The Way of Kings": "it_was_okay",
+    "Words of Radiance": "loved",
+    "Oathbringer": "liked",
+    "Wind and Truth": "liked",
+    "The Eye of the Bedlam Bride": "loved",
+    "The Eye of the World": "it_was_okay",
+    "The Great Hunt": "loved",
+    "The Dragon Reborn": "it_was_okay",
+    "The Shadow Rising": "loved",
+    "The Fires of Heaven": "disliked",
+    "Lord of Chaos": "loved",
+    "A Crown of Swords": "it_was_okay",
+    "The Path of Daggers": "hated",
+    "Winter's Heart": "liked",
+    "Crossroads of Twilight": "liked",
+    "Knife of Dreams": "loved",
+    "The Gathering Storm": "loved",
+    "Towers of Midnight": "loved",
+    "A Memory of Light": "loved",
+    "Ender's Game": "loved",
+    "Ender's Shadow": "loved",
+    "Speaker for the Dead": "loved",
+    "Xenocide": "liked",
+    "Mistborn: The Final Empire": "it_was_okay",
+    "The Well of Ascension": "liked",
+    "The Hero of Ages": "it_was_okay",
+    "Mistborn: Secret History": "loved",
+    "The Alloy of Law": "disliked",
+    "Shadows of Self": "loved",
+    "The Bands of Mourning": "liked",
+    "The Lost Metal": "liked"
+  }
+}

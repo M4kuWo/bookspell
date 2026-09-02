@@ -3342,3 +3342,55 @@ be the actual cause here specifically. Full writeup in
 `docs/scoring-test-protocol.md`'s new "stakes_drive/craft_density:
 investigated, not a real lever" section. Genuine dilution-resistant
 scoring remains an open, unsolved problem -- not attempted here.
+
+## 2026-09-02 (later still) -- imported two new raters via the public intake form
+
+Checked `rating_submissions` on hosted (`supabase db query --linked`, no
+password needed -- the CLI's own auth handles it) after the repo owner's
+friends reported using `tools/rate-books/`. Found 3 rater_names: the
+repo owner's own "test" row from trying the tool (1 rating, confirmed by
+repo owner, deleted), and two real submissions -- דנדן (Dandan, 32
+unique ratings after dedup, already on the expected roster) and Gabriel
+Lempert (7 ratings, NOT on the original expected list -- an independent
+friend submission, used anyway per explicit repo-owner instruction).
+
+Every title matched the catalog cleanly with zero typos to reconcile --
+both submitters picked titles from the form's live autocomplete, unlike
+every hand-typed list collected so far, which is a real, structural
+data-quality advantage of the public form over manual collection.
+
+Exported both into `data/ratings/{dandan,gabriel}.json`, added as new
+scoring-test scenarios (`scripts/scoring_tests.py`): Dandan gets a real
+held-out split (32 ratings is enough -- 7 held out, chosen to leave 2 of
+her 3 negative-tier ratings in training so the calibrated threshold has
+something to compute from); Gabriel gets leave-one-out, same treatment
+Osnat's round-1 4-book list got, since 7 ratings can't support a real
+split. Also fixed `run_leave_one_out_diagnostic()` while touching it --
+it was still calling the old fixed-0.35 `match_label()`, never updated
+when the calibrated threshold landed earlier today because nothing was
+wired into `run_all()`/the scorecard yet; now uses the calibrated
+threshold per iteration and returns rows in the same shape
+`run_held_out_test()` does, so it plugs into pairwise_accuracy()/
+recall_and_rejection()/scorecard_row() unchanged.
+
+**Results, both added to the benchmark scorecard:** Dandan -- 5/7 bucket
+accuracy (71%), 73% pairwise, 100% hated_rejection (her one hated book,
+The Path of Daggers, correctly caught), but only 33% loved_recall (2 of
+3 held-out loved books scored surprisingly low -- Words of Radiance and
+Shadows of Self, while Ender's Shadow scored correctly high; not
+investigated further here). Gabriel -- 57% bucket accuracy but only 20%
+pairwise accuracy, driven by a genuinely hard-to-model contradiction in
+his own list: he disliked Red Rising but loved its direct sequel Golden
+Son, which a same-series/same-DNA-profile similarity system has no way
+to resolve from 6 other ratings. Consistent with the repo owner's own
+assessment going in ("I don't think they are very good lists") -- used
+as real data anyway, per instruction, and logged as-is rather than
+excluded or smoothed over.
+
+Cleaned up the "test" row via
+`20260902020000_cleanup_rating_submissions_test_row.sql` (scoped to
+rater_name='test' AND book_title, same pattern as the earlier
+`...230200` precedent), applied to both local (0 rows affected -- the
+row only ever existed on hosted, via the live form) and hosted (`db
+push`, verified: only Gabriel Lempert and דנדן remain in
+`rating_submissions` afterward).

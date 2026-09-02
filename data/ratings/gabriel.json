@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "rater": "Gabriel Lempert",
+    "collected": "2026-09-02, via tools/rate-books/ public intake form",
+    "notes": "Not on the original expected-raters roster (Osnat/Dandan/Omri/Irael/Shahar) -- a friend who used the public form independently. Only 7 ratings, all picked from the real catalog's own autocomplete (no typos to reconcile). Too few for a real held-out split -- run as a leave-one-out diagnostic instead, same treatment Osnat's round-1 list got at a similar size. Repo owner's own assessment going in was 'I don't think they are very good lists,' logged here rather than silently smoothed over, but used as real data per explicit repo-owner instruction rather than excluded."
+  },
+  "ratings": {
+    "Light Bringer": "it_was_okay",
+    "Harry Potter and the Chamber of Secrets": "liked",
+    "Before They Are Hanged": "liked",
+    "Red Rising": "disliked",
+    "Golden Son": "loved",
+    "Morning Star": "liked",
+    "The Dragon Reborn": "liked"
+  }
+}

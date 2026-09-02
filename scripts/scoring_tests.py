@@ -117,23 +117,60 @@ OSNAT_HELD_OUT = [
     "Daughter of No Worlds", "Magic Burns",  # new: test the newly-available negative signal
 ]
 
+# --- Scenario 5: third rater, Dandan -- 32 ratings via tools/rate-books/,
+# the public intake form, 2026-09-02 (see data/ratings/dandan.json's
+# _meta). Heavily Wheel of Time/Mistborn/Ender's Saga, skewed positive.
+# Held-out list picked to keep at least 2 of her 3 negative-tier ratings
+# in TRAINING (only The Path of Daggers, her one "hated," is held out)
+# so the calibrated Poor threshold has enough negative signal to compute
+# a meaningful midpoint from -- holding out ALL her negative ratings at
+# once would make this scenario untestable for hated_rejection, same
+# failure mode already documented for Osnat's early rounds. ---
+DANDAN_RATINGS = load_rater("dandan")
+DANDAN_HELD_OUT = [
+    "The Path of Daggers", "The Way of Kings", "Words of Radiance",
+    "Mistborn: The Final Empire", "The Hero of Ages", "Ender's Shadow",
+    "Shadows of Self",
+]
 
-def run_leave_one_out_diagnostic(catalog, ratings, label):
+# --- Scenario 6: fourth rater, Gabriel Lempert -- 7 ratings via
+# tools/rate-books/, 2026-09-02. Not on the original expected-raters
+# list (Osnat/Dandan/Omri/Irael/Shahar) -- an independent friend
+# submission, used anyway per explicit repo-owner instruction. Too few
+# for a real held-out split -- run as leave-one-out, same treatment
+# Osnat's round-1 4-book list got. ---
+GABRIEL_RATINGS = load_rater("gabriel")
+
+
+def run_leave_one_out_diagnostic(catalog, ratings, label, quiet=False):
     """For each title in `ratings`, trains on the rest and scores it --
     a sanity check for a rater with too few usable ratings for a real
     held-out split (see scenario 4's comment above for why n this small
-    can't support a real accuracy test)."""
+    can't support a real accuracy test). Returns rows in the same shape
+    run_held_out_test() does, so pairwise_accuracy()/recall_and_rejection()/
+    scorecard_row() all work on it unchanged.
+
+    Uses R.user_calibrated_poor_threshold() per leave-one-out iteration,
+    same as run_held_out_test() -- each training set gets its own
+    calibration, consistent with how a real profile would actually be
+    built."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
-    print(f"  {label}:")
+    rows = []
+    if not quiet:
+        print(f"  {label}:")
     for held_out_title, true in ratings.items():
         train = {t: r for t, r in ratings.items() if t != held_out_title}
         centroid, weights, id_to_mag, _ = R._resolve_profile(catalog, train)
+        poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_mag, centroid, weights)
         book = catalog[title_to_id[held_out_title]]
         score, _ = R.score_book(book, centroid, weights)
         score = R._apply_series_repeat(catalog, id_to_mag, book, score)
-        pred = R.match_label(score)
+        pred = R.match_label(score, poor_threshold)
         v = verdict(true, pred)
-        print(f"    {held_out_title:<35} true={true:<12} {score:.3f} ({pred}) {v}")
+        rows.append((held_out_title, true, score, pred, v))
+        if not quiet:
+            print(f"    {held_out_title:<35} true={true:<12} {score:.3f} ({pred}) {v}")
+    return rows
 
 
 def verdict(true_label, predicted_label):
@@ -413,6 +450,13 @@ def build_scorecard(catalog):
                                           isolate_by="series", quiet=True, summary=False)
     rows.append(scorecard_row("Osnat -- series-isolated", r, "isolated"))
 
+    _, _, r = run_held_out_test(catalog, DANDAN_RATINGS, DANDAN_HELD_OUT, "Dandan, full",
+                                 quiet=True, summary=False)
+    rows.append(scorecard_row(f"Dandan -- full ({len(DANDAN_RATINGS)} ratings)", r, "full"))
+
+    r = run_leave_one_out_diagnostic(catalog, GABRIEL_RATINGS, "Gabriel, LOO", quiet=True)
+    rows.append(scorecard_row(f"Gabriel -- LOO ({len(GABRIEL_RATINGS)} ratings)", r, "sparse"))
+
     return rows
 
 
@@ -689,6 +733,12 @@ def run_all():
 
     print(f"\n=== Scenario 4: second rater (Osnat) -- held-out validation ({len(OSNAT_USABLE)} usable ratings) ===")
     run_held_out_test(catalog, OSNAT_USABLE, OSNAT_HELD_OUT, "Osnat held-out")
+
+    print(f"\n=== Scenario 4b: third rater (Dandan) -- held-out validation ({len(DANDAN_RATINGS)} ratings) ===")
+    run_held_out_test(catalog, DANDAN_RATINGS, DANDAN_HELD_OUT, "Dandan held-out")
+
+    print(f"\n=== Scenario 4c: fourth rater (Gabriel) -- leave-one-out ({len(GABRIEL_RATINGS)} ratings, too few for held-out) ===")
+    run_leave_one_out_diagnostic(catalog, GABRIEL_RATINGS, "Gabriel leave-one-out")
 
     print("\n=== Scenario 5: series/author-isolated held-out (no series or author memory) ===")
     run_isolated_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, series-isolated", isolate_by="series")

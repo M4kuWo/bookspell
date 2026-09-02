@@ -16,8 +16,9 @@ rater's data extends the test suite instead of requiring a rewrite.
 | Name | Status |
 |---|---|
 | Mathias | Collected — `mathias.json`, 53 ratings, 2 rounds |
-| Osnat | Expected |
-| Dandan | Expected |
+| Osnat | Collected — `osnat.json`, 30 usable (of ~145 total unique titles) |
+| Dandan | Collected — `dandan.json`, 32 ratings, via public intake form |
+| Gabriel Lempert | Collected — `gabriel.json`, 7 ratings, via public intake form (not on the original expected list -- an independent friend submission) |
 | Omri | Expected |
 | Irael | Expected |
 | Shahar | Expected |
@@ -29,3 +30,10 @@ other rater's. Per `docs/scoring-test-protocol.md`: watch specifically
 for a scoring idea marked "deferred" (not "disproven") in that doc's
 table turning out to actually help once a second or third rater's
 pattern is different from Mathias's.
+
+Dandan's and Gabriel's lists (2026-09-02) came through
+`tools/rate-books/`, the public intake form -- see that tool's own
+README for the submit -> `rating_submissions` -> export flow. Titles
+submitted this way are picked from the catalog's own live autocomplete,
+so (unlike hand-typed lists) there's no typo/near-miss reconciliation
+needed against `books.title`.
