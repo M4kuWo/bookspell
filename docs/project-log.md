@@ -3687,3 +3687,62 @@ Harsh Mistress, The Ten Thousand Doors of January, others). Did not
 triage the full 50 in this pass -- flagged as the concrete next step for
 the catalog/tagging work this session was already deferring in favor of
 the scoring engine.
+
+## 2026-09-02 (later still) -- expanded the untagged catalog by ~300 books, guaranteeing the flagged-missing titles land
+
+Repo owner asked to bring in the next ~300 books ahead of a tagging pass
+he'll do later from a different machine (to save tokens here) --
+untagged is fine, cheap to fetch, expensive to tag. Two parts:
+
+**Targeted titles, guaranteed inclusion rather than left to chance.**
+The bulk popularity pull can't promise any SPECIFIC title lands within
+whatever rank cutoff it happens to use, so the 16 titles confirmed
+missing from Mathias's own reading history (the docs-consistency-pass
+entry above) plus 7 famous/classic titles found missing during a
+broader subgenre breadth check (Sword of Shannara, Pawn of Prophecy,
+Book of Three, Good Omens, Neverwhere, Babel, The Handmaid's Tale --
+most of the checked list was already present) were searched and
+confirmed individually against Hardcover first, not auto-matched. 2 of
+the 7 (Good Omens, Babel) turned out to already be in the catalog under
+their full subtitle -- caught safely by the hardcover_id conflict check,
+no duplicates created. Also added Osnat's one remaining flagged gap
+(Sweep of the Heart, from her `_meta`'s note, confirmed via the
+consistency pass above) once found via a clean, unambiguous search
+match. New script: `scripts/ingest-targeted-titles-2.js` (round 2 of
+the existing pattern -- see the original `ingest-targeted-titles.js`
+for round 1, Osnat's earlier batch). 22 new books, 5 new series inserted
+this way.
+
+**Bulk popularity pull for breadth.** Bumped `ingest-seed-catalog.js`'s
+per-genre count 420->620 -- the same-size step as the 2026-08-31 bump
+(220->420), which netted 299 new books, aiming for the requested "next
+~300." Hit the same transient Hardcover API connect-timeout this
+project's history already has an example of (curl to the same endpoint
+succeeded instantly in under half a second during the failure, so this
+was Node/fetch-specific, not a real outage) -- confirmed nothing writes
+until the whole fetch phase succeeds, so a failed attempt is always
+safe to just retry; the third attempt succeeded. Netted 276 new books,
+98 new series.
+
+**Verification and hosted sync**, per this project's standing
+migration discipline: generated the hosted-bound SQL migrations
+programmatically from local's own post-ingestion state (not hand-typed)
+using each new row's `created_at` to identify exactly which rows a given
+run added -- confirmed a clean, unambiguous timestamp gap between
+batches before relying on this (e.g. round 3's cutoff: newest 276 rows
+all within under a second of each other, then a clean 4-minute jump to
+the next-oldest row). Sanity-checked each generated migration's SQL by
+re-applying it to local first and confirming zero row-count change
+(true idempotency, not just "looks right") before ever pushing to
+hosted. Three migrations total this round
+(`20260902030000_targeted_ingestion_round2_21_books.sql`,
+`20260902040000_catalog_expansion_round3_276_books.sql`,
+`20260902050000_targeted_ingestion_sweep_of_the_heart.sql`), applied via
+`supabase db push`, `supabase migration list --linked` confirms no
+desync anywhere in the full history.
+
+**Result, verified matching exactly on both local and hosted**: 911
+books total (up from 613), 357 series (up from 254), 563 tagged
+(unchanged -- none of this batch was tagged, as intended). 348 books now
+untagged and ready for the repo owner's own tagging pass, including
+every specifically-flagged missing title from both real raters.

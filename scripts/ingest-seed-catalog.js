@@ -225,17 +225,19 @@ async function main() {
     const fantasy = await searchBooks({
       filterBy: 'genres:=[Fantasy]',
       sort: 'users_count:desc',
-      count: 420, // bumped 2026-08-31 (220->420) to fetch the next ~200-per-genre
-      // tier ahead of the next real tagging expansion -- bibliographic data
-      // only, deliberately NOT tagged yet (see ingest-only note below).
-      // dedup against existingHardcoverIds means ranks 1-220 (already in
-      // the DB) are skipped automatically, netting only ranks 221-420.
+      count: 620, // bumped 2026-09-02 (420->620), same-size step as the
+      // 2026-08-31 bump (220->420, netted 299 new) to fetch roughly the
+      // next ~300-book tier ahead of the next real tagging expansion --
+      // bibliographic data only, deliberately NOT tagged yet (see
+      // ingest-only note below). dedup against existingHardcoverIds means
+      // ranks 1-420 (already in the DB) are skipped automatically,
+      // netting only ranks 421-620.
     });
     console.log('Pulling top Science Fiction books...');
     const scifi = await searchBooks({
       filterBy: 'genres:=[Science Fiction]',
       sort: 'users_count:desc',
-      count: 420,
+      count: 620,
     });
 
     const seen = new Set();

@@ -15,9 +15,9 @@ for the full, dated history of every decision, bug, and fix.
 
 | | |
 |---|---|
-| Books in catalog | 613 |
+| Books in catalog | 911 |
 | Fully tagged | 563 |
-| Series tracked | 254 |
+| Series tracked | 357 |
 | Tropes in vocabulary | 123 |
 | Content warning types | 37 |
 | Shared universes | 2 (Cosmere, Middle-earth) |
@@ -154,12 +154,17 @@ The full design writeup with worked examples is in
 
 Near-term, roughly in order:
 
-1. **Grow the tagged catalog.** 563 of 613 books are tagged; 50 remain
-   untagged, and a rough spot-check suggests most of those are genuinely
-   out of v1 scope (literary fiction, thrillers, memoir pulled in by
-   Hardcover's genre search) rather than a real backlog — needs a full
-   triage pass to confirm which specific titles to tag vs. delete, not
-   done yet. Priority for what IS in-scope: finish partially-tagged
+1. **Grow the tagged catalog.** 563 of 911 books are tagged; 348 remain
+   untagged and ready for the next tagging pass (up from 50 after a
+   2026-09-02 expansion — bulk popularity pull plus every specifically-
+   flagged missing title from both real raters, guaranteed via a
+   targeted, individually-confirmed ingestion rather than left to chance
+   in the popularity ranking). A rough spot-check of the smaller original
+   50 suggested most were genuinely out of v1 scope (literary fiction,
+   thrillers, memoir pulled in by Hardcover's genre search) rather than a
+   real backlog — still needs a full triage pass to confirm which
+   specific titles to tag vs. delete, not done yet, and now a bigger pool
+   to triage. Priority for what IS in-scope: finish partially-tagged
    series before tagging new standalones (Series DNA needs 2+ tagged
    books per series to compute anything).
 2. **Recruit more real readers.** Grew from 1 to 4 real raters this
