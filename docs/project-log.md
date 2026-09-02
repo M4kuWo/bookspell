@@ -3195,3 +3195,45 @@ relative to non-isolated ones (e.g. Royal Assassin: 0.397 -> 0.560
 series-isolated) -- consistent with the series-repeat signal actively
 pulling non-isolated scores down as designed, just not always by enough
 to cross a bucket boundary.
+
+## 2026-09-02 (later still) -- DNA ablation study, aimed at hated_rejection
+
+Implemented the ablation idea deferred from the scorecard entry above:
+`run_ablation_study()`/`print_ablation_table()` in
+`scripts/scoring_tests.py`, zeroing one field-group's weight post-hoc
+(never touching `build_profile()`/`score_book()`) and re-running the
+held-out benchmark, across 8 field groups x 3 base scenarios (Mathias
+full/sparse, Osnat full). Full reasoning and numbers in
+`docs/scoring-test-protocol.md`'s new "DNA ablation, chasing
+hated_rejection" section.
+
+**Result reframes the problem rather than solving it, which is itself
+the useful outcome: hated_rejection stayed at exactly 0% across all 24
+ablation runs, no exceptions.** No single field group -- not tropes,
+not POV/structure, nothing -- is responsible for the engine's inability
+to ever land a truly hated/disliked held-out book below the "Poor
+match" threshold. That rules out the brainstorm's original framing
+(ablation reveals which field to reweight) for this specific metric --
+the fix isn't in weight composition. Most likely next suspects, neither
+tested yet: `match_label()`'s fixed 0.35 threshold may be too high given
+how the weighted-average formula actually behaves (disliked books have
+consistently landed in the 0.40-0.90 range across every scenario run so
+far, never below ~0.33), or the averaging mechanism itself structurally
+resists low scores whenever a book happens to match on enough
+uncorrelated fields, independent of which fields those are. Logged as
+the next thing to investigate -- not actioned in this session.
+
+Two secondary, non-contradictory-with-standing-policy findings: tropes
+are hugely important to Osnat's ranking quality (removing them: -61pp
+pairwise accuracy, by far the largest single effect measured) but
+appear to actively hurt Mathias's sparse-data ranking (+17pp when
+removed) -- a real cross-rater/data-regime contradiction, logged as-is
+rather than resolved, consistent with this doc's standing "don't
+conclude from a single scenario" rule. POV/structure fields are a real
+positive ranking signal for Mathias (-13pp pairwise when removed),
+corroborating already-known findings from the WEIGHT_CAP/redundancy
+work rather than adding a new one. Also notable: bucket accuracy barely
+moved for any group (mostly +0pp) while pairwise accuracy was
+consistently sensitive -- retroactively validates adding pairwise
+accuracy as a metric, since bucket accuracy alone would have made this
+entire ablation study look like a null result.

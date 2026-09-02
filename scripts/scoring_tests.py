@@ -360,23 +360,23 @@ def _fmt_pct(p):
     return "n/a" if p is None else f"{p:.0%}"
 
 
-def scorecard_row(name, rows, target_key):
+def _metrics_from_rows(rows):
+    """The 4 scorecard metrics computed from one set of already-scored
+    held-out rows -- shared by scorecard_row() and the ablation study
+    below so both draw from one definition."""
     bucket_hits = sum(1 for r in rows if r[4] == "OK")
-    bucket = _pct(bucket_hits, len(rows))
     pw_hits, pw_n = pairwise_accuracy(rows)
-    pairwise = _pct(pw_hits, pw_n)
     rr = recall_and_rejection(rows)
-    loved = _pct(*rr["loved_recall"])
-    hated = _pct(*rr["hated_rejection"])
     return {
-        "name": name,
-        "target_key": target_key,
-        "n": len(rows),
-        "bucket_accuracy": bucket,
-        "pairwise_accuracy": pairwise,
-        "loved_recall": loved,
-        "hated_rejection": hated,
+        "bucket_accuracy": _pct(bucket_hits, len(rows)),
+        "pairwise_accuracy": _pct(pw_hits, pw_n),
+        "loved_recall": _pct(*rr["loved_recall"]),
+        "hated_rejection": _pct(*rr["hated_rejection"]),
     }
+
+
+def scorecard_row(name, rows, target_key):
+    return {"name": name, "target_key": target_key, "n": len(rows), **_metrics_from_rows(rows)}
 
 
 def build_scorecard(catalog):
@@ -428,6 +428,136 @@ def print_scorecard(scorecard):
         print("  " + "  ".join(cells))
 
 
+# --- DNA ablation -------------------------------------------------------
+# Re-runs the held-out benchmark with one field-group's weight zeroed out
+# POST-HOC (after build_profile() computes it normally -- never a change
+# to build_profile()/score_book() themselves), to see how much each
+# group actually moves accuracy. Added specifically to chase the
+# scorecard's one clear finding: hated_rejection sits at 0% across every
+# scenario in the 2026-09-02 baseline (see docs/scoring-test-protocol.md)
+# -- this is pointed at explaining THAT, not at re-deriving default
+# weights in general.
+#
+# Grouped by what a real scoring decision would plausibly change
+# together, not tested field-by-field -- ~30 individual fields against
+# an 11-book held-out set would be almost pure noise. Groups matching a
+# real question ("does tone matter," "does POV/structure matter") give a
+# more stable signal from the same tiny dataset, though "more stable"
+# here still means "still small-n" -- results are DIRECTIONAL evidence,
+# never proof, per this doc's standing "don't conclude from a
+# single-rater test" rule. Run across 3 base scenarios (Mathias full,
+# Mathias sparse, Osnat full) rather than just one, for the same reason
+# -- a group that moves hated_rejection for one rater but not the other
+# is a real, useful finding in itself (see the results table), not a
+# contradiction to resolve.
+ABLATION_GROUPS = {
+    "tropes": ["tropes"],
+    "pace": ["overall_pace", "pace_shape"],
+    "tone": ["darkness", "emotional_register", "humor_level", "message_intensity"],
+    "pov_structure": ["person", "pov_count", "narrator_reliability", "timeline", "form"],
+    "stakes_drive": ["drive", "stakes_scope", "personal_stakes", "narrative_closure",
+                      "emotional_resolution", "ends_on_cliffhanger"],
+    "content_intensity": ["romance_heat_frequency", "romance_heat_intensity",
+                           "violence_frequency", "violence_intensity"],
+    "craft_density": ["worldbuilding_density", "book_length", "audiobook_length",
+                       "prose_density", "prose_complexity", "age_category"],
+    "magic_scifi": ["magic_system_hardness", "scifi_hardness"],
+}
+
+# (base label, all_ratings pool, held-out titles, fixed train_ratings or
+# None to derive it as all_ratings-minus-held_out) -- same 3 scenarios
+# the scorecard already reports on for "full"/"sparse" data richness
+# across both real raters; deliberately excludes the isolated variants,
+# which test a different axis (series/author memory) that would combine
+# combinatorially with ablation for little added signal at this n.
+ABLATION_BASES = [
+    ("Mathias, full", REAL_RATINGS, REAL_HELD_OUT, None),
+    ("Mathias, sparse", REAL_RATINGS, SPARSE_HELD_OUT, SPARSE_RATINGS),
+    ("Osnat, full", OSNAT_USABLE, OSNAT_HELD_OUT, None),
+]
+
+
+def _apply_ablation(weights, fields):
+    """weights with each of `fields`' weight zeroed (the special key
+    "tropes" empties the whole trope-weights dict instead) -- applied
+    AFTER build_profile() computes weights normally. score_book() treats
+    a zero weight as a no-op contribution (0 numerator, 0 added to the
+    normalizing denominator), so this cleanly removes a field's voice
+    without needing to delete it from the dict or touch centroid. Returns
+    a new dict; doesn't mutate the input."""
+    ablated = dict(weights)
+    for f in fields:
+        if f == "tropes":
+            ablated["tropes"] = {}
+        elif f in ablated:
+            ablated[f] = 0.0
+    return ablated
+
+
+def run_ablation_held_out(catalog, all_ratings, held_out, train_ratings, ablate_fields):
+    """Same mechanics as run_held_out_test, but zeroes ablate_fields'
+    weight(s) right after the profile is built. Returns rows in the same
+    shape run_held_out_test does."""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    train = train_ratings if train_ratings is not None else {
+        t: r for t, r in all_ratings.items() if t not in held_out
+    }
+    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
+    weights = _apply_ablation(weights, ablate_fields)
+    rows = []
+    for title in held_out:
+        book = catalog[title_to_id[title]]
+        score, _ = R.score_book(book, centroid, weights)
+        score = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
+        pred = R.match_label(score)
+        true = all_ratings[title]
+        rows.append((title, true, score, pred, verdict(true, pred)))
+    return rows
+
+
+def run_ablation_study(catalog):
+    """Returns (baselines, results): baselines is {base_name: metrics}
+    for the un-ablated run of each ABLATION_BASES scenario; results is
+    {group_name: {base_name: metrics}} for every (group, base) pair."""
+    baselines = {}
+    for name, all_ratings, held_out, train in ABLATION_BASES:
+        rows = run_ablation_held_out(catalog, all_ratings, held_out, train, [])
+        baselines[name] = _metrics_from_rows(rows)
+
+    results = {}
+    for group, fields in ABLATION_GROUPS.items():
+        results[group] = {}
+        for name, all_ratings, held_out, train in ABLATION_BASES:
+            rows = run_ablation_held_out(catalog, all_ratings, held_out, train, fields)
+            results[group][name] = _metrics_from_rows(rows)
+    return baselines, results
+
+
+def print_ablation_table(baselines, results):
+    cols = ["bucket_accuracy", "pairwise_accuracy", "loved_recall", "hated_rejection"]
+    headers = ["Group removed", "Base", "Bucket acc.", "Pairwise acc.", "Loved recall", "Hated reject."]
+    widths = [18, 16, 15, 15, 15, 15]
+    print("  Baseline (nothing removed):")
+    for name, m in baselines.items():
+        print(f"    {name:<16} " + "  ".join(f"{c}={_fmt_pct(m[c])}" for c in cols))
+    print()
+    print("  " + "  ".join(h.ljust(w) for h, w in zip(headers, widths)))
+    print("  " + "-" * (sum(widths) + 2 * (len(widths) - 1)))
+    for group, per_base in results.items():
+        for base_name, metrics in per_base.items():
+            base = baselines[base_name]
+            cells = [group.ljust(widths[0]), base_name.ljust(widths[1])]
+            for col, w in zip(cols, widths[2:]):
+                base_val, abl_val = base[col], metrics[col]
+                if base_val is None or abl_val is None:
+                    cell = "n/a"
+                else:
+                    delta = (abl_val - base_val) * 100
+                    cell = f"{abl_val:.0%} ({delta:+.0f}pp)"
+                cells.append(cell.ljust(w))
+            print("  " + "  ".join(cells))
+
+
 def run_all():
     catalog = R.load_catalog()
 
@@ -451,6 +581,10 @@ def run_all():
 
     print("\n=== Benchmark scorecard ===")
     print_scorecard(build_scorecard(catalog))
+
+    print("\n=== Scenario 6: DNA ablation (post-hoc field-group zeroing) ===")
+    baselines, results = run_ablation_study(catalog)
+    print_ablation_table(baselines, results)
 
 
 if __name__ == "__main__":

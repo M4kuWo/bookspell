@@ -326,3 +326,71 @@ to their non-isolated versions (e.g. Royal Assassin: 0.397 -> 0.560
 series-isolated) -- consistent with the series-repeat signal actively
 pulling scores down in the non-isolated version, exactly as designed,
 though not by enough to cross a bucket boundary in this case.
+
+## DNA ablation, chasing hated_rejection (2026-09-02)
+
+Implemented `run_ablation_study()`/`print_ablation_table()` in
+`scripts/scoring_tests.py`: re-runs the held-out benchmark with one
+field-group's weight zeroed out post-hoc (after `build_profile()`
+computes it normally -- `_apply_ablation()` never touches
+`build_profile()`/`score_book()` themselves), across 8 groups
+(`ABLATION_GROUPS`) x 3 base scenarios (Mathias full/sparse, Osnat
+full -- `ABLATION_BASES`). Grouped by real scoring questions (tropes,
+pace, tone, POV/structure, stakes/drive, content intensity,
+craft/density, magic/scifi-hardness), not tested field-by-field --
+~30 individual fields against an 11-book held-out set would be almost
+pure noise.
+
+**Headline result, and it's a real reframing, not the answer the
+brainstorm expected: hated_rejection stayed at EXACTLY 0% in all 24
+(group x base) ablation runs, with zero exceptions.** Removing any
+single field group -- including tropes entirely, including all of
+POV/structure -- never once flips a single truly-hated/disliked
+held-out book into "Poor match." The brainstorm's framing (ablation
+will produce a clean importance ranking like "-7.2% pace, -0.8% POV"
+that tells you what to reweight) doesn't hold for this specific metric:
+**the problem isn't that one field group's weight is wrong or
+overrepresented -- no single group is carrying the failure, so the fix
+isn't in weight composition at all.** More likely candidates, not yet
+tested: `match_label()`'s fixed 0.35 "Poor match" threshold may simply
+sit too high given how the weighted-average formula behaves in
+practice (scores for genuinely disliked books are landing in the
+0.40-0.90 range across every scenario tested so far -- see the
+Magic Bites/Magic Burns case and this doc's baseline table -- never
+below ~0.33), or the averaging mechanism itself may structurally resist
+producing low scores whenever a book matches on enough uncorrelated
+fields by chance, regardless of which specific fields those are. Next
+step should be diagnosing THAT mechanism (e.g. does lowering the Poor
+match threshold, or an explicit "how many fields actively mismatch"
+count, better separate real dislikes?) rather than more field-level
+ablation -- logged as the next thing to try, not actioned here.
+
+Two secondary findings, both consistent with "check at least 2
+scenarios before concluding anything" already being the right standard:
+
+- **Tropes matter enormously for Osnat's ranking quality, and appear to
+  actively hurt Mathias's on the sparse scenario -- a direct
+  contradiction across raters/data regimes, not a consensus finding.**
+  Removing tropes costs Osnat's pairwise accuracy -61pp (72% -> 11%,
+  by far the largest single effect in the whole study -- unsurprising
+  given her catalog is largely trope-dense romantasy/YA fantasy where
+  structural fields alone barely discriminate one book from another).
+  But removing tropes for Mathias's SPARSE scenario *improves* pairwise
+  accuracy +17pp (67% -> 83%) and loved recall +25pp (75% -> 100%) --
+  plausibly overfitting noise from too few trope data points at that
+  training size, not a real signal that tropes are bad. Do not
+  generalize either direction from this alone.
+- **POV/structure fields (person, pov_count, narrator_reliability,
+  timeline, form) are a real, positive ranking signal for Mathias**:
+  removing them costs pairwise accuracy -13pp (67% -> 53%) on the full
+  scenario, no effect on sparse, -6pp for Osnat. Consistent with
+  person/pov_count's known importance from the WEIGHT_CAP/redundancy
+  work -- this is corroborating evidence, not a new finding.
+
+Bucket accuracy moved for almost no group/base combination (mostly
+`+0pp`) -- only pairwise accuracy, a continuous ranking metric, showed
+any sensitivity to ablation at all. That's itself informative: the
+4-bucket match-label thresholds are too coarse to detect this kind of
+signal at this sample size, which retroactively justifies adding
+pairwise accuracy in the first place rather than relying on bucket
+accuracy alone for this kind of test.
