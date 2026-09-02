@@ -3746,3 +3746,59 @@ books total (up from 613), 357 series (up from 254), 563 tagged
 (unchanged -- none of this batch was tagged, as intended). 348 books now
 untagged and ready for the repo owner's own tagging pass, including
 every specifically-flagged missing title from both real raters.
+
+## 2026-09-02 (later still) -- closed the gap that let the trope/CW under-tagging incident happen, ahead of the next tagging pass
+
+Repo owner is about to have a session on a different machine/account
+(his wife's Claude, on his home PC) tag the 348 newly-untagged books
+from the entry above, and asked to fix `CLAUDE.md` so the SAME mistake
+from last time's tagging round doesn't recur: a batch shipped
+meaningfully thinner on tropes/content-warnings than the rest of the
+catalog, not caught until a separate session had to audit it afterward
+and run a whole second enrichment pass to fix it (see the 2026-09-01
+"under-tagging signal" and 2026-09-02 "follow-up trope enrichment"
+entries above).
+
+Root cause, found by actually reading `.claude/skills/tag-catalog-batch/
+SKILL.md` (the doc a tagging session actually follows step by step, not
+just `CLAUDE.md`'s policy summary): Step 3's tagging instructions were
+purely qualitative ("assign every trope that's a real, meaningful,
+defining element") with no quantitative anchor and no required
+self-check before finishing a batch -- exactly the kind of instruction
+that's easy to satisfy technically (every trope picked really was
+"real and meaningful") while still landing thin, especially as a big
+batch drags on and thoroughness quietly declines (confirmed already
+happened once: 6.47 -> 4.27 -> 3.20 tropes/book across three successive
+sub-batches within one session, per the 2026-09-01 entry).
+
+**Fixed the actual mechanism, not just the policy pointer.** Added a
+required density self-check to the skill itself, right before Step 4
+(save as migration): a SQL query comparing the just-tagged batch's own
+tropes/book and CW/book against the CURRENT catalog-wide average
+(queried fresh, not hardcoded -- catalog average drifts as the catalog
+grows, currently 5.88 tropes/book and 1.75 CW/book but that number is
+already stale the moment it's written down). If the batch sits
+meaningfully below catalog average (~20% rule of thumb) on either
+metric, the skill now says explicitly: don't finish and report yet, go
+back and enrich the thin books first. Also added the actual numbers to
+Step 5's report-back requirement, so "I did the density check" isn't
+enough -- the real numbers have to be in the report, the same way this
+project already requires "check the DB, don't guess" for factual
+claims elsewhere.
+
+Tested the query itself before trusting it in the skill file, per this
+project's own standing rule ("test example SQL in a rolled-back
+transaction before trusting it in a skill, doc, or migration"): ran it
+against a real 3-book sample (Warbreaker, A Clash of Kings, Dune),
+confirmed it returns sensible numbers (catalog 5.88 tropes/1.75 CWs per
+book; that specific sample, all well-known flagship titles, came back
+above average at 10.0/2.33 -- consistent, not a red flag).
+
+Also sharpened `CLAUDE.md`'s existing (too-passive) version of this rule
+-- it previously said "compare against the average... audit and enrich
+rather than assume it's fine," which reads as an after-the-fact check
+a LATER session might run, not a same-session, before-you-finish gate.
+Rewritten to say explicitly that this is not an after-the-fact audit,
+point at the skill's new concrete step as where the mechanism actually
+lives, and name the real, already-happened cost (a full second
+enrichment pass) rather than leaving the stakes abstract.

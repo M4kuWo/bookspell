@@ -118,11 +118,22 @@ re-litigate decisions already made there.
   check whether the later names are genuine co-authors (real, and
   common — don't assume contamination) or contributors before trusting
   or further propagating it.
-- **When adding a batch of new books, compare tropes/book and content
-  warnings/book against the existing catalog's average.** A fresh batch
-  that's meaningfully thinner than the existing catalog is a real
-  under-tagging signal, not just "this batch happened to have less
-  content" — audit and enrich rather than assume it's fine.
+- **A tagging batch must self-check its own trope/content-warning
+  density BEFORE the session ends — this is not an after-the-fact audit
+  for someone else to catch later.** This has already gone wrong twice:
+  a batch shipped meaningfully thinner than the catalog average (density
+  visibly declining across sub-batches within the SAME session — a real
+  sign of rushing/fatigue as a big batch drags on, not a one-off), and
+  wasn't caught until a separate session audited it afterward and had to
+  run a whole second enrichment pass to fix it. Catching this during the
+  original tagging session is far cheaper than a second pass later, and
+  is now an explicit, required step in `.claude/skills/tag-catalog-batch/
+  SKILL.md` (Step 3) — every tagging session must query the CURRENT
+  catalog-wide average (don't trust a hardcoded number here, it drifts
+  as the catalog grows — as of 2026-09-02, roughly 5.9 tropes/book and
+  1.75 content warnings/book, but query it fresh) against their own
+  just-tagged batch's average, and go back and enrich the thin books
+  before reporting the batch done if it's meaningfully below that.
 - **Prioritize completing partially-tagged series before tagging new
   standalones.** Series DNA (the trajectory-aggregation feature) needs
   >= 2 tagged books per series to compute anything at all — finishing a

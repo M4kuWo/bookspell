@@ -224,6 +224,56 @@ Verify each book's inserts by re-querying afterward -- specifically
 check that the book_dna row actually has values in most columns, not
 just a few, given the silent-partial-insert risk above.
 
+**Before you move on to Step 4, check your batch's own trope/content-
+warning density against the catalog average -- this is a required gate,
+not an optional nice-to-have.** This exact failure has already happened
+twice on this project: a full batch shipped meaningfully thinner than
+the rest of the catalog (tropes/book visibly declining across
+sub-batches WITHIN the same tagging session -- a real rushing/fatigue
+pattern as a big batch drags on, not random variance), and it wasn't
+caught until a separate session audited it afterward and had to run a
+whole second enrichment pass to fix trope and content-warning counts.
+Catching it now, before you report the batch done, is far cheaper than
+someone else catching it later. Run this once you've tagged the whole
+batch (substitute your batch's actual titles):
+
+```sql
+with batch as (
+  select b.id from books b
+  where b.title in ('Title One', 'Title Two', '...')  -- your batch's titles
+),
+catalog_avg as (
+  select
+    (select count(*) from book_tropes)::float
+      / nullif((select count(*) from book_dna), 0) as tropes_per_book,
+    (select count(*) from book_content_warnings)::float
+      / nullif((select count(*) from book_dna), 0) as cws_per_book
+),
+batch_avg as (
+  select
+    (select count(*) from book_tropes where book_id in (select id from batch))::float
+      / nullif((select count(*) from batch), 0) as tropes_per_book,
+    (select count(*) from book_content_warnings where book_id in (select id from batch))::float
+      / nullif((select count(*) from batch), 0) as cws_per_book
+)
+select catalog_avg.tropes_per_book as catalog_tropes_per_book,
+       batch_avg.tropes_per_book as your_batch_tropes_per_book,
+       catalog_avg.cws_per_book as catalog_cws_per_book,
+       batch_avg.cws_per_book as your_batch_cws_per_book
+from catalog_avg, batch_avg;
+```
+
+Query the catalog average fresh every time -- don't reuse a remembered
+number from a previous session or from this doc, it drifts as the
+catalog grows. If your batch's tropes/book or CW/book comes out
+meaningfully below the catalog's (as a rough rule of thumb, more than
+~20% below on either number), don't finish and report yet -- go back
+through the batch's thinner books specifically and add more tropes/
+content warnings before moving to Step 4. A book landing below average
+isn't automatically wrong (some books really are sparser than others),
+but a whole BATCH sitting well below average is the under-tagging
+signal this check exists to catch.
+
 If you genuinely don't know a book well enough to tag it confidently
 even after thinking it through, do a quick check (a web search is fine)
 before guessing -- and if you're still not confident, skip that book and
@@ -309,6 +359,8 @@ out of sync with hosted.
 
 For each book tagged, note anything genuinely uncertain or any
 vocabulary gap you noticed. Report the total tagged, how many partial
-series moved closer to (or reached) full completion, and confirm
-whether the migration file was pushed or handed back for the repo owner
-to commit.
+series moved closer to (or reached) full completion, your batch's
+tropes/book and content-warnings/book from the density self-check above
+alongside the catalog average you compared against (not just "I did the
+check" -- the actual numbers), and confirm whether the migration file
+was pushed or handed back for the repo owner to commit.
