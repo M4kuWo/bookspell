@@ -244,3 +244,85 @@ ratings), and there's no clean way to isolate "worse BECAUSE of high
 POV count" from "just also disliked" with only 53 ratings from one
 person. Revisit once multiple raters' data exists and a specific,
 recurring pattern (not just a hunch) can be checked.
+
+## Benchmark scorecard (added 2026-09-02)
+
+Prompted by a repo-owner brainstorm (with ChatGPT) about whether
+held-out bucket accuracy should be the only accuracy metric. Verdict:
+no -- bucket accuracy (the original test) blends several different
+questions into one correct/wrong count, which can hide a system that's
+lopsided in a specific, fixable way. Added three new metrics to
+`scripts/scoring_tests.py`, all computed from the SAME held-out rows a
+normal `run_held_out_test()` call already produces (no new ratings or
+retraining needed):
+
+- **Pairwise preference accuracy** (`pairwise_accuracy()`) -- of every
+  pair of held-out books with a different true rating, does the
+  predicted score rank them in the same direction? Turns an 11-book
+  held-out set's 11 independent bucket verdicts into up to 55 pairwise
+  comparisons -- more statistical power from the same data, which
+  matters given how small every real rater's set still is.
+- **Loved recall / hated rejection** (`recall_and_rejection()`) -- of
+  truly loved/liked held-out books, what fraction scored Good/Strong
+  ("can it find books I'd enjoy"); of truly hated/disliked ones, what
+  fraction scored Poor ("can it recognize a dealbreaker"). These are two
+  different capabilities a single blended accuracy number conflates.
+- **Series/author-isolated held-out** (`run_isolated_held_out_test()`,
+  `_isolated_training_set()`) -- strips every OTHER rated title sharing
+  a series or author with a held-out book out of training, not just the
+  held-out titles themselves. Directly targets a real gap in the
+  existing scenarios: Royal Assassin and Assassin's Quest are held out
+  in `REAL_HELD_OUT` while Assassin's Apprentice (same series, also
+  disliked) stays in training -- exactly the evidence the series-repeat
+  signal (see the "landed" table above) is designed to use. The normal
+  held-out test can't distinguish "the DNA fields genuinely generalize"
+  from "the series-repeat mechanism is doing the work." Osnat's set has
+  the same shape via ACOTAR/Harry Potter/Fourth Wing/Kate Daniels.
+
+All three feed `build_scorecard()`/`print_scorecard()`, a single table
+(6 rows: Mathias full/sparse/series-isolated/author-isolated, Osnat
+full/series-isolated) x 4 metric columns, each cell flagged against a
+target in `SCORECARD_TARGETS`. Run via `scripts/scoring_tests.py`'s
+`run_all()`, under "=== Benchmark scorecard ===".
+
+**Baseline run (2026-09-02, current catalog/formula) and what it means:**
+
+| Test | n | Bucket acc. | Pairwise acc. | Loved recall | Hated reject. |
+|---|---|---|---|---|---|
+| Mathias -- full (53 ratings) | 11 | 36% | 67% | 80% | **0%** |
+| Mathias -- sparse (16 ratings) | 9 | 33% | 67% | 75% | **0%** |
+| Mathias -- series-isolated | 11 | 36% | 67% | 80% | **0%** |
+| Mathias -- author-isolated | 11 | 36% | 64% | 80% | **0%** |
+| Osnat -- full (30 ratings) | 7 | 43% | 72% | 100% | **0%** |
+| Osnat -- series-isolated | 7 | 43% | 61% | 100% | **0%** |
+
+Targets in `SCORECARD_TARGETS` were calibrated FROM this baseline, not
+picked first and compared against it -- see the constant's own comment
+for the reasoning per dimension.
+
+**The one finding that actually matters here: hated_rejection is 0% in
+every single row.** The engine has never once correctly scored a truly
+hated/disliked held-out book as "Poor match," for either rater, in any
+variant (full, sparse, series-isolated, author-isolated). This isn't a
+new bug -- it's the same asymmetry already flagged concretely in the
+Magic Bites/Magic Burns case above (0.895 "Strong match" for a hated
+book) and the WEIGHT_CAP/redundancy-discount work generally -- but it
+was never visible as its own number before, because it was always
+averaged together with loved-book recall (which is genuinely healthy:
+75-100% across every row) into one bucket-accuracy figure. **This is
+the concrete, prioritized target the "DNA ablation" idea from the same
+brainstorm should be pointed at next**, rather than re-running ablation
+against blended accuracy the way the brainstorm originally proposed --
+a field whose removal moves hated_rejection specifically is a much more
+useful signal than one that moves overall bucket accuracy by some
+fraction of a percent.
+
+Pairwise accuracy (61-72%) and loved recall (75-100%) already clear
+their targets almost everywhere -- read that as "these dimensions are
+already reasonably healthy," not as the scorecard being miscalibrated.
+Series/author isolation barely moved bucket accuracy for Mathias (36%
+either way) but did measurably raise several isolated scores relative
+to their non-isolated versions (e.g. Royal Assassin: 0.397 -> 0.560
+series-isolated) -- consistent with the series-repeat signal actively
+pulling scores down in the non-isolated version, exactly as designed,
+though not by enough to cross a bucket boundary in this case.

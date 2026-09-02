@@ -144,12 +144,15 @@ def verdict(true_label, predicted_label):
     return "OK" if predicted_label == "Mixed match" else "SOFT-MISS"
 
 
-def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_ratings=None):
+def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_ratings=None, summary=True):
     """Trains on all_ratings minus held_out (or on train_ratings directly,
     if given -- for a fixed smaller training set like SPARSE_RATINGS,
     where all_ratings is only used to look up held-out titles' true
     labels, not as the training pool itself). Scores each held-out
-    title, reports directional correctness. Returns (correct, total, rows)."""
+    title, reports directional correctness. Returns (correct, total, rows).
+    summary=False also suppresses the trailing "N/M correct" line, for
+    callers (e.g. build_scorecard) collecting rows into their own report
+    rather than printing this test's output directly."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     train = train_ratings if train_ratings is not None else {
         t: r for t, r in all_ratings.items() if t not in held_out
@@ -174,8 +177,109 @@ def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_
         if not quiet:
             print(f"    {title:<28} {true:<12} {score:.3f} {pred:<14} {v}")
     total = len(held_out)
-    print(f"  {label}: {correct}/{total} correct, {wrong} wrong, {soft} soft-miss")
+    if summary:
+        print(f"  {label}: {correct}/{total} correct, {wrong} wrong, {soft} soft-miss")
     return correct, total, rows
+
+
+def pairwise_accuracy(rows):
+    """Pairwise preference accuracy over a set of already-scored held-out
+    rows (as returned by run_held_out_test): for every pair of books with
+    a DIFFERENT true rating, does the predicted score rank them in the
+    same direction? Ties in true rating are excluded (no real preference
+    to check against).
+
+    Motivation: a held-out set of 11 books gives you 11 independent
+    bucket verdicts, but up to C(11,2)=55 pairwise comparisons -- much
+    more statistical power from the same data, which matters given how
+    small every real rater's set currently is (see
+    docs/scoring-test-protocol.md's repeated "don't conclude from a
+    single-rater test" caveat). Returns (correct, total)."""
+    correct = total = 0
+    for i in range(len(rows)):
+        for j in range(i + 1, len(rows)):
+            _, true_i, score_i, _, _ = rows[i]
+            _, true_j, score_j, _, _ = rows[j]
+            mag_i, mag_j = R.RATING_LABELS[true_i], R.RATING_LABELS[true_j]
+            if mag_i == mag_j:
+                continue
+            total += 1
+            if (score_i > score_j) == (mag_i > mag_j):
+                correct += 1
+    return correct, total
+
+
+def recall_and_rejection(rows):
+    """Splits already-computed held-out rows into two directional rates
+    that a single blended correct/wrong count can hide:
+
+    - loved_recall: of truly loved/liked held-out books, what fraction
+      scored Good/Strong match? (the system's ability to surface books
+      a reader would actually enjoy)
+    - hated_rejection: of truly hated/disliked held-out books, what
+      fraction scored Poor match? (its ability to recognize personal
+      dealbreakers, not just find generally-appealing books)
+
+    A system can look decent on blended accuracy while being lopsided on
+    one of these -- see the ChatGPT brainstorm discussion this was added
+    for for why that's worth catching separately. Returns
+    {"loved_recall": (hits, n), "hated_rejection": (hits, n)}."""
+    good = [r for r in rows if r[1] in EXPECT_GOOD]
+    poor = [r for r in rows if r[1] in EXPECT_POOR]
+    return {
+        "loved_recall": (sum(1 for r in good if r[4] == "OK"), len(good)),
+        "hated_rejection": (sum(1 for r in poor if r[4] == "OK"), len(poor)),
+    }
+
+
+def _isolated_training_set(catalog, all_ratings, held_out, isolate_by):
+    """Removes not just the held-out titles but every OTHER rated title
+    that shares a series (isolate_by="series") or author
+    (isolate_by="author") with one of them -- so a held-out prediction
+    can't be answered by "I've already seen this series/author," only by
+    genuine DNA-field similarity.
+
+    This matters concretely here: Royal Assassin and Assassin's Quest are
+    both held out in REAL_HELD_OUT while Assassin's Apprentice (same
+    series, also disliked) stays in training -- the series-repeat signal
+    (see docs/scoring-test-protocol.md, "landed" table) is specifically
+    designed to use that kind of same-series evidence, so the normal
+    held-out test partly measures series memory, not just DNA
+    generalization. Osnat's set has the same shape via ACOTAR/Harry
+    Potter/Fourth Wing/Kate Daniels. Isolating strips that out to see
+    what's left."""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    held_out_ids = [title_to_id[t] for t in held_out if t in title_to_id]
+    if isolate_by == "series":
+        keys = {catalog[bid]["series_id"] for bid in held_out_ids if catalog[bid].get("series_id")}
+        def is_linked(bid):
+            return catalog[bid].get("series_id") in keys
+    elif isolate_by == "author":
+        keys = {catalog[bid]["author"] for bid in held_out_ids}
+        def is_linked(bid):
+            return catalog[bid].get("author") in keys
+    else:
+        raise ValueError(f"unknown isolate_by: {isolate_by!r}")
+
+    train = {}
+    for title, label in all_ratings.items():
+        if title in held_out:
+            continue
+        bid = title_to_id.get(title)
+        if bid is not None and is_linked(bid):
+            continue
+        train[title] = label
+    return train
+
+
+def run_isolated_held_out_test(catalog, all_ratings, held_out, label, isolate_by="series", quiet=False, summary=True):
+    """Same as run_held_out_test, but trained on the series/author-isolated
+    pool from _isolated_training_set() instead of the normal
+    all-minus-held-out pool. Returns (correct, total, rows), same shape as
+    run_held_out_test, so callers (e.g. the scorecard) can treat both
+    uniformly."""
+    train = _isolated_training_set(catalog, all_ratings, held_out, isolate_by)
+    return run_held_out_test(catalog, all_ratings, held_out, label, quiet=quiet, train_ratings=train, summary=summary)
 
 
 def run_weight_cap_check(catalog, label):
@@ -213,6 +317,117 @@ def run_weight_cap_check(catalog, label):
     return person_mismatch, pov_mismatch, max_trope
 
 
+# --- Scorecard --------------------------------------------------------
+# One row per named test; each row reports the four metrics below, all
+# derived from the same held-out `rows` (no separate retraining needed).
+#
+# Targets below are NOT aspirational round numbers -- they're calibrated
+# off this suite's actual 2026-09-02 baseline run (see
+# docs/scoring-test-protocol.md's "Benchmark scorecard" section for the
+# real numbers this was set from), the same way match_label()'s
+# thresholds are documented as a provisional first pass. Where the
+# baseline already cleared a plausible bar (pairwise accuracy ~61-72%,
+# loved recall 75-100%), the target sits close to current performance --
+# those dimensions are already reasonably healthy, and the point of a
+# target is to catch regressions, not manufacture a gap that isn't real.
+# Where the baseline was clearly weak, the target is deliberately set
+# ABOVE current performance as a real bar to close, not padded down to
+# whatever the baseline already does -- hated_rejection landed at 0%
+# across every single row of the 2026-09-02 baseline (it has NEVER
+# correctly flagged a held-out hated/disliked book as "Poor match" for
+# either rater, in any variant), which is this scorecard's single most
+# actionable finding: the system currently cannot recognize a personal
+# dealbreaker at all, only find generally-appealing books. Revisit these
+# targets as more rater data comes in.
+#
+# Isolated/sparse rows get a deliberately lower bar than "full": they're
+# testing a harder question (genuine DNA generalization without
+# series/author memory, or with less evidence) than the full blended
+# rows, so holding them to the same target would conflate "the model got
+# worse" with "this question is inherently harder."
+SCORECARD_TARGETS = {
+    "full": {"bucket_accuracy": 0.55, "pairwise_accuracy": 0.70, "loved_recall": 0.75, "hated_rejection": 0.40},
+    "sparse": {"bucket_accuracy": 0.45, "pairwise_accuracy": 0.60, "loved_recall": 0.65, "hated_rejection": 0.30},
+    "isolated": {"bucket_accuracy": 0.40, "pairwise_accuracy": 0.55, "loved_recall": 0.65, "hated_rejection": 0.25},
+}
+
+
+def _pct(hits, n):
+    return None if n == 0 else hits / n
+
+
+def _fmt_pct(p):
+    return "n/a" if p is None else f"{p:.0%}"
+
+
+def scorecard_row(name, rows, target_key):
+    bucket_hits = sum(1 for r in rows if r[4] == "OK")
+    bucket = _pct(bucket_hits, len(rows))
+    pw_hits, pw_n = pairwise_accuracy(rows)
+    pairwise = _pct(pw_hits, pw_n)
+    rr = recall_and_rejection(rows)
+    loved = _pct(*rr["loved_recall"])
+    hated = _pct(*rr["hated_rejection"])
+    return {
+        "name": name,
+        "target_key": target_key,
+        "n": len(rows),
+        "bucket_accuracy": bucket,
+        "pairwise_accuracy": pairwise,
+        "loved_recall": loved,
+        "hated_rejection": hated,
+    }
+
+
+def build_scorecard(catalog):
+    rows = []
+
+    _, _, r = run_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, full", quiet=True, summary=False)
+    rows.append(scorecard_row("Mathias -- full (53 ratings)", r, "full"))
+
+    _, _, r = run_held_out_test(catalog, REAL_RATINGS, SPARSE_HELD_OUT, "Mathias, sparse",
+                                 train_ratings=SPARSE_RATINGS, quiet=True, summary=False)
+    rows.append(scorecard_row("Mathias -- sparse (16 ratings)", r, "sparse"))
+
+    _, _, r = run_isolated_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, series-isolated",
+                                          isolate_by="series", quiet=True, summary=False)
+    rows.append(scorecard_row("Mathias -- series-isolated", r, "isolated"))
+
+    _, _, r = run_isolated_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, author-isolated",
+                                          isolate_by="author", quiet=True, summary=False)
+    rows.append(scorecard_row("Mathias -- author-isolated", r, "isolated"))
+
+    _, _, r = run_held_out_test(catalog, OSNAT_USABLE, OSNAT_HELD_OUT, "Osnat, full", quiet=True, summary=False)
+    rows.append(scorecard_row(f"Osnat -- full ({len(OSNAT_USABLE)} ratings)", r, "full"))
+
+    _, _, r = run_isolated_held_out_test(catalog, OSNAT_USABLE, OSNAT_HELD_OUT, "Osnat, series-isolated",
+                                          isolate_by="series", quiet=True, summary=False)
+    rows.append(scorecard_row("Osnat -- series-isolated", r, "isolated"))
+
+    return rows
+
+
+def print_scorecard(scorecard):
+    cols = ["bucket_accuracy", "pairwise_accuracy", "loved_recall", "hated_rejection"]
+    headers = ["Test", "n", "Bucket acc.", "Pairwise acc.", "Loved recall", "Hated reject."]
+    widths = [32, 3, 17, 17, 17, 17]
+    print("  " + "  ".join(h.ljust(w) for h, w in zip(headers, widths)))
+    print("  " + "-" * (sum(widths) + 2 * (len(widths) - 1)))
+    for row in scorecard:
+        target = SCORECARD_TARGETS[row["target_key"]]
+        cells = [row["name"].ljust(widths[0]), str(row["n"]).ljust(widths[1])]
+        for col, w in zip(cols, widths[2:]):
+            val = row[col]
+            if val is None:
+                cell = "n/a"
+            elif val >= target[col]:
+                cell = f"{val:.0%} OK"
+            else:
+                cell = f"{val:.0%} (target {target[col]:.0%})"
+            cells.append(cell.ljust(w))
+        print("  " + "  ".join(cells))
+
+
 def run_all():
     catalog = R.load_catalog()
 
@@ -228,6 +443,14 @@ def run_all():
 
     print(f"\n=== Scenario 4: second rater (Osnat) -- held-out validation ({len(OSNAT_USABLE)} usable ratings) ===")
     run_held_out_test(catalog, OSNAT_USABLE, OSNAT_HELD_OUT, "Osnat held-out")
+
+    print("\n=== Scenario 5: series/author-isolated held-out (no series or author memory) ===")
+    run_isolated_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, series-isolated", isolate_by="series")
+    run_isolated_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, author-isolated", isolate_by="author")
+    run_isolated_held_out_test(catalog, OSNAT_USABLE, OSNAT_HELD_OUT, "Osnat, series-isolated", isolate_by="series")
+
+    print("\n=== Benchmark scorecard ===")
+    print_scorecard(build_scorecard(catalog))
 
 
 if __name__ == "__main__":

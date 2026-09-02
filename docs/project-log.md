@@ -3146,3 +3146,52 @@ average of 5.88 (catalog average itself ticked up slightly from the new
 rows) -- 61% of average to 86%. Not fully closed, but a real, substantial
 improvement; the remaining gap is mostly genuinely-sparse books rather
 than an under-tagging signal at this point.
+
+## 2026-09-02 (later still) -- new accuracy metrics and a benchmark scorecard for the scoring engine
+
+Repo owner brought back a ChatGPT brainstorm about whether held-out
+bucket accuracy (the only accuracy test so far) is too narrow a
+benchmark for a recommendation engine. Reviewed it against the actual
+test infra rather than taking it at face value: several suggestions
+didn't fit (literal MAE assumes the engine predicts a star rating, which
+it doesn't -- it produces a bucketed match label; NDCG needs much larger
+candidate lists than an 11-book held-out set to earn its complexity over
+plain rank correlation), but three ideas were real, cheap wins given
+this project's actual bottleneck (tiny single/two-rater datasets, not
+test design): pairwise preference accuracy, loved-recall/hated-rejection
+split out from the blended verdict, and series/author-isolated held-out
+splits. Implemented all three in `scripts/scoring_tests.py`
+(`pairwise_accuracy()`, `recall_and_rejection()`,
+`_isolated_training_set()`/`run_isolated_held_out_test()`), all
+computed from the same held-out rows `run_held_out_test()` already
+produces -- no new ratings or retraining infrastructure needed. Also
+built a benchmark scorecard (`build_scorecard()`/`print_scorecard()`)
+that runs all of the above across 6 named tests (Mathias
+full/sparse/series-isolated/author-isolated, Osnat full/series-isolated)
+and reports each against a target in `SCORECARD_TARGETS`, calibrated
+from this run's actual baseline rather than picked first. Full reasoning
+and the baseline table are in `docs/scoring-test-protocol.md`'s new
+"Benchmark scorecard" section.
+
+**The scorecard's one real finding: hated_rejection is 0% in every
+single row.** The engine has never correctly scored a truly
+hated/disliked held-out book as "Poor match," for either rater, in any
+variant. Not a new bug -- it's the same asymmetry already visible
+piecemeal in the Magic Bites/Magic Burns case and the
+WEIGHT_CAP/redundancy-discount work -- but it was never isolated as its
+own number before; averaged into blended bucket accuracy alongside a
+genuinely healthy loved-recall (75-100% across every row), it was
+invisible. This is now the concrete, prioritized target for the
+deferred "DNA ablation" idea from the same brainstorm: which fields'
+removal moves hated_rejection specifically, not just overall bucket
+accuracy by some fraction of a point. Not actioned yet -- logged here as
+the clear next step, consistent with this doc's "don't conclude from a
+single-rater test" standard: ablation results should be checked against
+this same metric across both raters before anything is called a fix.
+
+Series/author isolation barely moved Mathias's bucket accuracy (36%
+either way) but did measurably shift individual isolated scores
+relative to non-isolated ones (e.g. Royal Assassin: 0.397 -> 0.560
+series-isolated) -- consistent with the series-repeat signal actively
+pulling non-isolated scores down as designed, just not always by enough
+to cross a bucket boundary.
