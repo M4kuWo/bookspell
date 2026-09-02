@@ -473,8 +473,9 @@ more useful signal than the pre-fix run did (when everything was pinned
 at 0% hated_rejection, ablation could only ever show "no change"):
 `stakes_drive` and `craft_density` removal each *improve* Mathias-full's
 hated_rejection (+20pp, 60%->80%) and bucket accuracy (+9pp, 64%->73%)
--- plausible candidates for being net-negative noise in his profile
-currently, worth a closer look before touching default weights. Tropes
+-- flagged as candidates worth a closer look. **Investigated 2026-09-02
+and NOT landed -- see "stakes_drive/craft_density: investigated, not a
+real lever" below for why.** Tropes
 removal cuts the other direction for Mathias's sparse scenario
 specifically: it improves pairwise accuracy (+17pp) and loved recall
 (+25pp) but *tanks* hated_rejection (50%->0%) -- tropes are doing real,
@@ -483,3 +484,49 @@ other metrics on that same small training set. None of this is acted on
 yet -- logged as candidates for the next scoring-change proposal, to be
 checked against all 3 base scenarios again before anything is changed,
 per this doc's standing rule.
+
+## stakes_drive/craft_density: investigated, not a real lever (2026-09-02)
+
+Followed up on the ablation candidate above by pulling `explain_book()`'s
+full match/mismatch breakdown for all 5 of Mathias's disliked/hated
+held-out books (Royal Assassin, Skyward, The Wise Man's Fear, Interview
+with the Vampire, Assassin's Quest). **Same pattern, every single time,
+with no exception:** the single largest, CORRECTLY DETECTED mismatch is
+always `person` (weight 0.425 -- Mathias dislikes first-person
+narration and the engine catches it consistently) -- but it's
+consistently outvoted by 6-10 other MATCHING fields that happen to
+agree with his overall taste for unrelated reasons: `darkness`,
+`violence_intensity`/`violence_frequency`, `worldbuilding_density`,
+`book_length`, `scifi_hardness`, `drive`, plus several tropes
+(`medieval_european_setting`, `epic_quest`). These books genuinely fit
+his favorite genre (dark, violent, dense-worldbuilding, epic-length
+grimdark/political fantasy) on every axis except narrative person --
+this is exactly "Scenario 1 dilution" as already defined earlier in
+this doc, now confirmed as the literal mechanism behind every one of
+Mathias's current held-out mispredictions, not a new discovery.
+
+**Verdict: NOT landed.** Removing `stakes_drive`/`craft_density`
+specifically is coincidental, not principled -- those two groups just
+happened to carry enough combined diluting weight to tip 2-4 books
+below the Poor threshold, but `darkness`/`violence_intensity`/
+`scifi_hardness`/tropes are contributing to the exact same dilution and
+aren't touched by removing those two groups. A blanket removal is also
+directly falsified by evidence already in hand: craft_density removal
+measurably HURT Osnat's pairwise accuracy (-6pp, see the ablation table
+above) -- exactly the "adjustment must be conditional on the specific
+book being scored, never blanket" failure this project's own rules
+exist to prevent (a real, already-shipped bug once, per this repo's
+CLAUDE.md). More fundamentally: every general mechanism previously
+tried for this exact class of dilution problem has already been tried
+and rejected/deferred in this project -- structural-field prior boost
+(**rejected**, reopens the domination/scenario-2 bug), category-budget/
+alpha blend (**deferred**, no clean win under a full sweep), Bayesian-
+average shrinkage (**deferred**, no net effect). This isn't a fresh
+angle on dilution; it's the same wall this project has hit three times
+already, now confirmed to be the actual cause here too rather than
+disproven. Genuine dilution-resistant scoring (down-weighting "generic
+taste agreement" specifically when one strong structural mismatch
+exists) remains unsolved and is not a small change to attempt casually
+-- any future attempt needs to check against BOTH scenario 1 and
+scenario 2 from the very first test, per this doc's standing rule, not
+just Mathias's held-out set.

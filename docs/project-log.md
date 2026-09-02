@@ -3308,3 +3308,37 @@ below ~0.33," which was actually referencing a liked book (Old Man's
 War) scored low, not a disliked one -- corrected to the real minimum,
 0.397 (Royal Assassin, Mathias's full scenario), in both that doc and
 the corresponding entry earlier in this log.
+
+## 2026-09-02 (later still) -- investigated the stakes_drive/craft_density ablation lever, didn't land it
+
+Followed up directly on the ablation study's stakes_drive/craft_density
+candidates instead of just noting them and moving on. Pulled
+`explain_book()`'s full match/mismatch breakdown for all 5 of Mathias's
+disliked/hated held-out books. Same pattern every single time, no
+exceptions: `person` (first-person narration) is always the single
+largest, correctly-detected mismatch (weight 0.425) -- but it's
+consistently outvoted by 6-10 other fields that happen to agree with his
+overall taste for unrelated reasons (dark tone, violent, dense
+worldbuilding, epic length, medieval-fantasy tropes). These books
+genuinely fit his favorite genre on every axis except narrative person.
+This is the exact "Scenario 1 dilution" failure mode already defined in
+`docs/scoring-test-protocol.md` -- now confirmed as the literal
+mechanism, not a new finding.
+
+**Not landed.** Removing stakes_drive/craft_density specifically was
+coincidental, not principled -- those two groups just happened to carry
+enough combined diluting weight to tip a few books over the threshold;
+darkness/violence_intensity/scifi_hardness/tropes contribute to the same
+dilution and aren't touched by removing those two. Already-measured
+evidence directly argues against it: craft_density removal hurt Osnat's
+pairwise accuracy by -6pp -- exactly the "blanket adjustment, not
+conditional on the specific book" pattern this project's rules exist to
+prevent. More fundamentally, every general fix for this class of
+dilution problem has already been tried and rejected/deferred in this
+project (structural-field prior boost, category-budget/alpha blend,
+Bayesian shrinkage -- see the protocol doc's "What's been tried" table).
+This wasn't a fresh lever; it was the same known wall, now confirmed to
+be the actual cause here specifically. Full writeup in
+`docs/scoring-test-protocol.md`'s new "stakes_drive/craft_density:
+investigated, not a real lever" section. Genuine dilution-resistant
+scoring remains an open, unsolved problem -- not attempted here.
