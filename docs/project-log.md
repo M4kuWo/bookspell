@@ -3564,3 +3564,126 @@ pre-veto), correctly "Poor match," dealbreaker_summary still naming
 first-person narration as the reason. `recommend()`'s top-5 list ran
 clean, no first-person titles. Full writeup and numbers in
 `docs/scoring-test-protocol.md`'s "Veto/cap mechanism -- LANDED" section.
+
+## 2026-09-02 (later still) -- evaluated bulk external rating datasets for testing at scale; none usable given commercial intent
+
+Repo owner had a lead on the UCSD Goodreads dataset (Julian McAuley's
+lab, ~229M interactions, a Fantasy & Paranormal genre subset alone with
+258,585 books and 55.4M interactions) as a way to test scoring
+approaches against far more real users than the 4 raters collected so
+far. Confirmed the repo owner's intent: Bookspell is meant to become a
+real commercial product eventually, not stay a personal hobby project
+forever -- this changes which data sources are usable at all, since
+"academic use only" restrictions that would be a non-issue for pure
+personal use become a real blocker.
+
+Checked the dataset's actual terms directly (fetched, not just search
+snippets): "We collected these datasets for academic use only. Please
+do not redistribute them or use for commercial purposes." A hard
+no for a product with commercial intent. Flagged a structural point:
+this isn't specific to UCSD's copy -- ANY Goodreads-derived dataset
+(Kaggle mirrors, other re-scrapes) inherits the same problem, since the
+restriction traces back to Goodreads' own terms being scraped against at
+the source, not an academic add-on. Finding "a different" Goodreads
+dataset doesn't route around this.
+
+Checked Hardcover's API directly too, since this project already has
+token access for catalog ingestion (`scripts/ingest-seed-catalog.js`).
+Same pattern, confirmed from Hardcover's own policy: commercial/
+professional projects may only use "your personal data and facts about
+books" -- explicitly NOT other users' reviews, ratings, lists, or other
+user-generated content. Confirms current usage (book metadata only,
+never other users' ratings) is fine, but rules out expanding into their
+community ratings data. Checked the Book-Crossing (BX) dataset as a
+third option -- no explicit license stated on its current host page,
+which is worse than an explicit non-commercial label, not better: no
+stated terms means no clear grant of rights for commercial use, would
+need the original rights holder tracked down and asked directly rather
+than assumed clean.
+
+Repo owner proposed a mitigation: use UCSD's dataset strictly as an
+internal R&D/benchmarking tool during development (comparing scoring
+approaches, testing metrics/weighting strategies), deleting it entirely
+and shipping no dataset-derived artifacts (trained models, embeddings,
+similarity matrices) before any commercial release -- production would
+run exclusively on independently licensed/consented data. Assessed this
+as a real, industry-recognized risk-REDUCTION pattern (this is
+essentially the standard practice for ImageNet/COCO, both under similar
+non-commercial research licenses: research/benchmark on the restricted
+set, retrain on owned/licensed data before shipping) -- not a novel
+workaround, and not a full resolution either, since "no commercial use"
+is written as a flat prohibition rather than one that explicitly
+exempts internal R&D, and a court finding a model trained on unlicensed
+data can order it destroyed regardless of whether the original file was
+later deleted. Identified the specific boundary the repo owner asked
+about: qualitative methodological insights ("small-sample validation
+needs a sample-size gate," "per-user calibration beats a global
+threshold") sit on much safer ground than any object that is a direct
+statistical fit to the restricted data (trained weights, embeddings,
+similarity matrices -- never to cross into production, full stop); a
+specific NUMERIC CONSTANT tuned to the restricted dataset's particular
+shape is the genuine gray zone in between, and the recommended practice
+is to treat any such number as a hypothesis to re-validate against
+properly-licensed data before shipping, never carry it over directly --
+notably, this project's own existing habit of treating every scoring
+constant as "provisional, revisit once real data exists" already
+implements most of that discipline.
+
+**Result: shelved for now, not pursued further.** No code or data
+changes resulted from this investigation -- logged because it's a real,
+substantive "explored X as a path to more test data, didn't produce a
+usable result" finding the repo owner explicitly asked to have on
+record, not because anything was implemented.
+
+## 2026-09-02 (later still) -- docs/README consistency pass; corrects a stale earlier entry
+
+Repo owner asked for a full consistency pass on `README.md` (which
+hadn't been touched since before any of today's scoring-engine work) and
+a check that everything done today is properly logged, including things
+that didn't pan out. While verifying current catalog numbers for the
+README, found and corrected a real inaccuracy in this doc's own history:
+
+**Correction to the 2026-09-02 "retest round 2" entry above**: it says
+"Black Prism sequels are still the only missing titles" for Mathias.
+Checked directly against the current catalog rather than trust that
+statement -- it was wrong (or at best, badly incomplete) even at the
+time it was written. The full, verified-just-now list of titles named
+in Mathias's own ratings history that are still not in the catalog at
+all (from `data/ratings/mathias.json`'s `_meta`, cross-checked against
+`books.title` directly): The Lady of the Lake (Witcher 5), Calamity
+(Reckoners 3), King of Thorns/Emperor of Thorns (Broken Empire 2-3),
+Grey Sister/Holy Sister (Book of the Ancestor 2-3), Valor (Malice's
+sequel), The Desert Spear/The Daylight War/The Skull Throne/The Core
+(Demon Cycle 2-5 -- his "hated" final-book rating still has nowhere to
+attach), and Rise of Empire (Theft of Swords' sequel) -- 12 titles, not
+"just Black Prism sequels." The Black Prism (Lightbringer book 1) is
+actually IN the catalog and tagged; books 2-5 of that series (The
+Blinding Knife, The Broken Eye, The Blood Mirror, The Burning White)
+are the ones actually missing, so even the one series the old entry DID
+name was half-wrong about which specific books qualify.
+
+Also checked Osnat's flagged gap list (her `_meta`'s "5 more in catalog
+but untagged," last written when her usable set was still 18 titles):
+4 of those 5 (An Absolutely Remarkable Thing, Divine Rivals, From Blood
+and Ash, The Serpent and the Wings of Night) are now tagged -- confirmed
+directly, they're already in `OSNAT_TAGGED_TITLES`. Only Sweep of the
+Heart remains genuinely not in the catalog. Her `_meta` note itself is
+now stale on this point (still says 18 tagged; the real current number,
+per `scripts/scoring_tests.py`'s `OSNAT_TAGGED_TITLES`, is 30) --
+flagged here rather than silently fixed in place, since `_meta` blocks
+in `data/ratings/*.json` aren't under the same append-only rule
+`project-log.md` is, but a fix there should still be deliberate, not
+silent.
+
+Catalog-wide, as of this check (verified matching on both local and
+hosted): 613 total books, 563 tagged, 50 untagged. Spot-checked a sample
+of the 50: most are genuinely out of v1 scope per the standing catalog-
+scope policy (Hemingway, Ayn Rand, Dan Brown's Robert Langdon books, The
+Godfather, literary fiction/memoir) and should eventually be confirmed
+with the repo owner and deleted rather than left as permanent dangling
+untagged rows; a real minority are genuine in-scope SFF still awaiting
+tagging (The Once and Future Witches, The Sparrow, Ubik, The Moon Is a
+Harsh Mistress, The Ten Thousand Doors of January, others). Did not
+triage the full 50 in this pass -- flagged as the concrete next step for
+the catalog/tagging work this session was already deferring in favor of
+the scoring engine.

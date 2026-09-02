@@ -15,12 +15,13 @@ for the full, dated history of every decision, bug, and fix.
 
 | | |
 |---|---|
-| Books in catalog | 606 |
-| Fully tagged | 307 |
-| Series tracked | 251 |
+| Books in catalog | 613 |
+| Fully tagged | 563 |
+| Series tracked | 254 |
 | Tropes in vocabulary | 123 |
 | Content warning types | 37 |
 | Shared universes | 2 (Cosmere, Middle-earth) |
+| Raters with real data | 4 (Mathias, Osnat, Dandan, Gabriel) |
 
 ## How the recommendation logic works, in plain terms
 
@@ -51,8 +52,16 @@ A few real problems surfaced in testing and what fixes them:
   specifically for being first-person, but everything else they've
   rated happens to agree on a dozen other traits, that one real signal
   can get diluted into irrelevance by everything else agreeing for
-  unrelated reasons. Partially addressed (see Current issues below —
-  not fully solved).
+  unrelated reasons. A weighted average is compensatory by construction
+  — no amount of weight-tuning fixes that, only a different aggregation
+  shape does. Addressed two ways, both conditional on real per-user
+  statistical evidence, not a blanket rule: the strongest mismatch is
+  surfaced as an explicit "possible dealbreaker" callout next to the
+  score, and — only once there's enough of a reader's own liked-vs-
+  disliked history to trust it — a real dealbreaker caps the score below
+  "Good match" outright, rather than just being diluted into the
+  average. See "Currently being worked on" below for what still doesn't
+  work.
 - **A field can dominate everything else.** If a reader's ratings
   happen to split cleanly on one structural trait (say, POV count),
   that field can end up so heavily weighted it functions as a near
@@ -75,6 +84,14 @@ A few real problems surfaced in testing and what fixes them:
   1 is a real spoiler risk and mostly useless. Fixed: a series
   installment is excluded from recommendations unless every earlier
   installment has been rated.
+- **A "Poor match" label that could never actually fire.** A fixed
+  numeric cutoff for "Poor match" turned out to sit below every
+  genuinely disliked book's real score, across every rater tested — the
+  label was mathematically unreachable no matter how well the engine
+  was actually ranking underneath. Fixed: the cutoff is now calibrated
+  per user, from the gap between their own liked and disliked books'
+  scores, falling back to the old fixed value only when someone hasn't
+  rated anything as disliked yet.
 
 The full design writeup with worked examples is in
 [`docs/scoring-test-protocol.md`](docs/scoring-test-protocol.md) and
@@ -101,30 +118,68 @@ The full design writeup with worked examples is in
   tone/trope preferences stay genre-specific, series-position
   awareness, series-aware weighting, conditional redundancy discounts,
   Series DNA (aggregate trajectory across a tagged series — does a
-  series improve, worsen, or stay consistent book to book), and
-  "summon something different" / "less of X" diversity controls.
+  series improve, worsen, or stay consistent book to book), "summon
+  something different" / "less of X" diversity controls, a per-user
+  calibrated "Poor match" threshold (see above), and a two-tier
+  dealbreaker mechanism: a displayed flag for any strong mismatch, and
+  — only once there's enough of a reader's own liked/disliked history to
+  statistically validate a field as a real personal dealbreaker for
+  them, not just a fixed heuristic — an actual score cap, not just a
+  callout.
 - **Real external reader validation**: the catalog-review tool
   ([`tools/catalog-review/`](tools/catalog-review/)) is in front of
   real test readers, whose feedback has already caught and fixed
   genuine tagging errors across 10+ fields, several missing tropes, and
   a mis-flagged spoiler — see the Hurdles overcome section below.
+- **Real rater data** ([`data/ratings/`](data/ratings/)): 4 people's real
+  liked/disliked lists (see the stats table above), one hand-collected,
+  three via the public intake form ([`tools/rate-books/`](tools/rate-books/)
+  — a no-account, mobile-friendly page for a friend to rate books
+  straight from the live catalog, no typo/title-matching cleanup needed
+  afterward).
 - **Reusable scoring test suite** ([`scripts/scoring_tests.py`](scripts/scoring_tests.py)):
-  every scoring change gets checked against real held-out ratings, a
-  reconstructed "one field dominates" scenario, and a sparse-data
-  scenario, before it's considered safe to land — see
-  [`docs/scoring-test-protocol.md`](docs/scoring-test-protocol.md).
+  every scoring change gets checked against real held-out ratings across
+  every rater above, a reconstructed "one field dominates" scenario, a
+  sparse-data scenario, series/author-isolated held-out splits (so a
+  correct prediction can't hide behind "it's seen this series/author
+  before"), a DNA-field ablation study, and a benchmark scorecard
+  (bucket accuracy, pairwise preference accuracy, loved-book recall,
+  hated-book rejection, each against a target) — before anything is
+  considered safe to land. See
+  [`docs/scoring-test-protocol.md`](docs/scoring-test-protocol.md) for
+  the full running log of what's been tried, including what looked
+  promising and didn't pan out.
 
 ## Roadmap
 
 Near-term, roughly in order:
 
-1. **Grow the tagged catalog.** 307 of 606 books are tagged; a 299-book
-   reserve batch is fully untagged. Priority: finish partially-tagged
+1. **Grow the tagged catalog.** 563 of 613 books are tagged; 50 remain
+   untagged, and a rough spot-check suggests most of those are genuinely
+   out of v1 scope (literary fiction, thrillers, memoir pulled in by
+   Hardcover's genre search) rather than a real backlog — needs a full
+   triage pass to confirm which specific titles to tag vs. delete, not
+   done yet. Priority for what IS in-scope: finish partially-tagged
    series before tagging new standalones (Series DNA needs 2+ tagged
    books per series to compute anything).
-2. **Recruit more real readers.** Every scoring conclusion so far is
-   based on exactly one real rater's ratings (mine) — see "Currently
-   being worked on" below for why that matters.
+2. **Recruit more real readers.** Grew from 1 to 4 real raters this
+   session (Osnat, Dandan, and Gabriel joined Mathias's original list) —
+   still far from enough: most scoring conclusions in
+   `docs/scoring-test-protocol.md` were established against Mathias's
+   data specifically and are only lightly checked against the other 3
+   so far, since their datasets are newer and thinner (Gabriel: 7 ratings
+   total; Dandan: 3 negative-tier ratings; Osnat: enough volume but no
+   field currently separates her likes from dislikes strongly, a real,
+   separate finding — not a data-volume problem for her). Recruiting
+   attempts so far: a Reddit post was drafted then abandoned after
+   checking r/Fantasy's actual rules (surveys/crowdsourcing posts are
+   explicitly disallowed there); the UCSD Goodreads dataset (~55M
+   fantasy/paranormal interactions) was evaluated as a bulk alternative
+   and set aside given this project's commercial intent — its license
+   is academic/non-commercial-use only, and so is Hardcover's own
+   ratings/reviews data beyond the book metadata already in use. See
+   `docs/project-log.md`'s entries from this session for the full
+   reasoning on both.
 3. **Import an existing reading history on signup — likely a real
    adoption blocker, not just a nice-to-have.** Raised directly by a
    friend who said she wouldn't have switched from Goodreads to Fable
@@ -137,9 +192,16 @@ Near-term, roughly in order:
    structured signal, and matching imported titles against a catalog
    that won't have every book a long-time reader has logged, is the
    real design work. Not started.
-4. **Fix the dilution problem properly.** One structural field getting
-   correctly detected but outvoted by many unrelated agreeing fields —
-   several approaches tried, none has fully solved it yet (see below).
+4. **Extend the dilution fix beyond one rater's easy case.** Landed a
+   real fix (statistically-validated dealbreaker flags + score cap, see
+   above) — but it only engages once a rater has enough of their own
+   disliked-book history to statistically validate a field, and stress-
+   testing surfaced a real, not-yet-fixed edge case: categorical fields
+   like narrative person match all-or-nothing, so two "close" values
+   (e.g. two flavors of third-person) can trigger a cap that a human
+   wouldn't consider a real mismatch. Doesn't show up in any real
+   rater's data yet, only a deliberately extreme synthetic test — logged
+   as a known limitation, not blocking.
 5. **Author-affinity**, tempered by which specific sub-style of an
    author's catalog a reader actually responds to, not a flat "you like
    this author" boost. Logically validated, not yet landed.
@@ -159,21 +221,35 @@ fields backlog" section at the bottom of
 
 ## Currently being worked on
 
-- **The "one field dominates" vs. "a real signal gets diluted" tension.**
-  A flat cap on how much any one field can matter fixes the first
-  problem and reopens the second; removing the cap does the reverse.
-  Several fixes tried (a structural-field weight boost, category-based
-  weight budgets, a BM25-style saturating curve, Bayesian-average
-  shrinkage) — none has cleanly solved dilution without risking
-  domination elsewhere. The redundancy discount (see above) is a real,
-  narrow win for domination specifically, not a general answer.
-- **Everything is tuned against one rater.** All scoring conclusions —
-  including "this idea doesn't work" — come from a single person's ~55
-  ratings. `docs/scoring-test-protocol.md` explicitly tracks which
-  ideas are "deferred" (not disproven, just not shown to help *this*
-  rater at *this* scale) vs. genuinely rejected, specifically so a
-  second or third rater's data can revisit them rather than assume
-  they're settled.
+- **The "one field dominates" vs. "a real signal gets diluted" tension —
+  a real fix landed, still not the general answer.** Weight-tuning alone
+  (a structural-field weight boost, category-based weight budgets, a
+  BM25-style saturating curve, Bayesian-average shrinkage) never cleanly
+  solved dilution without risking domination elsewhere — because a
+  weighted average is compensatory by construction, so no weight
+  adjustment inside that shape can fix it. The actual fix changed the
+  shape instead: a per-user, statistically validated dealbreaker field
+  now caps a book's score outright rather than getting outvoted (see
+  Current state above). Landing it required catching and fixing a real
+  regression first — an early version of the statistical validation
+  threshold let small-sample noise "validate" several spurious fields at
+  once, which briefly collapsed one rater's loved-book recall to 0% in
+  testing before the threshold was corrected; see
+  `docs/scoring-test-protocol.md`'s "Veto/cap mechanism" entry. Doesn't
+  help every rater yet — it only engages once someone has enough of
+  their own disliked-book history to validate a field statistically (see
+  the roadmap item above), and a real, pre-existing limitation in how
+  categorical fields match surfaced during stress-testing (not fixed,
+  see roadmap).
+- **Most scoring conclusions are still tuned against one rater.** 4 real
+  raters exist now (up from 1), but most ideas in
+  `docs/scoring-test-protocol.md` — including "this idea doesn't work"
+  verdicts — were established against Mathias's ~55 ratings specifically
+  and only lightly re-checked against the other 3, whose datasets are
+  newer and thinner. The doc explicitly tracks which ideas are
+  "deferred" (not disproven, just not shown to help *this* rater at
+  *this* scale) vs. genuinely rejected, specifically so more/different
+  rater data can revisit them rather than assume they're settled.
 - **Author-field data quality.** 65 of 606 books had contaminated
   author fields (translator, illustrator, or narrator credits mixed in
   from the ingestion source) — cleaned up, but the broader bibliographic
@@ -247,6 +323,13 @@ scripts/
   feedback_log.jsonl             logged post-read "why didn't it work" feedback
   requirements.txt               Python deps (psycopg2)
 
+data/
+  ratings/                       one {name}.json per real rater (see its
+                                  own README for the roster + collection
+                                  notes) — the durable stand-in for a
+                                  real user/account system, which doesn't
+                                  exist yet
+
 supabase/
   migrations/                    every schema/data change, in order
   config.toml                    local dev config
@@ -254,6 +337,11 @@ supabase/
 tools/
   catalog-review/                internal QA tool — browse/filter the
                                   full tagged catalog in a browser
+  rate-books/                    public, no-account intake form — a
+                                  friend searches the live catalog and
+                                  taps a rating, saved straight into
+                                  hosted (see its own README for the
+                                  submit -> export flow)
 
 .claude/skills/
   tag-catalog-batch/             batch-tagging skill for outsourced
@@ -325,3 +413,16 @@ A few things worth knowing before touching the schema or the engine:
   especially for anything mechanical (POV structure, whether a specific
   plot beat occurs). This project's tagging errors have consistently
   come from confident-but-wrong recall, not felt uncertainty.
+- **A problem in how scores are combined can't be fixed by retuning the
+  weights that feed into it** — a weighted average is compensatory by
+  construction, so a real signal getting outvoted by unrelated agreeing
+  fields needs a different aggregation shape (a validated cap, a
+  separate flag), not another weight adjustment inside the same shape.
+  Every purely weight-based attempt at this specific problem either did
+  nothing or turned into a near-hard-filter.
+- **A statistically "validated" pattern still needs a sample-size floor,
+  even for metadata that only displays, let alone anything that changes
+  a score** — a small enough sample lets noise clear almost any fixed
+  threshold. Caught once already: an under-gated version of this
+  briefly collapsed a real rater's loved-book recall to 0% in testing
+  before landing.
