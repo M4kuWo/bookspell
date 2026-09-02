@@ -149,6 +149,8 @@ const TARGETS = [
   // more obscure ones) -- not guessed at.
   { query: 'The Crimson Campaign Brian McClellan', hardcoverId: 437922 },
   { query: 'The Autumn Republic Brian McClellan', hardcoverId: 437920 },
+  // The novella he meant, confirmed directly (Powder Mage #0.1)
+  { query: 'Forsworn Brian McClellan', hardcoverId: 460254 },
 ];
 
 async function main() {
