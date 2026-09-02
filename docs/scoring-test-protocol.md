@@ -633,7 +633,7 @@ because it only checked true positives, never the full held-out set for
 false ones.** Measured properly: Mathias 3/5 (60%) false-positive rate,
 Osnat 1/3 (33%), Dandan 3/3 (100%), Gabriel 5/5 (100%) -- e.g. Dandan's
 Words of Radiance (loved) and The Way of Kings (it_was_okay) both
-tripped a "court intrigue" dealbreaker flag despite her actually rating
+tripped a "court intrigue" dealbreaker flag despite his actually rating
 them fine. Root cause: a field/trope's raw weight from only a handful
 of ratings is genuinely noisy, and noise crosses a fixed 0.3 magnitude
 threshold just as easily as a real pattern does -- the fixed threshold
@@ -681,9 +681,9 @@ the sanity check uses):
   on ANY field, not just the ones tested before).
 - **Dandan**: FULL profile (32 ratings) DOES validate one field --
   `pace_shape` (separation 0.565) -- that the held-out test's reduced
-  training set (2 disliked, below the 3-sample gate once her one hated
-  book is held out) couldn't reach. Confirmed live against her real
-  profile: her actual disliked/hated books don't happen to mismatch
+  training set (2 disliked, below the 3-sample gate once his one hated
+  book is held out) couldn't reach. Confirmed live against his real
+  profile: his actual disliked/hated books don't happen to mismatch
   specifically on pace_shape, so no flag fires for them regardless --
   correct, expected behavior, not a contradiction.
 - **Gabriel**: FULL profile has exactly 1 disliked rating -- can never

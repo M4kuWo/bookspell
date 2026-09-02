@@ -3362,7 +3362,7 @@ data-quality advantage of the public form over manual collection.
 Exported both into `data/ratings/{dandan,gabriel}.json`, added as new
 scoring-test scenarios (`scripts/scoring_tests.py`): Dandan gets a real
 held-out split (32 ratings is enough -- 7 held out, chosen to leave 2 of
-her 3 negative-tier ratings in training so the calibrated threshold has
+his 3 negative-tier ratings in training so the calibrated threshold has
 something to compute from); Gabriel gets leave-one-out, same treatment
 Osnat's round-1 4-book list got, since 7 ratings can't support a real
 split. Also fixed `run_leave_one_out_diagnostic()` while touching it --
@@ -3374,7 +3374,7 @@ threshold per iteration and returns rows in the same shape
 recall_and_rejection()/scorecard_row() unchanged.
 
 **Results, both added to the benchmark scorecard:** Dandan -- 5/7 bucket
-accuracy (71%), 73% pairwise, 100% hated_rejection (her one hated book,
+accuracy (71%), 73% pairwise, 100% hated_rejection (his one hated book,
 The Path of Daggers, correctly caught), but only 33% loved_recall (2 of
 3 held-out loved books scored surprisingly low -- Words of Radiance and
 Shadows of Self, while Ender's Shadow scored correctly high; not
@@ -3447,7 +3447,7 @@ has a high false-positive rate -- 60% for Mathias, 100% for Dandan and
 Gabriel. Root cause: a field's raw weight estimated from a handful of
 ratings is noisy, and noise crosses a fixed magnitude bar as easily as
 a real signal does. Dandan's Words of Radiance (loved) and The Way of
-Kings (it_was_okay) both tripped a "court intrigue" flag despite her
+Kings (it_was_okay) both tripped a "court intrigue" flag despite his
 rating them fine -- exactly the kind of false alarm that would erode
 trust in this feature fast if shipped as-is.
 
@@ -3486,8 +3486,8 @@ the reduced held-out-split training): Osnat has enough sample (4
 disliked) but genuinely no field separates her groups strongly, matching
 the already-documented Magic Bites/Magic Burns finding; Dandan's full
 32-rating profile DOES validate one field (`pace_shape`, separation
-0.565) that her held-out split's reduced training set couldn't reach --
-confirmed her actual disliked books just don't happen to mismatch on
+0.565) that his held-out split's reduced training set couldn't reach --
+confirmed his actual disliked books just don't happen to mismatch on
 that specific field, so no flag fires, which is correct, not a
 contradiction; Gabriel has exactly 1 disliked rating, which can never
 clear the 3-sample gate no matter how the data is split -- a real limit
