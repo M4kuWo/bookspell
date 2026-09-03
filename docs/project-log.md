@@ -4669,3 +4669,35 @@ Hardcover's own contributor data a MANDATORY step for every newly
 ingested book, not a reactive check for suspicious-looking cases, using
 the same "not an after-the-fact audit" framing already applied to the
 trope/CW density rule after ITS first recurrence.
+
+## 2026-09-03 (later still) -- full rating-history genre breakdown, "City" ingested
+
+Repo owner shared the fantasy/sci-fi split lists with a friend, who
+found the fantasy list noticeably more accurate; repo owner attributed
+this to having far more fantasy ratings than sci-fi ones and asked for
+the real numbers. Computed directly against his 113 ratings at the time
+(before this entry's own addition): 91 fantasy-only, 15 sci-fi-only, 7
+dual-tagged (fantasy+sci_fi) -- roughly 4.4:1 in fantasy's favor once
+dual-tagged books are split evenly, or ~6:1 counting only single-genre
+books. Confirms the hypothesis. A second, compounding factor found
+alongside it: his sci-fi-only ratings are also proportionally more
+mixed (7 of 15 disliked/hated, 47%) than his fantasy-only ones (13 of
+91, 14%) -- so the sci-fi profile isn't just built from less data, the
+data it does have is less consistent, which independently would make
+for a noisier profile even before accounting for sample size.
+
+Not built: a genuine genre-scoped held-out accuracy test to verify this
+empirically rather than infer it from counts. Flagged as having a real,
+inherent limitation right now -- with only ~22 sci-fi-touching books
+total, holding out enough for a meaningful test would eat further into
+an already-thin sci-fi training pool, likely producing a result too
+noisy to trust more than the counts already given. Worth revisiting
+once sci-fi-tagged ratings grow.
+
+**"City" (Clifford D. Simak) ingested** -- another remembered book,
+surfaced after this same review. Bibliographic only
+(`20260903230000_targeted_ingestion_city_simak.sql`, hardcover_id
+373370, confirmed as the single-book edition over two omnibus matches),
+rated liked, added to the tag-catalog-batch skill's Step 0 as the new
+priority item (the original 23/25-book batch is marked done there).
+Verified matching on local and hosted (871 books both sides).

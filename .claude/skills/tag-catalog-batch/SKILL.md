@@ -68,10 +68,26 @@ a value not listed there. If you think a real gap exists in the
 vocabulary (a trope or value that should exist but doesn't), don't
 silently work around it -- note it in your final report instead.
 
-## Step 0: PRIORITY BATCH -- tag these 23 books first
+## Step 0: PRIORITY BATCH -- tag this book first
 
-Before running Step 2's normal partial-series-first query, tag these 23
-specific books first, regardless of what that query would otherwise
+**UPDATE (2026-09-03, later): the original 23/25-book priority batch
+below is DONE** -- tagged, density-audited, and verified (see
+docs/project-log.md's independent-audit entry). Left here for reference
+only, not something to redo.
+
+**New priority item, tag before Step 2's normal query**: **City**
+(Clifford D. Simak) -- ingested
+(`20260903230000_targeted_ingestion_city_simak.sql`) specifically
+because the repo owner remembered and rated it (liked) from memory,
+same reasoning as the batch below: tagging it unlocks real signal
+immediately rather than sitting invisible behind less-verified titles.
+Standalone, no series.
+
+---
+
+The original priority batch (DONE, reference only): before running
+Step 2's normal partial-series-first query, these 23 specific books
+were tagged first, regardless of what that query would otherwise
 surface. They were bibliographically ingested 2026-09-03
 (`supabase/migrations/20260903170000_targeted_ingestion_mathias_priority_list.sql`)
 specifically because the repo owner (Mathias) named and rated every one
