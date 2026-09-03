@@ -4519,3 +4519,50 @@ recommendation: collecting more disliked/hated ratings specifically
 (not just more ratings in general, and not necessarily a message-themes
 tagging effort first) is the highest-leverage next step for making any
 future statistical-validation work reliable at all.
+
+## 2026-09-03 (later still) -- message_themes shelved (not dropped), synced with the wife's tagging session, real accuracy jump confirmed
+
+Repo owner's call on `message_themes`: not abandoning the idea, but not
+committing resources to it right now either -- explicitly shelved for
+later, kept in mind as a near-future candidate rather than closed out.
+No code/doc change beyond this note; the full design proposal stays in
+book-dna.md's backlog exactly as written.
+
+**Synced with the wife's separate tagging session**: `git fetch` found
+3 new commits (`7dca993`, `2a93080`, `26c6080` -- the priority-batch
+tagging plus 2 more 20-book batches, 45 books total). Confirmed zero
+file overlap with this session's own uncommitted local work before
+merging (`git diff --name-only` on both sides of the merge-base showed
+no shared files) -- clean explicit merge, no conflicts.
+
+**Found the same category of desync this project has hit before, but
+a different specific flavor of it**: `supabase migration list --linked`
+showed all 3 new migration files as `local` with no matching `remote`
+entry. Checked data on both sides before assuming anything (per
+CLAUDE.md's standing instruction) -- unlike the earlier documented
+incident (data already on hosted, only the TRACKING was missing), this
+time hosted's `book_dna` count (582) exactly matched local's PRE-batch
+count and didn't have Kings of Ash tagged either -- meaning these 3
+migrations were applied to the wife's own separate local Supabase
+instance and committed to git, but never actually pushed to the SHARED
+hosted database at all. Not a `migration repair` case (nothing to
+repair -- the data genuinely wasn't there). Fixed the normal way:
+applied to this machine's local Postgres via the raw psycopg2 script,
+then `supabase db push` for real. Verified matching exactly after:
+647 tagged / 870 total books, both sides, `migration list --linked`
+showing every entry matched.
+
+**Real, substantial accuracy improvement, confirming the learning-curve
+finding from earlier today wasn't just a projection**: rated-and-tagged
+pool grew from 86 to 111 (63/15 liked-disliked split before, now 84/19)
+directly closing part of the disliked-side gap the validation-power
+simulation flagged as the real bottleneck. Rerunning the full benchmark
+scorecard: Mathias-full pairwise accuracy 67%->89%, series-isolated
+64%->80%, author-isolated 67%->76% -- a clean, across-the-board jump,
+no regressions. Fixed a real stale hardcoded label while at it
+(`scripts/scoring_tests.py`'s scorecard said "Mathias -- full (53
+ratings)" long after the real count had grown well past 100) -- now
+computed fresh from the actual training pool each run.
+
+Pushed everything (this session's simulation-tools commit, the merge,
+and the label fix) to `origin/main`.

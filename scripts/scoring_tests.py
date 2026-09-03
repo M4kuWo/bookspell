@@ -464,8 +464,15 @@ def scorecard_row(name, rows, target_key):
 def build_scorecard(catalog):
     rows = []
 
+    # Training-set size in the row label is computed fresh each run, not
+    # hardcoded -- it drifts every time more ratings are added/tagged
+    # (was stale at "53" for a long stretch this session while real
+    # count grew past 100; see docs/project-log.md's 2026-09-03 note).
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    full_train_size = len({t for t in REAL_RATINGS if t not in REAL_HELD_OUT and t in title_to_id})
+
     _, _, r = run_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, full", quiet=True, summary=False)
-    rows.append(scorecard_row("Mathias -- full (53 ratings)", r, "full"))
+    rows.append(scorecard_row(f"Mathias -- full ({full_train_size} ratings)", r, "full"))
 
     _, _, r = run_held_out_test(catalog, REAL_RATINGS, SPARSE_HELD_OUT, "Mathias, sparse",
                                  train_ratings=SPARSE_RATINGS, quiet=True, summary=False)
