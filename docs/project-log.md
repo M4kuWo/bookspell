@@ -4211,3 +4211,68 @@ the author-level match works across series too), promoting Jade City/
 The City of Brass/Wizard's First Rule into the top 10 instead. Full
 `scoring_tests.py` suite reran clean after adding the parameter (default
 behavior unchanged).
+
+## 2026-09-03 (later still) -- author-gender correlation checked and rejected, a real learning-curve tool added, two backlog ideas logged
+
+Follow-up from repo owner's continued reaction to the algorithm
+critique, plus two new questions.
+
+**Author gender**: repo owner suspected he responds less positively to
+female-authored books. Checked directly: female-authored books (7
+authors, 11 ratings in his 86-rating history) average magnitude -0.227;
+male-authored (28 authors, 75 ratings) average +0.593 -- a real, large
+gap on its face. But it doesn't survive decomposition: 5 of the 7
+negative female-authored ratings are `person: first` (his single
+strongest validated dealbreaker), the other 2 are both
+`message_intensity: heavy_handed` (the already-documented Poppy
+War/Dragon Republic issue). Every positive female-authored rating is an
+ordinary match on his general profile. Conclusion: the correlation is
+real but fully confounded by mechanisms this project already tracks and
+has independently validated -- an author-gender field would be
+redundant, not a new source of signal, and would risk generalizing
+badly (a female author who doesn't write first-person/heavy-handed
+books would get no benefit from a demographic proxy that happens to
+correlate in his specific history). Not built. Full numbers in
+`docs/scoring-test-protocol.md`.
+
+**Learning curve (accuracy vs. rating-history size)**: repo owner asked
+whether adding more ratings would meaningfully improve accuracy, and
+whether that could be measured against history size. Added
+`run_learning_curve()` to `scripts/scoring_tests.py` (new Scenario 10 in
+`run_all()`) -- trains on random subsets of increasing size from his
+real ratings (15 repeats per size, fixed held-out set across all sizes,
+seeded for reproducibility). Real, clear answer: bucket accuracy roughly
+DOUBLES from 32% at 10 ratings to 68% at 70 -- the single biggest lever
+for prediction quality this project has found this session, bigger than
+any individual scoring-formula change. Pairwise accuracy improves too
+(63%->73%) but plateaus earlier, around 45-60 ratings. History
+DIVERSITY (as opposed to count) isn't measured by this tool yet -- only
+varies sample size via random draws from his existing pool -- flagged as
+a real follow-up, not built this round.
+
+**Two backlog ideas logged** in `docs/schema/book-dna.md`'s "Future
+fields backlog" (not built, per this project's "needs to clear a real
+bar" standard, each needing more than one data point):
+- Revenge "sweet fruition" vs. revenge-as-anti-violence-message
+  (Red Rising named as the specific negative example) -- possibly
+  already partially caught by `message_intensity`, possibly needs a new
+  controlled value; repo owner's own words: "I don't know how this
+  could be caught by a pattern recognition system."
+- Protagonist gender as a possible field, from a single before/after
+  pair (loved The Grey Bastards, hated its sequel).
+
+**Deferred, not acted on**: repo owner listed ~19 more books he
+remembers liking/disliking outside the current catalog (Kings of
+Paradise trilogy confirmed loved in full, Malice's sequel Valor loved,
+The Grey Bastards loved/sequel hated, Licanious trilogy liked, the
+Pariah/Martyr/Traitor trilogy, Aching God, The Vagrant, The Justice of
+Kings, I'm Afraid You've Got Dragons hated, The Wandering Inn hated, The
+Malice by Peter Newman liked, Ender's Shadow loved, the Red Queen's War
+trilogy loved, Blackwing liked, Firestarter loved, the Time Master
+series liked, One Word Kill didn't resonate) plus two genre-scope
+questions (Firestarter -- soft-scifi psychic powers, clearly in scope;
+Joe Hill's Heart-Shaped Box/Horns/NOS4A2 -- all treat their supernatural
+elements as real and central, in scope as horror/fantasy crossover by
+this project's existing diegetic-vs-device test). Repo owner explicitly
+said to look these up specifically later -- nothing ingested or rated
+this round.

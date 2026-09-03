@@ -1088,6 +1088,39 @@ Deliberately deferred, not in v0.1:
   Legitimate technique, real modeling work touching the whole trope
   vocabulary and scoring code. Deferred — revisit if trope-sparsity for
   narrower tags becomes an observed real problem, not before.
+- **`revenge` (trope) satisfying vs. hollow resolution** — raised
+  2026-09-03 by the repo owner after his `revenge` separation checked
+  out as slightly NEGATIVE (-0.041, see scoring-test-protocol.md's
+  qualitative-review-round-2 entry), contradicting his own stated
+  instinct. His clarification: he likes revenge "coming to a sweet
+  fruition," not revenge used as a device to illustrate "violence leads
+  to more violence, why can't we all just hold hands" (Red Rising named
+  as the specific example that doesn't work for him). This is really
+  the SAME axis as `message_intensity`/`emotional_resolution` intersected
+  with the `revenge` trope specifically, not a wholly new field — but
+  no existing field currently distinguishes "the revenge plot resolves
+  as earned catharsis" from "the revenge plot resolves as a cautionary
+  tale about violence." Repo owner's own words: "I don't know how this
+  could be caught by a pattern recognition system" — genuinely unclear
+  whether this needs a new controlled value (e.g. splitting
+  `emotional_resolution` or adding a revenge-specific resolution
+  sub-trope) or is better left as a case the veto/message_intensity
+  fields already partially catch (both Poppy War and Dragon Republic,
+  his actual heavy-handed-message dislikes, already validate via
+  `message_intensity: heavy_handed`). Not built — needs more than one
+  data point (Red Rising) before it clears this project's "does this
+  change what gets recommended" bar.
+- **Protagonist gender as a possible field** — raised 2026-09-03: repo
+  owner loved The Grey Bastards but hated its sequel, hypothesizing
+  protagonist gender/POV-character change as the reason. A single
+  before/after pair from one duology, not yet checked against his wider
+  rating history (no `protagonist_gender` field exists to check it
+  against retroactively). Worth real investigation once/if a field like
+  this is added — but per this project's schema-change bar, needs
+  either (a) enough of his catalog independently re-tagged to check the
+  hypothesis, or (b) more real examples surfacing the same pattern,
+  before committing to a new controlled vocabulary value. Flagged, not
+  built.
 
 ## Open for review
 

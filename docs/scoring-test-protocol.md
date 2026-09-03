@@ -945,3 +945,89 @@ top 10 instead, all previously ranked just below the cutoff. Reran the
 full `scoring_tests.py` suite after adding the parameter (default
 unchanged): zero regressions, identical output modulo the same
 pre-existing tie-ordering nondeterminism noted above.
+
+## Author-gender correlation -- checked, confounded, not built (2026-09-03)
+
+Repo owner's hypothesis: "I feel like I respond less positively to
+books by female authors." Checked directly against his 86 real ratings
+(classified each of his 35 rated authors' publicly-known gender by
+hand -- all public professional authors, not private individuals).
+Raw numbers: female-authored books (7 authors, 11 ratings) average
+magnitude **-0.227** (between it_was_okay and disliked); male-authored
+(28 authors, 75 ratings) average **+0.593** (between liked and loved).
+A real, large-looking gap on its face.
+
+**But it doesn't survive decomposition -- it's confounded by two
+mechanisms this project already tracks and has independently
+validated.** Of the 7 negative-magnitude female-authored ratings, 5 are
+`person: first` (Circe, Interview with the Vampire, Royal Assassin,
+Assassin's Apprentice, Assassin's Quest) -- his single most
+statistically validated dealbreaker field, separation 0.692, landed
+weeks before this check. The other 2 (The Poppy War, The Dragon
+Republic) are both `message_intensity: heavy_handed` -- the exact,
+already-documented, independently-corroborated (by a friend who read
+the same author's Babel) issue from the 2026-09-02 enjoyment-vs-quality
+rating correction. Meanwhile every POSITIVE female-authored rating
+(Six of Crows, Crooked Kingdom, The Time Traveler's Wife) is
+third-limited or first-but-not-heavy-handed, fast/medium pace --
+unremarkable, ordinary matches to his general profile.
+
+**Not built as a field.** Two independent reasons, not just "small
+sample": (1) statistically, once you condition on `person` and
+`message_intensity`, there's no residual gender signal left to explain
+-- an author-gender field would be redundant with mechanisms already
+in the schema, not a new source of predictive power; (2) by design,
+this schema targets the actual TEXTUAL/structural mechanism driving a
+reaction (person, pace, message intensity, darkness...), not a
+demographic proxy for it -- even where a demographic correlation is
+real on its face, the mechanism-based fields already explain it more
+precisely and without the risk of a spurious/confounded signal
+generalizing badly to a female author who doesn't write first-person
+or heavy-handed books. `n=11` for female-authored ratings is also
+genuinely small; revisit if a much larger, still-unexplained gap
+appears once his history grows via the learning-curve work below.
+
+## Learning curve: accuracy vs. rating-history size -- added (2026-09-03)
+
+Repo owner's own question: "maybe if we add more books to my list we
+could improve it more... maybe we could correlate the level of accuracy
+with the history size." Added `run_learning_curve()`/
+`print_learning_curve()` to `scripts/scoring_tests.py` (wired into
+`run_all()` as Scenario 10) -- for a range of training-set sizes, draws
+15 random subsets of that size from Mathias's real ratings (excluding
+`REAL_HELD_OUT`, which stays fixed across every point so every size is
+judged against the exact same 11-book test), trains a profile on each,
+and averages pairwise/bucket accuracy across the repeats. Deterministic
+(seeded RNG) so the curve is reproducible run to run.
+
+Result, current data (86 ratings total, 75 available for training after
+excluding the fixed held-out set):
+
+| Train size | Pairwise acc. | Bucket acc. |
+|---|---|---|
+| 10 | 63% | 32% |
+| 22 | 65% | 35% |
+| 34 | 68% | 42% |
+| 46 | 72% | 52% |
+| 58 | 72% | 63% |
+| 70 | 73% | 68% |
+| 75 (full, 1 draw) | 69% | 64% |
+
+**Clear, real answer: yes, more ratings help, substantially.** Bucket
+accuracy roughly DOUBLES from 32% at 10 ratings to 68% at 70 -- the
+single biggest lever this project has found for prediction quality,
+bigger than any individual scoring-formula change tried this session.
+Pairwise accuracy also improves (63%->73%) but visibly plateaus earlier,
+around 45-60 ratings -- consistent with pairwise accuracy already being
+a more forgiving, higher-power metric even at small sample sizes (see
+its own docstring). The `n=1` final row (no repeats possible at the
+full pool size) is noisier than the rest of the curve by construction
+and shouldn't be read as a real dip.
+
+Diversity-of-history (the other half of the repo owner's question --
+not just count, but how varied the rated books are) is NOT measured
+here yet -- this only varies sample SIZE via random draws from his
+existing pool, which already has whatever diversity his real reading
+history has. A real diversity metric would need a second axis (e.g.
+re-running at fixed size but deliberately narrow vs. broad genre/author
+mixes) -- flagged as a natural follow-up, not built this round.

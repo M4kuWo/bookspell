@@ -14,6 +14,7 @@ that shape, not fabricated ratings.
 import sys
 import os
 import json
+import random
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 import recommend as R
@@ -888,6 +889,78 @@ def run_all():
         catalog,
         validated_fields_fn=lambda id_to_mag: R.validated_dealbreaker_fields(catalog, id_to_mag),
     )
+
+    print("\n=== Scenario 10: learning curve (accuracy vs. rating-history size) ===")
+    curve = run_learning_curve(catalog, REAL_RATINGS, REAL_HELD_OUT)
+    print_learning_curve(curve, "Mathias", len(REAL_HELD_OUT))
+
+
+# --- Learning curve: does accuracy actually improve with more ratings? --
+# (2026-09-03) Repo owner's own question after the qualitative-review-
+# round-2 critique: "if we add more books... maybe we could correlate
+# the level of accuracy with the history size." REAL_HELD_OUT stays
+# fixed (never trained on, across every sample) so every point on the
+# curve is judged against the exact same test -- only the TRAINING pool
+# size varies. Sampled repeatedly at each size (not just once) because
+# a single random subset at a small size is noisy enough to make the
+# curve meaningless otherwise -- see this project's repeated "don't
+# conclude from one small sample" caveats elsewhere in this file.
+LEARNING_CURVE_REPEATS = 15
+LEARNING_CURVE_SEED = 42
+
+
+def run_learning_curve(catalog, all_ratings, held_out, sizes=None, repeats=LEARNING_CURVE_REPEATS, seed=LEARNING_CURVE_SEED):
+    """For each size in `sizes`, draws `repeats` random subsets of that
+    size from all_ratings (excluding held_out), trains a profile on each,
+    scores the SAME fixed held_out set, and averages pairwise/bucket
+    accuracy across the repeats. Returns a list of
+    {"size", "pairwise_accuracy", "bucket_accuracy", "n_repeats"} dicts,
+    one per size actually run (a requested size larger than the
+    available pool is silently skipped, not padded/clamped).
+
+    sizes: defaults to a spread from 10 up to the full pool in ~6 steps.
+    Deterministic (fixed `seed`) so this is reproducible run to run, not
+    a different curve every time out of pure sampling luck."""
+    pool = {t: r for t, r in all_ratings.items() if t not in held_out}
+    pool_titles = list(pool.keys())
+    max_size = len(pool_titles)
+
+    if sizes is None:
+        step = max(5, max_size // 6)
+        sizes = list(range(10, max_size, step)) + [max_size]
+        sizes = sorted(set(s for s in sizes if s <= max_size))
+
+    rng = random.Random(seed)
+    curve = []
+    for size in sizes:
+        if size > max_size:
+            continue
+        pw_hits_total = pw_n_total = bucket_hits_total = 0
+        n_repeats = 1 if size == max_size else repeats
+        for _ in range(n_repeats):
+            sample_titles = pool_titles if size == max_size else rng.sample(pool_titles, size)
+            train = {t: pool[t] for t in sample_titles}
+            _, _, rows = run_held_out_test(catalog, all_ratings, held_out, None,
+                                            train_ratings=train, summary=False, quiet=True)
+            pw_hits, pw_n = pairwise_accuracy(rows)
+            pw_hits_total += pw_hits
+            pw_n_total += pw_n
+            bucket_hits_total += sum(1 for r in rows if r[4] == "OK")
+        curve.append({
+            "size": size,
+            "pairwise_accuracy": _pct(pw_hits_total, pw_n_total),
+            "bucket_accuracy": _pct(bucket_hits_total, n_repeats * len(held_out)),
+            "n_repeats": n_repeats,
+        })
+    return curve
+
+
+def print_learning_curve(curve, label, held_out_size):
+    print(f"  {label} (held-out set fixed at {held_out_size} books, "
+          f"up to {LEARNING_CURVE_REPEATS} random samples per size):")
+    print(f"    {'Train size':<12} {'Pairwise acc.':<16} {'Bucket acc.':<14} {'Repeats'}")
+    for point in curve:
+        print(f"    {point['size']:<12} {_fmt_pct(point['pairwise_accuracy']):<16} {_fmt_pct(point['bucket_accuracy']):<14} {point['n_repeats']}")
 
 
 if __name__ == "__main__":
