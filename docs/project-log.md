@@ -4100,3 +4100,47 @@ rater's data.
 
 See `docs/scoring-test-protocol.md`'s updated "Veto/cap mechanism --
 LANDED" section for the full before/after detail.
+
+## 2026-09-03 (later) -- qualitative review round 2: a real mistagged book found and deleted, two missed ratings added
+
+Follow-up from a second qualitative `recommend()` review (top 20, after
+the nominal-similarity fix above). Two findings, both real, neither a
+scoring bug:
+
+**The Girl with the Dragon Tattoo (Stieg Larsson) was tagged
+`genre: ['sci_fi']`** despite being a straight Swedish crime/
+murder-mystery thriller with zero speculative content (confirmed
+against its own synopsis: a journalist and a hacker investigating a
+decades-old disappearance and corporate corruption, nothing
+fantastical or SFF at all). This let it leak into `recommend()`'s
+SFF-scoped results and surface as a "Strong match" (0.766) purely on
+craft/structural fields (third-limited narration, dual POV, standard
+prose) that say nothing about genre. A real catalog-scope contamination
+case, same category as the out-of-scope triage earlier this week, just
+caught downstream via a recommendation instead of upstream via a
+genre-search audit. Confirmed zero dependent rows in
+`rating_submissions`/`book_field_confidence` and no soft-reference in
+any rater's `data/ratings/*.json` before deleting. Deleted via
+`20260903160000_delete_mistagged_girl_with_dragon_tattoo.sql` (child
+rows in `book_content_warnings`/`book_tropes`/`book_dna` first, then
+the `books` row, all scoped by title subselect). Applied to local via
+the raw psycopg2 script, then hosted via `supabase db push`; verified
+matching on both sides (847 books, down from 848).
+
+**Two real missed ratings surfaced by the same review**: Dawnshard
+(Stormlight Archive novella, read and liked) and Kings of Paradise
+(Richard Nell, read and loved) -- both genuinely never on file despite
+the repo owner believing Kings of Paradise already was ("wasn't it
+logged already?" turned out to be a false memory once checked against
+`data/ratings/mathias.json` directly). Both added. Neither is a data
+bug, just a gap in what had been collected -- flagged here mainly
+because it's the second time this session a qualitative review round
+has surfaced a real missing rating (see the Poppy War/Dragon Republic/
+Promise of Blood round above), which is exactly the value this kind of
+review is for.
+
+Also confirmed, per explicit repo-owner instruction, that round 1's
+already-surfaced titles (Shadow of the Gods, Rage of Dragons, Katabasis)
+should NOT be excluded from a fresh top-20 pull -- the point of this
+review is to see what the system currently and honestly ranks, not to
+curate around what's already been shown.
