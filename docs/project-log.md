@@ -4772,3 +4772,63 @@ output is a large, disposable analysis artifact (not committed to git,
 this is exploratory not a durable doc), path given directly to the
 repo owner for this session. The TOOL itself is committed and reusable
 any time going forward.
+
+## 2026-09-04 (later) -- Goodreads import tool built (Fable deferred, not researched confidently enough yet)
+
+Repo owner wants a way to import Goodreads/Fable users' reading history
+-- both because the product will eventually need this anyway, and as a
+near-term way to get real, richer test data from "lazy testers" (real
+readers with hundreds of rated books who won't hand-type a rating list
+the way Mathias/Osnat/Dandan/Gabriel did).
+
+**Goodreads**: built `scripts/import_goodreads.py`. Goodreads shut down
+its public API in 2020 -- this parses the CSV a user can export
+themselves (My Books -> Import/Export -> Export Library), a standard,
+ToS-compliant, user-initiated export, not scraping. Matching, in order:
+exact ISBN/ISBN13 (normalized -- Goodreads wraps these in `="..."`
+Excel-formula escaping), exact normalized title+author (stripping
+Goodreads' own series-suffix convention, "Title (Series, #3)"), then a
+same-author fuzzy title match (difflib, threshold 0.90, conservative on
+purpose -- a false match silently corrupts a rating; a missed match
+just lands in the unmatched report). Stars map 1:1 by POSITION to this
+project's 5-tier scale (1=hated...5=loved) -- not Goodreads' own
+oddly-worded star labels, which most users don't read literally anyway.
+Output is a normal `data/ratings/<name>.json` rater file, explicitly
+marked in its own `_meta` as unreviewed/draft until a human spot-checks
+it, plus a console report of unmatched titles sorted by Goodreads' own
+average rating (a rough "well-known enough to maybe ingest" signal).
+
+**Caught a real bug before it could bite in production use**:
+`R.load_catalog()` deliberately doesn't select `books.isbn` (nothing in
+the scoring path needs it), which would have silently made ISBN
+matching never fire against the real catalog -- only worked in the
+first self-check because that used a hand-built synthetic catalog dict
+with `isbn` inlined directly, masking the gap. Fixed with a small,
+separate supplementary query (`fetch_isbns_by_book_id()`) rather than
+changing the shared, heavily-used `load_catalog()` for a need specific
+to this one script. Caught by actually running an end-to-end test
+against the REAL local catalog (a real ISBN, a real exact-title match,
+a real unmatched book), not just the synthetic fixture -- the synthetic
+fixture alone would never have caught this.
+
+**Not yet tested against a real Goodreads export file** -- none was
+available when this was built, only the documented, stable column
+format. Test against a real export (Osnat's friend's, or anyone's)
+before trusting this on someone's actual data.
+
+**Fable: deliberately NOT built.** This session has no confident,
+verified knowledge of what data-export or API capability Fable actually
+offers -- asserting a specific mechanism without checking first would
+be exactly the kind of confidently-wrong claim this project's own
+standing policy warns against (see CLAUDE.md's tagging-accuracy
+section). Needs real research (Fable's own settings/help docs, or
+asking a Fable user directly) before anything gets built for it.
+
+**A real, non-technical consideration flagged, not resolved**:
+importing someone's Goodreads account means importing a real person's
+actual reading history and opinions, not disposable test fixtures --
+get explicit consent before running this on a friend's export, and
+decide whether their ratings should be committed to a shared repo under
+their real name or need anonymizing first. Not a technical question,
+and not defaulted one way or another here -- a real product/privacy
+decision for the repo owner before this is used for real.
