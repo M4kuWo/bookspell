@@ -1871,6 +1871,224 @@ def log_feedback(title, selected_keys=None, notes=None):
         f.write(json.dumps(record) + "\n")
 
 
+# --- Deep score audit -- INTERNAL/DEBUG TOOL, not part of the -----------
+# production scoring path (2026-09-04). recommend()/explain_match() never
+# call this. Built for manually analyzing a specific candidate's score
+# against a specific profile in full detail: which specific liked/
+# disliked training books drove each field/trope, what penalties/bonuses/
+# interactions fired, and the exact pipeline that produced the final
+# 0-1 score -- a superset of what explain_match() surfaces (which only
+# shows aggregate field-level matches/mismatches, never traces back to
+# individual training books).
+#
+# Attribution shape differs by field type, because the underlying
+# statistic does:
+# - NOMINAL fields/tropes: the centroid is a MODE/frequency-share, so a
+#   specific training book either does or doesn't share the relevant
+#   value -- individual books are directly nameable ("liked_supporting"/
+#   "disliked_undercutting" below).
+# - ORDINAL fields: the centroid is a continuous weighted MEAN position,
+#   so no single training book "caused" it in a discrete sense -- reported
+#   as a summary (mean position, n, magnitude-weighted) rather than a
+#   book list, to avoid a misleading implication of discrete attribution
+#   that doesn't match the actual math.
+AUDIT_CONTRIBUTION_THRESHOLD = 0.1  # same magnitude floor explain_book() uses
+AUDIT_BOOK_LIST_CAP = 8  # truncate long per-value book lists, note the overflow count
+
+
+def _audit_attribute_nominal_or_trope(catalog, id_to_magnitude, id_to_title, field_key, relevant_value):
+    """Which liked books SHARE relevant_value on this field/trope (support
+    for it being the profile's preference), and which disliked books
+    ALSO share it (undercutting -- see field_or_trope_separation()'s own
+    math: a disliked book sharing the liked group's preferred value is
+    exactly what LOWERS that field's separation/weight)."""
+    is_trope = field_key.startswith("trope:")
+    key = field_key[len("trope:"):] if is_trope else field_key
+
+    def has_value(bid):
+        if is_trope:
+            return key in (catalog[bid].get("tropes") or [])
+        return catalog[bid].get(key) == relevant_value
+
+    liked = [id_to_title[bid] for bid, mag in id_to_magnitude.items() if mag > 0 and has_value(bid)]
+    disliked = [id_to_title[bid] for bid, mag in id_to_magnitude.items() if mag < 0 and has_value(bid)]
+    return {
+        "liked_supporting": liked[:AUDIT_BOOK_LIST_CAP],
+        "liked_supporting_overflow": max(0, len(liked) - AUDIT_BOOK_LIST_CAP),
+        "disliked_undercutting": disliked[:AUDIT_BOOK_LIST_CAP],
+        "disliked_undercutting_overflow": max(0, len(disliked) - AUDIT_BOOK_LIST_CAP),
+    }
+
+
+def _audit_attribute_ordinal(catalog, id_to_magnitude, field):
+    """Summary form for an ordinal field -- see module note above for why
+    this isn't a book list. Returns magnitude-weighted mean position and
+    sample size for each side."""
+    def summarize(sign):
+        positions = []
+        for bid, mag in id_to_magnitude.items():
+            if (mag > 0) != (sign > 0):
+                continue
+            pos = ordinal_position(field, catalog[bid].get(field))
+            if pos is not None:
+                positions.append((pos[0] / pos[1], abs(mag)))
+        if not positions:
+            return None
+        total_w = sum(w for _, w in positions)
+        mean = sum(p * w for p, w in positions) / total_w
+        return {"n": len(positions), "mean_position": round(mean, 3)}
+    return {"liked": summarize(1), "disliked": summarize(-1)}
+
+
+def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None):
+    """Full attribution trace for one candidate against one profile.
+    Returns a dict (see print_score_audit() for a readable rendering):
+    {
+      "title", "author", "final_score", "match_label",
+      "pipeline": [ {"stage", "score", "changed"}, ... ],
+      "matches": [ {"field", "contribution", "weight", "similarity",
+                     "redundancy_discounted", <attribution keys>}, ... ],
+      "mismatches": [ same shape ],
+      "dealbreaker_flags": [ (field, magnitude), ... ],
+      "validated_fields": set(...),
+      "series_note": str,
+    }"""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    centroid, weights, id_to_magnitude, matches_genre = _resolve_profile(
+        catalog, ratings, genre, fatigue_overrides
+    )
+    id_to_title = {bid: catalog[bid]["title"] for bid in id_to_magnitude}
+    validated_fields = validated_dealbreaker_fields(catalog, id_to_magnitude)
+    csw = cold_start_weight(catalog, id_to_magnitude)
+    book = catalog[title_to_id[title]]
+
+    raw_score, _ = score_book(book, centroid, weights)
+    after_series = _apply_series_repeat(catalog, id_to_magnitude, book, raw_score)
+    after_veto = _apply_dealbreaker_veto(
+        catalog, id_to_magnitude, validated_fields, book, centroid, weights, after_series
+    )
+    if csw > 0:
+        demand = GENRE_ACCESSIBILITY_DEMAND.get(book.get("genre_accessibility"), 0.5)
+        final = (1 - csw) * after_veto + csw * (1.0 - demand)
+    else:
+        final = after_veto
+
+    pipeline = [
+        {"stage": "raw score_book()", "score": round(raw_score, 4), "changed": None},
+        {"stage": "after _apply_series_repeat()", "score": round(after_series, 4),
+         "changed": abs(after_series - raw_score) > 1e-9},
+        {"stage": "after _apply_dealbreaker_veto()", "score": round(after_veto, 4),
+         "changed": abs(after_veto - after_series) > 1e-9},
+        {"stage": "after cold-start blend", "score": round(final, 4),
+         "changed": abs(final - after_veto) > 1e-9, "cold_start_weight": round(csw, 3)},
+    ]
+
+    matches, mismatches = explain_book(book, centroid, weights, top_n=100)
+
+    def build_rows(rows, negate=False):
+        out = []
+        for field_key, contribution in rows:
+            if abs(contribution) < AUDIT_CONTRIBUTION_THRESHOLD:
+                continue
+            if negate:
+                # explain_book() stores mismatch magnitude as a positive
+                # number (w*(1-sim), "how much this pulls down"), not a
+                # signed delta -- negate here so "contribution" has
+                # consistent sign semantics for any caller: positive
+                # always means "pulled the score up," negative always
+                # means "pulled it down," regardless of which list it
+                # came from.
+                contribution = -contribution
+            plain_field = field_key[len("trope:"):] if field_key.startswith("trope:") else field_key
+            row = {"field": field_key, "contribution": round(contribution, 3)}
+            if not field_key.startswith("trope:") and plain_field in weights:
+                raw_w = weights[plain_field]
+                eff_w = _redundancy_adjusted_weight(book, plain_field, raw_w)
+                if abs(eff_w - raw_w) > 1e-9:
+                    row["weight_raw"] = round(raw_w, 3)
+                    row["weight_after_redundancy_discount"] = round(eff_w, 3)
+            if field_key.startswith("trope:") or plain_field in NOMINAL_FIELDS:
+                # Always attribute against the CENTROID's own preferred
+                # value (its mode), not the candidate book's value -- a
+                # mismatch row means the book differs from that mode, but
+                # "who supports/undercuts this field's weight" is always
+                # about the mode itself, in both the match and mismatch
+                # case. Unused for tropes (has_value() checks presence,
+                # not a specific value).
+                relevant_value = centroid.get(plain_field)
+                row.update(_audit_attribute_nominal_or_trope(catalog, id_to_magnitude, id_to_title, field_key, relevant_value))
+            elif plain_field in ORDINAL_FIELDS:
+                row["training_data"] = _audit_attribute_ordinal(catalog, id_to_magnitude, plain_field)
+            out.append(row)
+        return out
+
+    dealbreaker = dealbreaker_flags(book, centroid, weights, validated_fields=validated_fields)
+    series_sim = series_repeat_worst_similarity(catalog, id_to_magnitude, book)
+
+    return {
+        "title": book["title"],
+        "author": book["author"],
+        "final_score": round(final, 4),
+        "match_label": match_label(final, user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)),
+        "pipeline": pipeline,
+        "matches": build_rows(matches),
+        "mismatches": build_rows(mismatches, negate=True),
+        "dealbreaker_flags": [(f, round(m, 3)) for f, m in dealbreaker],
+        "validated_fields": sorted(validated_fields),
+        "series_repeat_worst_similarity": round(series_sim, 3) if series_sim is not None else None,
+    }
+
+
+def print_score_audit(audit, max_matches=None, max_mismatches=None):
+    """max_matches/max_mismatches: cap how many rows print (the returned
+    audit dict from audit_book_score() always has the FULL list --
+    this only truncates DISPLAY, for running this across many books at
+    once without an unmanageable wall of text). None = print everything
+    above AUDIT_CONTRIBUTION_THRESHOLD, same as audit_book_score()'s
+    default."""
+    print(f"\n### {audit['title']} by {audit['author']} -- final score {audit['final_score']} ({audit['match_label']})")
+    print("  Pipeline:")
+    for stage in audit["pipeline"]:
+        flag = "" if stage["changed"] is None else ("  <- CHANGED" if stage["changed"] else "  (no change)")
+        extra = f" (cold_start_weight={stage['cold_start_weight']})" if "cold_start_weight" in stage else ""
+        print(f"    {stage['stage']:<38} {stage['score']:.4f}{extra}{flag}")
+
+    if audit["validated_fields"]:
+        print(f"  Statistically validated dealbreaker fields for this profile: {', '.join(audit['validated_fields'])}")
+    if audit["dealbreaker_flags"]:
+        print(f"  Dealbreaker flags fired: {audit['dealbreaker_flags']}")
+    if audit["series_repeat_worst_similarity"] is not None:
+        print(f"  Series-repeat: worst similarity to a disliked series-mate = {audit['series_repeat_worst_similarity']}")
+
+    def print_rows(rows, label, cap):
+        if not rows:
+            return
+        shown = rows if cap is None else rows[:cap]
+        overflow = 0 if cap is None else max(0, len(rows) - cap)
+        print(f"  {label}{f' (top {cap} of {len(rows)})' if overflow else ''}:")
+        for row in shown:
+            w_note = ""
+            if "weight_raw" in row:
+                w_note = f" [redundancy discount: {row['weight_raw']} -> {row['weight_after_redundancy_discount']}]"
+            print(f"    {row['field']:<35} contribution={row['contribution']:+.3f}{w_note}")
+            if "liked_supporting" in row:
+                ls, lo = row["liked_supporting"], row["liked_supporting_overflow"]
+                du, do = row["disliked_undercutting"], row["disliked_undercutting_overflow"]
+                if ls:
+                    print(f"        liked books also sharing this: {ls}{f' (+{lo} more)' if lo else ''}")
+                if du:
+                    print(f"        disliked books ALSO sharing this (undercuts the signal): {du}{f' (+{do} more)' if do else ''}")
+            if "training_data" in row:
+                td = row["training_data"]
+                if td["liked"]:
+                    print(f"        liked training data: n={td['liked']['n']}, mean position={td['liked']['mean_position']}")
+                if td["disliked"]:
+                    print(f"        disliked training data: n={td['disliked']['n']}, mean position={td['disliked']['mean_position']}")
+
+    print_rows(audit["matches"], "Matches (pulling score UP)", max_matches)
+    print_rows(audit["mismatches"], "Mismatches (pulling score DOWN)", max_mismatches)
+
+
 if __name__ == "__main__":
     catalog = load_catalog()
     print(f"Loaded {len(catalog)} books.\n")

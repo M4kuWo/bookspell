@@ -4731,3 +4731,44 @@ tagging. Tested in a rolled-back transaction first, applied to local,
 pushed to hosted, verified matching (648 tagged books both sides). Full
 `scoring_tests.py` suite reran clean, no more "not found in catalog"
 warning for City.
+
+## 2026-09-04 -- deep score-audit tool built (internal/debug only)
+
+Repo owner asked for a per-book breakdown answering: which liked books
+contributed positively, which disliked books contributed negatively,
+which DNA fields contributed and by how much, what penalties/bonuses
+fired, what interactions fired, and the exact pipeline producing the
+final 0-1 score -- a superset of what `explain_match()` already
+surfaces (aggregate field-level matches/mismatches only, never traced
+back to specific training books).
+
+Added `audit_book_score()`/`print_score_audit()` to `scripts/
+recommend.py`, explicitly marked as an internal/debug tool -- NOT part
+of the production scoring path, `recommend()`/`explain_match()` never
+call it. Attribution shape differs by field type because the
+underlying statistic does: NOMINAL fields and tropes are mode/frequency
+based, so specific training books are directly nameable
+("liked_supporting"/"disliked_undercutting" -- the latter naming
+exactly what `field_or_trope_separation()`'s own math treats as
+weakening a field's weight: a disliked book sharing the liked group's
+preferred value). ORDINAL fields are a continuous weighted MEAN, so no
+single book "caused" it in a discrete sense -- reported as a magnitude-
+weighted mean position + sample size per side instead of a misleading
+book list. Also traces the full post-score pipeline
+(series_repeat -> dealbreaker_veto -> cold-start blend, each stage
+showing whether it actually changed anything) and any
+`REDUNDANCY_DISCOUNTS` that fired for this specific book.
+
+One real bug caught before finishing: mismatch contributions were
+initially displayed with a `+` sign (explain_book() stores mismatch
+magnitude as an unsigned "how much this pulls down" number, not a
+signed delta) -- fixed to negate at the source so "contribution" has
+consistent sign semantics everywhere (positive = pulled score up,
+negative = pulled it down), not just at print time.
+
+Ran across the full fantasy-20 + sci-fi-20 lists (capped at top 8
+matches / 5 mismatches per book for readability across 40 books) --
+output is a large, disposable analysis artifact (not committed to git,
+this is exploratory not a durable doc), path given directly to the
+repo owner for this session. The TOOL itself is committed and reusable
+any time going forward.
