@@ -4058,3 +4058,45 @@ process as round 1: verified zero dependent rows (including a rater-file
 soft-reference check) before writing anything, individually-scoped
 statements, tested in a rolled-back transaction first. Verified matching
 exactly on both sides: 848 books (down from 863), 583 tagged (unchanged).
+
+## 2026-09-03 (later still) -- fixed the nominal-field all-or-nothing matching gap
+
+Addressed the known, deferred limitation logged in
+`docs/scoring-test-protocol.md`'s "Veto/cap mechanism -- LANDED" section:
+nominal fields (`person`, `drive`, etc.) scored ANY non-exact match
+identically -- `third_limited` vs. `third_omniscient` (a close pair, both
+close third-person) counted the same as `third_limited` vs. `first` (an
+unrelated pair). Pure code change, no migration needed.
+
+Added `NOMINAL_PARTIAL_SIMILARITY`/`nominal_similarity()` to
+`scripts/recommend.py`, called from both `score_book()` and
+`explain_book()` (previously duplicated inline as
+`1.0 if a == b else 0.0` in each). Scoped deliberately narrowly to two
+pairs with real schema-comment justification, not a general "similar
+category" guess: `person`'s `third_limited`/`third_omniscient`, and
+`drive`'s `balanced` against both `character_driven` and `plot_driven`
+(the schema comment for `drive` explicitly calls `balanced` "an even
+split of" those two). Considered and rejected extending the same idea to
+`narrator_reliability`'s `ambiguous` and `emotional_resolution`'s
+`bittersweet` -- both have schema comments framing them as a genuinely
+different axis, not a blend, so they were left alone.
+
+Verified via a stash/unstash before-after diff of the full
+`scoring_tests.py` suite against unchanged catalog/rating data: zero
+MISS/OK label flips and zero regressions across all 8 benchmark
+scorecard rows; one ablation sub-metric improved (Mathias sparse,
+tropes-removed pairwise accuracy 83% -> 87%); only the specific affected
+candidates' scores moved (nudged up), nothing else changed. Also
+re-checked the original Children of Dune case directly: raw
+`score_book()` (pre-veto) is 0.916, and the `person` mismatch magnitude
+feeding the dealbreaker veto dropped from full weight (~0.42, sim=0) to
+half weight (0.212, sim=0.5) -- confirming the fix works as intended.
+Its *capped* score is still 0.549 in that one deliberately extreme
+synthetic domination scenario, because even half-credit deviation still
+clears the veto's 0.15 trigger bar there -- a separate, already-logged,
+non-blocking residual of the veto's own threshold mechanic, not this
+fix's job to change, and one that still doesn't manifest in any real
+rater's data.
+
+See `docs/scoring-test-protocol.md`'s updated "Veto/cap mechanism --
+LANDED" section for the full before/after detail.

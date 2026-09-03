@@ -776,6 +776,46 @@ Logged as a known, deferred limitation, not blocking, because it doesn't
 manifest in any real rater's data across this entire testing pass, only
 in the deliberately extreme synthetic domination scenario.
 
+**Nominal-field all-or-nothing gap -- PARTIALLY ADDRESSED (2026-09-03).**
+Added `NOMINAL_PARTIAL_SIMILARITY`/`nominal_similarity()` to
+`scripts/recommend.py`, called from both `score_book()` and
+`explain_book()` (previously each had its own inline
+`1.0 if a == b else 0.0`). Deliberately conservative scope, covering
+only two pairs with explicit schema-comment justification rather than
+guessing at "closeness" generally: `person`'s `third_limited`/
+`third_omniscient` (the pair that motivated this, above) and `drive`'s
+`balanced` against both `character_driven` and `plot_driven` (the
+schema comment for `drive` explicitly frames `balanced` as "an even
+split of" the two). Considered and rejected extending to
+`narrator_reliability`'s `ambiguous` and `emotional_resolution`'s
+`bittersweet` -- both have schema comments framing them as a genuinely
+different axis rather than a blend, so no partial credit was added
+there.
+
+Verified via a stash/unstash before-after diff of the full
+`scoring_tests.py` suite (same catalog/rating data, only this code
+change toggled): zero MISS/OK label flips and zero scorecard-row
+regressions across all 8 benchmark rows; one ablation sub-metric
+improved (Mathias sparse, tropes-removed pairwise accuracy 83% -> 87%);
+a handful of scores nudged up slightly for exactly the affected
+candidates (e.g. A Clash of Kings, Old Man's War) and nothing else
+moved.
+
+Re-checked the Children of Dune case directly: raw `score_book()`
+(pre-veto) is 0.916, and the `person` mismatch magnitude used by
+`dealbreaker_flags()`/the veto dropped from full weight (~0.42, sim=0)
+to half weight (0.212, sim=0.5) -- the fix is working as intended. It
+still clears the veto's `VALIDATED_DEALBREAKER_MAGNITUDE=0.15` trigger
+bar in this specific deliberately extreme domination scenario (person's
+learned weight there is large enough that even half-credit deviation
+exceeds 0.15), so Children of Dune's *capped* score is unchanged at
+0.549 -- the veto itself is a separate boolean/threshold mechanism, not
+in scope for this fix, and this residual is the same already-documented
+non-blocking limitation ("doesn't manifest in any real rater's data").
+The underlying scoring gap this was meant to fix -- nominal fields
+treating a close categorical pair identically to a totally unrelated
+one -- is resolved.
+
 Verified live end-to-end through `explain_match()`/`recommend()`
 directly, not just the test harness: Royal Assassin (trained on
 Mathias's real ratings minus itself and Skyward) now scores 0.323 (down

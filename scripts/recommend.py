@@ -98,6 +98,55 @@ NOMINAL_FIELDS = [
     "ends_on_cliffhanger", "magic_system_hardness", "scifi_hardness",
 ]
 
+# Nominal fields match all-or-nothing by default (see nominal_similarity()
+# below) -- correct for most nominal values, which really are just
+# different categories with no natural "closeness." But a stress test
+# during the veto/cap mechanism's rollout (2026-09-02) found a real gap:
+# person's third_limited and third_omniscient got scored as a COMPLETE
+# mismatch against each other, identical to third_limited vs. first --
+# even though a reader would call both "basically third person." This
+# maps specific (field, value_a, value_b) pairs to a partial-credit
+# similarity instead of 0.0 for a non-exact match. Exact match is always
+# 1.0 regardless of what's here.
+#
+# Deliberately conservative -- NOT a blanket "give nominal fields partial
+# credit" change (see this project's general caution against inventing
+# field relationships without real justification, e.g. the deferred
+# field-pairing-interactions idea in docs/scoring-test-protocol.md).
+# Each entry here has either (a) direct empirical evidence a full
+# mismatch is wrong (person, the case that motivated this), or (b)
+# explicit textual justification in the schema itself (drive's
+# `balanced` is documented as "an even split of" character_driven and
+# plot_driven -- a real midpoint, not an unrelated fourth category, so it
+# gets partial credit against each of those two specifically, but NOT
+# against worldbuilding_driven, which the schema treats as a genuinely
+# separate axis). Deliberately did NOT extend this to narrator_reliability's
+# `ambiguous` (the schema explicitly frames it as a different axis from
+# unreliable, not a blend -- "withholds the information needed to judge
+# either way," not "somewhat unreliable") or emotional_resolution's
+# `bittersweet` (linguistically plausible as a happy/tragic blend, but
+# without either empirical evidence or explicit schema backing -- a
+# candidate to revisit, not added speculatively).
+NOMINAL_PARTIAL_SIMILARITY = {
+    "person": {
+        frozenset({"third_limited", "third_omniscient"}): 0.5,
+    },
+    "drive": {
+        frozenset({"character_driven", "balanced"}): 0.5,
+        frozenset({"plot_driven", "balanced"}): 0.5,
+    },
+}
+
+
+def nominal_similarity(field, value_a, value_b):
+    """1.0 for an exact match, else a partial-credit value from
+    NOMINAL_PARTIAL_SIMILARITY if this specific (field, value_a, value_b)
+    pair has one, else 0.0 (the original all-or-nothing behavior)."""
+    if value_a == value_b:
+        return 1.0
+    return NOMINAL_PARTIAL_SIMILARITY.get(field, {}).get(frozenset({value_a, value_b}), 0.0)
+
+
 MULTI_FIELDS = ["tropes", "genre"]
 
 # Rating scale, added 2026-08-30. Labeled tiers rather than raw 1-5
@@ -955,7 +1004,7 @@ def score_book(book, centroid, weights):
             book_val = pos[0] / pos[1]
             sim = 1 - abs(book_val - centroid[field])
         else:
-            sim = 1.0 if book.get(field) == centroid[field] else 0.0
+            sim = nominal_similarity(field, book.get(field), centroid[field])
         w_eff = _redundancy_adjusted_weight(book, field, w) * get_confidence(book, field)
         contribution = w_eff * sim
         score += contribution
@@ -1012,7 +1061,7 @@ def explain_book(book, centroid, weights, top_n=5):
                 continue
             sim = 1 - abs(pos[0] / pos[1] - centroid[field])
         else:
-            sim = 1.0 if book.get(field) == centroid[field] else 0.0
+            sim = nominal_similarity(field, book.get(field), centroid[field])
         w = _redundancy_adjusted_weight(book, field, w) * get_confidence(book, field)
 
         if w >= 0:
