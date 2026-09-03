@@ -3962,3 +3962,47 @@ session, including everything above, aren't pushed to GitHub yet -- the
 wife's Claude session's tagging batch was already pushed and pulled in
 cleanly, but the reverse hasn't happened. Worth pushing soon so her next
 session doesn't work from a stale checkout.
+
+## 2026-09-03 (later) -- out-of-scope catalog triage, 51 books deleted
+
+Ran the triage flagged repeatedly but never done: 331 untagged books
+included a real mix of genuine SFF backlog and off-genre books Hardcover's
+noisy genre-search ingestion pulled in by mistake. Classified all 331 via
+a background agent (pure classification from title+author, no DB access
+needed -- see this project's own agent-efficiency convention for why this
+kind of large batch judgment work doesn't belong in the main session).
+Result: 262 confirmed in-scope (real backlog, left untagged for the next
+tagging pass), 51 confirmed out-of-scope, 17 genuinely uncertain
+(mostly magical-realism/literary-fabulism boundary cases -- Murakami,
+Isabel Allende, Colson Whitehead -- where the fantastical content is
+real but the book is culturally shelved as literary fiction).
+
+Spot-checked the agent's judgment before trusting it -- correctly
+distinguished Iain Banks (literary, excluded) from Iain M. Banks (his SF
+pen name, included), correctly separated Vonnegut's grounded Mother
+Night from his actual SF work, correctly excluded books whose
+supernatural framing turns out to be a hoax/twist within the book
+itself (Home Before Dark) rather than including anything with a
+horror-adjacent title. No misclassifications found on review.
+
+Before deleting anything, verified per this project's own safety rule:
+zero dependent rows in book_dna/book_tropes/book_content_warnings/
+book_field_confidence/rating_submissions for all 51 (all were untagged,
+as expected). One soft reference found and flagged, not a blocker:
+Osnat's ratings file has "Fifty Shades of Grey" in her wider reading
+history -- never tagged, never part of her usable test set, deletion
+changes nothing functionally.
+
+Deleted via `20260903140000_delete_out_of_scope_books.sql` -- 51
+individually-scoped DELETE statements (one per book, per this project's
+rule against blanket unscoped deletes), tested in a rolled-back
+transaction first given this is destructive/hard-to-reverse. Timestamped
+to run after the other 2026-09-03 migrations rather than needing
+`supabase db push --include-all` -- same fix pattern as the earlier
+backfill-ordering issue this session already hit once. Verified
+matching exactly on both sides: 863 books (down from 914), 583 tagged
+(unchanged, as expected -- none of the deleted books were ever tagged).
+
+The 17 uncertain titles are being handed back to the repo owner with a
+brief premise summary each, for a book-by-book call rather than a batch
+guess -- not resolved in this entry.
