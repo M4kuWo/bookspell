@@ -4448,3 +4448,44 @@ sampling pool to `title in title_to_id` up front. Reran the full
 diversity-curve numbers to the pre-ingestion run, confirming the new
 untagged ratings correctly contribute zero signal until tagged, exactly
 as intended.
+
+## 2026-09-03 (later still) -- three open items resolved, one design idea refined
+
+**Diversity curve**: repo owner's explicit call is to leave this
+deliberately open-ended, not chase a firmer number now -- rerun once
+the remembered-books batch is tagged and contributes real new authors.
+Noted directly in `docs/scoring-test-protocol.md`'s diversity-curve
+entry; no code change.
+
+**`message_themes` idea refined, corrected a mistake in this project's
+own prior framing**: repo owner proposed a concrete version of the
+message-intensity gap fix from earlier the same day -- a small,
+trope-like controlled vocabulary for a book's authorial STANCE
+(pacifism, anti-militarism, pro-religion, heroism, altruism, feminism,
+etc.), not just its intensity. This project's own prior entry (both
+here and in book-dna.md) wrongly framed this class of idea as requiring
+a reader-belief-modeling layer the schema has nowhere else -- corrected:
+tagged as an OBJECTIVE book attribute (a new trope group), the existing
+per-trope weight-learning already discovers per-user positive/negative
+correlation without ever encoding the reader's actual beliefs anywhere,
+exactly like every other trope. Real, buildable idea. Full design
+proposal (narrow starting vocabulary, validation-probe-before-rollout
+approach, implement as a trope group not a new mechanism) added to
+book-dna.md's backlog. Not started -- awaiting repo owner's go-ahead
+given the tagging-cost implications of a catalog-wide field.
+
+**Three open items from the remembered-books ingestion, all resolved**:
+- "I'm Afraid You've Got Dragons" (Peter S. Beagle) confirmed as the
+  book he meant -- no fix needed.
+- One Word Kill: he DNF'd it -- rated `disliked` in
+  `data/ratings/mathias.json` (DNF is a real dislike signal, not left
+  unrated; 111 ratings total now).
+- The Wandering Inn: confirmed `hated` is correct, and strongly so --
+  he listened to ~5 hours of the audiobook before stopping. No rating
+  change, noted in the ratings file's `_meta` for context.
+- Kings of Paradise's orphaned `series_id` fixed via
+  `20260903180000_link_kings_of_paradise_to_series.sql` -- single-row
+  UPDATE scoped by exact title match, tested in a rolled-back
+  transaction first, applied to local then hosted via `supabase db
+  push`, verified matching on both sides. Now correctly linked to
+  Ash and Sand as book 1, alongside its already-linked sequels.

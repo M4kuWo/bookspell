@@ -1110,6 +1110,47 @@ Deliberately deferred, not in v0.1:
   `message_intensity: heavy_handed`). Not built — needs more than one
   data point (Red Rising) before it clears this project's "does this
   change what gets recommended" bar.
+- **`message_themes` — a trope-like controlled vocabulary for a book's
+  authorial STANCE, not just its intensity** — repo owner's own
+  follow-up proposal (2026-09-03) to the entry above: "a small
+  archetype list... pacifism, anti-militarism, pro-religion, heroism,
+  altruism, feminism, etc." **Correction to this doc's earlier framing**
+  (in the entry above and in docs/project-log.md's 2026-09-03 "message
+  intensity gap" entry): this does NOT require modeling the reader's own
+  beliefs as a new kind of field. If message stance is tagged as an
+  OBJECTIVE attribute of the book (a new trope group, exactly like
+  existing tropes), the same per-user weight-learning `build_profile()`
+  already does for every other trope (liked_freq - disliked_freq) would
+  organically discover which specific stances correlate positively or
+  negatively for THIS reader, with no need to ever encode his personal
+  political/philosophical views anywhere. Structurally identical to how
+  `darkness` or any trope already works — the system doesn't need to
+  know WHY a reader likes dark books, it just needs the tag and his own
+  ratings. This is a real, buildable idea, not just a thought experiment.
+
+  Two real costs before committing to it, though: (1) tagging
+  difficulty/subjectivity is genuinely higher than a plot-event trope
+  (`revenge` = did this happen; `message_themes:anti_militarism` =
+  what is this book ARGUING, an interpretive judgment) — though not
+  categorically different from `message_intensity` itself or
+  `black_and_white_morality`/`corruption_arc`, which already require
+  similar interpretive calls; (2) retroactively tagging the existing
+  catalog for a brand-new field is real work, and per this project's
+  own schema-change bar this needs evidence it will actually move
+  recommendations before that cost is paid across ~600+ books.
+
+  **Recommended path if the repo owner wants to proceed**: don't tag
+  the whole catalog speculatively. Start with a narrow 2-3 value probe
+  (`anti_militarist_message` is the clearest, most directly evidenced
+  one — it's exactly the Poppy War/Dragon Republic/Red Rising pattern
+  already found) tagged on just a handful of relevant books (the ones
+  already implicated, plus a few loved books that might carry a
+  countervailing or absent stance, to get real liked/disliked contrast)
+  as a real, cheap validation check before any catalog-wide rollout.
+  Implement as a new trope group (reuses all existing trope machinery —
+  weight learning, confidence, `validated_dealbreaker_fields()` — rather
+  than inventing a separate mechanism). Not started -- awaiting the
+  repo owner's go-ahead on scope given the tagging-cost implications.
 - **Protagonist gender as a possible field** — raised 2026-09-03: repo
   owner loved The Grey Bastards but hated its sequel, hypothesizing
   protagonist gender/POV-character change as the reason. A single

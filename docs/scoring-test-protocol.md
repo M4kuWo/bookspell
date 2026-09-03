@@ -1068,3 +1068,9 @@ in a rerun, and a bigger total pool would also allow deliberately
 stratified sampling (force a "min N distinct authors" vs "max N"
 draw) instead of relying on natural random variance, a real
 follow-up if this remains a live question.
+
+**Repo owner's explicit call (2026-09-03)**: leave this deliberately
+open-ended rather than chase a firmer number now -- rerun once the
+newly-ingested batch above is tagged and contributes real new
+authors/data, not before. `run_diversity_curve()` stays in the suite
+as-is (Scenario 11), ready to rerun then.
