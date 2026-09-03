@@ -4332,3 +4332,119 @@ approach (does the reason the SYSTEM infers match the reason the READER
 states?). Recommended as worth doing once there's a real rating UI to
 attach it to, rather than building the DB column speculatively ahead of
 that -- flagged, not scheduled.
+
+## 2026-09-03 (later still) -- targeted ingestion of Mathias's ~19-title priority list, bibliographic only
+
+Follow-up to the previous session's deferred list of ~19 more books the
+repo owner remembered reading/rating. Bibliographic ingestion only (no
+DNA tagging, per usual division of labor) --
+`supabase/migrations/20260903170000_targeted_ingestion_mathias_priority_list.sql`.
+Checked local first, per usual practice, before searching Hardcover.
+
+**Already in the catalog, nothing to ingest:**
+- Valor (John Gwynne, Faithful and the Fallen #2) -- confirmed already
+  present (his "Brian McClellan" attribution was wrong, as he himself
+  flagged; it's Gwynne's). Only needed the rating (added: loved).
+- Ender's Shadow -- already present AND already rated loved. No action.
+- The Shadow of What Was Lost (Licanius #1) -- already present AND
+  already rated liked. No action.
+- Kings of Paradise -- already present and already rated loved (added
+  earlier this session); deliberately not touched. Its `series_id` is
+  NULL (matches Hardcover's own record, which also has no featured
+  series for this book) -- its two new sequels below ARE linked to a
+  new "Ash and Sand" series row, so the trilogy is now inconsistently
+  linked (book 1 orphaned, books 2-3 linked). Not fixed here since
+  fixing an existing row wasn't asked for; flagged for the repo owner
+  as an easy optional follow-up (a single scoped UPDATE on Kings of
+  Paradise's `series_id`).
+
+**23 new books ingested** (bibliographic data only), 22 given ratings
+(see `data/ratings/mathias.json`'s updated `_meta` for full per-book
+notes): Kings of Ash/Kings of Heaven (Richard Nell), The Grey
+Bastards/The True Bastards (Jonathan French), An Echo of Things to Come/
+The Light of All That Falls (James Islington -- Light was already
+present but unrated), The Pariah/The Martyr/The Traitor (Anthony Ryan),
+Aching God (Mike Shel), The Vagrant/The Malice (Peter Newman), The
+Justice of Kings (Richard Swan), I'm Afraid You've Got Dragons, The
+Wandering Inn, Prince of Fools/The Liar's Key/The Wheel of Osheim (Mark
+Lawrence), Blackwing (Ed McDonald), Firestarter (Stephen King), The
+Initiate/The Outcast/The Master (Louise Cooper), and One Word Kill (Mark
+Lawrence, ingested but NOT rated -- see below). 11 new series created
+(Ash and Sand, The Lot Lands, Covenant of Steel, Iconoclasts, The
+Vagrant, Empire of the Wolf, The Wandering Inn, The Red Queen's War,
+Raven's Mark, Time Master, Impossible Times).
+
+**Judgment calls / disambiguations, each also documented in the
+migration's own header comment:**
+- **"The Malice" (Peter Newman, The Vagrant #2, hardcover_id 481926) vs
+  "Malice" (John Gwynne, Faithful and the Fallen #1, hardcover_id
+  429071, already in the catalog and already rated loved).** Two
+  genuinely different books by two different authors in two different
+  series. Confirmed distinct hardcover_id and author before inserting;
+  both now coexist in the catalog under their own titles.
+- **"I'm Afraid You've Got Dragons" was named as Peter McLean's, but no
+  such title exists under that author on Hardcover** (checked directly,
+  including `cached_contributors` on every zero-metadata candidate id
+  that came back for the exact title search). The real book by this
+  exact title is Peter S. Beagle's (2024, hardcover_id 1086185).
+  Ingested under Beagle, treating this the same way as the Valor/
+  McClellan misattribution above (trust the title, correct the wrong
+  author) -- but flagged here explicitly in case this isn't actually
+  the book the repo owner meant.
+- **The Wandering Inn (pirateaba)** is an very long ongoing web serial;
+  Hardcover represents it as one primary series entry plus many
+  individual volume entries (and a separate, lower-popularity "(Web)"
+  volume series). Picked the single highest-popularity entry
+  (hardcover_id 446694, users_count 903, "The Wandering Inn", series
+  position #1) as the one representative row, per the task's own
+  instruction to prefer a sensible single entry over adding dozens of
+  volumes.
+- **Author-field contamination stripped before inserting** (narrator
+  names Hardcover's search index had folded into `author_names`, per
+  CLAUDE.md's data-quality section): Prince of Fools (dropped "Tim
+  Gerard Reynolds"), Blackwing (dropped "Colin Mace"). Both inserted
+  with only their real author.
+- **One Word Kill (Mark Lawrence, Impossible Times #1) was ingested but
+  deliberately NOT rated.** The repo owner's own words were "didn't
+  resonate well with me" -- genuinely ambiguous between `disliked` and
+  `it_was_okay`, not a case where a best-guess label was appropriate.
+  Book is in the catalog and ready to tag/rate once he specifies which.
+- **Time Master trilogy (Louise Cooper)** was flagged by the repo owner
+  himself as a softer memory ("I remember reading... and liking it") --
+  rated `liked` for all three per instruction, but noted here as lower
+  -confidence than the rest of this batch's ratings.
+
+**Verification**: local and hosted both at 870 books / 368 series after
+push (`supabase db push`); spot-checked all 23 new titles present by
+exact title match on both sides.
+
+**Priority-tagging note added**: `.claude/skills/tag-catalog-batch/
+SKILL.md` now has a new "Step 0: PRIORITY BATCH" section listing these
+23 titles (minus Ender's Shadow, already tagged) for whoever runs the
+next tagging session (the repo owner's wife) to tag first, ahead of the
+skill's normal partial-series-first selection query -- these unlock
+real, already-collected rating signal immediately rather than sitting
+untagged behind less-verified titles.
+
+**Not resolved, left for the repo owner**: (1) whether "I'm Afraid
+You've Got Dragons" (Peter S. Beagle) is really the book he meant; (2)
+whether to fix Kings of Paradise's orphaned `series_id` now that its
+sequels are linked to the Ash and Sand series; (3) what rating label
+One Word Kill should actually get.
+
+**A real bug in `scripts/scoring_tests.py` surfaced and fixed while
+verifying this batch**: `run_learning_curve()`/`run_diversity_curve()`
+(added earlier the same day) sampled directly from `all_ratings`
+without filtering to titles present in the loaded (tagged-only)
+`catalog` -- harmless before this batch, since every rated title
+happened to already be tagged, but the 22 new bibliographic-only-rated
+titles above immediately exposed it: `run_diversity_curve()` crashed
+with a `KeyError` (it looks up `catalog` directly for the author-count
+metric), while `run_learning_curve()` merely printed noisy "not found
+in catalog" warnings (it delegates to `_resolve_profile()`, which
+already handles a missing title gracefully). Fixed both to filter their
+sampling pool to `title in title_to_id` up front. Reran the full
+`scoring_tests.py` suite clean afterward -- identical learning-curve/
+diversity-curve numbers to the pre-ingestion run, confirming the new
+untagged ratings correctly contribute zero signal until tagged, exactly
+as intended.

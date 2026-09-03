@@ -68,6 +68,54 @@ a value not listed there. If you think a real gap exists in the
 vocabulary (a trope or value that should exist but doesn't), don't
 silently work around it -- note it in your final report instead.
 
+## Step 0: PRIORITY BATCH -- tag these 23 books first
+
+Before running Step 2's normal partial-series-first query, tag these 23
+specific books first, regardless of what that query would otherwise
+surface. They were bibliographically ingested 2026-09-03
+(`supabase/migrations/20260903170000_targeted_ingestion_mathias_priority_list.sql`)
+specifically because the repo owner (Mathias) named and rated every one
+of them from memory -- tagging them unlocks real, already-collected
+enjoyment signal immediately (`data/ratings/mathias.json`), rather than
+sitting untagged and invisible to the recommendation engine while the
+normal batch order works through less-verified titles first.
+
+- Kings of Ash, Kings of Heaven (Richard Nell, Ash and Sand #2-3)
+- Valor (John Gwynne, Faithful and the Fallen #2)
+- The Grey Bastards, The True Bastards (Jonathan French, The Lot Lands #1-2)
+- An Echo of Things to Come, The Light of All That Falls (James Islington,
+  The Licanius Trilogy #2-3 -- #1, The Shadow of What Was Lost, is
+  already tagged)
+- The Pariah, The Martyr, The Traitor (Anthony Ryan, Covenant of Steel #1-3)
+- Aching God (Mike Shel, Iconoclasts #1)
+- The Vagrant, The Malice (Peter Newman, The Vagrant #1-2 -- note this
+  "The Malice" is a different book from John Gwynne's "Malice", already
+  tagged, in the Faithful and the Fallen series; don't conflate the two
+  when tagging)
+- The Justice of Kings (Richard Swan, Empire of the Wolf #1)
+- I'm Afraid You've Got Dragons (Peter S. Beagle -- named by the repo
+  owner as Peter McLean's, but no such title exists under that author;
+  this is the actual book found and ingested, flagged for him to
+  confirm it's the one he meant)
+- The Wandering Inn (pirateaba -- ingested as one representative entry
+  for this very long ongoing web serial, not the whole thing)
+- Prince of Fools, The Liar's Key, The Wheel of Osheim (Mark Lawrence,
+  The Red Queen's War #1-3)
+- Blackwing (Ed McDonald, Raven's Mark #1)
+- Firestarter (Stephen King, standalone)
+- The Initiate, The Outcast, The Master (Louise Cooper, Time Master #1-3)
+- One Word Kill (Mark Lawrence, Impossible Times #1) -- ingested but
+  deliberately has NO rating on file yet (repo owner's reaction was
+  ambiguous between disliked/it_was_okay); tag it normally, the missing
+  rating doesn't block tagging.
+
+Ender's Shadow (Orson Scott Card) was also on the repo owner's list but
+is already tagged -- not part of this priority batch.
+
+Within this list, prioritize completing the partial series first (the
+Licanius and Vagrant entries above, since book 1 of each is already
+tagged) -- same reasoning as Step 2 below.
+
 ## Step 2: pick the next batch, prioritizing partial series
 
 Untagged books belonging to a series that's ALREADY partly tagged

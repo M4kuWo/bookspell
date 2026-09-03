@@ -925,8 +925,18 @@ def run_learning_curve(catalog, all_ratings, held_out, sizes=None, repeats=LEARN
 
     sizes: defaults to a spread from 10 up to the full pool in ~6 steps.
     Deterministic (fixed `seed`) so this is reproducible run to run, not
-    a different curve every time out of pure sampling luck."""
-    pool = {t: r for t, r in all_ratings.items() if t not in held_out}
+    a different curve every time out of pure sampling luck.
+
+    Only draws from ratings for books actually IN `catalog` (i.e.
+    tagged) -- a rating can exist in all_ratings for a book that's been
+    ingested bibliographically but not yet tagged (see
+    docs/project-log.md's 2026-09-03 targeted-ingestion entries), which
+    _resolve_profile() already handles gracefully elsewhere (warns and
+    skips), but this function samples titles directly rather than going
+    through it, so it needs the same filter itself -- otherwise `size`
+    would silently overstate how many books actually fed the profile."""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    pool = {t: r for t, r in all_ratings.items() if t not in held_out and t in title_to_id}
     pool_titles = list(pool.keys())
     max_size = len(pool_titles)
 
@@ -997,10 +1007,17 @@ def run_diversity_curve(catalog, all_ratings, held_out, size=DIVERSITY_FIXED_SIZ
     Returns a list of {"n_authors", "size", "pairwise_accuracy",
     "bucket_accuracy"} dicts, one per sample (NOT averaged/bucketed --
     the caller decides how to summarize, since both a raw correlation
-    and a tercile breakdown are useful views of the same data)."""
-    pool = {t: r for t, r in all_ratings.items() if t not in held_out}
-    pool_titles = list(pool.keys())
+    and a tercile breakdown are useful views of the same data).
+
+    Only draws from ratings for books actually IN `catalog` (i.e.
+    tagged) -- see run_learning_curve()'s docstring for why this filter
+    is needed here specifically (this function looks up `catalog`
+    directly for the author-count metric, so an untagged-but-rated
+    title would KeyError rather than being silently skipped the way
+    _resolve_profile() handles it elsewhere)."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    pool = {t: r for t, r in all_ratings.items() if t not in held_out and t in title_to_id}
+    pool_titles = list(pool.keys())
 
     rng = random.Random(seed)
     points = []
