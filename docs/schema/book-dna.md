@@ -75,7 +75,7 @@ dense prose is harder to follow by ear than by eye.
 |---|---|
 | `overall_pace` | slow, medium, fast |
 | `pace_shape` | consistent, slow_burn_to_fast_finish, front_loaded, uneven |
-| `drive` | character_driven, plot_driven, balanced, worldbuilding_driven |
+| `drive` | character_driven, plot_driven, balanced, worldbuilding_driven, romance_driven |
 | `darkness` | light, moderate, dark, grimdark |
 | `humor_level` | none, light, moderate, heavy |
 | `emotional_register` | comfort_read, bittersweet, tense, gut_punch |
@@ -1151,6 +1151,32 @@ Deliberately deferred, not in v0.1:
   weight learning, confidence, `validated_dealbreaker_fields()` — rather
   than inventing a separate mechanism). Not started -- awaiting the
   repo owner's go-ahead on scope given the tagging-cost implications.
+- **Romance TONE/execution-quality, distinct from `drive: romance_driven`**
+  (added 2026-09-04) — repo owner's own gap analysis: he doesn't dislike
+  romance generally (loved examples: Wax/Steris, Siri/God King in
+  Warbreaker, Inej/Kaz in Six of Crows), he dislikes specifically
+  "juvenile/CW-style relationship drama... telenovela-style melodrama...
+  contrived romantic conflict... excessive misunderstandings." The new
+  `romance_driven` value (see `drive` above) captures NARRATIVE
+  CENTRALITY (is romance the main engine) but deliberately not TONE/
+  EXECUTION QUALITY (is it handled with restraint or melodrama) — a
+  different, harder axis. Same treatment as `message_themes` above and
+  for the same reason: genuinely useful if real, but more subjective to
+  tag consistently than a plot-event trope, and the current rating
+  history has zero real negative examples to validate against (he
+  explicitly flagged "I have not actually read enough romantasy to
+  provide strong direct negative training evidence" — this is a case
+  where the DNA gap is real but the EVIDENCE gap is separate and also
+  real; adding the field alone can't fix the second problem). Candidate
+  values, not yet built: something like `romance_tone`:
+  [understated, grounded, dramatic, melodramatic], or a trope-group
+  approach mirroring `message_themes`' design. **Recommended path**: the
+  same validation-probe approach as `message_themes` — tag a small,
+  deliberately contrastive set (his 3 loved examples above, plus a
+  handful of well-known "juvenile/melodramatic" romantasy touchstones he
+  hasn't read but that have clear reader consensus, e.g. via StoryGraph
+  tag data) before any catalog-wide rollout, specifically BECAUSE his
+  own history can't yet validate this one on its own. Not started.
 - **Protagonist gender as a possible field** — raised 2026-09-03: repo
   owner loved The Grey Bastards but hated its sequel, hypothesizing
   protagonist gender/POV-character change as the reason. A single

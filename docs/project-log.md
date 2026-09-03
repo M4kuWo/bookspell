@@ -4832,3 +4832,71 @@ decide whether their ratings should be committed to a shared repo under
 their real name or need anonymizing first. Not a technical question,
 and not defaulted one way or another here -- a real product/privacy
 decision for the repo owner before this is used for real.
+
+## 2026-09-04 -- repo owner's 10-hypothesis structural review, five follow-up actions
+
+Repo owner reviewed a full qualitative recommendation output plus the
+new score-audit tool's output against his real reading history and
+wrote a detailed 10-point structural critique of the scoring
+methodology itself (redundancy, series clustering, accumulation,
+interactions, romance, historical-vs-current taste, contrastive pairs,
+dealbreaker semantics), explicitly asking each be classified before any
+change and warning against hardcoding his specific tastes. Full
+classification, real numbers, and reasoning for all 10 points in
+`docs/scoring-test-protocol.md`'s "10-hypothesis structural review"
+entry -- this entry covers the five concrete follow-up actions taken.
+
+**1. Series DNA / dedup integration** -- investigated at the repo
+owner's prompt (did `compute_series_dna()` ever get wired into
+deduplication?). Confirmed no -- it's only used for
+`explain_match()`'s human-readable trajectory text. A real,
+well-motivated future refinement (field-conditional dedup using each
+series' actual stable-vs-drifting trajectory) logged but not built --
+bigger, riskier core-scoring change than today's simpler fix, deserves
+its own pass.
+
+**2. Group-redundancy discount** -- built and tested per the repo
+owner's explicit request, on the `darkness`/`violence_intensity`/
+`emotional_register` correlation found during the review (r=0.48-0.71).
+Found a real regression in the author-isolated scenario, traced to a
+genuine conceptual flaw (population-level field correlation doesn't
+imply a specific candidate's simultaneous match on both is redundant --
+a book can genuinely, independently confirm two correlated traits at
+once). REVERTED in full, not left half-wired. Full numbers and the
+root-cause explanation in scoring-test-protocol.md.
+
+**3. `rated_dates`** -- added as an optional, empty-by-default sibling
+object to `ratings` in all 4 rater JSON files' schema (never inferred,
+nothing reads it yet). Repo owner's own explicit requirement recorded
+as a standing rule in `data/ratings/README.md`: any future date-aware
+feature must be tested both with and without dates present, since a
+real user population will always include people who can't or won't
+supply them.
+
+**4. Contrastive-pairs diagnostic** -- generalized into a permanent,
+rater-agnostic tool (`find_contrastive_pairs()` and friends, Scenario
+12 in `scoring_tests.py`'s `run_all()`), not hardcoded to the two pairs
+found by hand during the review. Automatically found the same Grey
+Bastards/True Bastards pair for Mathias, a fresh Magic Bites/Magic
+Burns pair for Osnat (identical failure pattern, zero field
+differences), and 17 pairs for Dandan (15/17 correctly ranked -- real
+DNA differences exist there and get used correctly most of the time).
+
+**5. Romance fields** -- repo owner pushed back on an earlier
+"don't touch romance" framing, correctly distinguishing "don't change
+weights" from "don't add new fields" -- these are different questions
+and only the first was actually warranted by the current data. Added
+`romance_driven` to `drive`'s enum (narrative centrality, not
+explicitness -- same precedent as `worldbuilding_driven`'s earlier
+addition), migration applied to local and hosted, constraint verified
+matching on both sides. The harder "tone/melodrama/execution quality"
+axis logged to book-dna.md's backlog with the same probe-first
+treatment as `message_themes`, since the repo owner's own history has
+zero real negative examples to validate it against yet -- a DNA gap
+AND a separate evidence gap, needing different fixes.
+
+**Standing practice, made explicit per the repo owner's own
+instruction**: this project's docs are a running journal of moves,
+findings, and concerns as they happen, not something to ask permission
+to write -- continue doing this by default going forward, the same way
+every substantive change this session has already been logged.

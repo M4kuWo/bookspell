@@ -1151,3 +1151,197 @@ Directly reinforces the learning-curve finding above from a different
 angle: it's not just "more data helps accuracy in general," it's "the
 disliked/hated side specifically is the bottleneck for detecting real
 per-user dealbreakers at all."
+
+## Repo owner's 10-hypothesis structural review (2026-09-04)
+
+The repo owner reviewed a full qualitative recommendation output plus
+the score-audit tool's output against his real reading history and
+wrote a detailed, 10-point structural critique, explicitly asking for
+each to be classified (genuinely present / partially present / already
+handled / unsupported / a data limitation rather than an algorithm
+problem) BEFORE any scoring change, and smallest-principled-change
+proposals rather than immediate fixes. Full real numbers below; see the
+conversation itself for the complete per-hypothesis writeup.
+
+**#1 (frequency vs. discriminative preference)**: unsupported as
+literally stated -- `build_profile()`'s weights are already a real
+discriminative statistic (`|liked_mean - disliked_mean|`), verified
+exactly matching deduped separation for every flagged field (person,
+emotional_register, emotional_resolution, violence_intensity, darkness,
+prose_density, worldbuilding_density, form). But checking pairwise
+correlation among the flagged fields across all rated books found a
+real redundancy: `darkness`/`violence_intensity`/`emotional_register`
+correlate at r=0.48-0.71 (a genuine shared "how dark/intense" latent
+dimension), while `prose_density`/`worldbuilding_density` are
+independent (r near 0). Reframes the actual problem as undetected
+field-group redundancy, not miscalibrated individual weights.
+
+**#2 (series clustering)**: partially handled. `_series_deduped()`
+already exists (2026-09-01) and IS applied inside `build_profile()` --
+confirmed its real weights exactly match cluster-deduped separation,
+not raw. Not applied to `validated_dealbreaker_fields()`,
+`cold_start_weight()`, or the score-audit tool's own reporting, all of
+which consume raw `id_to_magnitude` directly. Concretely: person's raw
+separation is 0.467 vs. 0.356 deduped (~24% inflation) in the
+validation path specifically. Doesn't currently change any real outcome
+(neither number clears 0.65), but is a real, fixable inconsistency.
+Raw liked pool: 86 books -> 40 independent clusters; disliked: 20 -> 17.
+
+**#3 (accumulation/dilution)**: genuinely present, this project's own
+long-documented unsolved problem. Daughter of No Worlds is the cleanest
+live example: a real, correctly-detected `person` mismatch (-0.302)
+gets outvoted by 4-5 correlated matches (emotional_register,
+violence_intensity, emotional_resolution, darkness, war_story), landing
+at 0.771 ("Strong match") anyway -- compounded by #1's redundancy
+finding, since some of those "5 votes" are substantially 2 independent
+signals wearing 3-5 different field names.
+
+**#4 (feature interactions)**: genuinely present, architectural.
+`score_book()` is a pure linear model, zero cross-terms -- cannot
+represent "A is great with B but bad with C" by construction. Real, but
+flagged as genuinely risky to fix at ~100 ratings (real overfitting
+risk estimating interaction terms with this little data).
+
+**#5 (romance)**: confirmed, not a scoring bug. `romance_heat_frequency`/
+`romance_heat_intensity` weights are negligible (0.004, 0.067) -- no
+learned romance-aversion exists. Schema genuinely can't represent
+"narrative centrality" vs. "explicitness," which is the repo owner's
+actual axis. **Action taken**: added `romance_driven` to `drive`'s
+enum (`20260904000000_add_romance_driven_to_drive_field.sql`) for
+narrative centrality specifically -- same precedent as
+`worldbuilding_driven`'s earlier addition to the same field. Logged the
+harder "tone/melodrama/execution quality" axis to book-dna.md's backlog
+with the same validation-probe treatment as `message_themes`,
+explicitly because the repo owner himself flagged having no real
+negative training data for it yet -- a DNA gap AND an evidence gap,
+needing different fixes.
+
+**#6**: a framing distinction, not an independent technical claim --
+addressed via #9's specific cases.
+
+**#7 (dates)**: confirmed, total gap -- zero temporal data existed
+anywhere. **Action taken**: added optional `rated_dates` (sibling to
+`ratings`, same title keys, ISO date or coarser, never inferred) to all
+4 rater JSON files' schema (currently empty everywhere -- nothing
+invents a date). Nothing reads this yet. Standing rule recorded in
+`data/ratings/README.md`: any future date-aware feature MUST be tested
+both with and without dates present, per the repo owner's own explicit
+requirement -- a real user population will always include raters who
+can't or won't supply them, so "works without dates" is a permanent
+constraint, not a temporary bootstrapping concern.
+
+**#8 (contrastive pairs)**: genuinely present opportunity, generalized
+into a permanent tool (`find_contrastive_pairs()`/
+`check_contrastive_pair_ranking()`/`run_contrastive_pairs_diagnostic()`,
+Scenario 12 in `run_all()`) -- NOT hardcoded to any specific books,
+works automatically on any rater's data via `book_similarity()` (high
+DNA similarity + large rating gap). Results across all 4 real raters:
+- **Mathias**: The Grey Bastards (loved) vs. The True Bastards (hated),
+  similarity 0.859, differing only on `drive` + 2 tropes. Held-out
+  test: model gets the ranking BACKWARDS (0.6965 vs. 0.7041) --
+  strong evidence the real differentiator (very plausibly the
+  protagonist-identity change between books, Jackal to Fetching) isn't
+  represented in the schema at all, not a weighting bug.
+- **Osnat**: Magic Bites (liked) vs. Magic Burns (hated), similarity
+  0.905, ZERO field differences (only trope differences). Same failure
+  mode, confirms this isn't Mathias-specific.
+- **Dandan**: 17 pairs found (mostly Wheel of Time, expected given the
+  series' length) -- 15/17 (88%) correctly ranked, real DNA differences
+  found and used correctly in most cases (pace_shape, violence,
+  personal_stakes shifts). Contrast with Mathias/Osnat's 0/1 -- when
+  real DNA signal exists, the model uses it; when it doesn't, it can't.
+- A separate, real, already-diagnosed contrast: The Name of the Wind
+  (it_was_okay) vs. The Wise Man's Fear (hated) -- real DNA differences
+  (pace_shape, personal_stakes, book 2 ADDS `monster_or_fae_romance`/
+  `slow_burn_romance` tropes) -- model correctly ranks 0.634 vs. 0.426.
+
+**#9 (specific books)**: 1Q84's mismatches are genuinely
+`prose_density`/`overall_pace`, exactly as the repo owner suspected --
+not a false positive, Hard-Boiled Wonderland (loved) is real supporting
+evidence. Rage of Dragons (0.814, #8 of 20 fantasy) scores via the same
+correlated bundle as everything else -- the "should score even better
+for the SPECIFIC revenge+momentum combination" intuition is real but is
+the interaction-modeling gap (#4), not missing evidence. From Blood and
+Ash/Daughter of No Worlds/House of Earth and Blood all score via the
+same bundle; Daughter of No Worlds is the cleanest #3 case (real
+`person` mismatch, outvoted anyway).
+
+**#10 (dealbreaker semantics)**: verified, and surfaced a real,
+previously-undocumented state change: `validated_dealbreaker_fields()`
+currently returns an EMPTY SET for Mathias (was `{'person'}` earlier
+this session) -- person's separation dropped 0.692 -> 0.467 as his
+rated-and-tagged pool roughly doubled (86->106+, several newly-tagged
+disliked books sharing `person: third_limited`). Since nothing clears
+0.65 now, the veto can never fire, so `dealbreaker_flags()` falls back
+to its noisier fixed-threshold mode -- explaining the "flags fired,
+veto no change" pattern the repo owner's own audit output showed. This
+is the system working exactly as designed (the veto deliberately never
+acts on unvalidated fixed-threshold evidence), not a bug -- but the
+veto/cap safety net built and tuned earlier this session is currently
+INACTIVE for his real profile, a real and consequential fact nobody had
+noticed until this review.
+
+## Group-redundancy discount -- tested, REVERTED (2026-09-04)
+
+Direct test of the #1/#3 finding above: built
+`score_book_with_group_redundancy()` (experimental variant of
+`score_book()`) discounting all-but-the-strongest member of
+`REDUNDANCY_GROUPS = [("darkness", "violence_intensity",
+"emotional_register")]` by 50%, but ONLY when 2+ members already clear
+the same 0.15 significance floor `score_book()` itself uses for a
+SPECIFIC candidate -- conditional on the book being scored, never a
+blanket adjustment, per this project's own standing rule (see the
+2026-08-29 structural-field-boost rejection).
+
+A/B tested via a monkey-patched `_full_score` against the full real
+benchmark suite (all 4 raters) plus the WEIGHT_CAP_RATINGS domination
+scenario. Result: **zero regressions in "Mathias -- full", "Mathias --
+sparse", "Mathias -- series-isolated", and the domination scenario**
+(byte-identical output) -- but a **real regression in "Mathias --
+author-isolated"**: bucket accuracy 73%->64%, loved_recall 80%->60%.
+Rhythm of War flips from correctly-matched to a miss.
+
+**Root cause, checked directly, is a genuine conceptual flaw in the
+design, not a parameter to retune**: for Rhythm of War, `darkness`
+(sim=0.987) and `violence_intensity` (sim=0.98) are BOTH independently,
+genuinely true -- the book really is extremely dark AND extremely
+violent, not "one fact counted twice." The discount conflates
+POPULATION-level field correlation (a real, measured fact about how
+these fields covary across the rated corpus) with INDIVIDUAL-candidate
+redundancy (whether matching both fields for THIS book is over-counted
+evidence) -- but a candidate that genuinely, independently confirms two
+correlated traits at once is providing real double-confirmation, not
+inflated evidence. Population correlation doesn't imply per-candidate
+redundancy; this design assumed it did.
+
+**REVERTED** in full (`score_book_with_group_redundancy()`,
+`_full_score_group_redundancy()`, `REDUNDANCY_GROUPS` constants all
+removed from `scripts/recommend.py`/`scripts/scoring_tests.py`) rather
+than left half-built, same precedent as the positive-floor experiment.
+The underlying #1/#3 finding (real field correlation exists and
+plausibly inflates some scores) remains open and unsolved -- a real fix
+would need a genuinely different mechanism than "discount when
+population-correlated fields agree for this candidate," since that
+specific mechanism is now shown not to work. Worth revisiting with a
+design that distinguishes "these fields are correlated in general" from
+"this candidate's agreement on both is redundant specifically" -- not
+obviously the same test, and this experiment conflated them.
+
+## Series DNA / dedup integration -- investigated, not built (2026-09-04)
+
+Repo owner asked whether `compute_series_dna()` (the existing
+trajectory-aggregation feature) could inform smarter series
+deduplication. Confirmed: it's currently used ONLY inside
+`explain_match()` for the human-readable trajectory caveat text --
+zero connection to `_series_deduped()`/`build_profile()`/any
+weight-learning path. A real, well-motivated idea: `_series_deduped()`
+currently treats every series-mate as equally redundant with every
+other on EVERY field, but `compute_series_dna()` already knows, per
+field, whether a series is `stable` or genuinely drifts across its run
+-- a field that drifts isn't actually redundant evidence the way a
+stable one is. Not built: this would require per-FIELD-conditional
+deduplication inside `build_profile()`'s core loop (changing dedup
+granularity from "book" to "book-field pair"), a bigger, riskier change
+to core scoring math than the plain validation-path consistency fix,
+deserving its own dedicated design-and-test pass. Logged as a real,
+scoped follow-up, not built this round.

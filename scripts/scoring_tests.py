@@ -906,6 +906,12 @@ def run_all():
     div_points = run_diversity_curve(catalog, REAL_RATINGS, REAL_HELD_OUT)
     print_diversity_curve(div_points, "Mathias", DIVERSITY_FIXED_SIZE)
 
+    print("\n=== Scenario 12: contrastive pairs (near-identical DNA, opposite ratings) ===")
+    run_contrastive_pairs_diagnostic(catalog, REAL_RATINGS, "Mathias")
+    run_contrastive_pairs_diagnostic(catalog, OSNAT_USABLE, "Osnat")
+    run_contrastive_pairs_diagnostic(catalog, DANDAN_RATINGS, "Dandan")
+    run_contrastive_pairs_diagnostic(catalog, GABRIEL_RATINGS, "Gabriel")
+
 
 # --- Learning curve: does accuracy actually improve with more ratings? --
 # (2026-09-03) Repo owner's own question after the qualitative-review-
@@ -1159,6 +1165,108 @@ def simulate_detection_power(catalog, id_to_magnitude, true_separation, trials=2
         if sep is not None and abs(sep) >= R.STAT_SEPARATION_THRESHOLD:
             detected += 1
     return detected / trials
+
+
+# --- Contrastive pairs: books with near-identical DNA but opposite -----
+# ratings (2026-09-04). Repo owner's own proposal, generalized to work
+# on ANY rater's data automatically (not hardcoded to specific titles):
+# find_contrastive_pairs() scans every pair of a rater's OWN rated books
+# for high objective DNA similarity (book_similarity() -- unweighted,
+# not personalized) combined with a large rating-magnitude gap. Since
+# most fields are held constant in such a pair, whatever DIFFERS is
+# disproportionately likely to be the real driver of the differing
+# reaction -- much more information-dense than an average unrelated
+# pair, and a natural, sharp diagnostic for "is the model using the
+# real signal when one exists, or is the DNA schema simply missing the
+# actual differentiator." Two known examples surfaced BY HAND before
+# this was generalized (see docs/project-log.md's 2026-09-04 "structural
+# issues" entry): The Grey Bastards/The True Bastards (near-DNA-twins,
+# loved/hated -- the model fails, likely a real DNA representation gap
+# around protagonist identity) and The Name of the Wind/The Wise Man's
+# Fear (real DNA differences exist -- pace_shape, personal_stakes, two
+# new romance tropes in book 2 -- and the model correctly ranks them).
+CONTRASTIVE_MIN_SIMILARITY = 0.85
+CONTRASTIVE_MIN_RATING_GAP = 1.0  # e.g. loved(1.0) vs hated(-1.0) = 2.0; loved vs disliked = 1.5; liked vs hated = 1.5
+
+
+def find_contrastive_pairs(catalog, ratings, min_similarity=CONTRASTIVE_MIN_SIMILARITY,
+                            min_rating_gap=CONTRASTIVE_MIN_RATING_GAP, max_pairs=20):
+    """Returns up to max_pairs dicts, sorted by (similarity desc, gap
+    desc): {"book_a", "book_b", "similarity", "rating_a", "rating_b",
+    "gap", "dna_diffs": {field: (val_a, val_b)}, "tropes_only_a",
+    "tropes_only_b"}. O(n^2) over this rater's rated-and-tagged books --
+    fine at real rater sizes (hundreds, not tens of thousands)."""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    rated_ids = [title_to_id[t] for t in ratings if t in title_to_id]
+    pairs = []
+    for i in range(len(rated_ids)):
+        for j in range(i + 1, len(rated_ids)):
+            book_a, book_b = catalog[rated_ids[i]], catalog[rated_ids[j]]
+            title_a, title_b = book_a["title"], book_b["title"]
+            mag_a, mag_b = R.RATING_LABELS[ratings[title_a]], R.RATING_LABELS[ratings[title_b]]
+            gap = abs(mag_a - mag_b)
+            if gap < min_rating_gap:
+                continue
+            sim = R.book_similarity(book_a, book_b)
+            if sim < min_similarity:
+                continue
+            dna_diffs = {}
+            for field in list(R.ORDINAL_FIELDS) + list(R.NOMINAL_FIELDS):
+                va, vb = book_a.get(field), book_b.get(field)
+                if va is not None and vb is not None and va != vb:
+                    dna_diffs[field] = (va, vb)
+            ta, tb = set(book_a.get("tropes") or []), set(book_b.get("tropes") or [])
+            pairs.append({
+                "book_a": title_a, "book_b": title_b, "similarity": round(sim, 3),
+                "rating_a": ratings[title_a], "rating_b": ratings[title_b], "gap": gap,
+                "dna_diffs": dna_diffs,
+                "tropes_only_a": sorted(ta - tb), "tropes_only_b": sorted(tb - ta),
+            })
+    pairs.sort(key=lambda p: (-p["similarity"], -p["gap"]))
+    return pairs[:max_pairs]
+
+
+def check_contrastive_pair_ranking(catalog, all_ratings, pair):
+    """Trains on all_ratings minus BOTH books in the pair, scores both
+    through the real production pipeline (_full_score()), and checks
+    whether the model correctly ranks the higher-rated book above the
+    lower-rated one. Returns `pair` with "score_a", "score_b",
+    "correctly_ranked" added."""
+    title_a, title_b = pair["book_a"], pair["book_b"]
+    train = {t: r for t, r in all_ratings.items() if t not in (title_a, title_b)}
+    centroid, weights, id_to_mag, _ = R._resolve_profile(catalog, train)
+    validated = R.validated_dealbreaker_fields(catalog, id_to_mag)
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    score_a = _full_score(catalog, id_to_mag, validated, centroid, weights, catalog[title_to_id[title_a]])
+    score_b = _full_score(catalog, id_to_mag, validated, centroid, weights, catalog[title_to_id[title_b]])
+    mag_a = R.RATING_LABELS[pair["rating_a"]]
+    mag_b = R.RATING_LABELS[pair["rating_b"]]
+    correctly_ranked = (mag_a > mag_b) == (score_a > score_b)
+    return {**pair, "score_a": round(score_a, 4), "score_b": round(score_b, 4), "correctly_ranked": correctly_ranked}
+
+
+def run_contrastive_pairs_diagnostic(catalog, ratings, label):
+    pairs = find_contrastive_pairs(catalog, ratings)
+    print(f"  {label}: {len(pairs)} contrastive pair(s) found "
+          f"(DNA similarity >= {CONTRASTIVE_MIN_SIMILARITY}, rating gap >= {CONTRASTIVE_MIN_RATING_GAP})")
+    correct = 0
+    for pair in pairs:
+        result = check_contrastive_pair_ranking(catalog, ratings, pair)
+        correct += result["correctly_ranked"]
+        verdict = "OK" if result["correctly_ranked"] else "MISS -- model can't distinguish these"
+        print(f"\n    {result['book_a']} ({result['rating_a']}, held-out score {result['score_a']}) vs "
+              f"{result['book_b']} ({result['rating_b']}, held-out score {result['score_b']})  [{verdict}]")
+        print(f"      DNA similarity: {result['similarity']}")
+        if result["dna_diffs"]:
+            print(f"      Field differences: {result['dna_diffs']}")
+        else:
+            print("      Field differences: NONE -- fully identical on every measured field")
+        if result["tropes_only_a"]:
+            print(f"      Tropes only in '{result['book_a']}': {result['tropes_only_a']}")
+        if result["tropes_only_b"]:
+            print(f"      Tropes only in '{result['book_b']}': {result['tropes_only_b']}")
+    if pairs:
+        print(f"\n  {label} summary: model correctly ranked {correct}/{len(pairs)} contrastive pairs.")
 
 
 if __name__ == "__main__":

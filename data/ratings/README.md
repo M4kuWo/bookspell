@@ -1,9 +1,29 @@
 # Rater data
 
 One JSON file per person, `{name}.json`, each with a `_meta` block
-(who, when, notes) and a `ratings` object mapping book title to one of
+(who, when, notes), a `ratings` object mapping book title to one of
 the 5 labels: `loved`, `liked`, `it_was_okay`, `disliked`, `hated`
-(matches `RATING_LABELS` in `scripts/recommend.py`).
+(matches `RATING_LABELS` in `scripts/recommend.py`), and an optional
+`rated_dates` object (see below).
+
+## `rated_dates` (optional, 2026-09-04)
+
+A sibling object to `ratings`, same title keys, mapping to an ISO date
+string (`"YYYY-MM-DD"`) or a coarser `"YYYY-MM"`/`"YYYY"` when that's
+all the rater can recall -- **never invent or infer a date**. A title
+with no known date simply doesn't appear in this object at all (don't
+write `null` placeholders). Added to unlock future work on preference
+drift/eras (see docs/project-log.md's 2026-09-04 "structural issues"
+entry) -- **nothing currently reads this field for scoring**. Purely
+additive and always optional: a rater with zero dates is exactly as
+usable as one with a full date history, and always will be --
+**every scoring change that eventually uses dates must be tested both
+with and without them present** (a real user population will always
+include raters who can't or won't supply dates), never assumed
+available. This is a standing testing requirement once any date-aware
+feature is built, the same way this project already requires testing
+against >= 2 scenarios before landing any scoring change -- see
+docs/scoring-test-protocol.md.
 
 This exists because there's no real user/account system yet (see the
 README's roadmap) — until there is, this is the durable, versioned

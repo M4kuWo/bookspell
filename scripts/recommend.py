@@ -1027,6 +1027,7 @@ def score_book(book, centroid, weights):
     return normalized, contributions[:5]
 
 
+
 def explain_book(book, centroid, weights, top_n=5):
     """Splits scoring factors into what's pulling the score UP (matches)
     vs. DOWN (mismatches) for this book against this profile -- the same

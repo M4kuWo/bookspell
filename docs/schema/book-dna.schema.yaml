@@ -168,10 +168,27 @@ categories:
         spoiler: false
       drive:
         type: enum
-        values: [character_driven, plot_driven, balanced, worldbuilding_driven]
+        values: [character_driven, plot_driven, balanced, worldbuilding_driven, romance_driven]
         # worldbuilding_driven added after the pilot: New Weird-style books
         # (Perdido Street Station) are consistently described as driven by
         # the setting itself, not character/plot/an even split of the two.
+        #
+        # romance_driven added 2026-09-04 (repo owner's own gap analysis,
+        # see docs/scoring-test-protocol.md's 2026-09-04 "structural issues"
+        # entry): the existing romance_heat_frequency/romance_heat_intensity
+        # fields measure EXPLICITNESS, not narrative centrality -- a book
+        # can be romance_heat_frequency: frequent and still have romance as
+        # a supporting thread (Wax/Steris in the back half of Mistborn Era
+        # 2), or be low-heat and still have the relationship AS the plot
+        # (much "clean" romantasy). This value captures specifically when
+        # the central relationship(s), not the external plot or a
+        # character's individual arc, is what the book is actually about --
+        # the direct fantasy-genre analog of contemporary romance's own
+        # "central love story" convention. Does NOT capture execution
+        # quality/tone (juvenile vs. mature, formulaic vs. earned) -- see
+        # book-dna.md's backlog for that harder, more subjective axis,
+        # deliberately not added yet pending a validation probe, the same
+        # treatment as the message_themes idea.
         spoiler: false
       darkness:
         type: enum
