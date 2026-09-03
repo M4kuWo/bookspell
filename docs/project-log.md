@@ -4489,3 +4489,33 @@ given the tagging-cost implications of a catalog-wide field.
   transaction first, applied to local then hosted via `supabase db
   push`, verified matching on both sides. Now correctly linked to
   Ash and Sand as book 1, alongside its already-linked sequels.
+
+## 2026-09-03 (later still) -- would a new field's validation even work? A real, surprising answer
+
+Repo owner asked whether a random-fictional-value test (assign made-up
+values like v/w/x/y/z to books, see if anything moves) would be good
+enough to validate the `message_themes` idea before committing to real
+tagging. Real answer: it answers one of two hidden questions, not the
+other. Built `simulate_field_validation()` (false-positive check --
+what the repo owner literally proposed) and `simulate_detection_power()`
+(the other half: if a message-themes-style signal were REALLY as strong
+as this user's one confirmed real dealbreaker, would we even catch it)
+in `scripts/scoring_tests.py`. Full numbers and reasoning in
+`docs/scoring-test-protocol.md`'s "Would validation even detect a new
+field before we tag it?" entry.
+
+Short version: random noise never spuriously validates at his current
+sample size (0/3000 trials) -- confirms the machinery is sound, but
+this was expected and not informative about whether message_themes
+specifically is real. The genuinely useful, surprising result is from
+the power check: even a real effect AS STRONG as his one confirmed
+dealbreaker (`person`, separation 0.692) would only be detected ~70%
+of the time given his CURRENT data -- not because of message_themes,
+but because he only has 15 disliked/hated rated-and-tagged books, and
+that's the side the separation statistic's noise is dominated by. This
+is a structural bottleneck for validating ANY new per-user dealbreaker
+field, not specific to this one idea. Reframes the practical
+recommendation: collecting more disliked/hated ratings specifically
+(not just more ratings in general, and not necessarily a message-themes
+tagging effort first) is the highest-leverage next step for making any
+future statistical-validation work reliable at all.

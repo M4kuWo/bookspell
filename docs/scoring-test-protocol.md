@@ -1074,3 +1074,80 @@ open-ended rather than chase a firmer number now -- rerun once the
 newly-ingested batch above is tagged and contributes real new
 authors/data, not before. `run_diversity_curve()` stays in the suite
 as-is (Scenario 11), ready to rerun then.
+
+## Would validation even detect a new field before we tag it? (2026-09-03)
+
+Repo owner's own proposal, in response to the `message_themes` idea:
+"give values like v,w,x,y,z... to books and perform tests to see if
+anything moves." Genuinely two different questions hiding in that one
+suggestion, and only one of them is answerable with pure random labels:
+
+1. **False-positive risk**: does `STAT_SEPARATION_THRESHOLD` (0.65)
+   ever validate pure noise? Answerable with random labels, exactly as
+   proposed.
+2. **Detection power**: if a field's real-world effect is genuinely as
+   strong as this user's one confirmed real dealbreaker (`person`,
+   separation 0.692), would the current machinery actually catch it,
+   or would his current small disliked-book count let a real signal
+   slip through as noise? **Not answerable with random labels** --
+   noise has no true effect by construction, so a random-label test
+   can only ever confirm the absence of a false alarm, never the
+   presence of real detection capability. Needs a KNOWN planted effect
+   to check detection against.
+
+Built `simulate_field_validation()` (question 1) and
+`simulate_detection_power()` (question 2) in `scripts/scoring_tests.py`
+-- both inject a fake nominal field into a copy of the real catalog
+(never touches the DB) and reuse `R._nominal_field_separation()`
+directly, so they test the EXACT real validation statistic, not an
+approximation of it.
+
+**Question 1 result**: 0.00% false-positive rate across 3000 trials,
+both at 2-value (boolean-style, the noisiest realistic case) and
+5-value fictional labels, on his real 86-book tagged/rated pool
+(63 liked, 15 disliked). Max |separation| ever seen by chance: 0.537
+(2-value) / 0.381 (5-value), both comfortably below the 0.65 bar.
+Confirms the validation machinery doesn't spuriously fire on noise at
+his CURRENT full sample size -- consistent with, not a surprise given,
+the multiple-comparisons regression this project already found and
+fixed once at a SMALLER sample size (the sparse-scenario STAT_
+SEPARATION_THRESHOLD incident). Worth re-running this exact check at a
+smaller probe-sized subsample before trusting any small-batch tagging
+result specifically (a 15-30 book probe showed a real, non-trivial
+0.5-1.3% false-positive rate in an earlier ad-hoc version of this
+check -- not zero the way the full sample is).
+
+**Question 2 result -- the actually decision-relevant one**:
+
+| True separation planted | Detection rate |
+|---|---|
+| 0.50 | 10% |
+| 0.65 (current threshold) | 52% |
+| 0.70 (~matches `person`) | 70% |
+| 0.80 | 95% |
+| 0.90 | 100% |
+
+Even a real effect AS STRONG as this user's single best-known real
+dealbreaker (`person`, 0.692) would only be caught roughly 70% of the
+time -- not because of anything about `message_themes` specifically,
+but because his DISLIKED/HATED pool is small (only 15 rated-and-tagged
+books) and that's the side the separation statistic's noise is
+dominated by (liked=63 contributes comparatively little variance).
+This is a structural constraint on validating ANY new dealbreaker-style
+field for this user right now, not specific to message themes -- it
+would apply identically to protagonist gender or any other backlog
+idea. The threshold (0.65) was deliberately set close to `person`'s own
+observed value (see its own landing note), so by construction any OTHER
+real signal of similar strength faces similarly uncertain detection --
+this isn't a flaw in 0.65, it's an honest reflection of how thin the
+disliked-side evidence currently is.
+
+**Conclusion**: a message_themes tagging probe is still worth trying if
+the repo owner wants to (a real, larger effect -- 0.8+ -- would likely
+be caught), but the SINGLE biggest lever for making this AND any future
+dealbreaker-style validation more reliable is more disliked/hated
+ratings specifically, not more liked ones and not more total books.
+Directly reinforces the learning-curve finding above from a different
+angle: it's not just "more data helps accuracy in general," it's "the
+disliked/hated side specifically is the bottleneck for detecting real
+per-user dealbreakers at all."

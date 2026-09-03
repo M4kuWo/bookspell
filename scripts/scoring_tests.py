@@ -1070,5 +1070,89 @@ def print_diversity_curve(points, label, size):
         print(f"    {name:<28} {f'{lo_a}-{hi_a}':<18} {_fmt_pct(avg_pw):<16} {_fmt_pct(avg_bucket)}")
 
 
+# --- Before tagging a NEW field: would validated_dealbreaker_fields() --
+# even be able to detect it? (2026-09-03) The repo owner's own question
+# ("give random fictional values, see if anything moves") pointed at a
+# real, reusable pre-check worth running before paying any tagging cost
+# for a brand-new field/trope, not just message_themes. Two separate
+# questions, answered by two separate simulations:
+#
+# 1. FALSE-POSITIVE risk: does the current STAT_SEPARATION_THRESHOLD
+#    ever validate pure noise, and does that risk change with sample
+#    size? (a literal version of the repo owner's random-label idea)
+# 2. DETECTION POWER: if a field's real effect size matches this user's
+#    STRONGEST already-known real dealbreaker, would the current
+#    machinery reliably catch it, or would it plausibly get missed by
+#    sampling noise even though it's real? (the question random labels
+#    alone can NEVER answer, since random labels carry no real signal
+#    to detect in the first place)
+#
+# A pure random-label test answers #1 (worth doing -- it's cheap and
+# real) but NOT #2, because #2 requires a KNOWN true effect to check
+# detection against, and noise has no true effect by construction.
+# Skipping #2 would leave the actually load-bearing question --
+# "is it even worth tagging books for this idea" -- unanswered.
+def simulate_field_validation(catalog, id_to_magnitude, n_values=2, trials=2000, seed=0):
+    """Question 1 (false-positive risk): injects a fake nominal field
+    with `n_values` uniformly-random fictional values (default 2, i.e.
+    a boolean-style trope-like field -- the noisiest realistic case)
+    onto every book in `id_to_magnitude`, `trials` times, and reports
+    what fraction of trials spuriously clear STAT_SEPARATION_THRESHOLD
+    purely by chance. Returns (false_positive_rate, max_abs_separation_seen)."""
+    import random as _random
+    rng = _random.Random(seed)
+    values = ["v", "w", "x", "y", "z"][:n_values]
+    false_positives = 0
+    max_sep = 0.0
+    for _ in range(trials):
+        assignment = {bid: rng.choice(values) for bid in id_to_magnitude}
+        fake_catalog = {
+            bid: {**book, "_sim_field": assignment[bid]} if bid in assignment else book
+            for bid, book in catalog.items()
+        }
+        sep = R._nominal_field_separation(fake_catalog, id_to_magnitude, "_sim_field")
+        if sep is not None:
+            max_sep = max(max_sep, abs(sep))
+            if abs(sep) >= R.STAT_SEPARATION_THRESHOLD:
+                false_positives += 1
+    return false_positives / trials, max_sep
+
+
+def simulate_detection_power(catalog, id_to_magnitude, true_separation, trials=2000, seed=1):
+    """Question 2 (detection power): plants a REAL effect of the given
+    magnitude (a 'theme present' value shown at rates chosen so
+    liked_share - disliked_share == true_separation exactly in
+    expectation) across ALL of `id_to_magnitude`, `trials` times, and
+    reports what fraction of trials actually clear
+    STAT_SEPARATION_THRESHOLD -- i.e. how often a real signal this
+    strong would be CAUGHT, not missed to sampling noise. Uses this
+    user's REAL liked/disliked group sizes (not a hypothetical larger
+    or smaller sample) -- the point is to answer "would it work with
+    the data we actually have," not a generic power calculation."""
+    import random as _random
+    rng = _random.Random(seed)
+    liked_ids = [bid for bid, m in id_to_magnitude.items() if m > 0]
+    disliked_ids = [bid for bid, m in id_to_magnitude.items() if m < 0]
+    # Split true_separation between the two groups around a 50/50
+    # baseline so the effect isn't driven entirely by one side.
+    p_liked = max(0.0, 0.5 - true_separation / 2)
+    p_disliked = min(1.0, 0.5 + true_separation / 2)
+    detected = 0
+    for _ in range(trials):
+        assignment = {}
+        for bid in liked_ids:
+            assignment[bid] = "present" if rng.random() < p_liked else "absent"
+        for bid in disliked_ids:
+            assignment[bid] = "present" if rng.random() < p_disliked else "absent"
+        fake_catalog = {
+            bid: {**book, "_sim_field": assignment[bid]} if bid in assignment else book
+            for bid, book in catalog.items()
+        }
+        sep = R._nominal_field_separation(fake_catalog, id_to_magnitude, "_sim_field")
+        if sep is not None and abs(sep) >= R.STAT_SEPARATION_THRESHOLD:
+            detected += 1
+    return detected / trials
+
+
 if __name__ == "__main__":
     run_all()
