@@ -4276,3 +4276,59 @@ elements as real and central, in scope as horror/fantasy crossover by
 this project's existing diegetic-vs-device test). Repo owner explicitly
 said to look these up specifically later -- nothing ingested or rated
 this round.
+
+## 2026-09-03 (later still) -- diversity curve built, message_intensity gap examined, a hated-book "why" feature discussed
+
+Four-part follow-up request. Item 1 (ingesting the ~19 remembered
+books, prioritizing them for the next tagging pass) delegated to a
+background agent -- see its own project-log entry once it completes for
+the full ingestion detail. This entry covers items 2-4.
+
+**Item 2: the diversity half of the learning-curve question, built and
+tested.** See `docs/scoring-test-protocol.md`'s "Diversity curve" entry
+for full detail. Short version: real but weak, NOT robust signal (author
+variety at a fixed training size correlates positively with bucket
+accuracy, but the effect size bounced from +0.10 to +0.35 across three
+random seeds -- not enough repeats/spread to trust a specific number
+yet). Volume remains the dominant, clearly-established lever from
+Scenario 10 (32%->68% from 10->70 ratings); variety looks like it helps
+some too, but nowhere near as clearly. Flagged to rerun once the
+remembered-books batch (item 1) adds real new authors to his history.
+
+**Item 3: is `message_intensity` alone the right field for the repo
+owner's Red Rising complaint?** He raised a sharp point: he doesn't
+mind a strong/heavy-handed message per se -- he minds one he disagrees
+with. "If the message intensity was strong but the message was more
+attuned to my own beliefs it might not have bothered me so much." This
+can't be checked computationally the way the gender hypothesis was --
+there's no field anywhere in this schema for a message's STANCE/content
+(only its intensity), and building one would require modeling the
+READER's own beliefs, not just the book's attributes, which is a
+different kind of field than anything else in Book DNA (every other
+field describes the book; this would need to describe a relationship
+between the book and a specific reader's values). Currently only 2 data
+points exist either way (Poppy War, Dragon Republic -- both anti-violence
+themed AND heavy-handed, confounded with each other, no counter-example
+of a heavy-handed message he'd agree with to test the hypothesis
+against). Logged to `docs/schema/book-dna.md`'s backlog as the
+"revenge/message stance" entry (already partially covers this) rather
+than built -- genuinely unclear this is solvable as a closed-vocabulary
+book attribute at all, versus something that would need a per-user
+belief-alignment layer this project doesn't have anywhere else.
+
+**Item 4: an optional "why did you hate this" multi-select question per
+rating, discussed, not built.** Repo owner's own framing was
+exploratory ("no?"), and this project has no live UI yet to attach it
+to -- `rating_submissions` (the closest real thing, currently just
+rater_name/book_id/rating) could grow a `hated_reasons text[]` column
+cheaply, and a genuinely useful vocabulary already exists implicitly in
+`dealbreaker_flags()`'s field/trope names (same controlled-vocabulary
+philosophy, not a free-text box). Real tradeoff worth naming: this
+would be the FIRST field in the schema describing the READER's own
+stated reasoning rather than the book's attributes, structurally
+different from everything else here and a genuinely useful validation
+signal for `validated_dealbreaker_fields()`'s inferred-from-behavior
+approach (does the reason the SYSTEM infers match the reason the READER
+states?). Recommended as worth doing once there's a real rating UI to
+attach it to, rather than building the DB column speculatively ahead of
+that -- flagged, not scheduled.

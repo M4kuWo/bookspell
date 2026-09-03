@@ -1031,3 +1031,40 @@ existing pool, which already has whatever diversity his real reading
 history has. A real diversity metric would need a second axis (e.g.
 re-running at fixed size but deliberately narrow vs. broad genre/author
 mixes) -- flagged as a natural follow-up, not built this round.
+
+## Diversity curve: does author VARIETY matter, independent of count? (2026-09-03)
+
+The follow-up the size-only learning curve above couldn't answer.
+Added `run_diversity_curve()`/`print_diversity_curve()` (Scenario 11 in
+`run_all()`): fixes training size at 40 (a mid-curve point from
+Scenario 10, chosen so there's real room for both narrow and broad
+author mixes to occur naturally), draws 40 random size-40 subsets, and
+for each records how many DISTINCT authors happened to land in that
+draw alongside its held-out pairwise/bucket accuracy -- isolating
+variety as the thing measured, size held constant.
+
+**Result: a real but weak, NOT robust signal, clearly secondary to raw
+size.** At seed=7: Pearson r = +0.143 (pairwise) / +0.351 (bucket);
+tercile breakdown shows bucket accuracy climbing 44%->52% from
+low-diversity (18-20 authors) to high-diversity (22-25 authors) draws.
+But rerunning at two more seeds (99, 123) gave r = +0.040/+0.103 and
++0.336/+0.299 respectively -- always positive in direction, but
+bouncing between "negligible" and "moderate" in magnitude, meaning 40
+samples isn't enough to pin down a stable effect size yet. Likely
+cause: his real author distribution is heavily skewed (Sanderson alone
+is 20 of his 86 ratings), so a random size-40 draw can only naturally
+range across roughly 17-25 distinct authors -- not nearly wide enough
+a spread to cleanly separate a real diversity effect from sampling
+noise with this few repeats.
+
+**Honest conclusion**: volume (Scenario 10, 32%->68% bucket accuracy
+from 10->70 ratings) is the dominant, clearly-established lever.
+Variety looks like it helps too, modestly, but the current evidence
+is too noisy to put a real number on it or treat it as landed. Worth
+rerunning once his rating history both grows in size AND gains real
+new authors (the remembered-books batch ingested 2026-09-03 adds
+~15-20 new authors at once) -- both effects should show up together
+in a rerun, and a bigger total pool would also allow deliberately
+stratified sampling (force a "min N distinct authors" vs "max N"
+draw) instead of relying on natural random variance, a real
+follow-up if this remains a live question.

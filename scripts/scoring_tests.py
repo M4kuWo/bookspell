@@ -15,6 +15,7 @@ import sys
 import os
 import json
 import random
+import statistics
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 import recommend as R
@@ -894,6 +895,10 @@ def run_all():
     curve = run_learning_curve(catalog, REAL_RATINGS, REAL_HELD_OUT)
     print_learning_curve(curve, "Mathias", len(REAL_HELD_OUT))
 
+    print("\n=== Scenario 11: diversity curve (accuracy vs. author variety, size held fixed) ===")
+    div_points = run_diversity_curve(catalog, REAL_RATINGS, REAL_HELD_OUT)
+    print_diversity_curve(div_points, "Mathias", DIVERSITY_FIXED_SIZE)
+
 
 # --- Learning curve: does accuracy actually improve with more ratings? --
 # (2026-09-03) Repo owner's own question after the qualitative-review-
@@ -961,6 +966,91 @@ def print_learning_curve(curve, label, held_out_size):
     print(f"    {'Train size':<12} {'Pairwise acc.':<16} {'Bucket acc.':<14} {'Repeats'}")
     for point in curve:
         print(f"    {point['size']:<12} {_fmt_pct(point['pairwise_accuracy']):<16} {_fmt_pct(point['bucket_accuracy']):<14} {point['n_repeats']}")
+
+
+# --- Diversity: at a FIXED size, does the VARIETY of a rating history --
+# (distinct authors, not just count) predict accuracy, independent of
+# size itself? (2026-09-03) The learning-curve above only varies sample
+# SIZE via plain random draws -- it can't answer this, since a random
+# draw's diversity is just whatever falls out of the pool by chance, not
+# a controlled variable. Fixing size and varying diversity as the thing
+# actually measured isolates the question the repo owner asked.
+DIVERSITY_FIXED_SIZE = 40
+DIVERSITY_NUM_SAMPLES = 40
+DIVERSITY_SEED = 7
+
+
+def run_diversity_curve(catalog, all_ratings, held_out, size=DIVERSITY_FIXED_SIZE,
+                         num_samples=DIVERSITY_NUM_SAMPLES, seed=DIVERSITY_SEED):
+    """Draws `num_samples` random subsets, ALL of the same fixed `size`,
+    from all_ratings (excluding held_out). For each, records how many
+    DISTINCT authors happen to be in that draw (the diversity metric --
+    a size-40 draw pulling from 35 different authors is a much more
+    varied slice of taste than one where the same 8 authors' books repeat
+    5x each) alongside its held-out pairwise/bucket accuracy against the
+    same fixed held_out set the learning curve uses. Author count, not
+    series count, is the primary metric -- series-diversity is highly
+    correlated with author-diversity for most authors in this catalog
+    (one series each) and author is the more direct proxy for "how many
+    genuinely different voices/styles is this profile built from."
+
+    Returns a list of {"n_authors", "size", "pairwise_accuracy",
+    "bucket_accuracy"} dicts, one per sample (NOT averaged/bucketed --
+    the caller decides how to summarize, since both a raw correlation
+    and a tercile breakdown are useful views of the same data)."""
+    pool = {t: r for t, r in all_ratings.items() if t not in held_out}
+    pool_titles = list(pool.keys())
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+
+    rng = random.Random(seed)
+    points = []
+    for _ in range(num_samples):
+        sample_titles = rng.sample(pool_titles, size)
+        train = {t: pool[t] for t in sample_titles}
+        n_authors = len({catalog[title_to_id[t]]["author"] for t in sample_titles})
+        _, _, rows = run_held_out_test(catalog, all_ratings, held_out, None,
+                                        train_ratings=train, summary=False, quiet=True)
+        pw_hits, pw_n = pairwise_accuracy(rows)
+        bucket_hits = sum(1 for r in rows if r[4] == "OK")
+        points.append({
+            "n_authors": n_authors,
+            "pairwise_accuracy": _pct(pw_hits, pw_n),
+            "bucket_accuracy": _pct(bucket_hits, len(held_out)),
+        })
+    return points
+
+
+def print_diversity_curve(points, label, size):
+    print(f"  {label} (fixed train size={size}, {len(points)} random samples, "
+          f"varying only in how many distinct authors happen to appear):")
+
+    authors = [p["n_authors"] for p in points]
+    pw = [p["pairwise_accuracy"] for p in points]
+    bucket = [p["bucket_accuracy"] for p in points]
+
+    if len(set(authors)) > 1:
+        r_pw = statistics.correlation(authors, pw)
+        r_bucket = statistics.correlation(authors, bucket)
+        print(f"    Pearson r (distinct authors vs. pairwise accuracy): {r_pw:+.3f}")
+        print(f"    Pearson r (distinct authors vs. bucket accuracy):   {r_bucket:+.3f}")
+    else:
+        print("    (no variance in author count across samples -- correlation undefined)")
+
+    # Tercile breakdown -- easier to read than a bare correlation
+    # coefficient, and more robust to a couple of outlier samples.
+    ranked = sorted(points, key=lambda p: p["n_authors"])
+    n = len(ranked)
+    third = max(1, n // 3)
+    low, mid, high = ranked[:third], ranked[third:n - third], ranked[n - third:]
+    print(f"    {'Author-diversity tercile':<28} {'n_authors range':<18} {'Pairwise acc.':<16} {'Bucket acc.'}")
+    for name, bucket_pts in [("Low", low), ("Mid", mid), ("High", high)]:
+        if not bucket_pts:
+            continue
+        lo_a = min(p["n_authors"] for p in bucket_pts)
+        hi_a = max(p["n_authors"] for p in bucket_pts)
+        avg_pw = sum(p["pairwise_accuracy"] for p in bucket_pts) / len(bucket_pts)
+        avg_bucket = sum(p["bucket_accuracy"] for p in bucket_pts) / len(bucket_pts)
+        print(f"    {name:<28} {f'{lo_a}-{hi_a}':<18} {_fmt_pct(avg_pw):<16} {_fmt_pct(avg_bucket)}")
 
 
 if __name__ == "__main__":
