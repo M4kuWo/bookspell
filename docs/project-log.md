@@ -4006,3 +4006,55 @@ matching exactly on both sides: 863 books (down from 914), 583 tagged
 The 17 uncertain titles are being handed back to the repo owner with a
 brief premise summary each, for a book-by-book call rather than a batch
 guess -- not resolved in this entry.
+
+## 2026-09-03 (later still) -- resolved the 17 uncertain titles
+
+4 of the 17 had real gaps in what either the classifying agent or this
+session actually knew about them ("Lights Out," "Platform Decay," "The
+Everlasting," "Yesteryear") -- looked them up rather than guess.
+Resolved cleanly: Lights Out (Navessa Allen) turned out to be a fully
+grounded dark romance/thriller, no fantastical content at all -- out.
+Platform Decay turned out to be Murderbot Diaries #8, a straight sequel
+to an already-tagged franchise -- in. The Everlasting (Alix E. Harrow)
+is genuine time-travel SF (a historian looping through history to
+rewrite a legend) -- in. Yesteryear (Caro Claire Burke) teases time
+travel but the twist reveals the protagonist and her husband built the
+pioneer illusion themselves, a mental-health break rather than anything
+literal -- same "supernatural framing explicitly undone by the ending"
+pattern as Home Before Dark in the round-1 list -- out.
+
+The other 13 went to the repo owner directly with a one-line premise
+each. His calls, with reasoning worth keeping:
+- **Life After Life vs. Groundhog Day / The Time Traveler's Wife**: a
+  real, useful distinction emerged, not just a one-off verdict --
+  whether the speculative element is DIEGETIC (something characters
+  actually experience and react to as real, e.g. Henry's diagnosed
+  time-travel condition) vs. purely a narrative DEVICE the reader
+  experiences but the story never treats as real (Ursula's resets in
+  Life After Life aren't something she or anyone else reacts to as an
+  in-world event). Groundhog Day itself falls on the "in" side of this
+  same line despite having zero explained mechanism, because Phil does
+  react to the loop as real -- the explained-mechanism question was
+  never actually the right test. Worth reusing this framing for future
+  ambiguous cases rather than re-deriving it each time.
+- Ficciones: "probably bye, your discretion" -- resolved as out,
+  consistent with Shadow of the Wind's exclusion in round 1 (real
+  fantastical concepts, but shelved/read as literary fabulism, not
+  genre SFF).
+- The House of the Spirits and The Underground Railroad were flagged
+  back to the repo owner as having meaningfully MORE sustained,
+  central fantastical content than the rest of this batch (real,
+  running clairvoyance/ghosts throughout a family saga; a literal
+  physical alternate-history railway as the entire premise) before
+  executing -- he confirmed "bye" anyway, a deliberate "still shelved
+  as literary fiction" line, not an oversight caught too late.
+
+Final count from the original 331: 264 in scope (262 + Platform Decay +
+The Everlasting), 66 deleted (51 round 1 + 15 round 2), 1 pending
+tagging alongside the rest (none held back further).
+
+Deleted via `20260903150000_delete_out_of_scope_books_round2.sql`, same
+process as round 1: verified zero dependent rows (including a rater-file
+soft-reference check) before writing anything, individually-scoped
+statements, tested in a rolled-back transaction first. Verified matching
+exactly on both sides: 848 books (down from 863), 583 tagged (unchanged).
