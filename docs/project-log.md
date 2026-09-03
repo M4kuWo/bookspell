@@ -4701,3 +4701,33 @@ surfaced after this same review. Bibliographic only
 rated liked, added to the tag-catalog-batch skill's Step 0 as the new
 priority item (the original 23/25-book batch is marked done there).
 Verified matching on local and hosted (871 books both sides).
+
+## 2026-09-03 (later still) -- tagged "City" (Clifford D. Simak) directly
+
+Small, well-defined tagging job (one book) done directly rather than
+via the tag-catalog-batch skill or an agent, per CLAUDE.md's
+agent-efficiency guidance. HIGH_RISK_FIELDS checked directly against
+the actual text rather than genre-convention pattern-matching: person
+is third-limited throughout (rotating close-third per story-segment,
+not omniscient or first-person); narrator_reliability is reliable --
+the book's doggish scholarly frame doubting whether "Man" ever existed
+is a framing_device (form field), not an unreliable narrator inside
+the stories themselves; drive is worldbuilding_driven, a much more
+specific and accurate fit than a generic character/plot label for a
+book whose real engine is "what happens to civilization over 10,000
+years." `genre_accessibility` computed via the documented formula
+(prose_complexity=moderate, overall_pace=medium, worldbuilding_density=
+dense, pov_count=several, intellectual_weight=cerebral) -> demand_score
+0.75 -> `demanding`, matching manual judgment exactly before checking.
+`audiobook_length` set from the real audio duration already on file
+(586 min ~= 9.8h -> `standard`) rather than left null.
+
+Six tropes tagged, each individually justified against the actual
+plot (uplift, ai_consciousness, species_divergence,
+terraforming_or_space_colonization, immortal_or_ageless_character,
+dying_earth) -- no content warnings tagged, since genuinely none apply
+with real on-page weight; forcing any in would have been padding, not
+tagging. Tested in a rolled-back transaction first, applied to local,
+pushed to hosted, verified matching (648 tagged books both sides). Full
+`scoring_tests.py` suite reran clean, no more "not found in catalog"
+warning for City.

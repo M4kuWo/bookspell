@@ -68,20 +68,17 @@ a value not listed there. If you think a real gap exists in the
 vocabulary (a trope or value that should exist but doesn't), don't
 silently work around it -- note it in your final report instead.
 
-## Step 0: PRIORITY BATCH -- tag this book first
+## Step 0: PRIORITY BATCH -- currently empty, nothing pending
 
-**UPDATE (2026-09-03, later): the original 23/25-book priority batch
-below is DONE** -- tagged, density-audited, and verified (see
-docs/project-log.md's independent-audit entry). Left here for reference
-only, not something to redo.
-
-**New priority item, tag before Step 2's normal query**: **City**
-(Clifford D. Simak) -- ingested
-(`20260903230000_targeted_ingestion_city_simak.sql`) specifically
-because the repo owner remembered and rated it (liked) from memory,
-same reasoning as the batch below: tagging it unlocks real signal
-immediately rather than sitting invisible behind less-verified titles.
-Standalone, no series.
+**UPDATE (2026-09-03, later still): both priority items below are now
+DONE.** The original 23/25-book batch was tagged, density-audited, and
+verified (see docs/project-log.md's independent-audit entry). "City"
+(Clifford D. Simak) was also tagged directly (see docs/project-log.md's
+own entry) -- HIGH_RISK_FIELDS checked against the actual text,
+`genre_accessibility` computed via the documented formula, 6 tropes
+individually justified, no content warnings forced. Nothing pending
+here right now -- proceed straight to Step 2's normal query. Left below
+for reference only, not something to redo.
 
 ---
 
