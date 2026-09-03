@@ -4144,3 +4144,70 @@ already-surfaced titles (Shadow of the Gods, Rage of Dragons, Katabasis)
 should NOT be excluded from a fresh top-20 pull -- the point of this
 review is to see what the system currently and honestly ranks, not to
 curate around what's already been shown.
+
+## 2026-09-03 (later still) -- repo owner's structured algorithm critique: one real gap found and fixed, one mechanism tested and reverted, one flag landed
+
+Repo owner reviewed the qualitative round-2 top-20 list and wrote up a
+detailed, structured critique (6 numbered points) of the scoring
+algorithm itself, asking which were genuinely present in the code and
+why. Investigated each against real numbers rather than in the
+abstract (see `docs/scoring-test-protocol.md` for the full per-field
+data). Short version of the verdicts:
+
+- **Structural fields (person=0.5, pov_count=0.474) dominate content/
+  taste fields (darkness=0.22, anti_hero=0.226, age_category=0.029)** --
+  CONFIRMED, real, and the exact same "dilution" problem this project
+  has been documenting all session, now shown to also suppress good
+  candidates' ranking (Jade City/Blood Over Bright Haven), not just
+  fail to suppress bad ones (City of Bones/Graceling). Still unsolved.
+- **`age_category` should matter more** -- checked, and the data
+  actually argues the opposite: separation is 0.052, because Mathias
+  has LOVED several YA-tagged books (The Subtle Knife, Steelheart,
+  Firefight, The Golden Compass, The Amber Spyglass). His stated
+  dislike of Skyward specifically ("juvenile... Mary Sue protagonist")
+  is narrower than "YA tone" and has no matching DNA field at all -- a
+  real schema gap, not a weighting bug.
+- **Confidence/calibration compression** -- confirmed, but already a
+  documented, acknowledged limitation (`match_label()`'s own docstring
+  says the Good/Strong boundaries are "a rough first-pass calibration,
+  not derived from real user data yet").
+- **Series/franchise leakage** -- confirmed as a real evaluation-
+  methodology point, but NOT a live-recommendation bug (recommending
+  Wind and Truth to a Stormlight lover is correct product behavior).
+  Addressed via a new opt-in `discovery_only` flag (see below), not a
+  scoring change.
+- **One genuine surprise found along the way**: the `revenge` trope's
+  separation for Mathias is -0.041 -- slightly MORE common among his
+  disliked books than his liked ones, contradicting his own stated
+  intuition. Flagged for him to look at directly; not acted on here.
+
+**Tested a fix for the dilution/false-negative finding: a "validated
+positive floor,"** mirror image of the existing veto/cap, floors a
+book's score up when it matches EVERY statistically-validated field for
+that user (same evidence-gated pattern that made the veto safe). Built,
+found and fixed a real regression during testing (a partially-credited
+nominal field, e.g. `person`'s third_limited/third_omniscient, could
+register as both a validated match AND mismatch simultaneously, letting
+the floor silently undo the veto's cap on the WEIGHT_CAP_RATINGS
+domination scenario's known cases), then re-tested and found it
+produces **zero effect anywhere** -- every real book this was meant to
+help already scored above the floor value, and a floor structurally
+cannot re-order two candidates that both already clear it. REVERTED
+(code fully removed, not left unwired) -- full writeup, including the
+regression and the real numbers behind "why it structurally can't
+work," in `docs/scoring-test-protocol.md`'s "Validated positive floor --
+tested, REVERTED" section. The underlying dilution problem remains open
+and unsolved; a real fix would need to change score_book()'s relative
+field weighting itself, the same class of fix this project has already
+tried and rejected multiple times for reopening the domination bug.
+
+**Landed a `discovery_only` flag on `recommend()`** (default `False`,
+manual opt-in only, never a smarter default): when `True`, additionally
+excludes any candidate sharing a `series_id` or `author` with any
+already-rated book. Verified on Mathias's real profile -- correctly
+drops Wind and Truth (Sanderson) and The Shadow of the Gods (excluded
+via Malice, a different John Gwynne series he's also rated, confirming
+the author-level match works across series too), promoting Jade City/
+The City of Brass/Wizard's First Rule into the top 10 instead. Full
+`scoring_tests.py` suite reran clean after adding the parameter (default
+behavior unchanged).

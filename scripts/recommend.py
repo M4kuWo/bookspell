@@ -1608,7 +1608,8 @@ def series_position_ready(catalog, id_to_magnitude, book):
 
 
 def recommend(catalog, ratings, top_n=10, genre=None,
-              recent_history=None, diversity=0.0, fatigue_overrides=None):
+              recent_history=None, diversity=0.0, fatigue_overrides=None,
+              discovery_only=False):
     """See _resolve_profile() for ratings/genre/fatigue_overrides.
 
     recent_history: list of titles the user was recently recommended/has
@@ -1624,7 +1625,23 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     the relevance term never disappears entirely and a book that's a
     diametrical mismatch for the user's taste (not just "different from
     recent picks") stays capped low regardless of how novel it is. This
-    is "summon something different," not "ignore my taste."""
+    is "summon something different," not "ignore my taste."
+
+    discovery_only: manual opt-in, default False -- NEVER applied
+    automatically, must be explicitly passed True by the caller each
+    time (see docs/scoring-test-protocol.md's qualitative-review-round-2
+    entry). When True, additionally excludes any candidate sharing a
+    series_id OR an author string with ANY already-rated book,
+    regardless of that rating's sign. This is a lens for a human
+    manually auditing a recommendation list for whether the DNA fields
+    themselves generalize to new authors/series, NOT a better default:
+    recommending the next book of a series a user loves is correct,
+    useful PRODUCT behavior, not a bug -- it only reads as "trivial"
+    when the question being asked is "does the algorithm work," which
+    is exactly why this stays a manual flag a caller must deliberately
+    check, mirroring the existing series-isolated/author-isolated
+    held-out test variants in scripts/scoring_tests.py rather than
+    replacing recommend()'s default behavior with them."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     centroid, weights, id_to_magnitude, matches_genre = _resolve_profile(
         catalog, ratings, genre, fatigue_overrides
@@ -1638,9 +1655,17 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     ]
 
     excluded = set(id_to_magnitude.keys())
+    known_series = {
+        s for bid in excluded if (s := catalog[bid].get("series_id")) is not None
+    }
+    known_authors = {catalog[bid]["author"] for bid in excluded}
     scored = []
     for bid, book in catalog.items():
         if bid in excluded or not matches_genre(bid):
+            continue
+        if discovery_only and (
+            book.get("series_id") in known_series or book["author"] in known_authors
+        ):
             continue
         if not series_position_ready(catalog, id_to_magnitude, book):
             continue

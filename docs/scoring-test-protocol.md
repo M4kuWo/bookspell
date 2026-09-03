@@ -823,3 +823,125 @@ from ~0.34-0.40 pre-veto depending on training set), still correctly
 "Poor match," with `dealbreaker_summary` still showing "Possible
 dealbreaker: first-person narration." `recommend()`'s top-5 ranked list
 ran without error and contained no first-person titles.
+
+## Validated positive floor -- tested, REVERTED (2026-09-03)
+
+Motivated by a qualitative review round 2 finding (see project-log):
+the repo owner correctly identified that `anti_hero`/
+`morally_grey_protagonist` -- real, validated-ish positive signal for
+him -- were present on Jade City/Blood Over Bright Haven but not
+driving them high enough in the ranking, because structural fields
+(`person`, `pov_count`) dominate. Proposed fix: a mirror image of the
+veto/cap -- `_apply_validated_positive_floor()`, floors `score` to
+`VALIDATED_POSITIVE_FLOOR` (= `GOOD_MATCH_THRESHOLD`) when a book
+matches EVERY field/trope in `validated_dealbreaker_fields()` for that
+user, using the exact same evidence-gated pattern that made the veto
+safe (never fires without real per-user statistical separation).
+
+**A real regression was found and fixed before considering this even
+as a candidate**, same discipline as the veto's own rollout: a field
+with PARTIAL nominal credit (see `nominal_similarity()`, e.g. person's
+`third_limited`/`third_omniscient` at sim=0.5) can register as BOTH a
+validated match (`w*sim` clears `VALIDATED_DEALBREAKER_MAGNITUDE`) AND
+a validated mismatch (`w*(1-sim)` also clears it) on the SAME field
+simultaneously -- "matches every validated field" and "has a validated
+dealbreaker mismatch" turned out NOT mutually exclusive, contrary to
+the function's original design assumption. Caught via the
+WEIGHT_CAP_RATINGS domination stress test: Children of Dune, correctly
+capped to "Mixed match" (0.549) by the veto for its partial `person`
+mismatch, got immediately un-capped back to "Good match" (0.550) by
+the floor on the same call, because that same partial-credit `person`
+field also counted as "matched." Fixed by making the floor explicitly
+defer to the veto: if `dealbreaker_flags()` finds ANY validated
+mismatch at all, the floor never fires, full stop.
+
+**After that fix, re-tested and found ZERO positive effect anywhere**:
+- Domination scenario (WEIGHT_CAP_RATINGS): confirmed no more
+  regression (Children of Dune/Persepolis Rising/Children of Ruin
+  correctly back at 0.549 "Mixed match"), and the floor genuinely never
+  fires elsewhere in that scenario either.
+- Full `scoring_tests.py` suite, all 4 real raters: byte-for-byte
+  identical scorecard/ablation/threshold-diagnostic output before and
+  after (confirmed via a stash-free direct before/after run; the only
+  diff lines were pre-existing Python set-iteration nondeterminism in
+  tied-magnitude mismatch lists, reproduced identically by rerunning
+  the SAME code twice with no code change at all).
+- The specific motivating books: Jade City, Blood Over Bright Haven,
+  Graceling, City of Bones, House of Earth and Blood all scored
+  IDENTICALLY with and without the floor (0.751-0.814, all already
+  above `VALIDATED_POSITIVE_FLOOR`=0.55).
+
+**Why it can't work, structurally, not just "wasn't tuned right"**: a
+floor can only ever pull a LOW score UP to a fixed value -- it can
+never re-order two candidates that both already clear that value. Every
+book this was meant to help was already scoring well above 0.55; the
+actual complaint (rank Jade City ABOVE City of Stairs) requires
+changing the RELATIVE ranking within the "already clears Good match"
+band, which a floor structurally cannot do. Also: even setting that
+aside, only `person` currently validates as a dealbreaker/positive
+field for Mathias at `STAT_SEPARATION_THRESHOLD`=0.65 --
+`anti_hero` separation is 0.143, `darkness` 0.202, `violence_intensity`
+0.169, `age_category` 0.052 (all real numbers, none close to
+validating) -- so even a working floor mechanism has no positive
+evidence to act on for these fields yet, regardless of shape.
+
+**REVERTED**: `_apply_validated_positive_floor()`/
+`_validated_positive_matches()`/`VALIDATED_POSITIVE_FLOOR` removed
+from `scripts/recommend.py` entirely rather than left as unwired dead
+code, and the `_full_score()` test helper in `scripts/scoring_tests.py`
+reverted to its pre-floor form (score_book + series_repeat + veto
+only) -- consistent with how this project has always handled a
+tested-and-rejected idea (see "stakes_drive/craft_density: investigated,
+not a real lever" and the 2026-08-29 structural-field-boost rejection
+above). The real, still-open problem this was meant to solve --
+structural fields (`person`=0.5, `pov_count`=0.474) dwarfing
+content/taste fields the repo owner considers more predictive
+(`darkness`=0.22, `anti_hero`=0.226, `age_category`=0.029) -- remains
+unsolved. A genuine fix would need to change the RELATIVE weighting
+inside `score_book()`'s aggregation itself, which is precisely the
+class of fix (structural-field boost, alpha-blending, category budgets)
+this project has already tried multiple times and rejected for
+reopening the WEIGHT_CAP_RATINGS domination bug -- still an open,
+hard problem, not a quick follow-up.
+
+**One unrelated real surprise surfaced during this investigation,
+worth the repo owner's own attention**: the `revenge` trope's
+liked-vs-disliked separation for Mathias is **-0.041** -- i.e. slightly
+MORE common among his disliked/hated books than his liked ones,
+contradicting his own stated intuition that revenge-driven plots are a
+strong positive signal for him. Not investigated further here (no
+scoring change follows from one trope's sign on its own), but worth a
+manual look at which specific `revenge`-tagged books he's disliked.
+
+## `discovery_only` flag -- LANDED (2026-09-03)
+
+Second half of the same qualitative-review-round-2 feedback: ranking
+Wind and Truth #3 (loves Stormlight) and New Spring #15 (loves Wheel of
+Time) are probably correct PRODUCT recommendations, but trivial ones
+for judging whether the DNA fields themselves generalize to new
+authors/series -- exactly why `scoring_tests.py` already has
+series-isolated/author-isolated held-out variants. Those variants
+exist for the automated benchmark; there was no equivalent for a human
+manually eyeballing a live `recommend()` pull.
+
+Added `discovery_only` (default `False`) to `recommend()`'s signature.
+When `True`, additionally excludes any candidate sharing a `series_id`
+OR an `author` string with ANY already-rated book (any sign, not just
+loved/liked -- the point is "the reader has direct experience with this
+series/author already," which explains the match either way).
+Deliberately a MANUAL, explicit opt-in the caller must pass every time,
+never a smarter default -- recommending the next book of a series a
+user loves is genuinely useful, not a bug, for a real end user; it only
+becomes noise for the specific task of auditing whether the algorithm's
+DNA-based matching generalizes, which is what this flag is for.
+
+Verified on Mathias's real profile: default top-10 includes Wind and
+Truth (Sanderson) and The Shadow of the Gods (excluded too, correctly
+-- he's also rated Malice, a different John Gwynne series, confirming
+the author-level exclusion works across series by the same author, not
+just within one series). `discovery_only=True` removes both and
+promotes Jade City, The City of Brass, and Wizard's First Rule into the
+top 10 instead, all previously ranked just below the cutoff. Reran the
+full `scoring_tests.py` suite after adding the parameter (default
+unchanged): zero regressions, identical output modulo the same
+pre-existing tie-ordering nondeterminism noted above.

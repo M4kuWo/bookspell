@@ -182,7 +182,25 @@ def _full_score(catalog, id_to_magnitude, validated_fields, centroid, weights, b
     -- the same gap that was caught and fixed for the calibrated
     threshold applies here too: a benchmark that doesn't call the veto
     would silently test a DIFFERENT pipeline than what a live user
-    actually sees."""
+    actually sees.
+
+    A symmetric "validated positive floor" (mirror of the veto, floors
+    instead of caps) was designed and tested here 2026-09-03, then
+    REVERTED -- see docs/scoring-test-protocol.md's qualitative-review-
+    round-2 entry for the full writeup. Short version: a floor can only
+    ever pull a LOW score UP to a fixed value; it can never re-order two
+    candidates that already both clear that value, which is exactly the
+    case for every real book this was meant to help (Jade City, Blood
+    Over Bright Haven -- already 0.81+, nowhere near the floor). Zero
+    effect across all 4 real raters' full benchmark, and testing it
+    against the WEIGHT_CAP_RATINGS domination scenario also caught a
+    real regression before it could ship: a field with PARTIAL nominal
+    credit (see nominal_similarity()) could register as both a validated
+    match and a validated mismatch on the same field simultaneously,
+    letting the floor silently undo the veto's cap on Children of Dune
+    et al. Not worth keeping half-built dead code around for a
+    mechanism that's structurally the wrong shape for the problem it
+    targeted -- removed rather than left unwired."""
     score, _ = R.score_book(book, centroid, weights)
     score = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
     score = R._apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, score)
