@@ -4566,3 +4566,39 @@ computed fresh from the actual training pool each run.
 
 Pushed everything (this session's simulation-tools commit, the merge,
 and the label fix) to `origin/main`.
+
+## 2026-09-03 (later still) -- independently audited the wife's tagging batch, no repeat of the earlier under-tagging incident
+
+Repo owner asked directly whether the density self-check from the
+earlier under-tagging incident had actually been verified for this
+batch, or just trusted from the migration comments -- a fair challenge,
+since it hadn't been independently checked yet, only glanced at. Did
+the real check: pulled the exact tagged-title list from all 3 new
+migrations and queried actual `book_tropes`/`book_content_warnings`
+counts directly, against the CURRENT fresh catalog-wide average (5.70
+tropes/book, 1.72 CWs/book -- queried fresh, not reused from a stale
+number).
+
+Per-batch (independently verified, not self-reported):
+- Priority list (25 books): 4.76 tropes/book (ratio 0.84), 1.72 CWs/book
+  (ratio 1.00) -- matches the migration's own self-report closely.
+- Batch 2 (20 books): 4.65 tropes/book (ratio 0.82), 1.55 CWs/book
+  (ratio 0.90) -- matches self-report closely.
+- Batch 3 (20 books): 4.55 tropes/book (ratio 0.80), 1.95 CWs/book
+  (ratio 1.13) -- matches the self-reported "exactly 0.80." (An initial
+  discrepancy against a lower number turned out to be a bug in the
+  verification query itself -- "Zoe's Tale" was truncated to "Zoe" by
+  an apostrophe-escaping mistake in title extraction, undercounting one
+  book's tropes; fixed and rechecked.)
+- **Combined across all 65 newly-tagged books**: 4.66 tropes/book
+  (ratio 0.82), 1.74 CWs/book (ratio 1.01).
+
+**Verdict: no repeat of the earlier incident.** Every batch's self-check
+process worked as designed this time -- each one caught its own initial
+shortfall (33-37% below average pre-correction, per their own migration
+comments), went back, and added genuine additional tropes before
+finishing, landing at 0.80-0.84 (within or right at this project's ~20%
+rule-of-thumb floor) rather than shipping thin and uncaught. Worth
+flagging that Batch 3 landed exactly AT the floor (0.80) with zero
+margin, not comfortably above it -- not a violation, but the closest
+call of the three, noted for awareness rather than requiring action.
