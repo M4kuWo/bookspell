@@ -4627,3 +4627,45 @@ similar in kind to the earlier out-of-scope-triage discussion, not
 acted on without repo owner input); Jurassic Park/Sphere (Crichton)
 appearing are genuinely in-scope hard-adjacent sci-fi-thriller, no
 concern there.
+
+## 2026-09-03 (later still) -- 1Q84 scope confirmed, genre-split lists re-surfaced, two more ratings, contamination guidance strengthened
+
+**1Q84 scope, checked properly**: applied the same diegetic-vs-device
+test used for the earlier Life After Life/Groundhog Day discussion.
+1Q84's fantastical elements (a parallel reality with two moons, the
+"Little People") are treated as REAL by the story -- characters
+directly perceive and are affected by them, driving major plot beats,
+not an ambiguous psychological state or pure narrative device. Correctly
+tagged `genre: ['fantasy']` with three real, specifically-motivated
+tropes (`parallel_universe_or_multiverse`, `noir_detective_structure`,
+`soulmate_bond`). Unlike Girl with the Dragon Tattoo, this is a
+legitimate in-scope call, not a mistagging -- no fix needed.
+
+**Genre-split recommendation lists**: these already exist
+(`recommend(..., genre='fantasy'|'sci_fi')`, built earlier this
+session -- see README's "genre-scoped profiles" line). The last two
+qualitative review rounds used the blended default out of habit, not
+because the split was dropped. Reran properly this time as two
+separate top-10 lists; both came back genuinely different and sensible
+(fantasy: The Shadow of the Gods, City of Stairs, Black Sun...; sci-fi:
+The Girl with All the Gifts, The Institute, Jurassic Park...) --
+confirms the mechanism still works correctly, just wasn't being used in
+recent manual test calls.
+
+**Two more ratings added**, both surfaced by this same review round:
+Ninth House (Leigh Bardugo) -- disliked (read it, no strong feelings
+either way, but bored enough to DNF); Hard-Boiled Wonderland and the
+End of the World (Murakami) -- loved. The latter was ALREADY in the
+catalog and already tagged (`genre: sci_fi + fantasy`, correctly
+capturing its dual cyberpunk/portal-fantasy structure) from an earlier
+session -- just never rated. 113 ratings total now.
+
+**Strengthened CLAUDE.md's author-contamination guidance** after it
+recurred a second time (Season of Storms/The Lady of the Lake, this
+same session) despite already being documented from the original
+65-book incident. The old wording only said to check IF a name "looks
+like" a contributor -- rewritten to make explicit verification against
+Hardcover's own contributor data a MANDATORY step for every newly
+ingested book, not a reactive check for suspicious-looking cases, using
+the same "not an after-the-fact audit" framing already applied to the
+trope/CW density rule after ITS first recurrence.

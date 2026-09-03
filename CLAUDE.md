@@ -110,14 +110,22 @@ re-litigate decisions already made there.
   not a one-off note — add a field to that list the next time a real
   error surfaces on it, rather than assuming this list is now complete.
 - **A book's `author` field must contain only genuine author(s) — not
-  illustrators, translators, narrators, or editors.** This has already
-  been a real, widespread problem (65 of 606 books had a contaminated
-  author field from Hardcover's bibliographic ingestion carrying every
-  "contributor" credit into one string) and can recur on any newly
-  ingested book. If an author field looks like `"Name, Name, Name"`,
-  check whether the later names are genuine co-authors (real, and
-  common — don't assume contamination) or contributors before trusting
-  or further propagating it.
+  illustrators, translators, narrators, or editors.** This is not a
+  one-time-fixed problem: it has already recurred more than once (65 of
+  606 books found contaminated in one audit; then again on 2 freshly
+  ingested books in the very next batch — "Season of Storms"/"The Lady
+  of the Lake" came in as `"Andrzej Sapkowski, David   French"`, David
+  French being the series' English translator). "Check if it looks
+  contaminated" is not enough, because it keeps slipping through anyway
+  — **every newly ingested book must have its author field explicitly
+  verified against Hardcover's own `author_names`/`cached_contributors`
+  data BEFORE it's inserted, not fixed reactively after it surfaces in
+  a review.** If an author field has more than one name, check whether
+  the later names are genuine co-authors (real, and common — don't
+  assume contamination) or contributors, every single time, not just
+  when a name "looks like" a contributor. This is a mandatory ingestion
+  step, the same way the trope/CW density self-check below is mandatory
+  for tagging — not an audit someone else runs afterward.
 - **A tagging batch must self-check its own trope/content-warning
   density BEFORE the session ends — this is not an after-the-fact audit
   for someone else to catch later.** This has already gone wrong twice:
