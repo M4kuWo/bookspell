@@ -120,12 +120,23 @@ The full design writeup with worked examples is in
   Series DNA (aggregate trajectory across a tagged series — does a
   series improve, worsen, or stay consistent book to book), "summon
   something different" / "less of X" diversity controls, a per-user
-  calibrated "Poor match" threshold (see above), and a two-tier
-  dealbreaker mechanism: a displayed flag for any strong mismatch, and
-  — only once there's enough of a reader's own liked/disliked history to
+  calibrated "Poor match" threshold (see above), a two-tier dealbreaker
+  mechanism (a displayed flag for any strong mismatch, and — only once
+  there's enough of a reader's own liked/disliked history to
   statistically validate a field as a real personal dealbreaker for
   them, not just a fixed heuristic — an actual score cap, not just a
-  callout.
+  callout), and a cold-start fallback for readers the engine doesn't
+  know well yet: blends toward broadly-accessible recommendations
+  (`genre_accessibility`, a new Book DNA field) when a reader has too
+  little demonstrated genre experience, fading out as real signal
+  accumulates. "Too little experience" isn't just rating count — a
+  reader whose only rating is Gardens of the Moon has shown real
+  readiness a short list doesn't otherwise capture, so the fallback
+  weight combines rating count with the hardest tier the reader's
+  actually engaged with. Fixes a real, previously-confirmed bug: a
+  reader with zero ratings used to get literal `0.000` scores in
+  arbitrary order (nothing for `build_profile()` to compute weights
+  from) instead of a sane default.
 - **Real external reader validation**: the catalog-review tool
   ([`tools/catalog-review/`](tools/catalog-review/)) is in front of
   real test readers, whose feedback has already caught and fixed
@@ -213,7 +224,15 @@ Near-term, roughly in order:
 6. **Fix spoiler leakage** in the explanation layer — some
    spoiler-flagged fields have already shown up in generated
    explanations.
-7. Real app: onboarding flow, UI, accounts. Not started.
+7. Real app: onboarding flow, UI, accounts. Not started. One concrete
+   idea already logged for whenever this starts: let a new reader
+   self-report their genre experience directly ("find and rate books
+   you liked and disliked, the more the better — or if you're new to
+   the genre, we can decide for you"), as a starting prior for the
+   cold-start fallback (see above) rather than relying purely on
+   inferring it from ratings so far — but real inferred signal should
+   still be able to override that initial self-report over time, not
+   leave someone stuck in cold-start mode forever after one checkbox.
 8. (Further out) A guide-character UX — a witch/wizard leading the
    reader through "summoning" a book recommendation, with matching
    illustrated art. Purely presentation-layer, deliberately deferred

@@ -165,6 +165,88 @@ WEIGHT_CAP = 0.5
 # how novel it is -- see book-dna.md's 2026-08-29 refinement note.
 MAX_DIVERSITY = 0.5
 
+# --- Cold-start fallback (2026-09-03) -------------------------------------
+# genre_accessibility (book_dna column, see its migration) powers a
+# SEPARATE blend from the normal per-field weighted average -- it's
+# deliberately NOT in ORDINAL_FIELDS/build_profile() at all, so it can
+# never dilute real signal for a user who already has a rating history
+# (the same failure mode this project already hit once for other
+# fields -- see docs/scoring-test-protocol.md's aggregation-shape design
+# discussion). Instead, for a user with too little demonstrated
+# experience, recommend() blends toward "broadly accessible" results
+# instead of trusting a profile built from almost nothing. This directly
+# fixes a real, confirmed bug: recommend() with 0 ratings previously
+# returned literal 0.000 scores in arbitrary order (build_profile() has
+# nothing to compute weights from), not a graceful default.
+#
+# Scope: this only affects recommend()'s ranking. explain_match() is
+# unchanged -- a user asking "why would/wouldn't I like THIS book"
+# still gets their real profile-based reasoning even when it's thin,
+# since there's no "ranked list" for a cold-start fallback to replace.
+GENRE_ACCESSIBILITY_DEMAND = {
+    "gateway": 0.0, "accessible": 0.25, "moderate": 0.5,
+    "demanding": 0.75, "veteran_only": 1.0,
+}
+
+# Ratings count at which cold-start blending fully fades to 0 (pure
+# normal scoring) -- a first-pass, provisional cutoff like every other
+# constant in this file, not derived from real data (there's no real
+# "brand-new user going through onboarding" data yet to check it
+# against). 12 sits just past this project's own "sparse" scenario (16
+# ratings, already treated as real, non-degenerate data) and just past
+# where a 7-rating rater (Gabriel) showed weak but real personalization
+# -- a reasonable middle ground, not a precise number.
+COLD_START_FADE_RATINGS = 12
+
+
+def reader_experience_fraction(catalog, id_to_magnitude):
+    """How much genre experience this user has ALREADY demonstrated,
+    independent of how many total ratings they've given -- someone who's
+    rated even a single veteran_only book without disliking it has shown
+    real readiness regardless of how short their list is. This is why
+    it's a separate factor from rating count, not folded into one number
+    -- a short list doesn't necessarily mean an inexperienced reader.
+
+    Only counts books rated loved/liked/it_was_okay (magnitude >= 0) --
+    disliking/hating a demanding book is ambiguous evidence (could mean
+    "too much for me," could mean something unrelated) and isn't trusted
+    as proof of readiness either way.
+
+    Returns the highest genre_accessibility demand level (see
+    GENRE_ACCESSIBILITY_DEMAND, 0.0-1.0) among those books, or 0.0 if
+    none are tagged/rated."""
+    best = 0.0
+    for bid, mag in id_to_magnitude.items():
+        if mag < 0:
+            continue
+        book = catalog.get(bid)
+        if book is None:
+            continue
+        demand = GENRE_ACCESSIBILITY_DEMAND.get(book.get("genre_accessibility"))
+        if demand is not None and demand > best:
+            best = demand
+    return best
+
+
+def cold_start_weight(catalog, id_to_magnitude):
+    """How much recommend() should lean on accessibility rather than the
+    normal per-field profile match -- 1.0 (fully cold) down to 0.0 (fully
+    trust the normal profile). Combines two independent factors: raw
+    rating count alone isn't the right measure, since someone who's only
+    rated one book but it's Gardens of the Moon has shown real genre
+    readiness a short list doesn't capture on its own.
+
+    count_component: linear fade from 1.0 at 0 ratings to 0.0 at
+    COLD_START_FADE_RATINGS. experience_component: demonstrated readiness
+    (see reader_experience_fraction()) discounts the count-based weight
+    directly, so a single confirmed veteran_only-tier rating can zero
+    this out even at n=1."""
+    n = len(id_to_magnitude)
+    count_component = max(0.0, 1.0 - n / COLD_START_FADE_RATINGS)
+    experience = reader_experience_fraction(catalog, id_to_magnitude)
+    return count_component * (1.0 - experience)
+
+
 # --- Explanation layer: field/value -> human-readable phrase ---------------
 # Generic fallback is "{value} {display name}" (e.g. "dark tone"); override
 # below only where that reads awkwardly or a field's raw values need real
@@ -1499,6 +1581,7 @@ def recommend(catalog, ratings, top_n=10, genre=None,
         catalog, ratings, genre, fatigue_overrides
     )
     validated_fields = validated_dealbreaker_fields(catalog, id_to_magnitude)
+    csw = cold_start_weight(catalog, id_to_magnitude)
 
     diversity = max(0.0, min(diversity, MAX_DIVERSITY))
     recent_books = [
@@ -1517,7 +1600,11 @@ def recommend(catalog, ratings, top_n=10, genre=None,
         relevance = _apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, relevance)
         if diversity > 0 and recent_books:
             novelty = 1 - max(book_similarity(book, h) for h in recent_books)
-            final = (1 - diversity) * relevance + diversity * novelty
+            relevance = (1 - diversity) * relevance + diversity * novelty
+        if csw > 0:
+            demand = GENRE_ACCESSIBILITY_DEMAND.get(book.get("genre_accessibility"), 0.5)
+            accessibility = 1.0 - demand
+            final = (1 - csw) * relevance + csw * accessibility
         else:
             final = relevance
         scored.append((final, book["title"], book["author"], contributions))

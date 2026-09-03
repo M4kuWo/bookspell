@@ -377,6 +377,66 @@ Two entries worth calling out:
   own field. Kept as the actual community term rather than a sanitized
   synonym, in keeping with the product's genre-native voice.
 
+### 6. Reader fit — core, powers a separate mechanism
+| Field | Values |
+|---|---|
+| `genre_accessibility` | gateway, accessible, moderate, demanding, veteran_only |
+
+Added 2026-09-03, from a repo-owner design discussion about two distinct
+cold-start problems: a reader with too little rating history overall
+(any genre), and a reader whose history doesn't demonstrate SFF-specific
+experience, even if they have plenty of general reading history. Neither
+is fixed by a new DNA field on its own — they need a fallback recommendation
+strategy for readers the engine doesn't know well yet, and this field is
+what that strategy leans on.
+
+**Deliberately excluded from the normal per-user weighted average**
+(`recommend.py`'s `ORDINAL_FIELDS`) — folding it in would risk diluting
+real signal for readers who already have a rating history, the same
+failure mode this project already hit and fixed once for other fields
+(see `docs/scoring-test-protocol.md`'s aggregation-shape design
+discussion). Instead it powers a separate blend in `recommend()`, active
+only for readers with too little demonstrated experience, fading out as
+real signal accumulates.
+
+"Too little experience" is NOT just a matter of how many books someone's
+rated — a reader whose only rating is Gardens of the Moon has demonstrated
+real genre readiness a short list doesn't otherwise capture. The
+cold-start weight combines rating count (a decaying factor) with the
+highest `genre_accessibility` tier the reader has engaged with and not
+disliked (a demonstrated-experience factor that can override the count
+factor entirely, even at n=1) — see `recommend.py`'s
+`cold_start_weight()`/`reader_experience_fraction()`.
+
+Backfilled for every already-tagged book via a formula over
+`prose_complexity`, `overall_pace`, `worldbuilding_density`, `pov_count`,
+and `intellectual_weight` (see the field's own schema comment for the
+exact formula) — free, no new tagging work for already-tagged books.
+This captures difficulty of CRAFT only; it deliberately doesn't (can't)
+capture premise familiarity, since nothing else in the schema does
+either — a mainstream premise (superheroes, a school setting) can make an
+otherwise structurally demanding book land as more welcoming than the
+formula alone would suggest. Going forward, a tagger starts from the
+computed baseline and adjusts specifically for that, rather than
+reassigning from scratch — see `tag-catalog-batch/SKILL.md`.
+
+Related but distinct from the series-length-as-approachability idea
+under "Series & universe" below — that's about how much TOTAL reading
+commitment a series represents (a long ongoing series vs. a short
+completed one), independent of how much genre fluency any single book
+in it assumes. Both are real approachability axes, deliberately not
+conflated into one field.
+
+**Future UI idea, not built** (no onboarding flow exists yet — see the
+main README's roadmap): let a new reader self-report their experience
+level directly at signup ("find and rate books you liked and disliked,
+the more the better — or if you're new to the genre, we can decide for
+you"), rather than relying purely on inferring it from whatever they've
+rated so far. A self-report would need to be a starting prior that real
+inferred signal can update/override over time, not a permanent label —
+someone who checks "new to the genre" but then rates a veteran-only book
+they loved shouldn't stay stuck in cold-start mode.
+
 ## Vocabulary growth process
 
 `tropes` and `content_warnings` are not meant to be "finished" at v1

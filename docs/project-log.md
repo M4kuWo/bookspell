@@ -3878,3 +3878,87 @@ flip, not a new systematic problem. Sparse/Osnat/Dandan/Gabriel scenarios
 unaffected, as expected -- none of them depend on Mathias's ratings.
 Full scorecard, ablation, and threshold-diagnostic output all rerun
 clean, no errors.
+
+## 2026-09-03 -- landed the cold-start fallback: a new field, a formula, and a real bug fix
+
+Built out the design discussed the day before: a new Book DNA field
+(`genre_accessibility`) plus a cold-start blend in `recommend()` for
+readers the engine doesn't know well yet. Repo owner refined the design
+first with a real insight before this was built: cold-start-ness isn't
+just a matter of rating COUNT -- a reader whose only rating is Gardens
+of the Moon has demonstrated real genre readiness a short list doesn't
+capture on its own. The final mechanism combines both factors rather
+than using count alone.
+
+**Schema**: new `reader_fit` category, one field, `genre_accessibility`
+(gateway/accessible/moderate/demanding/veteran_only) --
+`docs/schema/book-dna.schema.yaml` and `book-dna.md` both updated.
+Deliberately kept OUT of `recommend.py`'s `ORDINAL_FIELDS` (the normal
+per-user weighted average) -- folding it in would risk the same
+dilution failure mode already fixed once for other fields this session.
+Backfilled for all already-tagged books via a formula over 5 existing
+fields (prose_complexity, overall_pace [inverted -- fast=accessible],
+worldbuilding_density, pov_count, intellectual_weight), averaged and
+bucketed -- free, zero new tagging work. Sanity-checked against the repo
+owner's own named examples before trusting it across the catalog:
+Steelheart/Firefight (his "recommend to newbies" example) land at
+demand=0.300 (accessible tier); Gardens of the Moon (his "never
+recommend to a newbie" example) lands at demand=0.800 (right at the
+veteran_only boundary). Tested in a rolled-back transaction first, per
+this project's standing rule, before applying for real.
+
+**While applying this, found hosted had 20 more tagged books than local
+that hadn't been pulled yet** -- a real tagging batch from a session on
+a different machine (the repo owner's wife's Claude, already using the
+tag-catalog-batch skill's partial-series-first ordering correctly).
+Merged cleanly (one new migration file, no conflicts), applied it to
+local, and found its migration-tracking version was recorded locally
+but not on hosted -- the documented "applied directly against hosted's
+Postgres instead of via `supabase db push`" desync this project has hit
+before. Confirmed data matched on both sides first, then repaired via
+`supabase migration repair --status applied`, per the documented
+procedure -- never forced through. Ran a second, correctly-ordered
+backfill migration afterward to cover genre_accessibility for those 20
+books too (the original backfill had already run before this merge, so
+they were missed the first time).
+
+**The mechanism** (`scripts/recommend.py`): `reader_experience_fraction()`
+returns the highest genre_accessibility tier a reader has engaged with
+and NOT disliked (loved/liked/it_was_okay only -- disliking a demanding
+book is ambiguous evidence, not trusted either way). `cold_start_weight()`
+combines that with a rating-count decay (linear fade from 1.0 at 0
+ratings to 0.0 at 12), so demonstrated experience can zero out the
+cold-start weight even at n=1. Wired into `recommend()` as an outer
+blend around the existing relevance/diversity calculation -- deliberately
+NOT touching `explain_match()`, which still gives a reader's real
+profile-based reasoning for one specific book regardless of how thin
+their history is (there's no "ranked list" for a fallback to replace
+there).
+
+**Verified live, not just logically**: a 0-rating profile, which
+previously returned literal `0.000` scores in arbitrary order (a real,
+confirmed bug -- `build_profile()` has nothing to compute weights from),
+now returns genuinely accessible, mainstream titles (Dark Matter, Fourth
+Wing, The Lightning Thief, Twilight, Artemis). A single "Steelheart:
+loved" rating (accessible tier) computes cold_start_weight=0.6875 and
+recommends more gateway-tier books (Red Queen, Powerless, The Cruel
+Prince). A single "Gardens of the Moon: loved" rating (veteran_only
+tier) computes cold_start_weight=0.0 EXACTLY -- full readiness
+demonstrated from one book -- and immediately recommends real, on-theme
+veteran-tier picks (Deadhouse Gates, A Little Hatred, The Grace of
+Kings), skipping the training-wheels behavior entirely. Confirmed zero
+regression for an experienced rater: Mathias's 84-rating profile computes
+cold_start_weight=0.0 exactly, and the full `scoring_tests.py` suite
+(which calls `score_book()` directly, not `recommend()`) is unaffected,
+as expected by design.
+
+**Not built**: the future UI idea from the same design discussion (a
+self-report experience checkbox at onboarding, later overridable by
+real inferred signal) -- logged in the README roadmap and the schema
+doc, not implemented, since there's no onboarding UI yet to attach it to.
+
+Repo owner flagged (not yet acted on): 16 local commits from this
+session, including everything above, aren't pushed to GitHub yet -- the
+wife's Claude session's tagging batch was already pushed and pulled in
+cleanly, but the reverse hasn't happened. Worth pushing soon so her next
+session doesn't work from a stale checkout.

@@ -650,6 +650,49 @@ categories:
           - {id: amnesia_driven_narrative, group: craft_devices, spoiler: false}  # protagonist memory loss/recovery is the structural engine revealing their own backstory to themselves (Project Hail Mary) — distinct from twist_ending/twist_filled, which are reader-facing reversals rather than a self-discovery device
           - {id: retrospective_memoir_narration, group: craft_devices, spoiler: false}  # added 2026-08-31 (external reader suggestion): the protagonist-narrator recounts their OWN past from a later vantage point, with explicit narrative distance between the narrating self and the experiencing self (The Name of the Wind — Kvothe telling his life story to the Chronicler). A specific, real reader-taste axis (the retrospective, "I know how this turns out" texture) distinct from `form: framing_device` in general, which is a broad structural umbrella also covering frames where the narrator ISN'T the protagonist recounting their own life (a third-party storyteller, a footnoted-historian voice, a found manuscript) — those don't carry the same narrative distance/foreshadowing texture this trope targets
 
+  reader_fit:
+    label: Reader fit
+    scope: core
+    fields:
+      genre_accessibility:
+        type: enum
+        values: [gateway, accessible, moderate, demanding, veteran_only]
+        # How much genre fluency/patience this book assumes of its
+        # reader, independent of the craft fields above -- a book can
+        # have simple prose (prose_complexity: accessible) and still
+        # assume comfort with invented magic terminology, dense
+        # political intrigue conventions, or a slow-burn multi-book
+        # payoff; conversely a mainstream, culturally-familiar premise
+        # (superheroes, a school setting) can make an otherwise
+        # structurally demanding book land as more welcoming than its
+        # other fields alone would suggest.
+        #
+        # Deliberately NOT part of the normal per-user weighted average
+        # (see recommend.py's ORDINAL_FIELDS, which excludes it on
+        # purpose) -- it powers a separate cold-start fallback instead,
+        # for readers with too little demonstrated experience to trust a
+        # normal profile match yet. Folding it into the main scoring
+        # average would risk diluting real signal for readers who
+        # already have a rating history, the same failure mode this
+        # project already hit and fixed once for other fields.
+        #
+        # Backfilled for every already-tagged book via a formula over
+        # prose_complexity, overall_pace, worldbuilding_density,
+        # pov_count, and intellectual_weight (see its migration) -- a
+        # real but INCOMPLETE proxy, since it can't capture premise
+        # familiarity (nothing else does either). Going forward, a
+        # tagger should start from that computed baseline and adjust it
+        # specifically for premise-familiarity, not reassign from
+        # scratch -- see tag-catalog-batch/SKILL.md.
+        #
+        # Related but distinct from the series-length-as-approachability
+        # idea in the "Series & universe" note below -- that's about how
+        # much TOTAL reading commitment a series represents (a long
+        # ongoing series vs. a short completed one), independent of how
+        # much genre fluency any single book in it assumes. Both are
+        # real approachability axes; not conflated into one field.
+        spoiler: false
+
 # Series-level spoiler gating (not a schema field — a data-model note).
 # Any field with spoiler: true, on a book that belongs to a series, gets a
 # companion "reveals at installment N" value stored per book record, e.g.

@@ -160,12 +160,33 @@ romance_heat_frequency, romance_heat_intensity, violence_frequency,
 violence_intensity, worldbuilding_density, narrative_closure,
 emotional_resolution, ends_on_cliffhanger, audiobook_length,
 magic_system_hardness, scifi_hardness, prose_density, prose_complexity,
-intellectual_weight, stakes_scope, personal_stakes` -- plus `genre`.
-(Leave out the 5 Tier B audiobook columns mentioned above -- those stay
-null on purpose.) If a field genuinely doesn't apply to a book (e.g.
-`romance_heat_frequency` on a book with zero romance), use its `none`
-value if the schema defines one for that field -- don't just omit the
-column.
+intellectual_weight, stakes_scope, personal_stakes, genre_accessibility`
+-- plus `genre`. (Leave out the 5 Tier B audiobook columns mentioned
+above -- those stay null on purpose.) If a field genuinely doesn't apply
+to a book (e.g. `romance_heat_frequency` on a book with zero romance),
+use its `none` value if the schema defines one for that field -- don't
+just omit the column.
+
+**`genre_accessibility` (added 2026-09-03) works differently from every
+other field above -- start from a computed baseline, then adjust, don't
+assign from scratch.** Once you've settled on this book's
+`prose_complexity`, `overall_pace`, `worldbuilding_density`, `pov_count`,
+and `intellectual_weight`, compute a 0-1 "demand" score by averaging
+their positions (`prose_complexity`: accessible=0/moderate=0.5/dense=1;
+`overall_pace` INVERTED, since fast=accessible: slow=1/medium=0.5/fast=0;
+`worldbuilding_density`: light=0/moderate=0.5/dense=1; `pov_count`:
+single=0/dual=0.25/few=0.5/several=0.75/ensemble=1; `intellectual_weight`:
+escapist=0/moderate=0.5/cerebral=1), then bucket it: <0.2 gateway, <0.4
+accessible, <0.6 moderate, <0.8 demanding, else veteran_only. THEN
+adjust that computed baseline up or down one tier if the book's actual
+premise familiarity differs from what those 5 craft fields alone would
+suggest -- a mainstream, culturally-familiar premise (superheroes, a
+school setting) can make a structurally demanding book land more
+welcoming than the formula alone implies; conversely a book with simple
+prose but a dense invented pantheon and no glossary can be less welcoming
+than its craft fields alone suggest. This adjustment is the one thing
+about this field a formula can't do, and the actual reason it's a real
+tagged field instead of something computed silently at query time.
 
 Write every insert as a SCOPED statement tied to a specific book, using a
 `select id from books where title = '...'` subselect for the book_id --
@@ -187,7 +208,7 @@ insert into book_dna (
   violence_intensity, worldbuilding_density, narrative_closure,
   emotional_resolution, ends_on_cliffhanger, audiobook_length,
   magic_system_hardness, scifi_hardness, prose_density, prose_complexity,
-  intellectual_weight, stakes_scope, personal_stakes
+  intellectual_weight, stakes_scope, personal_stakes, genre_accessibility
 )
 select
   id, array['fantasy'], 'adult', 'standard', 'few', 'third_limited',
@@ -197,7 +218,13 @@ select
   'graphic', 'moderate', 'requires_series',
   'bittersweet', 'cliffhanger', 'standard',
   'soft', 'na', 'moderate', 'moderate',
-  'moderate', 'regional', 'high'
+  'moderate', 'regional', 'high', 'moderate'
+  -- genre_accessibility: prose_complexity=moderate(0.5), overall_pace=fast
+  -- (inverted: 0), worldbuilding_density=moderate(0.5), pov_count=few(0.5),
+  -- intellectual_weight=moderate(0.5) -> average 0.4 -> 'moderate' tier.
+  -- Adjust from this computed baseline for premise-familiarity if
+  -- warranted (see the paragraph above) -- not done here, since this is
+  -- a generic placeholder example, not a real book with a real premise.
 from books where title = 'Example Title';
 
 insert into book_tropes (book_id, trope_id)
