@@ -4602,3 +4602,28 @@ rule-of-thumb floor) rather than shipping thin and uncaught. Worth
 flagging that Batch 3 landed exactly AT the floor (0.80) with zero
 margin, not comfortably above it -- not a violation, but the closest
 call of the three, noted for awareness rather than requiring action.
+
+## 2026-09-03 (later still) -- qualitative recommend() review round 3, one more real author-contamination bug found
+
+Fresh top-20 `recommend()` pull with the newly-expanded profile
+(111 rated, 111 tagged after the sync above). Found one real,
+fixable data-quality bug: "Season of Storms" and "The Lady of the
+Lake" (both added in the 2026-09-03 tagging batch) had `author` =
+'Andrzej Sapkowski, David   French' -- David French, the English
+translator of the Witcher series, folded in from Hardcover's
+bibliographic data, the exact contamination pattern CLAUDE.md already
+documents. Confirmed the other 6 Sapkowski books already in the
+catalog are clean before fixing (isolated to these 2 new additions,
+not a systemic recurrence). Fixed via
+`20260903220000_fix_witcher_translator_contamination.sql`, scoped by
+exact title + a match on the contaminated string. Applied to local,
+pushed to hosted, verified matching on both sides.
+
+Top-20 list itself (post-fix) is in the conversation; two other things
+worth a look, not acted on: `1Q84` (Murakami) appearing at #18 is a
+legitimate borderline-scope case (real fantastical elements -- two
+moons, Little People -- but predominantly read as literary fiction,
+similar in kind to the earlier out-of-scope-triage discussion, not
+acted on without repo owner input); Jurassic Park/Sphere (Crichton)
+appearing are genuinely in-scope hard-adjacent sci-fi-thriller, no
+concern there.
