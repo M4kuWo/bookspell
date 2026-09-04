@@ -4900,3 +4900,40 @@ instruction**: this project's docs are a running journal of moves,
 findings, and concerns as they happen, not something to ask permission
 to write -- continue doing this by default going forward, the same way
 every substantive change this session has already been logged.
+
+## 2026-09-04 (later) -- retagged the 3 confirmed romance_driven books, found a real "it doesn't matter yet" result
+
+Repo owner's correct observation: `romance_driven` (added earlier
+today) does nothing until real books get retagged with it. Checked
+directly: From Blood and Ash, Daughter of No Worlds, and House of
+Earth and Blood (his own review's flagged books) are all
+`romance_heat_frequency: frequent` / `intensity: explicit` with 3+
+romance-structural tropes each -- unambiguous cases, not borderline
+judgment calls. Retagged via
+`20260904010000_retag_confirmed_romance_driven_books.sql`, applied to
+local and hosted, verified matching.
+
+Scoped but did NOT bulk-retag the wider candidate pool: querying
+`romance_heat_frequency=frequent AND intensity=explicit` across the
+whole catalog returns 24 books, but that filter alone isn't sufficient
+signal -- it also matched Gravity's Rainbow (Pynchon) and Stranger in a
+Strange Land (Heinlein), neither of which should ever be `romance_driven`
+despite genuinely explicit content. The rest need real per-book
+judgment (several Sarah J. Maas/Rebecca Yarros titles are genuinely
+uncertain -- early ACOTAR/Fourth Wing lean romance-forward, later
+books in the same series lean back toward plot) -- listed in the
+migration's own comment for a future tagging-session review pass, not
+guessed here.
+
+**Real, honest finding from checking the actual effect**: `drive`'s
+weight in Mathias's own profile is currently **0.0** -- no real
+separation between his liked and disliked books on this field at all.
+Verified directly (scored From Blood and Ash with `drive=romance_driven`
+vs. the old `character_driven` value, identical centroid/weights both
+times): **byte-identical score, 0.8645 either way.** The schema fix is
+real and correct, but it changes nothing for Mathias's own
+recommendations today -- exactly the "DNA gap AND a separate evidence
+gap" distinction flagged when this field was proposed. It would matter
+immediately for a different user whose `drive` field IS discriminative,
+or for Mathias himself once he has real disliked ratings on genuinely
+romance-driven books to give this field something to learn from.
