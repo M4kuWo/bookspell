@@ -5057,3 +5057,45 @@ categories) as an alternative or complement to a scoring change. Not
 built this round -- a real scoring change needs the same design+test
 discipline as everything else, proposed and awaiting a decision on
 whether to build now or as a dedicated next pass.
+
+## 2026-09-04 (later still) -- series-trajectory penalty landed, per-value nominal weights tested and held
+
+Repo owner asked to build+test the series-trajectory penalty design
+(with a real caveat about self-contained entries) and the per-value
+nominal weight fix. Full numbers in
+`docs/scoring-test-protocol.md`'s own entries for each -- summary here.
+
+**Series-trajectory penalty: LANDED.** Verified `narrative_closure`
+already distinguishes exactly the repo owner's examples (The Lies of
+Locke Lamora/Storm Front: `self_contained`; The Warded Man:
+`requires_series`) before building. First version had a real bug
+(applied to every series book scored, not just entry points -- Rhythm
+of War/A Clash of Kings got wrongly penalized), causing severe damage
+in testing (sparse loved_recall 75%->25%). Fixed by gating on the
+candidate actually being the series' earliest position. After the fix:
+a clean win, zero regressions anywhere, real gains for Mathias (bucket
+82%->91% full, 64%->73% series-isolated; Skyward flips from MISS to
+correct in 3 scenarios). Wired into the real `recommend()`/
+`explain_match()`/`audit_book_score()` pipeline. Honest finding: it
+does NOT fire on The Warded Man itself (its tagged DNA trajectory
+doesn't cross the divergence threshold) -- what bothered him about
+that ending may be more an execution/quality judgment than a
+measurable content shift.
+
+**Per-value nominal weight learning: tested, safe, NOT merged.** Built
+as full parallel implementations
+(`build_profile_per_value()`/`score_book_per_value()`/
+`explain_book_per_value()`), A/B tested via monkeypatching. Result:
+byte-identical to the current production behavior across every real
+scenario, all 4 raters -- zero regressions, but confirmed genuinely
+active (real, different per-value weights computed and used, e.g.
+`drive: character_driven = -0.139`, a real negative the old formula
+couldn't see) with no measurable net effect, fully explained by
+`romance_driven` having zero occurrences anywhere in the rated history
+to test against. Found a real, unresolved tension with the earlier
+`NOMINAL_PARTIAL_SIMILARITY` fix (person's third_limited/third_omniscient
+partial credit) -- the new scheme computes real, weaker evidence-based
+weights instead of the old assumed 50% credit, a genuine behavior
+change against an already-landed fix. Not merged into production
+pending a decision -- safe and architecturally sound, but larger blast
+radius (every nominal field) than proven benefit currently justifies.

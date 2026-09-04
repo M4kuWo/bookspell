@@ -934,6 +934,221 @@ def build_profile(catalog, ratings, full_ratings=None):
     return centroid, weights
 
 
+# --- Per-value nominal weight learning (2026-09-04, EXPERIMENTAL -- ----
+# UNDER TEST, NOT wired into build_profile()/score_book() yet) ----------
+# Repo owner's own pushback on why `drive: romance_driven`'s weight
+# being 0.0 didn't mean what it looked like it meant: build_profile()'s
+# normal NOMINAL_FIELDS loop computes exactly ONE weight per field, tied
+# entirely to whichever value is most common among liked books (the
+# "mode") -- `liked_share(mode) - disliked_share(mode)`. It has no way
+# to learn a separate relationship for any OTHER value independent of
+# the mode's own separation -- `romance_driven` could be a real,
+# validated-strength negative signal and this formula would never see
+# it unless the MODE value's own separation also happened to shift.
+#
+# This variant treats every nominal field's VALUES like tropes: each
+# value gets its own `liked_freq(value) - disliked_freq(value)` weight
+# (same formula, same WEIGHT_CAP), and scoring becomes a direct lookup
+# of the candidate's own value's weight -- no similarity-to-centroid
+# math, no partial-credit maps (NOMINAL_PARTIAL_SIMILARITY's hand-picked
+# exceptions become moot: if the user's real ratings show they like
+# BOTH third_limited and third_omniscient, each gets its own real
+# positive weight from genuine evidence, rather than borrowing partial
+# credit from a hardcoded pair list).
+def build_profile_per_value(catalog, ratings, full_ratings=None):
+    """EXPERIMENTAL variant of build_profile() -- identical for ORDINAL
+    fields and tropes; NOMINAL fields get `weights[field] = {value:
+    weight, ...}` (a dict, like weights["tropes"]) instead of a single
+    scalar + one centroid mode value. `centroid[field]` is still set to
+    the mode purely for display/explain-text compatibility -- scoring
+    under this variant never reads it for nominal fields."""
+    full_ratings = ratings if full_ratings is None else full_ratings
+    liked, disliked = _split_by_sign(catalog, ratings)
+    full_liked, full_disliked = _split_by_sign(catalog, full_ratings)
+    liked = _series_deduped(liked)
+    disliked = _series_deduped(disliked)
+    full_liked = _series_deduped(full_liked)
+    full_disliked = _series_deduped(full_disliked)
+
+    centroid = {}
+    weights = {}
+
+    def weighted_mean(pairs, positions):
+        total_w = sum(w for _, w in positions)
+        if total_w == 0:
+            return None
+        return sum(v * w for v, w in positions) / total_w
+
+    for field in ORDINAL_FIELDS:
+        pool_liked = full_liked if field in STRUCTURAL_ORDINAL_FIELDS else liked
+        pool_disliked = full_disliked if field in STRUCTURAL_ORDINAL_FIELDS else disliked
+        liked_positions = [
+            (pos[0] / pos[1], m) for b, m in pool_liked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        liked_mean = weighted_mean(pool_liked, liked_positions)
+        if liked_mean is None:
+            continue
+        centroid[field] = liked_mean
+        disliked_positions = [
+            (pos[0] / pos[1], m) for b, m in pool_disliked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        disliked_mean = weighted_mean(pool_disliked, disliked_positions)
+        if disliked_mean is not None:
+            weights[field] = min(WEIGHT_CAP, abs(liked_mean - disliked_mean))
+        else:
+            weights[field] = 0.3
+
+    for field in NOMINAL_FIELDS:
+        pool_liked = full_liked if field in STRUCTURAL_NOMINAL_FIELDS else liked
+        pool_disliked = full_disliked if field in STRUCTURAL_NOMINAL_FIELDS else disliked
+        liked_vals = [(b.get(field), m) for b, m in pool_liked if b.get(field)]
+        disliked_vals = [(b.get(field), m) for b, m in pool_disliked if b.get(field)]
+        if not liked_vals and not disliked_vals:
+            continue
+        total_liked_m = sum(m for _, m in liked_vals) or 1.0
+        total_disliked_m = sum(m for _, m in disliked_vals)
+        all_values = set(v for v, _ in liked_vals) | set(v for v, _ in disliked_vals)
+        per_value = {}
+        for v in all_values:
+            liked_freq = sum(m for val, m in liked_vals if val == v) / total_liked_m
+            disliked_freq = (
+                sum(m for val, m in disliked_vals if val == v) / total_disliked_m
+                if total_disliked_m else 0.0
+            )
+            raw = liked_freq - disliked_freq
+            per_value[v] = max(-WEIGHT_CAP, min(WEIGHT_CAP, raw))
+        weights[field] = per_value
+        if liked_vals:
+            counts = {}
+            for v, m in liked_vals:
+                counts[v] = counts.get(v, 0.0) + m
+            centroid[field] = max(counts, key=counts.get)
+
+    trope_weights = {}
+    liked_trope_pairs = [(b.get("tropes") or [], m) for b, m in liked]
+    disliked_trope_pairs = [(b.get("tropes") or [], m) for b, m in disliked]
+    total_liked_m = sum(m for _, m in liked_trope_pairs) or 1.0
+    total_disliked_m = sum(m for _, m in disliked_trope_pairs)
+    all_tropes = set(t for lst, _ in liked_trope_pairs + disliked_trope_pairs for t in lst)
+    for t in all_tropes:
+        liked_freq = sum(m for lst, m in liked_trope_pairs if t in lst) / total_liked_m
+        disliked_freq = (
+            sum(m for lst, m in disliked_trope_pairs if t in lst) / total_disliked_m
+            if total_disliked_m else 0.0
+        )
+        raw = liked_freq - disliked_freq
+        trope_weights[t] = max(-WEIGHT_CAP, min(WEIGHT_CAP, raw))
+    weights["tropes"] = trope_weights
+
+    return centroid, weights
+
+
+def score_book_per_value(book, centroid, weights):
+    """EXPERIMENTAL variant of score_book() -- identical for ORDINAL
+    fields and tropes; NOMINAL fields look up `weights[field][book_value]`
+    directly (0.0 if that specific value was never observed in training
+    data -- no evidence, no signal, rather than falling back to a
+    similarity-to-mode calculation)."""
+    score = 0.0
+    total_weight = 0.0
+    contributions = []
+
+    for field, w in weights.items():
+        if field == "tropes":
+            continue
+        if field not in centroid and field not in weights:
+            continue
+        if field in ORDINAL_FIELDS:
+            if field not in centroid:
+                continue
+            pos = ordinal_position(field, book.get(field))
+            if pos is None:
+                continue
+            book_val = pos[0] / pos[1]
+            sim = 1 - abs(book_val - centroid[field])
+            w_eff = _redundancy_adjusted_weight(book, field, w) * get_confidence(book, field)
+            contribution = w_eff * sim
+        else:
+            book_val = book.get(field)
+            if book_val is None or not isinstance(w, dict):
+                continue
+            raw_w = w.get(book_val, 0.0)
+            w_eff = raw_w * get_confidence(book, field)
+            contribution = w_eff
+        score += contribution
+        total_weight += abs(w_eff)
+        if abs(contribution) > 0.15:
+            contributions.append((field, round(contribution, 3)))
+
+    trope_weights = weights.get("tropes", {})
+    book_tropes = set(book.get("tropes") or [])
+    for t, w in trope_weights.items():
+        if t in book_tropes:
+            w_eff = w * get_confidence(book, t)
+            score += w_eff
+            total_weight += abs(w_eff)
+            if abs(w) > 0.15:
+                contributions.append((f"trope:{t}", round(w_eff, 3)))
+
+    normalized = score / total_weight if total_weight > 0 else 0.0
+    contributions.sort(key=lambda x: -abs(x[1]))
+    return normalized, contributions[:5]
+
+
+def explain_book_per_value(book, centroid, weights, top_n=5):
+    """EXPERIMENTAL variant of explain_book() -- needed because
+    dealbreaker_flags()/_apply_dealbreaker_veto() call explain_book()
+    internally, and the real explain_book() can't handle a dict-shaped
+    nominal weight (score_book_per_value()'s _redundancy_adjusted_weight()
+    call would try to multiply a dict by a float and crash) -- this
+    variant is what lets the veto mechanism keep working during A/B
+    testing. NOMINAL fields: match/mismatch bucket is decided by the
+    SIGN of the candidate's own per-value weight (same pattern the trope
+    loop below already uses), not by similarity-to-centroid."""
+    matches, mismatches = [], []
+
+    for field, w in weights.items():
+        if field == "tropes":
+            continue
+        if field in ORDINAL_FIELDS:
+            if field not in centroid:
+                continue
+            pos = ordinal_position(field, book.get(field))
+            if pos is None:
+                continue
+            sim = 1 - abs(pos[0] / pos[1] - centroid[field])
+            w = _redundancy_adjusted_weight(book, field, w) * get_confidence(book, field)
+            if w >= 0:
+                matches.append((field, w * sim))
+                mismatches.append((field, w * (1 - sim)))
+            else:
+                matches.append((field, abs(w) * (1 - sim)))
+                mismatches.append((field, abs(w) * sim))
+        else:
+            if not isinstance(w, dict):
+                continue
+            book_val = book.get(field)
+            if book_val is None:
+                continue
+            raw_w = w.get(book_val, 0.0)
+            w_eff = raw_w * get_confidence(book, field)
+            (matches if w_eff >= 0 else mismatches).append((field, abs(w_eff)))
+
+    trope_weights = weights.get("tropes", {})
+    book_tropes = set(book.get("tropes") or [])
+    for t, w in trope_weights.items():
+        if t not in book_tropes:
+            continue
+        w = w * get_confidence(book, t)
+        (matches if w >= 0 else mismatches).append((f"trope:{t}", abs(w)))
+
+    matches = sorted((m for m in matches if m[1] > 0.1), key=lambda x: -x[1])
+    mismatches = sorted((m for m in mismatches if m[1] > 0.1), key=lambda x: -x[1])
+    return matches[:top_n], mismatches[:top_n]
+
+
 # Redundancy discounts (2026-09-01, revised): a field pair where knowing
 # one value makes the other near-certain, in ONE direction only -- these
 # are asymmetric implications, not a symmetric correlation, so the
@@ -1446,6 +1661,102 @@ def _apply_series_repeat(catalog, id_to_magnitude, book, score):
     return (1 - SERIES_REPEAT_WEIGHT) * score + SERIES_REPEAT_WEIGHT * series_component
 
 
+# --- Series-trajectory penalty (2026-09-04, EXPERIMENTAL -- UNDER TEST, --
+# NOT wired into recommend()/explain_match() yet) -----------------------
+# Repo owner's own proposal, after the Warded Man/The Pariah discussion:
+# a series entry point that scores well now but whose SAME strong-
+# matching fields trend AWAY from this reader's profile by the series'
+# end shouldn't score as confidently as it currently does -- recommend
+# ing something that gets worse (loved books 1-3, the finale "ruined
+# the series") is a real harm distinct from recommending something that
+# builds slowly toward a payoff (The Pariah). Deliberately NEGATIVE-ONLY
+# -- mirrors _apply_series_repeat's shape but never boosts a score, only
+# ever caps it down, avoiding the opposite failure mode (inflating a
+# weak-looking opener because the series supposedly gets better --
+# "undersells itself" is its own kind of bad recommendation, see the
+# earlier positive-floor experiment's finding that a floor can't safely
+# reorder things upward).
+#
+# Deliberate exclusion, per the repo owner's own caveat: skipped
+# entirely when the candidate's OWN narrative_closure is
+# 'self_contained' -- The Lies of Locke Lamora and the Dresden Files'
+# early entries deliver a complete, satisfying experience regardless of
+# what a later, loosely-connected sequel does; penalizing them for a
+# future book's drift would make it impossible to ever recommend a
+# genuinely great standalone-feeling entry point, exactly the failure
+# mode flagged. `requires_series` books (The Warded Man) remain subject
+# to the penalty.
+SERIES_TRAJECTORY_DIVERGENCE_THRESHOLD = 0.15
+SERIES_TRAJECTORY_MAX_PENALTY = 0.3
+
+
+def _series_trajectory_penalty_factor(series_dna, book, centroid, weights):
+    """Returns a multiplier in [1 - SERIES_TRAJECTORY_MAX_PENALTY, 1.0] --
+    1.0 = no penalty, the common case (most books aren't series entry
+    points with a real divergent trajectory). `series_dna`:
+    compute_series_dna(catalog)'s result, precomputed ONCE by the
+    caller (it's a pure function of the catalog, not of any one user's
+    profile) rather than recomputed per candidate.
+
+    Only applies to the series' ENTRY POINT (this book's own position
+    equals the series' lowest tagged position) -- comparing "series
+    start vs. end" only makes sense for a candidate that actually IS
+    the start. Found and fixed during testing (2026-09-04): the first
+    version applied this to every series book scored directly (Rhythm
+    of War, WoT book 4; A Clash of Kings, ASOIAF book 2), which isn't
+    what "will a NEW reader's experience of picking this series up
+    diverge" is asking, and produced badly inflated, broad damage in
+    the real benchmark (see docs/scoring-test-protocol.md)."""
+    if book.get("narrative_closure") != "requires_series":
+        return 1.0
+    series_id = book.get("series_id")
+    if series_id is None:
+        return 1.0
+    entry = series_dna.get(series_id)
+    if entry is None:
+        return 1.0
+    own_position = book.get("position_in_series")
+    if own_position is None:
+        return 1.0
+    earliest_position = min(pos for pos, _ in entry["books"] if pos is not None)
+    if float(own_position) != float(earliest_position):
+        return 1.0
+
+    matches, _ = explain_book(book, centroid, weights, top_n=100)
+    strong_fields = {f: c for f, c in matches if c > 0.15 and not f.startswith("trope:")}
+    if not strong_fields:
+        return 1.0
+
+    total_divergence = 0.0
+    for field in strong_fields:
+        traj = entry["trajectories"].get(field)
+        if traj is None or traj["trend"] == "stable" or field not in weights:
+            continue
+        if field in ORDINAL_FIELDS:
+            start_pos = ordinal_position(field, traj["start_value"])
+            end_pos = ordinal_position(field, traj["end_value"])
+            if start_pos is None or end_pos is None:
+                continue
+            start_sim = 1 - abs(start_pos[0] / start_pos[1] - centroid[field])
+            end_sim = 1 - abs(end_pos[0] / end_pos[1] - centroid[field])
+        else:
+            if field not in centroid:
+                continue
+            start_sim = nominal_similarity(field, traj["start_value"], centroid[field])
+            end_sim = nominal_similarity(field, traj["end_value"], centroid[field])
+        drop = start_sim - end_sim
+        if drop > SERIES_TRAJECTORY_DIVERGENCE_THRESHOLD:
+            total_divergence += drop * abs(weights[field])
+
+    if total_divergence <= 0:
+        return 1.0
+    return 1 - min(SERIES_TRAJECTORY_MAX_PENALTY, total_divergence)
+
+
+def _apply_series_trajectory_penalty(series_dna, book, centroid, weights, score):
+    return score * _series_trajectory_penalty_factor(series_dna, book, centroid, weights)
+
+
 # Veto/cap ceiling: just under GOOD_MATCH_THRESHOLD, so a vetoed book can
 # never read as "Good match" or "Strong match" no matter how far above
 # this its raw weighted-average score sits. Deliberately NOT capped down
@@ -1649,6 +1960,7 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     )
     validated_fields = validated_dealbreaker_fields(catalog, id_to_magnitude)
     csw = cold_start_weight(catalog, id_to_magnitude)
+    series_dna = compute_series_dna(catalog)
 
     diversity = max(0.0, min(diversity, MAX_DIVERSITY))
     recent_books = [
@@ -1673,6 +1985,7 @@ def recommend(catalog, ratings, top_n=10, genre=None,
         relevance, contributions = score_book(book, centroid, weights)
         relevance = _apply_series_repeat(catalog, id_to_magnitude, book, relevance)
         relevance = _apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, relevance)
+        relevance = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, relevance)
         if diversity > 0 and recent_books:
             novelty = 1 - max(book_similarity(book, h) for h in recent_books)
             relevance = (1 - diversity) * relevance + diversity * novelty
@@ -1731,9 +2044,11 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
 
     centroid, weights, id_to_magnitude, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides)
     validated = validated_dealbreaker_fields(catalog, id_to_magnitude)
+    series_dna = compute_series_dna(catalog)
     score, _ = score_book(book, centroid, weights)
     score = _apply_series_repeat(catalog, id_to_magnitude, book, score)
     score = _apply_dealbreaker_veto(catalog, id_to_magnitude, validated, book, centroid, weights, score)
+    score = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, score)
     poor_threshold = user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
     matches, mismatches = explain_book(book, centroid, weights, top_n=top_n)
     flags = dealbreaker_flags(book, centroid, weights, validated_fields=validated)
@@ -1744,7 +2059,6 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
 
     series_note = ""
     if book.get("series_id"):
-        series_dna = compute_series_dna(catalog)
         series_entry = series_dna.get(book["series_id"])
         if series_entry:
             series_note = describe_series_trajectory(series_entry)
@@ -1961,6 +2275,7 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
     id_to_title = {bid: catalog[bid]["title"] for bid in id_to_magnitude}
     validated_fields = validated_dealbreaker_fields(catalog, id_to_magnitude)
     csw = cold_start_weight(catalog, id_to_magnitude)
+    series_dna = compute_series_dna(catalog)
     book = catalog[title_to_id[title]]
 
     raw_score, _ = score_book(book, centroid, weights)
@@ -1968,11 +2283,12 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
     after_veto = _apply_dealbreaker_veto(
         catalog, id_to_magnitude, validated_fields, book, centroid, weights, after_series
     )
+    after_trajectory = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, after_veto)
     if csw > 0:
         demand = GENRE_ACCESSIBILITY_DEMAND.get(book.get("genre_accessibility"), 0.5)
-        final = (1 - csw) * after_veto + csw * (1.0 - demand)
+        final = (1 - csw) * after_trajectory + csw * (1.0 - demand)
     else:
-        final = after_veto
+        final = after_trajectory
 
     pipeline = [
         {"stage": "raw score_book()", "score": round(raw_score, 4), "changed": None},
@@ -1980,8 +2296,10 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
          "changed": abs(after_series - raw_score) > 1e-9},
         {"stage": "after _apply_dealbreaker_veto()", "score": round(after_veto, 4),
          "changed": abs(after_veto - after_series) > 1e-9},
+        {"stage": "after _apply_series_trajectory_penalty()", "score": round(after_trajectory, 4),
+         "changed": abs(after_trajectory - after_veto) > 1e-9},
         {"stage": "after cold-start blend", "score": round(final, 4),
-         "changed": abs(final - after_veto) > 1e-9, "cold_start_weight": round(csw, 3)},
+         "changed": abs(final - after_trajectory) > 1e-9, "cold_start_weight": round(csw, 3)},
     ]
 
     matches, mismatches = explain_book(book, centroid, weights, top_n=100)

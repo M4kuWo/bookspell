@@ -175,16 +175,24 @@ def run_leave_one_out_diagnostic(catalog, ratings, label, quiet=False):
     return rows
 
 
+# Computed ONCE (pure function of the catalog, not of any user's
+# profile) and reused across every _full_score() call, rather than
+# recomputed per candidate -- see
+# R._series_trajectory_penalty_factor()'s own docstring.
+_SERIES_DNA_CACHE = None
+
+
 def _full_score(catalog, id_to_magnitude, validated_fields, centroid, weights, book):
     """score_book() + _apply_series_repeat() + _apply_dealbreaker_veto()
     (2026-09-02, the veto/cap mechanism -- option #2 from the
-    aggregation-shape design discussion), in the same order
-    recommend()/explain_match() apply them. Centralized here so every
-    scenario in this file reflects the real production scoring pipeline
-    -- the same gap that was caught and fixed for the calibrated
-    threshold applies here too: a benchmark that doesn't call the veto
-    would silently test a DIFFERENT pipeline than what a live user
-    actually sees.
+    aggregation-shape design discussion) + _apply_series_trajectory_penalty()
+    (2026-09-04, LANDED -- see docs/scoring-test-protocol.md), in the
+    same order recommend()/explain_match() apply them. Centralized here
+    so every scenario in this file reflects the real production scoring
+    pipeline -- the same gap that was caught and fixed for the
+    calibrated threshold applies here too: a benchmark that doesn't
+    call these would silently test a DIFFERENT pipeline than what a
+    live user actually sees.
 
     A symmetric "validated positive floor" (mirror of the veto, floors
     instead of caps) was designed and tested here 2026-09-03, then
@@ -202,10 +210,22 @@ def _full_score(catalog, id_to_magnitude, validated_fields, centroid, weights, b
     letting the floor silently undo the veto's cap on Children of Dune
     et al. Not worth keeping half-built dead code around for a
     mechanism that's structurally the wrong shape for the problem it
-    targeted -- removed rather than left unwired."""
+    targeted -- removed rather than left unwired.
+
+    A "correlated-field redundancy group" discount was designed and
+    tested here 2026-09-04, then also REVERTED -- see
+    docs/scoring-test-protocol.md's "Group-redundancy discount" entry.
+    Found a real regression in the author-isolated scenario, traced to
+    a genuine conceptual flaw (population-level field correlation
+    doesn't imply a specific candidate's simultaneous match on both is
+    redundant evidence) rather than a parameter to retune -- removed."""
+    global _SERIES_DNA_CACHE
+    if _SERIES_DNA_CACHE is None:
+        _SERIES_DNA_CACHE = R.compute_series_dna(catalog)
     score, _ = R.score_book(book, centroid, weights)
     score = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
     score = R._apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, score)
+    score = R._apply_series_trajectory_penalty(_SERIES_DNA_CACHE, book, centroid, weights, score)
     return score
 
 

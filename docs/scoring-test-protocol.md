@@ -1345,3 +1345,116 @@ granularity from "book" to "book-field pair"), a bigger, riskier change
 to core scoring math than the plain validation-path consistency fix,
 deserving its own dedicated design-and-test pass. Logged as a real,
 scoped follow-up, not built this round.
+
+## Series-trajectory penalty -- tested and LANDED (2026-09-04)
+
+Repo owner's own design, refined after two real examples (The Warded
+Man -- loved books 1-3, book 4 "ruined the series" for him; The Pariah
+-- didn't click until partway into book 1). Negative-only: a series
+entry point that scores well now, whose SAME strong-matching fields
+trend AWAY from the user's profile by the series' end (per
+`compute_series_dna()`'s existing trajectories), gets its score capped
+down -- never boosted, mirroring the earlier positive-floor finding
+that boosting can't safely reorder things and avoids "undersells
+itself" disappointment. Explicit exclusion, per the repo owner's own
+caveat: skipped entirely when `narrative_closure: self_contained`
+(The Lies of Locke Lamora, the Dresden Files' early entries) -- a
+complete, satisfying standalone shouldn't be penalized for what a
+later, loosely-connected sequel does. Verified against real data before
+building: Locke Lamora and Storm Front are indeed tagged
+`self_contained`, The Warded Man `requires_series`.
+
+**First version had a real bug, caught by testing**: applied the
+penalty to EVERY series book scored directly, not just entry points --
+Rhythm of War (WoT book 4) and A Clash of Kings (ASOIAF book 2) both
+got penalized using a "series start vs. end" comparison that only
+makes sense for a book that IS the start. Produced badly inflated,
+broad damage in the real benchmark (Mathias sparse loved_recall
+75%->25%, Osnat series-isolated pairwise 61%->44%). **Fixed** by
+gating on `book.position_in_series == min(series' tagged positions)`
+-- only the actual entry point is ever penalized.
+
+**After the fix: a clean, real improvement, zero regressions anywhere**
+(all 4 raters, plus the WEIGHT_CAP_RATINGS domination scenario,
+byte-identical where unaffected):
+- Mathias full: bucket 82%->91%, pairwise 84%->89%, hated_rejection
+  80%->100%.
+- Mathias series-isolated: bucket 64%->73%, pairwise 73%->78%,
+  hated_rejection 60%->80%.
+- Mathias author-isolated: pairwise 76%->78%.
+- Skyward flips from a MISS to correctly-ranked in 3 separate
+  scenarios (held-out full, author-isolated, series-isolated).
+- Every other row (sparse, Osnat both rows, Dandan) byte-identical.
+
+**Verified the exclusion and the mechanism directly**: Locke Lamora and
+Storm Front get `penalty_factor=1.000` (untouched, confirming the
+exclusion works); Skyward gets `0.955` (a real, modest ~4.5% discount,
+enough to flip 3 held-out labels). Honest finding on The Warded Man
+itself: `penalty_factor=1.000` -- it does NOT fire on the repo owner's
+own original motivating example, because its tagged DNA trajectory
+doesn't cross the current divergence threshold. Plausible explanation,
+not confirmed: what "ruined it" for him may be more about narrative
+EXECUTION/ending satisfaction than a measurable content-field shift --
+the same "DNA gap vs. quality judgment" theme found elsewhere this
+session, not something any DNA-based mechanism can fully capture.
+
+**LANDED**: wired into `recommend()`, `explain_match()`, and
+`audit_book_score()`'s real pipeline (after the veto, before the
+cold-start blend), and merged into `scoring_tests.py`'s real
+`_full_score()` (the separate experimental variant removed). `SERIES_
+TRAJECTORY_DIVERGENCE_THRESHOLD=0.15`, `SERIES_TRAJECTORY_MAX_PENALTY=
+0.3` -- picked as reasonable starting points, not exhaustively swept;
+revisit if real use surfaces either as miscalibrated.
+
+## Per-value nominal weight learning -- tested, SAFE but UNPROVEN, not yet merged (2026-09-04)
+
+Direct test of the architectural finding from the `drive`/
+`romance_driven` pushback: `build_profile_per_value()`/
+`score_book_per_value()`/`explain_book_per_value()` built as full
+parallel implementations (not modifying the real `build_profile()`/
+`score_book()`/`explain_book()` in place). NOMINAL fields' values each
+get their own `liked_freq - disliked_freq` weight (same formula as
+tropes), looked up directly at scoring time -- no similarity-to-mode
+calculation. A/B tested by monkeypatching `R.build_profile`,
+`R.score_book`, `R.explain_book` (all three needed --
+`dealbreaker_flags()`/the veto call `explain_book()` internally, and
+its old nominal-similarity branch can't handle a dict-shaped weight)
+and rerunning the full suite.
+
+**Result: byte-identical scorecard across every real scenario, all 4
+raters** -- zero regressions, but also no measurable benefit shown.
+Directly verified this is a genuine null result, not a broken test
+pathway: computed real per-value weights directly (`drive:
+character_driven = -0.139`, a real negative the old mode-based formula
+couldn't see at all; `person: first = -0.262`, `third_limited =
++0.356`) and confirmed `score_book_per_value()` produces genuinely
+different raw scores per candidate (City of Stairs: 0.8812 old vs.
+0.8608 new) -- the mechanism is real and active, it just doesn't happen
+to flip any bucket/pairwise labels in the CURRENT held-out test set.
+Fully explained by the same evidence gap already documented:
+`romance_driven` (the case that motivated this) has zero occurrences
+anywhere in Mathias's rated history, so no test case exists yet where
+per-value learning would diverge from mode-based learning in a way
+that changes an outcome.
+
+**A real, unresolved tension found, not swept under**: the old
+`NOMINAL_PARTIAL_SIMILARITY` mechanism (person's third_limited/
+third_omniscient partial credit, tested and landed 2026-09-03) assumed
+third_omniscient deserves 50% credit against a third_limited mode. The
+new per-value scheme instead computes third_omniscient's OWN weight
+from real (sparse) evidence -- currently -0.042 for Mathias, a
+genuinely different and weaker number than the old hand-coded 50%
+assumption would produce. This is arguably more principled (real
+evidence over an assumed relationship) but is a real behavior change
+against an already-tested-and-landed fix, not something this
+experiment straightforwardly subsumes or preserves -- flagged
+honestly, not resolved.
+
+**NOT merged into production.** Genuinely safe (zero regressions) and
+architecturally sound, but the benefit can't be demonstrated with
+current data, and it touches EVERY nominal field's core scoring math
+(a much larger blast radius than the trajectory penalty above), plus
+the unresolved tension with the partial-credit fix above. Awaiting a
+decision on whether to land now (on architectural merit + safety) or
+wait for real per-value-relevant evidence to exist (e.g. once
+`romance_driven`-rated books exist) before committing.
