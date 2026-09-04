@@ -5375,3 +5375,50 @@ confirming both are genuinely already reflected on hosted, which they
 are) before any further batch is pushed** -- otherwise the same
 two-machine collision this project has already hit more than once
 will recur. Flagged to the repo owner directly, not just logged here.
+
+## 2026-09-05 (later) -- batch 33 (20 books)
+
+Tagged: How to Sell a Haunted House, How to Stop Time, Lincoln in the
+Bardo, My Best Friend's Exorcism, Needful Things, Nothing to See Here,
+Prey, Slewfoot, Some Desperate Glory, Starling House, Swan Song, The
+Book Eaters, The Book of Doors, The Buffalo Hunter Hunter, The
+Cartographers, The Everlasting, The Fisherman, The Gods Themselves,
+The Gone World, and The Humans. All 20 verified with 0 nulls across
+the 32 required Book DNA fields. Migration:
+`20260905130000_batch_tag_20_more_books.sql`. Same as the prior batch,
+this one is applied and verified on hosted directly but **not yet
+registered in hosted's migration-tracking table** -- still blocked on
+the missing Supabase auth documented above, now three versions deep
+(`20260829025000`, `20260905120000`, `20260905130000`) waiting on the
+same `supabase link` + `db push` (or `migration repair`) step.
+
+Density self-check (Step 3) needed a real topup this time: this
+batch's first pass skewed heavily toward contemporary horror and
+literary-speculative standalones (Grady Hendrix, Matt Haig, cosmic
+horror, magical realism) rather than the trope-dense epic fantasy that
+makes up more of the catalog average, and came in at only 0.65x
+catalog trope density. Added 21 genuine additional tropes across 11 of
+the 20 books -- individually justified per book, nothing padded onto a
+book that didn't actually have more to say -- bringing it to 0.85x.
+CW density was fine throughout (1.34x) and didn't need adjustment.
+
+One title-vs-CW mistake caught before it reached hosted this time:
+`child_soldiers_in_warfare` is a **trope** (it's in the controlled
+trope vocabulary, not content-warning vocabulary) -- initially drafted
+into Some Desperate Glory's content-warnings list by mistake, which
+the tagging script's foreign-key insert caught immediately
+(`ForeignKeyViolation` on `book_content_warnings_warning_id_fkey`)
+before anything committed. Fixed by moving it to the tropes list where
+it belongs. Same category of mistake as the recurring
+`religious_trauma_or_cults`-used-as-a-trope bug from earlier batches,
+just in the opposite direction (trope used as CW rather than CW used
+as trope) -- worth remembering that the trope/CW vocabularies can be
+confused either way, not just one direction.
+
+No genre-scope skips this batch -- all 20 candidates in the
+prioritized-untagged pull were reviewed and cleared the sci-fi/fantasy
+bar (several via the established magical-realism/cosmic-horror
+borderline-inclusion precedents: Nothing to See Here, The Fisherman,
+The Cartographers). *Shogun* and *Nimona*, both flagged in the prior
+batch, remain untouched and still awaiting the repo owner's call on
+deletion.
