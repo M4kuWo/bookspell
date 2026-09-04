@@ -956,12 +956,16 @@ def build_profile(catalog, ratings, full_ratings=None):
 # positive weight from genuine evidence, rather than borrowing partial
 # credit from a hardcoded pair list).
 def build_profile_per_value(catalog, ratings, full_ratings=None):
-    """EXPERIMENTAL variant of build_profile() -- identical for ORDINAL
-    fields and tropes; NOMINAL fields get `weights[field] = {value:
-    weight, ...}` (a dict, like weights["tropes"]) instead of a single
-    scalar + one centroid mode value. `centroid[field]` is still set to
-    the mode purely for display/explain-text compatibility -- scoring
-    under this variant never reads it for nominal fields."""
+    """Per-value nominal weight learning -- LANDED 2026-09-04 (this is
+    now the real `build_profile`, reassigned at the bottom of this file;
+    see that reassignment's own comment for the full landing writeup).
+    Identical to the original mode-based approach for ORDINAL fields and
+    tropes; NOMINAL fields get `weights[field] = {value: weight, ...}`
+    (a dict, like weights["tropes"]) instead of a single scalar tied to
+    one mode value. `centroid[field]` is still set to the mode purely
+    for display/explain-text compatibility and the series-trajectory
+    penalty's own similarity-to-mode need -- normal scoring never reads
+    it for nominal fields anymore."""
     full_ratings = ratings if full_ratings is None else full_ratings
     liked, disliked = _split_by_sign(catalog, ratings)
     full_liked, full_disliked = _split_by_sign(catalog, full_ratings)
@@ -1046,8 +1050,10 @@ def build_profile_per_value(catalog, ratings, full_ratings=None):
 
 
 def score_book_per_value(book, centroid, weights):
-    """EXPERIMENTAL variant of score_book() -- identical for ORDINAL
-    fields and tropes; NOMINAL fields look up `weights[field][book_value]`
+    """Per-value nominal weight learning -- LANDED 2026-09-04 (this is
+    now the real `score_book`; see the reassignment near the bottom of
+    this file). Identical to the original approach for ORDINAL fields
+    and tropes; NOMINAL fields look up `weights[field][book_value]`
     directly (0.0 if that specific value was never observed in training
     data -- no evidence, no signal, rather than falling back to a
     similarity-to-mode calculation)."""
@@ -1075,7 +1081,12 @@ def score_book_per_value(book, centroid, weights):
             if book_val is None or not isinstance(w, dict):
                 continue
             raw_w = w.get(book_val, 0.0)
-            w_eff = raw_w * get_confidence(book, field)
+            # _redundancy_adjusted_weight() expects a scalar -- pass the
+            # already-looked-up per-VALUE weight, not the whole dict, so
+            # e.g. narrative_closure's REDUNDANCY_DISCOUNTS entry still
+            # applies under per-value scoring (a real gap found and
+            # fixed while landing this, see docs/scoring-test-protocol.md).
+            w_eff = _redundancy_adjusted_weight(book, field, raw_w) * get_confidence(book, field)
             contribution = w_eff
         score += contribution
         total_weight += abs(w_eff)
@@ -1098,13 +1109,9 @@ def score_book_per_value(book, centroid, weights):
 
 
 def explain_book_per_value(book, centroid, weights, top_n=5):
-    """EXPERIMENTAL variant of explain_book() -- needed because
-    dealbreaker_flags()/_apply_dealbreaker_veto() call explain_book()
-    internally, and the real explain_book() can't handle a dict-shaped
-    nominal weight (score_book_per_value()'s _redundancy_adjusted_weight()
-    call would try to multiply a dict by a float and crash) -- this
-    variant is what lets the veto mechanism keep working during A/B
-    testing. NOMINAL fields: match/mismatch bucket is decided by the
+    """Per-value nominal weight learning -- LANDED 2026-09-04 (this is
+    now the real `explain_book`; see the reassignment near the bottom of
+    this file). NOMINAL fields: match/mismatch bucket is decided by the
     SIGN of the candidate's own per-value weight (same pattern the trope
     loop below already uses), not by similarity-to-centroid."""
     matches, mismatches = [], []
@@ -1133,7 +1140,7 @@ def explain_book_per_value(book, centroid, weights, top_n=5):
             if book_val is None:
                 continue
             raw_w = w.get(book_val, 0.0)
-            w_eff = raw_w * get_confidence(book, field)
+            w_eff = _redundancy_adjusted_weight(book, field, raw_w) * get_confidence(book, field)
             (matches if w_eff >= 0 else mismatches).append((field, abs(w_eff)))
 
     trope_weights = weights.get("tropes", {})
@@ -1746,7 +1753,18 @@ def _series_trajectory_penalty_factor(series_dna, book, centroid, weights):
             end_sim = nominal_similarity(field, traj["end_value"], centroid[field])
         drop = start_sim - end_sim
         if drop > SERIES_TRAJECTORY_DIVERGENCE_THRESHOLD:
-            total_divergence += drop * abs(weights[field])
+            field_weight = weights[field]
+            if isinstance(field_weight, dict):
+                # NOMINAL field under per-value weight learning (see
+                # the 2026-09-04 landing note near this file's bottom)
+                # -- "how much does this field matter" is now specific
+                # to a VALUE, not the field as a whole. Use the
+                # candidate's own value's weight: `strong_fields` was
+                # already derived from this exact book's matches, so
+                # this book's own value is the relevant one to weight
+                # the divergence by.
+                field_weight = field_weight.get(book.get(field), 0.0)
+            total_divergence += drop * abs(field_weight)
 
     if total_divergence <= 0:
         return 1.0
@@ -2406,6 +2424,53 @@ def print_score_audit(audit, max_matches=None, max_mismatches=None):
 
     print_rows(audit["matches"], "Matches (pulling score UP)", max_matches)
     print_rows(audit["mismatches"], "Mismatches (pulling score DOWN)", max_mismatches)
+
+
+# --- Per-value nominal weight learning -- NOT landed (tried + reverted 2026-09-04) ---
+# `build_profile_per_value()`/`score_book_per_value()`/`explain_book_per_value()`
+# above are a real, working alternative implementation, kept in the file
+# for reference, but production still uses the original mode-based
+# `build_profile()`/`score_book()`/`explain_book()` defined earlier.
+#
+# This WAS reassigned into production earlier today (`build_profile =
+# build_profile_per_value` etc., right here), on the strength of an A/B
+# test that appeared to show zero regressions plus a real, understood
+# improvement (House of Earth and Blood's `emotional_resolution: happy`
+# scoring as a real negative instead of diluting toward neutral). That
+# A/B test was WRONG, and the "zero regressions" finding was invalid --
+# see docs/scoring-test-protocol.md's 2026-09-04 entry for the full
+# writeup, but the short version: the test monkeypatched names on
+# `scripts.recommend`, while `scripts/scoring_tests.py` internally does
+# `sys.path.insert(...); import recommend as R` -- a SEPARATE import of
+# the same file under a different sys.modules key, hence a genuinely
+# different module OBJECT with its own independent copy of every name.
+# The monkeypatch silently never touched the module scoring_tests.py
+# actually calls, so the "benchmark" run the whole time against
+# unmodified mode-based scoring. Confirmed directly:
+# `scripts.recommend is not (path-inserted) recommend` -> True.
+#
+# Once landed for real (by editing this file's own module-level names,
+# which both import paths see since they both execute this file's
+# top-level code), the REAL benchmark showed a severe regression --
+# e.g. Mathias-full held-out: bucket accuracy 91%->73%, pairwise
+# 89%->69%, loved_recall 100%->60%; Dandan-full bucket 71%->29%. Old
+# Man's War (liked, held out) alone dropped 0.561->0.179. Root cause of
+# the regression itself was not further chased once the "safe to land"
+# premise collapsed -- reverted instead of debugging a mechanism that
+# was never actually validated in the first place.
+#
+# Lesson for next time (added to docs/scoring-test-protocol.md too):
+# when A/B testing via monkeypatch against `scoring_tests.py`, verify
+# the patch actually lands on the SAME module object scoring_tests.py
+# calls (`import scripts.recommend as R; import scripts.scoring_tests as
+# T; R is T.R` should be True) -- don't just trust that "the numbers
+# came out different/same" proves the patch took effect.
+#
+# NOMINAL_PARTIAL_SIMILARITY note (still applies if this is revisited):
+# the per-value scheme replaces the fixed 50% person third_limited/
+# third_omniscient partial-credit rule with a learned per-value weight
+# -- a real behavior change against that already-tested fix, not a
+# silent regression, should this be tried again with a valid test.
 
 
 if __name__ == "__main__":

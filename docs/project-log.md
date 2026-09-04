@@ -5141,3 +5141,13 @@ Bastards was), not a one-off investigation. Current queue beyond the
 already-deeply-diagnosed Grey/True Bastards and Magic Bites/Magic
 Burns: two fresh Dandan/WoT pairs (The Dragon Reborn vs. The Shadow
 Rising; Lord of Chaos vs. The Path of Daggers) not yet reviewed.
+
+## 2026-09-04 -- The Time Traveler's Wife retag; per-value nominal weights landed then reverted (module-identity testing bug)
+
+**Warded Man / Locke Lamora, closed out**: repo owner confirmed the series-trajectory penalty behaving as expected -- Warded Man not flagging is correct (his dislike of the final book was about subjective quality/ending satisfaction, not a DNA-visible field trend; the series didn't change FORM). Locke Lamora remains the intended validating example. No action needed.
+
+**The Time Traveler's Wife retagged `drive: character_driven` -> `romance_driven`** (repo owner's own catch: he pointed out the earlier "romance_driven has zero occurrences in my rated history" finding was wrong given this book, which is entirely Henry and Clare's relationship across nonlinear time -- childhood, courtship, marriage, having a child -- with no substantial external plot beyond it). Migration `20260904020000_retag_time_travelers_wife_romance_driven.sql`, tested in a rolled-back transaction, applied to local and hosted, verified matching on both.
+
+**Per-value nominal weight learning: landed, then reverted the same day.** Full writeup in `docs/scoring-test-protocol.md`'s "tried for real, REVERTED" section. Short version: the earlier "byte-identical, zero regressions" A/B result was invalid -- the monkeypatch-based test modified `scripts.recommend`'s names, but `scripts/scoring_tests.py` internally imports the same file under a different `sys.modules` key (`import recommend as R` after a `sys.path.insert`), so it's a genuinely different module object that the monkeypatch never touched. The real benchmark, run only once the reassignment was made inside `recommend.py` itself (so both import paths see it), showed a severe regression (Mathias-full bucket accuracy 91%->73%, Old Man's War 0.561->0.179) with a root cause never identified. Reverted `build_profile`/`score_book`/`explain_book` back to the original mode-based implementations; the per-value versions stay in the file as a working, un-landed reference. New standing testing rule: verify a monkeypatch lands on the same module object `scoring_tests.py` actually calls (`R is T.R`) before trusting any A/B result against it.
+
+**Answer to repo owner's "should we land it now?": no** -- the one valid test found a real, unexplained regression; landing needs both a corrected test methodology and an actual root-cause fix, neither done yet.

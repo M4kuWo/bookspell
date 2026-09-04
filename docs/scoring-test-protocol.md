@@ -1458,3 +1458,94 @@ the unresolved tension with the partial-credit fix above. Awaiting a
 decision on whether to land now (on architectural merit + safety) or
 wait for real per-value-relevant evidence to exist (e.g. once
 `romance_driven`-rated books exist) before committing.
+
+## Per-value nominal weight learning -- tried for real, REVERTED (2026-09-04, same day)
+
+The "byte-identical, zero regressions" result above was **wrong**, and
+the mistake is itself worth recording since it's a real testing-
+methodology gap, not a one-off slip.
+
+After Mathias retagged The Time Traveler's Wife to `drive:
+romance_driven` (a real, correct catch on his part -- see
+`supabase/migrations/20260904020000_retag_time_travelers_wife_
+romance_driven.sql`; the entire novel is Henry and Clare's relationship
+across nonlinear time, there's no substantial external plot beyond it)
+and asked whether to land per-value weights now, this looked like the
+evidence needed to decide yes: `emotional_resolution: happy` now scored
+as a real, understood negative contribution instead of diluting toward
+neutral (House of Earth and Blood: 0.80 -> 0.67), directly explained
+and directly tied to real evidence.
+
+Landed it by reassigning `build_profile = build_profile_per_value` etc.
+at the bottom of `recommend.py` (after an earlier, riskier line-splice
+attempt corrupted the file and had to be `git checkout`-reverted).
+Found and fixed three real compatibility bugs surfaced by the dict-
+shaped nominal weights (`fatigue_overrides` handling in
+`_resolve_profile()`, a crash in `_series_trajectory_penalty_factor()`,
+a silently-dropped `narrative_closure` redundancy discount in both
+`score_book_per_value()`/`explain_book_per_value()`'s nominal
+branches). Then ran the real, non-monkeypatched suite and got a severe
+regression across nearly every scenario: Mathias-full bucket accuracy
+91%->73%, pairwise 89%->69%, loved_recall 100%->60%; Dandan-full bucket
+71%->29%. Old Man's War (liked, held out) alone: 0.561 -> 0.179.
+
+This directly contradicted the "byte-identical" finding above, which
+prompted elimination testing (ruled out: the reassignment mechanism
+itself, the trajectory penalty, the Time Traveler's Wife retag, the
+`score_book` redundancy-discount fix) before finding the actual
+explanation, which was upstream of all of it:
+
+**The original A/B test never actually exercised per-value scoring.**
+It monkeypatched names on `scripts.recommend` (`import scripts.recommend
+as R; R.build_profile = R.build_profile_per_value`), then called into
+`scripts/scoring_tests.py`. But `scoring_tests.py` internally does
+`sys.path.insert(0, ...); import recommend as R` -- importing the SAME
+FILE under a DIFFERENT `sys.modules` key (`recommend`, not
+`scripts.recommend`). Python caches these as two distinct module
+objects, each with its own independent copy of every top-level name.
+Confirmed directly:
+
+```python
+import scripts.recommend as R1
+import sys; sys.path.insert(0, 'scripts')
+import recommend as R2
+R1 is R2   # False
+```
+
+The monkeypatch modified `R1`'s `build_profile` attribute; every real
+call inside `scoring_tests.py` reads `R2`'s. The "zero regressions"
+result was real -- it's just that it was measuring unmodified
+mode-based scoring against itself the whole time. The trajectory-
+penalty experiment earlier this session did NOT have this flaw, because
+that one was tested by editing `_full_score()` inside
+`scoring_tests.py` directly (adding a real call to
+`R._apply_series_trajectory_penalty`), not by external monkeypatching
+of a same-named-but-different module object.
+
+**Reverted.** `build_profile`/`score_book`/`explain_book` are back to
+the original mode-based implementations; `build_profile_per_value()`/
+`score_book_per_value()`/`explain_book_per_value()` stay in
+`recommend.py` as a real, working, un-landed reference (with the three
+compatibility fixes above still applied to them, so they're usable
+as-is for a future, correctly-designed test). Full suite reconfirmed
+back at the known-good baseline (Mathias full 91%/89%/100%/100%) after
+reverting.
+
+**Lesson, now a standing testing rule for this repo**: when A/B testing
+via monkeypatch against `scoring_tests.py`, verify the patch lands on
+the SAME module object `scoring_tests.py` actually calls (`import
+scripts.recommend as R; import scripts.scoring_tests as T; R is T.R`
+should be `True`) before trusting any "same/different numbers"
+conclusion. Don't infer that a patch took effect just because the
+before/after numbers look plausible either way.
+
+**Net answer to "should we land per-value nominal weights now?": no.**
+The one real test that actually exercised the mechanism against the
+full benchmark showed a severe regression whose root cause was never
+identified (elimination testing ruled out the obvious candidates but
+didn't isolate the real one before the "was this even a valid finding"
+question took priority). Landing requires: (a) a valid test (edit
+`scoring_tests.py`'s `_full_score()` directly, or verify module
+identity before monkeypatching), (b) actually finding why per-value
+scoring tanks Old Man's War and similar books, not just reverting past
+the symptom.
