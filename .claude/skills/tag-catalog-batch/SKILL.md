@@ -68,10 +68,24 @@ a value not listed there. If you think a real gap exists in the
 vocabulary (a trope or value that should exist but doesn't), don't
 silently work around it -- note it in your final report instead.
 
-## Step 0: PRIORITY BATCH -- `romance_driven` catalog audit (2026-09-04, ACTIVE)
+## Step 0: PRIORITY BATCH -- `romance_driven` catalog audit (2026-09-04, PARTIALLY DONE)
 
 **This takes priority over Step 2's normal untagged-books work below.**
 Do this first.
+
+**UPDATE (2026-09-04, later): Tier 1 and Tier 3 are DONE -- see
+docs/project-log.md's "romance_driven catalog audit, Tier 1 + Tier 3
+complete" entry.** Tier 1's 20 live candidates were each individually
+reviewed; 12 reclassified to `romance_driven`
+(`20260904020000_romance_driven_audit_tier1.sql`), 8 confirmed
+correctly unchanged (6 with per-book reasoning logged, 2 were the
+already-resolved calibration anchors). Tier 3's 19 candidates were
+fully reviewed too -- zero reclassifications warranted, a legitimate
+"nothing to do here" result, not a skipped review. **Tier 2 (~173
+books, occasional heat) is still open** -- its size warrants a
+dedicated pass; re-run Tier 2's query below for the current live list
+before starting (it drifts as more books get tagged). Don't re-review
+Tier 1 or Tier 3.
 
 ### What changed
 

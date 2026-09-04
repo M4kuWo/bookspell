@@ -5141,3 +5141,54 @@ Bastards was), not a one-off investigation. Current queue beyond the
 already-deeply-diagnosed Grey/True Bastards and Magic Bites/Magic
 Burns: two fresh Dandan/WoT pairs (The Dragon Reborn vs. The Shadow
 Rising; Lord of Chaos vs. The Path of Daggers) not yet reviewed.
+
+## 2026-09-04 (later) -- romance_driven catalog audit, Tier 1 + Tier 3 complete
+
+Worked the Step 0 priority handoff from `tag-catalog-batch/SKILL.md`.
+
+**Tier 1 (heat=frequent+explicit, 20 live candidates)**: reviewed every
+book individually against the skill's test -- is the central
+relationship what the book is ABOUT, or a strong supporting thread
+inside a plot/character-driven story. Reclassified 12 to
+`romance_driven`: A Court of Frost and Starlight, A Court of Mist and
+Fury, A Court of Silver Flames, A Court of Thorns and Roses, Bride,
+Fourth Wing, Iron Flame, One Last Stop, Outlander, Quicksilver, The
+Serpent and the Wings of Night, When the Moon Hatched.
+
+Confirmed correctly unchanged (6, beyond the 2 already-resolved
+calibration anchors): A Court of Wings and Ruin, Empire of Storms,
+House of Flame and Shadow, House of Sky and Breath, Kingdom of Ash,
+Onyx Storm -- all war/political-conflict-climax books where the
+external plot has genuinely become the real engine by that point,
+exactly the pattern the skill flagged as plausible-as-is. ACOMAF was
+the closest real judgment call (its romance and its plot are deeply
+intertwined via the marriage-bargain structure) -- kept it
+`romance_driven` on the strength of reader-consensus and its own
+distinct engine from ACOWAR's war-climax structure, not a hard fact
+the way most of the others were.
+
+**Tier 3 (romance-structural trope present, romance_heat NOT
+occasional/frequent -- catches "clean"/closed-door romantasy the heat
+filter alone would miss)**: reviewed all 19 candidates. Zero
+reclassifications. Carmilla, Interview with the Vampire, Oathbringer,
+Mistborn: The Final Empire, The House in the Cerulean Sea, Never Let
+Me Go, and the rest all have real, sometimes central relationship
+threads, but none are romance-genre in the sense this field is meant
+to capture (predatory/horror dynamics, political-fantasy subplots, or
+literary character studies where the relationship serves a thematic
+point beyond itself). This is the legitimate "nothing to do here"
+outcome the skill explicitly warned not to force -- confirmed by
+individually checking each title, not by treating a null result as a
+missed review.
+
+**Tier 2 (~173 books, occasional heat) not attempted this pass** --
+its own size warrants a dedicated session rather than folding into
+this one; left for whoever picks up Step 0 next, per the skill's "as
+budget allows" framing.
+
+Applied via `20260904020000_romance_driven_audit_tier1.sql`
+(title-scoped `UPDATE ... WHERE book_id = (SELECT id FROM books WHERE
+title = ...)`, tested in a rolled-back transaction first, matches this
+project's standing migration convention). `book_dna.drive` now has 16
+`romance_driven` rows total (the 12 above + the 4 already-confirmed
+anchors from the prior session's own retag).
