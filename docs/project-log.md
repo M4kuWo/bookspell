@@ -4937,3 +4937,123 @@ gap" distinction flagged when this field was proposed. It would matter
 immediately for a different user whose `drive` field IS discriminative,
 or for Mathias himself once he has real disliked ratings on genuinely
 romance-driven books to give this field something to learn from.
+
+## 2026-09-04 (later still) -- two real data corrections, one real architectural finding, three new backlog ideas
+
+Repo owner pushed back on several specific claims from the last round
+with real, checkable objections. Verified every one directly rather
+than defending from memory.
+
+**Correction 1 -- WoT's darkness trajectory was overstated.** Checked
+the actual tagged data: WoT's `darkness` never exceeds `dark` across
+all 14 books (never `grimdark`); only `violence_intensity` climbs to
+`brutal`, and only in the final book (A Memory of Light). Wrong to
+frame this as "the series becomes grimdark" -- corrected.
+
+**Correction 2 -- Rhythm of War is NOT as extreme as First Law/Kings of
+Ash and Sand, and I mischaracterized what "0.987 similarity" meant.**
+Checked directly: Rhythm of War is `darkness: dark` /
+`violence_intensity: graphic`; First Law's trilogy is `darkness:
+grimdark` / `violence_intensity: graphic-to-brutal`; Kings of Ash and
+Sand is `darkness: dark-to-grimdark` / `violence_intensity: brutal` --
+genuinely more extreme on both axes, exactly as the repo owner said.
+The earlier "0.987 similarity" claim was accurate but poorly
+communicated -- it describes closeness to Mathias's own PERSONAL
+CENTROID, not an absolute claim about the book. Checked his actual
+centroid position: darkness=0.679, violence_intensity=0.687 on their
+4-point scales -- both sit almost exactly AT "dark"/"graphic"
+(position 0.667), not at "grimdark"/"brutal" (1.0). His own preference
+center is one real tier below the most extreme books in his history,
+not at the ceiling -- a meaningfully different, more precise fact than
+"extremely dark and extremely violent."
+
+**Real architectural finding, from a sharp technical pushback on the
+`drive`/`romance_driven` "changes nothing" claim**: checked the full
+per-value liked/disliked breakdown for `drive` -- liked: {plot_driven:
+31, character_driven: 39, balanced: 12, worldbuilding_driven: 4},
+disliked: {character_driven: 16, plot_driven: 9, balanced: 2,
+worldbuilding_driven: 1}, `romance_driven` count anywhere in his rated
+history: **0**. `character_driven` (the mode) is proportionally MORE
+common in his disliked pool (57%) than liked (45%) -- exactly why the
+field's weight clamps to 0 (`max(0, liked_share - disliked_share)`).
+This confirms a real, generalizable limitation the repo owner
+correctly intuited: **nominal field weight-learning is mode-vs-rest,
+not per-value** -- `build_profile()` computes ONE weight per field,
+tied entirely to whichever value is most common among liked books,
+never learning a separate relationship for any OTHER value
+(`romance_driven` included) independent of the mode value's own
+separation. `nominal_similarity()` correctly detects `romance_driven`
+as a full mismatch against the mode (sim=0.0) -- the pipeline isn't
+blind to it -- but weight=0 means that correct detection currently
+contributes nothing, for a different and deeper reason than "no
+evidence exists yet." Even with real romance_driven-disliked examples
+in the future, THIS SPECIFIC formula wouldn't necessarily learn to
+penalize it unless the MODE value's own separation also happened to
+shift. Logged as a real architectural idea, not built: treat nominal
+field VALUES more like tropes (each with its own learned
+liked-frequency-minus-disliked-frequency weight), not one shared
+scalar tied to the mode.
+
+**Three new backlog ideas, from a detailed real account of what
+actually bothered him about The True Bastards** (protagonist Jackal,
+beloved and earned in book 1, is written to lose repeatedly and get
+rescued by the new lead in book 2; that new lead, Fetching, is
+narratively favored despite -- in his read -- not being written as a
+competent leader; a few sex scenes felt gratuitously over-the-top):
+- **Protagonist competence/agency trajectory** -- is a protagonist
+  written as increasingly capable and effective, or deliberately
+  undermined/humiliated across a book -- no existing field captures
+  this at all.
+- **Narrative sympathy/favoritism between co-leads** -- which
+  character the text itself validates vs. criticizes, distinct from
+  either character's own competence.
+- **Romance execution tastefulness/restraint** -- a second real,
+  concrete example (after From Blood and Ash et al.) of the same
+  "romance handled with restraint vs. gratuitously" axis already
+  logged as the `message_themes`-style backlog item.
+All three are genuinely hard to tag consistently (literary/authorial-
+intent judgment, not a plot-event fact) -- flagged, not built, same
+probe-first caution as the existing romance-tone and message-theme
+backlog entries.
+
+**Clarified: the contrastive-pairs diagnostic is informational only.**
+Confirmed directly for the repo owner: it finds and reports these
+cases, it does not fix or learn from them automatically. Any actual
+fix requires either new DNA fields (tagging work) or a scoring-
+mechanism change (a design + test cycle) -- both real, separate,
+human decisions.
+
+**Freshness/novelty-decay, a DIFFERENT dimension from taste drift**
+(repo owner's own refinement of the recency/fatigue idea, logged for
+when `rated_dates` has real data to test against): even if a childhood
+rating (Harry Potter) remains an honestly-felt "fond memory" that
+shouldn't be overwritten, its usefulness for CURRENT recommendation
+may still have partly decayed -- not because his taste for the CONTENT
+changed, but because the specific trope (magic school) has already
+been "spent" on him, so a new book leaning on the same trope for its
+novelty appeal lands with less impact than it would for someone who's
+never encountered it. Distinct from the taste-drift mechanism already
+logged: one is about whether enjoyment of a CONTENT DIMENSION has
+shifted over time, this is about DIMINISHING NOVELTY RETURNS on a
+specific, already-consumed trope/setting, independent of whether he
+still likes it. Both worth building once dated data exists; not
+conflating them into one mechanism.
+
+**Series-trajectory-as-negative-only-influence, proposed not yet
+built**: repo owner's own concrete refinement of yesterday's series-DNA
+discussion, prompted by two real examples -- The Pariah (Anthony Ryan,
+didn't click until partway through book 1 into 2/3) and The Warded Man
+(loved books 1-3, the finale "ruined the series" for him, making him
+unwilling to recommend the whole series to anyone despite loving most
+of it). Core insight: series trajectory should only ever be allowed to
+PENALIZE a strong-looking entry point (if the specific fields driving
+its high score trend away from the user's profile by series' end),
+never BOOST a weak-looking one (avoids the "undersells itself, feels
+like a bait-and-switch" risk already flagged) -- an asymmetric,
+lower-risk design than a bidirectional trajectory adjustment. Also
+raised a genuine presentation-layer idea (separate "book match" vs.
+"series match" / "easy match" vs. "will match along the way"
+categories) as an alternative or complement to a scoring change. Not
+built this round -- a real scoring change needs the same design+test
+discipline as everything else, proposed and awaiting a decision on
+whether to build now or as a dedicated next pass.

@@ -1188,6 +1188,62 @@ Deliberately deferred, not in v0.1:
   hypothesis, or (b) more real examples surfacing the same pattern,
   before committing to a new controlled vocabulary value. Flagged, not
   built.
+  **UPDATE (2026-09-04)**: repo owner gave a much richer, specific
+  account of what he thinks actually happened in The True Bastards —
+  not just "the protagonist changed," but Jackal (the beloved,
+  earned-growth lead of book 1) is written to lose repeatedly and be
+  rescued by the new lead, Fetching, who he reads as narratively
+  favored despite not being written as a competent leader. This
+  decomposes the original single hypothesis into (at least) three
+  possibly-distinct real axes — see the two new entries directly below.
+  Still not built; the account is real, specific evidence but still a
+  single narrator's read of two books, same evidentiary bar as before.
+- **Protagonist competence/agency trajectory** — added 2026-09-04, from
+  the same True Bastards account above. Whether a protagonist is
+  written as increasingly capable/effective across a book, or
+  deliberately undermined/humiliated (repeatedly loses, needs rescuing,
+  etc.), independent of that character's objective power level or the
+  book's stakes. No existing field captures this at all — `drive`,
+  `personal_stakes`, and the character-archetype tropes describe
+  structural facts (who's driving the plot, how dangerous is it) not
+  this specific narrative-treatment axis. Genuinely hard to tag
+  consistently — this is an authorial-intent/craft judgment, not a
+  plot-event fact, closer in kind to `message_intensity`'s own
+  subjectivity than to a trope like `revenge`. Flagged, not built —
+  needs more than one account before committing to vocabulary.
+- **Narrative sympathy/favoritism between co-leads** — added
+  2026-09-04, same source. Distinct from protagonist competence above:
+  this is about which character the TEXT ITSELF seems to validate vs.
+  criticize when a book has two or more co-leads, independent of either
+  character's own competence or agency. A book could write both
+  co-leads as equally competent while still tonally favoring one's
+  perspective — these are separable signals. Same tagging-difficulty
+  caution as the entry above; flagged, not built.
+- **Per-value nominal-field weight learning** — a real architectural
+  finding, not a new field, surfaced 2026-09-04 by a sharp technical
+  pushback on why `drive: romance_driven`'s addition "changed nothing"
+  for the repo owner's own recommendations. `build_profile()` computes
+  exactly ONE weight per nominal field, tied entirely to whichever
+  value is most common among a user's liked books (the "mode") — it
+  never learns a separate relationship for any OTHER value independent
+  of the mode's own separation. Checked directly: his `drive` weight is
+  0.0 because `character_driven` (the mode) is proportionally MORE
+  common in his disliked books (57%) than liked (45%) — a fact about
+  `character_driven` specifically, not about `romance_driven` (0
+  occurrences anywhere in his rated history). `nominal_similarity()`
+  correctly flags `romance_driven` as a full mismatch against the mode
+  — the pipeline isn't blind to it — but a near-zero field weight means
+  that correct detection currently contributes nothing regardless. This
+  is a real limitation for EVERY nominal field, not specific to `drive`
+  or this user: any value other than the mode is currently invisible to
+  weight-learning even with real per-value evidence. Proposed fix, not
+  built: treat nominal field VALUES more like tropes — each with its
+  own learned `liked_freq - disliked_freq` weight, rather than one
+  scalar tied to the mode. This is a real scoring-architecture change
+  (not a schema/tagging one) and needs the standard 2-scenario test
+  discipline in `scripts/scoring_tests.py` before landing, same as any
+  other scoring change — flagged in
+  `docs/scoring-test-protocol.md`, not attempted yet.
 
 ## Open for review
 
