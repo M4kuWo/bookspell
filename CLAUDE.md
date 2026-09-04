@@ -54,6 +54,23 @@ re-litigate decisions already made there.
 - **Write idempotent SQL**: `insert ... on conflict do nothing` for
   inserts, so a migration can be safely reapplied without duplicating
   data if something goes wrong partway through.
+- **Before pushing, check for duplicate migration timestamps** —
+  `ls supabase/migrations/ | sort | uniq -c -w14 | awk '$1>1'` (or just
+  eyeball it after a merge). Real, already-happened example: two
+  sessions working the same calendar day each independently wrote a
+  migration timestamped `20260904020000` (one a single-book retag, one
+  a batch audit) — a plain filename collision, caught during a `git
+  merge` conflict on `docs/project-log.md`. Supabase's migration
+  tracking table keys on the numeric timestamp prefix, not the full
+  filename, so pushing both as-is would have had the second one either
+  error or (worse) silently no-op against an already-recorded version.
+  Fixed by renaming the not-yet-pushed-to-hosted one to a free
+  timestamp before running `supabase db push` — safe to rename freely
+  as long as `supabase migration list --linked` shows it has no
+  `remote` entry yet; never rename one that's already applied to
+  hosted. Two people (or two Claude sessions) working the same day
+  makes this collision more likely, not less — check for it as routine
+  merge hygiene, not just when a push errors.
 - **Reference books via a title subselect, never a raw UUID**:
   `select id from books where title = '...'` — local and hosted (and
   anyone else's clone) have different row UUIDs for the same logical
@@ -192,6 +209,30 @@ re-litigate decisions already made there.
   the durable stand-in. See `data/ratings/README.md` for the current
   roster. Add a new person's file there, then a new scenario in
   `scripts/scoring_tests.py`, rather than replacing existing data.
+- **A/B testing an experimental scoring variant via monkeypatch must
+  verify the patch lands on the SAME module object
+  `scripts/scoring_tests.py` actually calls — don't just trust that the
+  before/after numbers look different (or the same).** Real,
+  already-happened example: an experimental variant was A/B tested by
+  doing `import scripts.recommend as R; R.build_profile =
+  R.build_profile_per_value` and rerunning the suite, which reported
+  "byte-identical, zero regressions" — but `scripts/scoring_tests.py`
+  internally does `sys.path.insert(...); import recommend as R`, a
+  SEPARATE import of the same file under a different `sys.modules` key,
+  hence a genuinely different module object with its own independent
+  copy of every name. The monkeypatch silently never touched the module
+  the benchmark actually calls (`scripts.recommend is not
+  (path-inserted) recommend`), so the "safe" finding was measuring
+  unmodified scoring against itself. Once actually landed (by editing
+  the real file's own module-level names, which both import paths
+  execute), the true benchmark showed a severe regression that had
+  looked completely invisible under the flawed test. **Verify with
+  `import scripts.recommend as R; import scripts.scoring_tests as T; R
+  is T.R` (should be `True`) before trusting any monkeypatch-based A/B
+  result against `scoring_tests.py`** — or avoid the whole class of bug
+  by editing `scoring_tests.py`'s own `_full_score()` directly to call
+  the experimental variant, the way the series-trajectory-penalty
+  experiment (tested successfully) did it.
 
 ## Safety / credentials
 
