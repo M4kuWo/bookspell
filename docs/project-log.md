@@ -5151,3 +5151,60 @@ Rising; Lord of Chaos vs. The Path of Daggers) not yet reviewed.
 **Per-value nominal weight learning: landed, then reverted the same day.** Full writeup in `docs/scoring-test-protocol.md`'s "tried for real, REVERTED" section. Short version: the earlier "byte-identical, zero regressions" A/B result was invalid -- the monkeypatch-based test modified `scripts.recommend`'s names, but `scripts/scoring_tests.py` internally imports the same file under a different `sys.modules` key (`import recommend as R` after a `sys.path.insert`), so it's a genuinely different module object that the monkeypatch never touched. The real benchmark, run only once the reassignment was made inside `recommend.py` itself (so both import paths see it), showed a severe regression (Mathias-full bucket accuracy 91%->73%, Old Man's War 0.561->0.179) with a root cause never identified. Reverted `build_profile`/`score_book`/`explain_book` back to the original mode-based implementations; the per-value versions stay in the file as a working, un-landed reference. New standing testing rule: verify a monkeypatch lands on the same module object `scoring_tests.py` actually calls (`R is T.R`) before trusting any A/B result against it.
 
 **Answer to repo owner's "should we land it now?": no** -- the one valid test found a real, unexplained regression; landing needs both a corrected test methodology and an actual root-cause fix, neither done yet.
+
+## 2026-09-04 (later) -- romance_driven catalog audit, Tier 1 + Tier 3 complete
+
+Worked the Step 0 priority handoff from `tag-catalog-batch/SKILL.md`.
+
+**Tier 1 (heat=frequent+explicit, 20 live candidates)**: reviewed every
+book individually against the skill's test -- is the central
+relationship what the book is ABOUT, or a strong supporting thread
+inside a plot/character-driven story. Reclassified 12 to
+`romance_driven`: A Court of Frost and Starlight, A Court of Mist and
+Fury, A Court of Silver Flames, A Court of Thorns and Roses, Bride,
+Fourth Wing, Iron Flame, One Last Stop, Outlander, Quicksilver, The
+Serpent and the Wings of Night, When the Moon Hatched.
+
+Confirmed correctly unchanged (6, beyond the 2 already-resolved
+calibration anchors): A Court of Wings and Ruin, Empire of Storms,
+House of Flame and Shadow, House of Sky and Breath, Kingdom of Ash,
+Onyx Storm -- all war/political-conflict-climax books where the
+external plot has genuinely become the real engine by that point,
+exactly the pattern the skill flagged as plausible-as-is. ACOMAF was
+the closest real judgment call (its romance and its plot are deeply
+intertwined via the marriage-bargain structure) -- kept it
+`romance_driven` on the strength of reader-consensus and its own
+distinct engine from ACOWAR's war-climax structure, not a hard fact
+the way most of the others were.
+
+**Tier 3 (romance-structural trope present, romance_heat NOT
+occasional/frequent -- catches "clean"/closed-door romantasy the heat
+filter alone would miss)**: reviewed all 19 candidates. Zero
+reclassifications. Carmilla, Interview with the Vampire, Oathbringer,
+Mistborn: The Final Empire, The House in the Cerulean Sea, Never Let
+Me Go, and the rest all have real, sometimes central relationship
+threads, but none are romance-genre in the sense this field is meant
+to capture (predatory/horror dynamics, political-fantasy subplots, or
+literary character studies where the relationship serves a thematic
+point beyond itself). This is the legitimate "nothing to do here"
+outcome the skill explicitly warned not to force -- confirmed by
+individually checking each title, not by treating a null result as a
+missed review.
+
+**Tier 2 (~173 books, occasional heat) not attempted this pass** --
+its own size warrants a dedicated session rather than folding into
+this one; left for whoever picks up Step 0 next, per the skill's "as
+budget allows" framing.
+
+Applied via `20260904025000_romance_driven_audit_tier1.sql` (renamed
+from its original `20260904020000_...` filename during merge -- that
+timestamp collided with the same-day Time Traveler's Wife retag
+migration from a parallel session; not yet applied to hosted at merge
+time, so renaming was safe -- see the merge note below) (title-scoped
+`UPDATE ... WHERE book_id = (SELECT id FROM books WHERE
+title = ...)`, tested in a rolled-back transaction first, matches this
+project's standing migration convention). `book_dna.drive` now has 16
+`romance_driven` rows total (the 12 above + the 4 already-confirmed
+anchors from the prior session's own retag).
+
+**Merge note (2026-09-04)**: this session and a parallel session both wrote migrations timestamped `20260904020000` independently (this session's Time Traveler's Wife retag, the parallel session's romance_driven Tier 1 audit). Caught during `git push` -> merge conflict resolution, before either collided in hosted's migration-tracking table (the Tier 1 audit hadn't been pushed to hosted yet). Renamed the Tier 1 audit file to `20260904025000_...` to resolve. Worth remembering: two people working the same calendar day increases the odds of this again -- a quick `ls supabase/migrations/ | sort | uniq -d` (or just eyeballing for duplicate prefixes) before pushing is cheap insurance.
