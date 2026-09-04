@@ -5208,3 +5208,52 @@ project's standing migration convention). `book_dna.drive` now has 16
 anchors from the prior session's own retag).
 
 **Merge note (2026-09-04)**: this session and a parallel session both wrote migrations timestamped `20260904020000` independently (this session's Time Traveler's Wife retag, the parallel session's romance_driven Tier 1 audit). Caught during `git push` -> merge conflict resolution, before either collided in hosted's migration-tracking table (the Tier 1 audit hadn't been pushed to hosted yet). Renamed the Tier 1 audit file to `20260904025000_...` to resolve. Worth remembering: two people working the same calendar day increases the odds of this again -- a quick `ls supabase/migrations/ | sort | uniq -d` (or just eyeballing for duplicate prefixes) before pushing is cheap insurance.
+
+## 2026-09-04 (later still) -- real data-quality bug found and fixed: a title collision silently mis-tagged a book
+
+Starting the next batch's prioritized-untagged query, "The One" (Kiera
+Cass) showed up as still untagged -- despite being reported COMMITTED in
+the previous batch. Investigated rather than re-running blind: the
+catalog has two entirely different books both titled exactly "The One"
+(Kiera Cass's Selection #3, and John Marrs's unrelated adult sci-fi
+thriller about a DNA soulmate-matching test). The previous batch's
+tagging script built its title -> book_id lookup as a plain Python dict
+keyed on normalized title text; when both rows came back from the same
+`select id, title from books` query, the second one silently overwrote
+the first in that dict. Net effect: Kiera Cass's intended Book DNA
+(YA, `romance_driven`, love_triangle/dystopia tropes) got applied to
+John Marrs's book_id instead, and Cass's own book was left completely
+untagged despite the script's own success output listing "The One" as
+committed. A single silent mis-tag, not a loud error -- exactly the
+"passes every check, still wrong" failure mode CLAUDE.md already warns
+about for a different reason (the `book_id`/`genre`-only NOT NULL
+columns), now confirmed for a second root cause: an ambiguous title
+lookup, not just a partial insert.
+
+Checked the blast radius before fixing anything: queried the full
+`books` table for any other duplicate title (`group by title having
+count(*) > 1`) -- exactly one duplicate exists in the entire 871-book
+catalog, this same "The One" pair. Not a wider pattern; safe to treat
+as a one-off collision rather than re-auditing every prior batch.
+
+Fixed directly against hosted: removed the misapplied tropes/CWs/
+book_dna row from John Marrs's book_id, then inserted correct,
+book-specific Book DNA for both titles -- Marrs's book tagged with its
+own real content (ensemble-POV DNA-match thriller, adult,
+`plot_driven`, twist_ending/soulmate_bond/villain_protagonist tropes,
+stalking/kidnapping_or_captivity CWs), Cass's book tagged with what was
+originally intended. Migration
+(`20260904050000_fix_the_one_title_collision.sql`) scopes every
+statement by `title AND author` together rather than a raw `book_id` --
+title alone is provably ambiguous for this specific pair, but the pair
+is unique, and this keeps the fix portable across local/hosted like
+every other migration in this project instead of hardcoding a
+hosted-only UUID.
+
+**Lesson for future batches**: a title-only lookup dict is not safe in
+general, even though it's been fine so far (only one collision exists
+today). Worth building the lookup as `title -> book_id` with an
+assertion/error on a duplicate key (or keying on `title + author`
+instead) rather than silently letting a second row win, so a *future*
+newly-ingested duplicate title fails loudly instead of repeating this
+exact bug.

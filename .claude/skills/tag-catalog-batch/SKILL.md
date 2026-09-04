@@ -403,8 +403,26 @@ row UUIDs than anyone else's local database for the same logical books
 -- a title-keyed subselect is portable across both, a hardcoded UUID
 only works in the one database you copied it from. This is the same
 pattern every migration in this project already uses. Never a blanket
-UPDATE or DELETE across multiple rows. Complete example, every real
-column filled in (not abbreviated -- copy this shape exactly):
+UPDATE or DELETE across multiple rows.
+
+**If you build a title -> book_id lookup in a script for a whole batch
+(rather than one subselect per statement), don't key it on title alone
+without checking for duplicates first.** Real, already-happened example
+(2026-09-04): the catalog has two entirely different books both titled
+"The One" (Kiera Cass's Selection #3, John Marrs's unrelated sci-fi
+thriller); a plain `{title: book_id}` dict let the second row silently
+overwrite the first, so one book's Book DNA got applied to the other
+book's `book_id` and the intended book was left completely untagged --
+while the script's own success output still listed it as committed. No
+error, no warning, just a silently wrong book_id. Query `select title,
+count(*) from books group by title having count(*) > 1` before trusting
+a title-keyed dict, or key it on `(title, author)` instead, or make
+duplicate-key construction raise loudly rather than silently picking a
+winner. (As of 2026-09-04 this is the only duplicate title in the whole
+catalog and it's now fixed -- but a future ingestion could introduce
+another one, so keep checking rather than assuming it stays unique.)
+Complete example, every real column filled in (not abbreviated -- copy
+this shape exactly):
 
 ```sql
 insert into book_dna (
