@@ -172,6 +172,22 @@ re-litigate decisions already made there.
   flagged, then deleted from `books` entirely once confirmed
   out-of-scope with the repo owner (don't leave them as permanent
   dangling untagged rows once that's confirmed).
+- **Graphic novels/comics are out of v1 scope** (decided 2026-09-04,
+  see `20260904090000_remove_out_of_scope_graphic_novels.sql`) — the
+  schema has no format/medium field distinguishing a visual comic from
+  prose, and several fields (page/word-count-driven pacing signals in
+  particular) mean something different for a comic than a novel. This
+  was raised as an open question earlier (prompted by *Saga, Vol. 1*
+  already sitting tagged in the catalog) and left genuinely unresolved
+  for a while — during that window, two more graphic novels (*Saga,
+  Vol. 2*, *The Sandman, Vol. 1*) got tagged anyway by treating the
+  already-tagged *Saga, Vol. 1* as an implicit precedent rather than
+  re-checking the still-open question. All three now have their Book
+  DNA removed (`books` rows left in place, untagged, not deleted — same
+  treatment as any other confirmed-out-of-scope-but-real-SFF-work
+  case). **If you encounter a graphic novel/comic in the untagged
+  queue, skip and flag it — don't tag it, and don't treat any
+  already-tagged comic as a precedent that settles the question.**
 - `books.series_id` always points at a **leaf** series, never a parent
   "umbrella" one (e.g. Mistborn's books link to "Mistborn Era One" /
   "Era Two", never the parent "Mistborn" row, which has zero books

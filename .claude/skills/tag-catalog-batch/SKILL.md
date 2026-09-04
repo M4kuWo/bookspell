@@ -315,6 +315,12 @@ anything (book_dna's primary key just rejects a duplicate), but it does
 waste real, paid effort on books someone else already tagged in the
 few minutes since you picked your batch.
 
+**Skip and flag any graphic novel/comic that surfaces in this query --
+they're out of v1 scope** (decided 2026-09-04, CLAUDE.md's Catalog
+scope section). Don't treat an already-tagged comic (if one somehow
+still exists) as precedent that they're fine to tag -- that's exactly
+how this gap grew from one book to three before it was caught.
+
 ## How many books
 
 Tag **15-20 books per invocation** of this skill, then stop and report.

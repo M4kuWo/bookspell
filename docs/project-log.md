@@ -5257,3 +5257,36 @@ assertion/error on a duplicate key (or keying on `title + author`
 instead) rather than silently letting a second row win, so a *future*
 newly-ingested duplicate title fails loudly instead of repeating this
 exact bug.
+
+## 2026-09-04 (later still) -- resolved the open graphic-novel scope question: out of v1 scope
+
+The repo owner closed the "whether comics/graphic novels are in v1
+scope at all" question raised earlier (see this file's 2026-09-03
+entry) after noticing *The Sandman, Vol. 1* had been tagged in the
+most recent batch: **graphic novels are out of v1 scope**, decided
+directly rather than left open any longer.
+
+Worth being honest about how it got to three tagged books instead of
+one: the original entry explicitly said the question was left open,
+*Saga, Vol. 1* deliberately "not silently added or excluded." But it
+was already sitting tagged in the catalog from before that entry was
+written, and two later tagging batches (*Saga, Vol. 2*, then *The
+Sandman, Vol. 1*) treated that existing tagged row as an implicit
+precedent for "comics are fine to tag" rather than re-checking the
+still-open question first. A real miss, not a deliberate call -- an
+already-tagged row is evidence of what happened, not evidence of what
+was decided.
+
+Fixed via `20260904090000_remove_out_of_scope_graphic_novels.sql`:
+removed Book DNA (book_dna, tropes, content warnings) from all three
+titles, scoped per book via title subselects. Checked for other
+comics hiding in the catalog before finishing -- searched title
+patterns like "Vol."/"Volume" for anything else that might have
+slipped through the same gap; only these three matched (La Belle
+Sauvage's "Volume One" subtitle is a genuine prose novel, correctly
+left alone). `books` rows for all three left in place, untagged --
+they're real SFF works, just out of scope for this schema/medium, same
+treatment as any other confirmed-out-of-scope title. Added a CLAUDE.md
+entry and a `tag-catalog-batch` skill note so a future batch skips and
+flags a comic on sight rather than re-discovering an already-tagged
+one and repeating the same precedent-mistake.
