@@ -5099,3 +5099,45 @@ weights instead of the old assumed 50% credit, a genuine behavior
 change against an already-landed fix. Not merged into production
 pending a decision -- safe and architecturally sound, but larger blast
 radius (every nominal field) than proven benefit currently justifies.
+
+## 2026-09-04 (later still) -- romance_driven catalog-audit plan handed off, priority over normal tagging
+
+Repo owner's wife's Claude session resets Monday and has budget
+remaining now -- asked for a full plan to catalog-wide-review
+`romance_driven` (added earlier today, currently only applied to 3
+books) before her session resets, prioritized over the normal
+untagged-books tagging queue.
+
+Scoped the real candidate pool with 3 confidence tiers rather than one
+blanket filter (verified query row counts directly, per CLAUDE.md's
+"test SQL before trusting it in a skill" rule): Tier 1 (21 books,
+`romance_heat_frequency=frequent` + `intensity=explicit` -- highest
+confidence, review all), Tier 2 (173 books, `occasional` heat -- most
+will correctly stay as-is, budget-permitting), Tier 3 (19 books, a
+romance-structural trope present but low/no heat tagged -- catches
+closed-door/"clean" romantasy the heat filters miss). Named the two
+already-confirmed non-matches (Gravity's Rainbow, Stranger in a Strange
+Land) as explicit calibration anchors so the audit doesn't turn into a
+blanket filter-and-replace -- the whole point of tiering this instead
+of just handing over "all 213 candidates" is that most of Tier 2/3
+should correctly stay unchanged, and several Tier 1 books (later,
+plot-heavy installments in ongoing romantasy series) are also
+plausible as-is despite matching the heat filter.
+
+Added as the new "Step 0: PRIORITY BATCH" in
+`.claude/skills/tag-catalog-batch/SKILL.md`, explicitly ordered before
+Step 2's normal untagged-book selection, with the judgment-call
+criteria, all 3 tier queries (tested directly against the live DB
+before writing them into the skill, per standing practice), the exact
+migration-writing convention to follow, and a reminder that no other
+new field/value from today's session needs a similar pass (the
+protagonist-competence/narrative-favoritism/romance-tone ideas are all
+proposals only, nothing tagged yet to retag).
+
+**Contrastive-pairs diagnostic, ongoing practice confirmed**: repo
+owner wants this treated as a standing qualitative-review source (new
+pairs get raised and discussed as they surface, the way Grey/True
+Bastards was), not a one-off investigation. Current queue beyond the
+already-deeply-diagnosed Grey/True Bastards and Magic Bites/Magic
+Burns: two fresh Dandan/WoT pairs (The Dragon Reborn vs. The Shadow
+Rising; Lord of Chaos vs. The Path of Daggers) not yet reviewed.
