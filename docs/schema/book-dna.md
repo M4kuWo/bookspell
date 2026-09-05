@@ -729,6 +729,32 @@ Deliberately deferred, not in v0.1:
   research). Deliberately not built in the same pass as the field-value
   audit below — it's a real schema addition plus a new data-sourcing
   effort, not a quick fix, and deserves its own scoped pass.
+
+  **UPDATE (2026-09-05): table BUILT** (`audiobook_editions`,
+  `20260905260000_audiobook_editions_table.sql`) — `book_id,
+  edition_type (standard/dramatized_full_cast/abridged/other),
+  narrators, production_company, runtime_minutes`, plus a real,
+  repo-owner-flagged addition the original idea missed: dramatized
+  full-cast productions (GraphicAudio in particular, but the same
+  applies to other dramatized adaptations) release EPISODICALLY over
+  months, not all at once — confirmed directly, Wind and Truth's
+  GraphicAudio adaptation released across 5 parts between roughly late
+  2025 and March 2026. A lookup done mid-release would correctly find
+  "yes, a GraphicAudio exists" while badly misrepresenting reality (only
+  some parts out, no way to say how much of the story is actually
+  available to listen to). Added `release_status`
+  (fully_released/in_progress/announced), `parts_released`/
+  `parts_total`, and `last_verified_date` — the same "refreshed from
+  metadata sources periodically, never set once at tagging time" pattern
+  this project already uses for `series.status`/`book_count`, now backed
+  by an actual column instead of just a documented expectation, so a
+  future tagging session can tell whether a row needs re-checking rather
+  than trusting a stale status indefinitely. Seeded with one real,
+  directly-verified row (Wind and Truth) as a working example — full
+  catalog backfill is separate, future work, not attempted in this pass.
+  Populating this at real scale is still blocked on the same
+  data-sourcing problem as before (Hardcover's API likely doesn't carry
+  GraphicAudio editions; needs per-book research).
 - **`solarpunk`** (setting_worldbuilding) — flagged during trope research
   as real but weaker/niche; not added.
 - **Retroactive tagging of `elves`/`dwarves`/`fae_or_fairies`/`orcs`/
