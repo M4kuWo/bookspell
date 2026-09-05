@@ -1549,3 +1549,96 @@ question took priority). Landing requires: (a) a valid test (edit
 identity before monkeypatching), (b) actually finding why per-value
 scoring tanks Old Man's War and similar books, not just reverting past
 the symptom.
+
+## Series-dedup consistency fix -- LANDED (2026-09-05)
+
+The 10-hypothesis review's #2 finding (`validated_dealbreaker_fields()`,
+`cold_start_weight()`, and the score-audit tool's own reporting all
+consume raw `id_to_magnitude` directly, unlike `build_profile()` which
+already deduplicates series-mates before computing weights) was left as
+a "real, fixable inconsistency" pending a decision. Fixed directly:
+added `_series_deduped_id_to_magnitude()` (the id_to_magnitude-keyed
+analog of `_series_deduped()`'s weight-splitting, for the three
+separation-statistic consumers) and `_n_independent_clusters()` (the
+count-shaped analog for `cold_start_weight()`'s own `n`, since
+magnitude-splitting doesn't change a dict's length the way it changes
+weights -- these needed genuinely different fixes, not the same helper
+applied twice). All three call sites (`validated_dealbreaker_fields()`,
+`cold_start_weight()`, `audit_book_score()`'s own display helpers)
+dedupe internally now, self-contained regardless of caller. Full
+benchmark suite: zero regressions, byte-identical scorecard.
+
+## Permutation-based adaptive dealbreaker threshold -- tried, REVERTED (2026-09-05)
+
+Direct follow-up to the fix above and the 10-hypothesis review's #10
+finding: `STAT_SEPARATION_THRESHOLD`'s fixed 0.65 had itself gone stale
+as Mathias's rated pool grew past where it was calibrated -- `person`'s
+separation drifted from 0.75-0.82 (when 0.65 was picked) down to 0.412,
+silently disabling `validated_dealbreaker_fields()` (returns an empty
+set) and therefore the whole veto mechanism for his profile, unnoticed
+until that review.
+
+Replaced the fixed magnitude with a permutation significance test:
+`STAT_SEPARATION_THRESHOLD` demoted to a cheap 0.3 pre-filter (skip
+permutation-testing obviously-dead candidates), real validation via
+`_permutation_p_value()` (empirical p-value from 200 label-shuffled
+trials) gated at `alpha=0.05` Bonferroni-corrected by however many
+candidates actually got tested for that user (`alpha / n_candidates`)
+-- genuinely adaptive to both sample size and how many fields/tropes
+are in play, rather than a number picked once and left to go stale.
+
+Result for Mathias: `person` (p=0.001), `emotional_resolution`
+(p=0.002), `worldbuilding_density` (p=0.002), and `prose_density`
+(p=0.002, negative direction) all validated -- `pov_count` cleared the
+0.3 pre-filter (0.322) but correctly failed significance, consistent
+with its known correlation with `person`. Runtime: 0.06s, no
+performance concern.
+
+Full benchmark suite: **real regression**. Mathias-full bucket accuracy
+91%->82%, loved_recall 100%->80%; Mathias-series-isolated bucket
+73%->64%, loved_recall 80%->60%. Root cause, checked directly via
+`audit_book_score()`: Old Man's War (true=liked) now gets vetoed by a
+`person` mismatch (0.251, above the newly-lower
+`VALIDATED_DEALBREAKER_MAGNITUDE` bar of 0.15) -- a real, individual
+exception to an otherwise genuinely strong, statistically robust
+pattern (Mathias generally dislikes first-person books; this is one
+real counter-example). Every other held-out book that the veto now
+also fires on (The Wise Man's Fear, Royal Assassin, Skyward, Interview
+with the Vampire, Assassin's Quest) was ALREADY correctly labeled
+"Poor match" without the veto, so reactivating it bought zero new
+correct catches while costing this one book -- a clean net negative on
+the only real benchmark available, not a marginal wash.
+
+**Not a bug in the permutation test itself** -- `person`'s p=0.001 is
+about as statistically unambiguous as this kind of test produces;
+tightening the correction further to exclude it would mean suppressing
+a genuinely real, strong signal specifically to dodge one legitimate
+exception, which defeats the point of a dealbreaker mechanism at all.
+This is the same "a trope aversion should lower a score, not
+disqualify a book" tension the schema doc already names -- restoring a
+CORRECTLY-validated veto has a real, inherent false-positive cost on
+individual exceptions, no threshold tuning removes that cost, it can
+only be traded off. On the one dataset available, the trade nets
+negative right now.
+
+**Reverted in full** (`_permutation_p_value()`, `PERMUTATION_TRIALS`,
+`PERMUTATION_ALPHA`, `_PERMUTATION_SEED` all removed;
+`STAT_SEPARATION_THRESHOLD` restored to 0.65;
+`validated_dealbreaker_fields()` restored to the plain magnitude
+check) rather than left half-built, same precedent as the positive-floor
+and group-redundancy-discount experiments. The series-dedup fix above
+is unaffected and stays landed -- it was tested independently and is
+clean on its own.
+
+**Open for whoever revisits this**: the underlying problem (a
+fixed-pool-size-calibrated constant going stale as real data
+accumulates) is real and will recur -- `person`'s separation will keep
+drifting as more books get rated, and 0.65 is exactly as arbitrary
+going forward as it was when first picked. A future attempt needs
+either (a) a second rater whose data can show whether the Old-Man's-War-
+style cost is typical or a one-off, since a single rater's single
+exception isn't enough to judge a general mechanism by, or (b) a
+design that keeps the field validated but softens the veto's magnitude
+threshold specifically for borderline mismatches (Old Man's War's 0.251
+sits well below the un-validated fallback bar of 0.3) rather than
+inheriting the full lower validated-field bar of 0.15 automatically.
