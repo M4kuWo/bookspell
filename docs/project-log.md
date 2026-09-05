@@ -5704,3 +5704,43 @@ instance from local and hosted via
 logged in `docs/schema/book-dna.md`'s backlog for a future, better-
 scoped attempt -- not built speculatively on one account, same
 standing bar as everything else in that backlog.
+
+## 2026-09-05 (later still) -- real rating gaps caught reviewing a recommendation list; Horns/NOS4A2 ingested and tagged
+
+Repo owner reviewed the top-20-fantasy list and caught two real gaps:
+The Trouble With Peace (Age of Madness #2) and The Desert Spear (Demon
+Cycle #2) were both recommended despite him having read and loved (or,
+for the Demon Cycle, mostly loved) the entire respective series --
+only book 1 of each had ever been rated. Added: The Desert Spear/The
+Daylight War/The Skull Throne (Demon Cycle 2-4, loved), The Core
+(Demon Cycle 5, hated -- confirms the earlier "dislike of the final
+book was about ending satisfaction, not a DNA-visible shift" finding
+was about this exact book), The Trouble With Peace/The Wisdom of
+Crowds (Age of Madness 2-3, loved).
+
+Also asked whether Horns and NOS4A2 (Joe Hill) had been agreed as
+fantasy -- checked directly: neither existed in the catalog at all
+(confirmed by direct query, not just untagged). Ingested and tagged
+both as dark fantasy/horror (real supernatural elements: Ig's horns/
+confession-inducing power in Horns; Christmasland as a real
+supernatural pocket-dimension in NOS4A2) via
+`20260905240000_ingest_and_tag_joe_hill_horns_nos4a2.sql` --
+bibliographic facts and structural fields (POV count, timeline,
+pacing) verified via web search before tagging, not assumed from
+memory. Both rated loved per repo owner confirmation.
+
+Re-ran the full benchmark suite after all 8 new ratings: Mathias-full
+moved from 91%/96%/100%/100% to 82%/91%/80%/100% (bucket/pairwise/
+loved-recall/hated-rejection) -- checked directly via audit_book_score()
+before assuming this was a problem: NOT a bug, no dealbreaker veto
+involved (validated_dealbreaker_fields() is still empty for his
+profile). Old Man's War flipped from Good match to Poor match purely
+because The Core (newly rated hated) now sits in the disliked-side
+pool sharing some field values with it, diluting his usual signal a
+bit further -- the same accumulation/dilution limitation already
+documented in the 10-hypothesis review, now visibly triggered by real
+new data rather than a change to the scoring code. Nothing to revert;
+this is the system working as previously understood, not a new
+problem. mathias.json now has 136 ratings total.
+
+Pushed to hosted, verified matching (873 books, 825 tagged).
