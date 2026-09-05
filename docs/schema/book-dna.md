@@ -1219,6 +1219,32 @@ Deliberately deferred, not in v0.1:
   co-leads as equally competent while still tonally favoring one's
   perspective — these are separable signals. Same tagging-difficulty
   caution as the entry above; flagged, not built.
+
+  **UPDATE (2026-09-05): both this entry and protagonist competence
+  above were actually built as a validation probe (two tropes, tagged
+  only on The True Bastards) then reverted three times in the same
+  day** — see docs/scoring-test-protocol.md for the full technical
+  trajectory (structurally untestable via held-out methodology with
+  only one real instance; re-added dormant on the reasoning that an
+  inert-but-accurate tag shouldn't be deleted for lacking test
+  evidence; then removed for real once the repo owner reconsidered the
+  CONCEPT, not just the evidence). His sharper description of what
+  actually bothered him, on reflection: **"Jackal isn't a lead in True
+  Bastards. He just goes through character assassination."** Neither
+  built field actually named this — "favoritism between co-leads"
+  wrongly assumed Jackal remains a comparably-positioned co-lead in
+  book 2 (he doesn't; he's been narratively demoted), and "competence
+  trajectory" was too general/sequel-agnostic to capture the specific
+  shape of the complaint (a previously-established, competent lead
+  from an EARLIER book being actively torn down within a LATER one,
+  not a trajectory within a single book). A future, better-scoped
+  attempt at this idea should center that framing —
+  `established_lead_narratively_torn_down` or similar, explicitly
+  scoped to sequels/later series entries relative to an earlier book's
+  characterization — rather than either of the two shapes tried here.
+  Still needs a second real account before clearing this schema's
+  standing bar; one book's read is not enough to commit vocabulary to,
+  regardless of how it's framed.
 - **Per-value nominal-field weight learning** — a real architectural
   finding, not a new field, surfaced 2026-09-04 by a sharp technical
   pushback on why `drive: romance_driven`'s addition "changed nothing"

@@ -5648,3 +5648,59 @@ Tier 2 audit (181 candidates, flagged as priority handoff work two
 sessions ago, still not started); a second real account of the
 protagonist-competence/narrative-favoritism pattern, needed before
 that concept can ever be validated one way or the other.
+
+## 2026-09-05 (later) -- romance_driven Tier 2 audit complete; execution-DNA probe reverted for real; another author-contamination fix
+
+**Tier 2 audit done.** The last open piece of the romance_driven catalog
+audit (Tier 1/Tier 3 done two sessions ago) -- 214 live candidates
+(occasional heat, drive != romance_driven), worked via 4 parallel
+background agents each reviewing ~54 books individually against the
+skill's judgment test ("is the central relationship what the book is
+ABOUT, or a strong supporting thread"). **19 reclassified to
+romance_driven**, 195 confirmed correctly unchanged: A Dowry of Blood,
+Assistant to the Villain, City of Lost Souls, Daughter of Smoke & Bone
+(batch 1); Divine Rivals, Matched, New Moon, Once Upon a Broken Heart,
+Our Wives Under the Sea, Paladin's Grace (batch 2); Ruthless Vows,
+Strange the Dreamer, Sweep of the Heart, The Host (batch 3); The Night
+Circus, The Song of Achilles, The Spellshop, Tower of Dawn, Yumi and
+the Nightmare Painter (batch 4). `book_dna.drive` now has 45
+romance_driven rows total. Each batch also flagged real, specific close
+calls left deliberately unchanged (Iron Widow, Powerless, One Dark
+Window, The Cruel Prince, The Invisible Life of Addie LaRue, The
+Ministry of Time, Wizard's First Rule, and others) with per-book
+reasoning, not silent skips. Applied to local first (each batch tested
+in a rolled-back transaction), then all 6 pending migrations
+(4 Tier-2 batches + the two items below) pushed to hosted in one
+consolidated push -- verified matching row counts (871 books, 823
+tagged, 45 romance_driven, 129 tropes) on both sides afterward. Full
+benchmark suite re-run clean, zero regressions.
+
+**Another real author-contamination bug, caught mid-audit.** Batch 3's
+agent flagged (not silently fixed) that The Blinding Knife's author
+field read `"Brent Weeks, Simon Vance"` -- Simon Vance is the
+audiobook narrator, not a co-author, the same pattern as Death Masks/
+James Marsters earlier this session and Sapkowski/David French before
+that. Fixed directly (small, well-scoped single-book change) via
+`20260905230000_fix_blinding_knife_author_contamination.sql`.
+
+**Execution-DNA validation probe (protagonist_undermined_or_diminished/
+narrative_favoritism_between_co_leads) reverted for real, third time
+today.** Full arc: added as a validation probe on The True Bastards ->
+reverted (couldn't be shown to help by any real test) -> RE-ADDED
+dormant on the repo owner's own call that "didn't hurt" and "didn't
+help" are different verdicts, an accurate tag shouldn't be deleted
+just for lacking test evidence -> repo owner reconsidered the CONCEPT
+itself on further reflection, not just the evidence: both fields read
+as too niche/sequel-specific for a general schema field, and neither
+actually names what bothered him about the book. His sharper
+description, worth preserving for a future attempt: Jackal isn't a
+diminished CO-LEAD in book 2 (the favoritism framing wrongly assumed
+two comparably-positioned leads) -- he undergoes outright character
+assassination, a previously-established, competent lead actively torn
+down within a single book. Removed both tropes and the one tagging
+instance from local and hosted via
+`20260905220000_remove_execution_dna_probe_for_real.sql`. The refined
+"character assassination of a previously-established lead" framing is
+logged in `docs/schema/book-dna.md`'s backlog for a future, better-
+scoped attempt -- not built speculatively on one account, same
+standing bar as everything else in that backlog.
