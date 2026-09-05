@@ -5744,3 +5744,40 @@ this is the system working as previously understood, not a new
 problem. mathias.json now has 136 ratings total.
 
 Pushed to hosted, verified matching (873 books, 825 tagged).
+
+## 2026-09-05 (later still) -- manual "none of X"/"less of X" user rules built (backend)
+
+Repo owner's own design push: some real preferences structurally can
+never surface from a rated history (his own examples -- melodrama
+aversion, responding less positively to YA -- an avoidant reader
+doesn't read what they'd dislike, so no amount of more ratings ever
+produces that signal). Agreed this needs an explicit channel, not more
+data collection, while keeping the "must" (a short liked/disliked list)
+separate from the "may" (optional calibration).
+
+Built the backend: `parse_user_rule_key()`/`normalize_user_rules()`/
+`apply_user_rules()`/`list_user_rule_targets()` in `scripts/recommend.py`,
+wired into `recommend()` (hard exclude drops a candidate; reduce applies
+a multiplicative discount) and `audit_book_score()` (new final pipeline
+stage). Deliberately separate from `fatigue_overrides` (the existing
+post-read/DNF feedback loop, which clobbers a learned weight and
+interacts with centroid/similarity machinery) -- this is pure additive
+post-processing, same architectural slot as the dealbreaker veto,
+never touches the core weighted average. A user with no rules set is
+byte-identical to today.
+
+Building `list_user_rule_targets()` correctly (validating every
+candidate key through `parse_user_rule_key()` itself rather than
+duplicating its rules) surfaced a separate, real, NOT-yet-fixed bug:
+`ordinal_position()` treats "none" as a universal NA sentinel, but it's
+a genuine bottom-of-scale value for `humor_level`/`violence_frequency`/
+`romance_heat_frequency` -- silently dropping 325 book-field values
+catalog-wide from ever contributing to profile weighting, for every
+rater, since these fields were added. Flagged for the repo owner's own
+call rather than fixed inline -- wide blast radius, deserves its own
+dedicated multi-scenario test pass like any other scoring change.
+
+Full test coverage added as Scenario 13 in `scripts/scoring_tests.py`.
+Zero regressions on the full benchmark suite. UI/UX (search-box target
+picker, simple vs. advanced strength control, reset) intentionally not
+built yet -- backend only, per explicit instruction.
