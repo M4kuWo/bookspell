@@ -91,6 +91,29 @@ def normalize_title(title):
     return re.sub(r"\s+", " ", title).strip()
 
 
+def normalize_date(raw):
+    """Goodreads writes Date Read as "YYYY/MM/DD" -- converts to this
+    project's ISO rated_dates format ("YYYY-MM-DD"). Returns None for a
+    blank date (Goodreads leaves this empty often, e.g. books read
+    before a user started tracking dates) -- per data/ratings/README.md,
+    a title with no known date simply doesn't appear in rated_dates at
+    all, never a guessed or null placeholder."""
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    return raw.replace("/", "-")
+
+
+def clean_review(raw):
+    """Goodreads' export wraps line breaks in a literal "<br/>" tag (the
+    only HTML markup found in real review text) -- converts to real
+    newlines. Returns None for a blank review."""
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    return raw.replace("<br/>", "\n").strip()
+
+
 def normalize_isbn(raw):
     """Goodreads wraps ISBN columns in ="1234567890" (an Excel-formula
     escape to preserve leading zeros) -- strips that plus any hyphens."""
@@ -163,13 +186,18 @@ def match_book(row, isbn_index, title_author_index, titles_by_author):
 
 
 def import_goodreads_csv(csv_path, catalog, isbns_by_book_id=None):
-    """Returns (ratings: {title: label}, matched_rows: [...], unmatched_rows: [...]).
+    """Returns (ratings: {title: label}, rated_dates: {title: iso_date},
+    reviews: {title: text}, matched_rows: [...], unmatched_rows: [...]).
     Only processes rows on the 'read' shelf with a real My Rating (1-5,
     0 = unrated on Goodreads and skipped -- there's nothing to import
-    for a book with no rating)."""
+    for a book with no rating). rated_dates/reviews only include titles
+    where Goodreads actually has that data -- no blank/guessed entries,
+    matching data/ratings/README.md's rated_dates convention."""
     isbn_index, title_author_index, titles_by_author = build_catalog_index(catalog, isbns_by_book_id)
 
     ratings = {}
+    rated_dates = {}
+    reviews = {}
     matched_rows = []
     unmatched_rows = []
 
@@ -179,7 +207,7 @@ def import_goodreads_csv(csv_path, catalog, isbns_by_book_id=None):
             if row.get("Exclusive Shelf", "").strip() != "read":
                 continue
             try:
-                stars = int(row.get("My Rating", "0") or "0")
+                stars = int(float(row.get("My Rating", "0") or "0"))
             except ValueError:
                 stars = 0
             if stars not in GOODREADS_STAR_TO_LABEL:
@@ -188,11 +216,17 @@ def import_goodreads_csv(csv_path, catalog, isbns_by_book_id=None):
             matched_title, method = match_book(row, isbn_index, title_author_index, titles_by_author)
             if matched_title:
                 ratings[matched_title] = GOODREADS_STAR_TO_LABEL[stars]
+                date_read = normalize_date(row.get("Date Read"))
+                if date_read:
+                    rated_dates[matched_title] = date_read
+                review = clean_review(row.get("My Review"))
+                if review:
+                    reviews[matched_title] = review
                 matched_rows.append((row.get("Title"), matched_title, method))
             else:
                 unmatched_rows.append((row.get("Title"), row.get("Author"), row.get("Average Rating")))
 
-    return ratings, matched_rows, unmatched_rows
+    return ratings, rated_dates, reviews, matched_rows, unmatched_rows
 
 
 def main():
@@ -203,10 +237,11 @@ def main():
 
     catalog = R.load_catalog()
     isbns_by_book_id = fetch_isbns_by_book_id()
-    ratings, matched_rows, unmatched_rows = import_goodreads_csv(csv_path, catalog, isbns_by_book_id)
+    ratings, rated_dates, reviews, matched_rows, unmatched_rows = import_goodreads_csv(csv_path, catalog, isbns_by_book_id)
 
     print(f"Matched {len(matched_rows)} rated-and-read books against the catalog.")
     print(f"Unmatched (not in catalog, or below the fuzzy-match threshold): {len(unmatched_rows)}")
+    print(f"Of the matched books: {len(rated_dates)} have a Date Read, {len(reviews)} have written review text.")
 
     out_path = os.path.join(os.path.dirname(__file__), "..", "data", "ratings", f"{rater_name}.json")
     out_data = {
@@ -218,10 +253,15 @@ def main():
                 f"{len(matched_rows) + len(unmatched_rows)} rated-and-read titles). Star ratings "
                 "mapped 1:1 by position to this project's 5-tier scale (1=hated...5=loved), not "
                 "Goodreads' own star-label text. NOT yet reviewed by a human for accuracy -- "
-                "treat as a draft rating set, not verified data, until spot-checked."
+                "treat as a draft rating set, not verified data, until spot-checked. `reviews` is "
+                "this rater's own free-text Goodreads reviews, carried over verbatim (line breaks "
+                "un-HTML-escaped only) -- not currently read by any scoring code, kept for future "
+                "qualitative taste-prediction work."
             ),
         },
         "ratings": ratings,
+        "rated_dates": rated_dates,
+        "reviews": reviews,
     }
     with open(out_path, "w") as f:
         json.dump(out_data, f, indent=2)
@@ -249,8 +289,8 @@ if __name__ == "__main__":
         import tempfile
 
         fixture_csv = '''Book Id,Title,Author,Author l-f,ISBN,ISBN13,My Rating,Average Rating,Publisher,Binding,Number of Pages,Year Published,Original Publication Year,Date Read,Date Added,Bookshelves,Bookshelves with positions,Exclusive Shelf,My Review,Spoiler,Private Notes,Read Count,Owned Copies
-1,The Way of Kings,Brandon Sanderson,"Sanderson, Brandon",="0765326353",="9780765326355",5,4.65,Tor Books,Hardcover,1007,2010,2010,2020/01/15,2020/01/01,read,read (#1),read,,,,1,0
-2,"Mistborn: The Final Empire (Mistborn, #1)",Brandon Sanderson,"Sanderson, Brandon",="",="",4,4.47,Tor Books,Paperback,541,2006,2006,2019/06/01,2019/05/20,read,read (#2),read,,,,1,0
+1,The Way of Kings,Brandon Sanderson,"Sanderson, Brandon",="0765326353",="9780765326355",5.0,4.65,Tor Books,Hardcover,1007,2010,2010,2020/01/15,2020/01/01,read,read (#1),read,"Loved it.<br/>Best Sanderson yet.",,,1,0
+2,"Mistborn: The Final Empire (Mistborn, #1)",Brandon Sanderson,"Sanderson, Brandon",="",="",4.0,4.47,Tor Books,Paperback,541,2006,2006,,2019/05/20,read,read (#2),read,,,,1,0
 3,Some Totally Unknown Book,Nobody Famous,"Famous, Nobody",="",="",3,3.10,Nobody Press,Paperback,200,2015,2015,2018/01/01,2017/12/01,read,read (#3),read,,,,1,0
 4,Unread Currently Reading Book,Someone Else,"Else, Someone",="",="",0,4.00,Somewhere Press,Paperback,300,2021,2021,,2021/01/01,currently-reading,currently-reading (#1),currently-reading,,,,0,0
 '''
@@ -262,16 +302,21 @@ if __name__ == "__main__":
             "id1": {"title": "The Way of Kings", "author": "Brandon Sanderson", "isbn": "9780765326355"},
             "id2": {"title": "Mistborn: The Final Empire", "author": "Brandon Sanderson", "isbn": "0765350386"},
         }
-        ratings, matched, unmatched = import_goodreads_csv(tmp_path, test_catalog)
+        ratings, rated_dates, reviews, matched, unmatched = import_goodreads_csv(tmp_path, test_catalog)
         os.unlink(tmp_path)
 
         print("=== Self-check against a synthetic fixture (NOT a real Goodreads export) ===")
         print("Ratings parsed:", ratings)
+        print("Rated dates parsed:", rated_dates)
+        print("Reviews parsed:", reviews)
         print("Matched:", matched)
         print("Unmatched:", unmatched)
         assert ratings == {"The Way of Kings": "loved", "Mistborn: The Final Empire": "liked"}, "self-check FAILED"
+        assert rated_dates == {"The Way of Kings": "2020-01-15"}, "self-check FAILED (Mistborn has a blank Date Read -- must not appear)"
+        assert reviews == {"The Way of Kings": "Loved it.\nBest Sanderson yet."}, "self-check FAILED (br-tag-to-newline conversion)"
         assert len(unmatched) == 1 and unmatched[0][0] == "Some Totally Unknown Book", "self-check FAILED"
         print("Self-check PASSED: exact ISBN match, series-suffix-stripped exact title match, "
-              "unmatched book correctly reported, currently-reading/unrated row correctly skipped.")
+              "unmatched book correctly reported, currently-reading/unrated row correctly skipped, "
+              "date/review extraction correct including a blank-date row correctly omitted.")
     else:
         main()

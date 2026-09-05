@@ -5422,3 +5422,115 @@ borderline-inclusion precedents: Nothing to See Here, The Fisherman,
 The Cartographers). *Shogun* and *Nimona*, both flagged in the prior
 batch, remain untouched and still awaiting the repo owner's call on
 deletion.
+## 2026-09-04 (later still) -- Goodreads library-export importer tested against a real export, two real bugs found and fixed
+
+Repo owner tested `scripts/import_goodreads.py` (built earlier today,
+never run against a real file -- only a synthetic fixture) against his
+own real Goodreads export (`My Books -> Import/Export`).
+
+**Bug 1 (importer): `int(row.get("My Rating", "0") or "0")` crashed
+silently on every row.** The real export writes `My Rating` as
+float-formatted strings (`"5.0"`, `"4.0"`), not the plain-int format
+the fixture assumed -- `int("5.0")` raises `ValueError`, caught by the
+existing `except ValueError: stars = 0`, which then fails the
+`stars not in GOODREADS_STAR_TO_LABEL` check and silently drops the row
+before it ever reaches the matcher (not logged as unmatched -- just
+gone). First real run: 0 matched, 0 unmatched, out of 113 actual
+`read`-shelf rows. Fixed with `int(float(...))`. Also added a
+float-formatted rating to the self-check fixture itself so this
+specific real-world quirk has permanent regression coverage, not just
+a one-off manual fix -- the mechanical self-check block is exactly the
+kind of test CLAUDE.md's "test example SQL/code before trusting it"
+rule is about, and it had been passing against an unrealistic fixture
+this whole time.
+
+Re-run after the fix: 71 matched, 38 unmatched, zero fuzzy matches used
+(every match was ISBN or exact title+author -- the two safest methods,
+confirmed by inspecting match methods directly rather than trusting
+the count alone).
+
+**Bug 2 (data quality, not the importer): Death Masks (Dresden Files
+#5) author field was contaminated with the audiobook narrator --
+`"Jim Butcher, James Marsters"` (Marsters is the actor who narrates the
+Dresden Files audiobooks, not a co-author).** This is exactly the
+recurring author-contamination failure CLAUDE.md already tracks (the
+Sapkowski/David-French translator case) -- caught here because the
+contaminated author field caused a book that IS tagged in the catalog
+to show up as "unmatched": the exact_title_author match failed (wrong
+author string), and the fuzzy fallback also missed it because
+candidates are bucketed by normalized author, so a contaminated author
+field puts the real title in the wrong bucket entirely. Fixed via
+`20260904040000_fix_death_masks_author_contamination.sql`
+(title+author-scoped `UPDATE`, tested in a rolled-back transaction
+first, applied to local then hosted via `supabase db push`, confirmed
+via `supabase migration list --linked` showing matching local/remote
+entries). Re-run after the fix: 72 matched, 37 unmatched, confirming
+Death Masks now matches correctly.
+
+Remaining 37 unmatched are legitimate: real out-of-scope-for-SFF titles
+(Battle Royale, The Count of Monte Cristo, Carrie, The Wind-Up Bird
+Chronicle), omnibus/boxed-set editions that don't correspond to single
+catalog rows (The Six of Crows Duology Boxed Set, the Eragon/Eldest/
+Brisingr omnibus), and -- notably -- several books from series already
+flagged as partially-tagged in the catalog (Powder Mage #2/#3,
+Lightbringer #2/#3, Age of Madness #2/#3), i.e. books the repo owner
+has actually read and rated that are sitting in the same
+partial-series-completion backlog CLAUDE.md already prioritizes.
+Confirmed by cross-referencing the unmatched list against `books`
+directly (title present but no `book_dna` row, vs. title absent
+entirely), not by assuming "unmatched = missing."
+
+Output written to `data/ratings/mathias_goodreads.json` (72 ratings,
+still marked `NOT yet reviewed by a human for accuracy` in its own
+`_meta.notes` per the importer's existing convention) -- not yet spot-
+checked for match-quality accuracy beyond the method-level check above,
+and not yet wired into `scripts/scoring_tests.py` as a rater scenario.
+
+## 2026-09-04 (later still) -- Goodreads importer extended with dates/reviews; standing rule: direct report beats import
+
+Follow-up to the same-day Goodreads import work above. Repo owner
+asked two things: whether the importer captures `Date Read`
+(it didn't -- the CSV has the column, the script just wasn't reading
+it), and whether it captures written review text (also present in the
+export, also not read). Extended `scripts/import_goodreads.py`:
+`normalize_date()` converts Goodreads' `YYYY/MM/DD` to this project's
+ISO `rated_dates` format; `clean_review()` un-escapes the single HTML
+tag (`<br/>`) Goodreads' export uses for line breaks in review text
+(confirmed by scanning all 28 non-empty reviews in the real export --
+no other tags, no HTML entities). `import_goodreads_csv()` now returns
+`rated_dates`/`reviews` dicts alongside `ratings`, only including a
+title when Goodreads actually had that data (no blank/null
+placeholders, matching the existing `rated_dates` convention). Added a
+`reviews` field to `data/ratings/README.md`, documented the same way
+`rated_dates` was. Self-check fixture extended with a review-bearing
+row and a blank-date row to cover both paths; re-verified passing.
+
+**New standing rule, requested explicitly and now documented in
+`data/ratings/README.md`: when a rater's own direct report (given in
+conversation, or via the intake form) conflicts with an imported
+source's inferred rating, the direct report wins -- an import never
+silently overwrites it.** Concrete case: King of Thorns and Emperor of
+Thorns were on file (recorded earlier this session from the repo
+owner's own memory) as `loved`; the Goodreads export shows 4 stars
+(`liked`) for both. Left both as `loved` per the new rule -- only their
+`rated_dates` (2018-09-05, both) were pulled in from the import, since
+dates are additive metadata, not a conflicting judgment call.
+
+Merged into `mathias.json`: 14 new ratings from titles matched by the
+Goodreads import that weren't previously on file (Bird Box, Calamity,
+Death Masks, Elantris, Emperor of Thorns, Ender's Game, Grey Sister,
+Holy Sister, King of Thorns, Red Country, Red Seas Under Red Skies,
+Summer Knight, The Heroes, The Lies of Locke Lamora), plus 59
+`rated_dates` and 22 `reviews` entries backfilled across ALL 72 matched
+titles (not just the 14 new ones -- purely additive, never overwriting
+an existing entry). `mathias.json` now has 128 ratings total. Not yet
+re-run through `scripts/scoring_tests.py` -- the 14 new ratings should
+be checked there before being trusted as equivalent to the
+hand-collected ones (per this project's own "byte-identical isn't
+proof" lesson from earlier today, verifying the actual test output
+matters more than assuming it's fine).
+
+Still open: `data/ratings/mathias_goodreads.json` (the raw import
+output, kept separately from `mathias.json`) has not been spot-checked
+by the repo owner for match-quality accuracy on the 58 overlapping
+titles; the `reviews` field is raw material only, nothing reads it yet.
