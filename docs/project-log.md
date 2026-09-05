@@ -5534,3 +5534,117 @@ Still open: `data/ratings/mathias_goodreads.json` (the raw import
 output, kept separately from `mathias.json`) has not been spot-checked
 by the repo owner for match-quality accuracy on the 58 overlapping
 titles; the `reviews` field is raw material only, nothing reads it yet.
+
+## 2026-09-05 -- overnight session: repo sync near-incident, series-dedup fix landed, adaptive threshold + execution-DNA probe both tried and honestly reverted, 5 new tropes shipped catalog-wide
+
+Repo owner asked for a broad overnight push while asleep: sync with a
+parallel session on another PC, run more tests, sweep the catalog for
+new tropes, research algorithm improvements, and weigh in on a friend's
+proposed "execution DNA" field list -- then, in a follow-up, asked to
+actually land the series-dedup fix, explore an adaptive dealbreaker
+threshold, encode the most promising execution-DNA concepts as tropes
+and validation-test them, apply the new sweep tropes catalog-wide, keep
+a rollback path available throughout, and produce a final scorecard +
+top-20-per-genre report -- explicitly without checking in until morning.
+
+**Real near-incident, caught before damage**: 3 background agents had
+already been dispatched to tag the partial-series backlog before
+syncing with the other PC's work -- every single book assigned to them
+turned out to already be tagged on the other side. Killed all 3
+immediately; none had written anything yet (still in research/
+verification phase), so no cleanup was needed, but it was close.
+Separately, a real migration-timestamp collision (`20260904040000`,
+this session's Death Masks author fix vs. the other PC's batch-tag
+migration) was caught by checking hosted's actual tracking state before
+merging -- confirmed via read-only query which side was actually
+recorded on hosted, renamed the never-applied file to a free slot
+(`20260904041000`) preserving the dependency the title-collision fix
+needed. Local now fully synced (871 books, 823 tagged, up from 668)
+and matches the other PC's work; **hosted still needs a manual
+`supabase db push --linked --include-all` from the repo owner** --
+blocked by the permission classifier since it required `--include-all`
+for an out-of-order backfill migration, verified safe (idempotent,
+rows already exist on hosted) but not pushable without live approval.
+
+**Safety net established before any risky work**: git tag
+`pre-algo-experiments-2026-09-05` plus a local Postgres data dump
+(`db_backups/pre-algo-experiments-2026-09-05.sql`) as a rollback point,
+per explicit request. Every subsequent change landed as its own
+commit, so any single piece can be reverted independently via
+`git revert` without touching the others.
+
+**Series-dedup consistency fix -- LANDED.** `validated_dealbreaker_fields()`,
+`cold_start_weight()`, and the score-audit tool's own display helpers
+were consuming raw (non-series-deduped) rating data, unlike
+`build_profile()` -- a documented, previously-deferred inconsistency
+from the 10-hypothesis review. Fixed with two new helpers (weight
+redistribution for the separation-statistic consumers, cluster-count
+redistribution for `cold_start_weight`'s own `n`) since these needed
+genuinely different fixes, not the same mechanism reused. Zero
+regressions.
+
+**Permutation-based adaptive dealbreaker threshold -- tried, REVERTED.**
+The fixed `STAT_SEPARATION_THRESHOLD=0.65` had gone stale as Mathias's
+rated pool grew (`person`'s separation drifted from 0.75-0.82 down to
+0.412), silently disabling his entire dealbreaker veto. Replaced with a
+genuinely adaptive permutation significance test (Bonferroni-corrected
+by candidate count) -- correctly, robustly re-validated `person`
+(p=0.001) but reactivating its veto cost one real held-out book (Old
+Man's War, a genuine individual exception to an otherwise-real
+pattern) with zero compensating gain, netting bucket accuracy
+91%->82% on Mathias-full. A statistically sound mechanism working
+exactly as designed, but a net regression on the only benchmark
+available -- reverted in full per the explicit "if it doesn't help,
+dismiss" instruction. Full numbers and the open question for whoever
+revisits this in `docs/scoring-test-protocol.md`.
+
+**5 new tropes from tonight's catalog-wide gap sweep -- LANDED.**
+`sapphic_romance`/`mlm_romance`, `infiltration_or_undercover_plot`,
+`alternate_history`, `multi_generational_saga`, `cosmic_horror` --
+each verified against 2+ real catalog books with zero shared trope
+signal despite being the same recognizable subgenre. Applied
+catalog-wide (43 book-trope insertions across 42 books) using real
+per-book literary knowledge, not genre pattern-matching -- several
+plausible candidates deliberately excluded on reflection where the
+specific mechanism didn't cleanly fit the trope's own definition
+(Babel dropped from infiltration -- Robin discovers an already-embedded
+resistance cell rather than adopting a false identity himself; Perdido
+Street Station dropped from cosmic_horror -- the Slake Moths are
+eventually defeated by human ingenuity, against the "confronting, not
+defeating" test). Zero regressions.
+
+**Execution-DNA validation probe (protagonist competence/narrative
+favoritism) -- tried, structurally UNTESTABLE, reverted.** Tagged the
+two new tropes on The True Bastards only (the one book with a real,
+specific account of the pattern) to test against the confirmed-broken
+Grey Bastards/True Bastards contrastive ranking. Learned zero weight
+and changed nothing -- not a bug, a hard structural fact:
+`build_profile()`'s trope weight needs TRAINING-set presence, and the
+sole real-world instance of this pattern is also the held-out test
+target, so it's structurally impossible to validate this specific
+concept via leave-one-out no matter how real the underlying pattern
+is. Confirmed the mechanism works correctly via a non-held-out sanity
+check (real -0.08 weight learned when included in training). Checked
+whether any OTHER backlog execution-DNA concept has enough real
+contrastive evidence to test at all (none do -- zero Pratchett ratings
+across all 4 raters despite ~30 Discworld books in the catalog, ruling
+out `humor_flavor` specifically). Reverted in full, nothing left in
+the DB. Full reasoning in `docs/scoring-test-protocol.md`.
+
+**Final verification**: full `scripts/scoring_tests.py` suite run
+clean after every change (Mathias-full: 91% bucket, 96% pairwise, 100%
+loved recall, 100% hated rejection -- unchanged from session start,
+confirming the two landed fixes are genuinely neutral-to-positive and
+the two reverted experiments left no trace). Top-20-fantasy and
+top-20-sci_fi reports generated for Mathias's real, current profile.
+
+**Still open, explicitly on hold per repo owner's own request: Series
+DNA.** Flagged as important but deliberately deferred this session --
+raise it again the next time the repo owner asks what to work on next.
+
+**Also still open**: hosted DB push (see above, needs the repo owner's
+own `supabase db push --linked --include-all`); the romance_driven
+Tier 2 audit (181 candidates, flagged as priority handoff work two
+sessions ago, still not started); a second real account of the
+protagonist-competence/narrative-favoritism pattern, needed before
+that concept can ever be validated one way or the other.
