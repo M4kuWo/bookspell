@@ -289,8 +289,15 @@ def cold_start_weight(catalog, id_to_magnitude):
     COLD_START_FADE_RATINGS. experience_component: demonstrated readiness
     (see reader_experience_fraction()) discounts the count-based weight
     directly, so a single confirmed veteran_only-tier rating can zero
-    this out even at n=1."""
-    n = len(id_to_magnitude)
+    this out even at n=1.
+
+    n is independent-cluster count (_n_independent_clusters()), not raw
+    rating count -- added 2026-09-05, same series-clustering-inflation
+    reasoning as build_profile()'s own dedup: 12 ratings that are really
+    6 Wheel of Time books + 6 standalones is 7 independent data points
+    of demonstrated experience, not 12. A rater with no series overlap
+    at all sees no change (every book is its own cluster)."""
+    n = _n_independent_clusters(catalog, id_to_magnitude)
     count_component = max(0.0, 1.0 - n / COLD_START_FADE_RATINGS)
     experience = reader_experience_fraction(catalog, id_to_magnitude)
     return count_component * (1.0 - experience)
@@ -827,6 +834,56 @@ def _series_deduped(pool):
         (b, m / counts[b.get("series_id") or f"standalone:{b['id']}"])
         for b, m in pool
     ]
+
+
+def _series_deduped_id_to_magnitude(catalog, id_to_magnitude):
+    """{book_id: magnitude} version of _series_deduped(), for the
+    downstream consumers that take id_to_magnitude directly rather than
+    build_profile()'s (book, magnitude) pools --
+    validated_dealbreaker_fields() and the score-audit tool's own
+    per-field reporting. Added 2026-09-05 per the 10-hypothesis
+    review's #2 finding: these consumed RAW id_to_magnitude, giving a
+    heavily-clustered series the same inflated influence on a field's
+    apparent separation that build_profile() itself already corrects
+    for (confirmed concretely: person's separation was 0.467 raw vs.
+    0.356 deduped in this exact path).
+
+    Liked/disliked deduped independently, matching build_profile()'s own
+    split (a book's magnitude is only "redundant" against OTHER books on
+    the SAME side of the like/dislike divide) -- magnitude-0
+    ("it_was_okay") ratings pass through completely unchanged, since
+    _split_by_sign() never routes them to either pool in the first
+    place, same as everywhere else in this file.
+
+    NOT a fix for cold_start_weight()'s own raw `len(id_to_magnitude)`
+    count -- magnitude-splitting rescales weights, it doesn't shrink the
+    number of dict entries, so this helper would leave that count
+    completely unchanged. See _n_independent_clusters() instead, which
+    is the actual count-shaped analog."""
+    liked, disliked = _split_by_sign(catalog, id_to_magnitude)
+    liked = _series_deduped(liked)
+    disliked = _series_deduped(disliked)
+    result = {bid: mag for bid, mag in id_to_magnitude.items() if mag == 0}
+    result.update({b["id"]: m for b, m in liked})
+    result.update({b["id"]: -m for b, m in disliked})
+    return result
+
+
+def _n_independent_clusters(catalog, id_to_magnitude):
+    """Count-shaped analog to _series_deduped_id_to_magnitude() for
+    cold_start_weight()'s `n` -- a book isn't a new independent
+    experience data point just because it shares a series with 5
+    already-counted siblings. Counts EVERY rating regardless of sign
+    (including magnitude-0/it_was_okay), matching cold_start_weight()'s
+    own existing "any rating counts as demonstrated engagement" scope --
+    unlike the liked/disliked-only separation helpers above."""
+    clusters = set()
+    for bid in id_to_magnitude:
+        book = catalog.get(bid)
+        if book is None:
+            continue
+        clusters.add(book.get("series_id") or f"standalone:{bid}")
+    return len(clusters)
 
 
 def build_profile(catalog, ratings, full_ratings=None):
@@ -1374,6 +1431,25 @@ MIN_DEALBREAKER_SAMPLE = 3
 # This was safe to do PURELY because dealbreaker_flags()'s VALIDATED path
 # (and now the veto) requires clearing this bar -- raising it only makes
 # both mechanisms MORE conservative, never introduces a new failure mode.
+#
+# Permutation-based adaptive threshold: TRIED, REVERTED (2026-09-05).
+# `person`'s separation had drifted to 0.412 as the rated pool grew,
+# silently disabling the veto for Mathias's whole profile (see the
+# 10-hypothesis review, #10) -- replaced this fixed constant with a
+# permutation significance test (Bonferroni-corrected per candidate
+# count) to adapt to pool size instead of going stale. `person` came
+# back genuinely, robustly significant (p=0.001, not a marginal call)
+# -- but reactivating its veto cost one real held-out book (Old Man's
+# War, true=liked, a genuine individual exception to an otherwise-real
+# pattern) with no compensating catch anywhere else, netting bucket
+# accuracy 91%->82% and loved_recall 100%->80% on Mathias-full with no
+# improvement on any other scenario. A statistically well-founded
+# mechanism, working as designed -- but the honest empirical verdict on
+# the one real benchmark available is a net regression, not a win, so
+# reverted in full per this project's "if it doesn't help, dismiss"
+# standard. Full numbers in docs/scoring-test-protocol.md. Revisit if a
+# second rater's data ever gives an independent read on whether this
+# trade is worth it on average, not just for Mathias.
 STAT_SEPARATION_THRESHOLD = 0.65
 
 # Once a field IS statistically validated for this user, a mismatch on
@@ -1507,9 +1583,22 @@ def validated_dealbreaker_fields(catalog, id_to_magnitude, min_strength=STAT_SEP
     rating pool, content fields/tropes from the genre-scoped pool) --
     always uses the full id_to_magnitude. A reasonable v1 scope limit,
     not revisited here; flagged in case it matters once more rater data
-    exists."""
+    exists.
+
+    Series-deduped internally (2026-09-05, per the 10-hypothesis
+    review's #2 finding) -- separation is computed against the same
+    deduped evidence build_profile() itself uses, not raw magnitudes a
+    heavily-clustered series would otherwise inflate. Dedupes its OWN
+    id_to_magnitude argument fresh every call (never assumes the caller
+    already deduped it) -- every existing call site keeps passing the
+    same raw dict it always has; this function alone is now internally
+    consistent with build_profile() regardless of caller. (A permutation-
+    based adaptive replacement for min_strength itself was tried and
+    reverted the same day -- see STAT_SEPARATION_THRESHOLD's own comment.)"""
+    deduped = _series_deduped_id_to_magnitude(catalog, id_to_magnitude)
+
     keys = set()
-    for bid, mag in id_to_magnitude.items():
+    for bid, mag in deduped.items():
         if mag == 0:
             continue
         book = catalog.get(bid)
@@ -1521,7 +1610,7 @@ def validated_dealbreaker_fields(catalog, id_to_magnitude, min_strength=STAT_SEP
 
     validated = set()
     for key in keys:
-        sep = field_or_trope_separation(catalog, id_to_magnitude, key)
+        sep = field_or_trope_separation(catalog, deduped, key)
         if sep is not None and abs(sep) >= min_strength:
             validated.add(key)
     return validated
@@ -2293,6 +2382,13 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
     id_to_title = {bid: catalog[bid]["title"] for bid in id_to_magnitude}
     validated_fields = validated_dealbreaker_fields(catalog, id_to_magnitude)
     csw = cold_start_weight(catalog, id_to_magnitude)
+    # Deduped once here so the audit's own "why" display (training_data,
+    # liked_supporting/disliked_undercutting) reflects the same evidence
+    # validated_fields' separation numbers above were computed against
+    # (validated_dealbreaker_fields() dedupes internally) -- 2026-09-05,
+    # the third of the 10-hypothesis review's #2 finding's three
+    # inconsistent consumers.
+    deduped_id_to_magnitude = _series_deduped_id_to_magnitude(catalog, id_to_magnitude)
     series_dna = compute_series_dna(catalog)
     book = catalog[title_to_id[title]]
 
@@ -2353,9 +2449,9 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
                 # case. Unused for tropes (has_value() checks presence,
                 # not a specific value).
                 relevant_value = centroid.get(plain_field)
-                row.update(_audit_attribute_nominal_or_trope(catalog, id_to_magnitude, id_to_title, field_key, relevant_value))
+                row.update(_audit_attribute_nominal_or_trope(catalog, deduped_id_to_magnitude, id_to_title, field_key, relevant_value))
             elif plain_field in ORDINAL_FIELDS:
-                row["training_data"] = _audit_attribute_ordinal(catalog, id_to_magnitude, plain_field)
+                row["training_data"] = _audit_attribute_ordinal(catalog, deduped_id_to_magnitude, plain_field)
             out.append(row)
         return out
 
