@@ -872,6 +872,105 @@ def run_dealbreaker_sanity_check(catalog, validated_fields_fn=None):
                                    validated_fields_fn=validated_fields_fn)
 
 
+def run_user_rules_tests(catalog):
+    """Correctness tests for the manual "none of X"/"less of X" mechanism
+    (added 2026-09-05, repo owner's own request) -- pure unit-level
+    checks on parse_user_rule_key()/normalize_user_rules()/
+    apply_user_rules(), plus an end-to-end check via a real recommend()
+    call. Not a scoring-quality benchmark like the scenarios above --
+    this is straightforward correctness testing of new pure functions,
+    asserts and fails loud rather than reporting a soft percentage."""
+    failures = []
+
+    def check(label, condition):
+        status = "OK" if condition else "FAIL"
+        if not condition:
+            failures.append(label)
+        print(f"  {label}: {status}")
+
+    # --- parse_user_rule_key() ---
+    check("parse trope key", R.parse_user_rule_key("slow_burn_romance") == ("trope", "slow_burn_romance"))
+    check("parse valid ordinal field:value", R.parse_user_rule_key("age_category:ya") == ("field_value", "age_category", "ya"))
+    check("parse valid nominal field:value", R.parse_user_rule_key("drive:romance_driven") == ("field_value", "drive", "romance_driven"))
+    check("reject invalid ordinal value", R.parse_user_rule_key("age_category:not_a_real_value") is None)
+    check("reject unknown field", R.parse_user_rule_key("not_a_real_field:whatever") is None)
+
+    # --- normalize_user_rules() ---
+    check("normalize None is empty", R.normalize_user_rules(None) == {"exclude": [], "reduce": []})
+    check("normalize {} is empty", R.normalize_user_rules({}) == {"exclude": [], "reduce": []})
+    norm = R.normalize_user_rules({
+        "exclude": ["age_category:ya", "not_a_real_field:x"],
+        "reduce": [{"key": "drive:romance_driven"}, {"key": "slow_burn_romance", "strength": 0.3}],
+    })
+    check("normalize drops bad keys, keeps good ones", norm["exclude"] == [("field_value", "age_category", "ya")])
+    check("normalize applies default strength", norm["reduce"][0] == (("field_value", "drive", "romance_driven"), R.DEFAULT_REDUCE_STRENGTH))
+    check("normalize respects explicit strength", norm["reduce"][1] == (("trope", "slow_burn_romance"), 0.3))
+
+    # --- apply_user_rules() ---
+    ya_book = {"age_category": "ya", "tropes": ["slow_burn_romance"]}
+    adult_book = {"age_category": "adult", "tropes": []}
+    check("no rules is a guaranteed no-op", R.apply_user_rules(ya_book, 0.7, None) == (0.7, False))
+    check("no rules is a no-op even with {}", R.apply_user_rules(ya_book, 0.7, R.normalize_user_rules({})) == (0.7, False))
+
+    exclude_ya = R.normalize_user_rules({"exclude": ["age_category:ya"]})
+    score, excluded = R.apply_user_rules(ya_book, 0.7, exclude_ya)
+    check("exclude exact-matches and flags excluded", excluded is True)
+    score2, excluded2 = R.apply_user_rules(adult_book, 0.7, exclude_ya)
+    check("exclude leaves non-matching book untouched", (score2, excluded2) == (0.7, False))
+
+    reduce_trope = R.normalize_user_rules({"reduce": [{"key": "slow_burn_romance", "strength": 0.5}]})
+    score3, excluded3 = R.apply_user_rules(ya_book, 0.8, reduce_trope)
+    check("reduce applies correct multiplicative discount", abs(score3 - 0.4) < 1e-9 and excluded3 is False)
+    score4, _ = R.apply_user_rules(adult_book, 0.8, reduce_trope)
+    check("reduce leaves non-matching book untouched", abs(score4 - 0.8) < 1e-9)
+
+    stacked = R.normalize_user_rules({"reduce": [
+        {"key": "age_category:ya", "strength": 0.5}, {"key": "slow_burn_romance", "strength": 0.5},
+    ]})
+    score5, _ = R.apply_user_rules(ya_book, 1.0, stacked)
+    check("multiple matching reduce rules stack multiplicatively", abs(score5 - 0.25) < 1e-9)
+
+    # --- list_user_rule_targets() ---
+    targets = R.list_user_rule_targets(catalog)
+    keys = {t["key"] for t in targets}
+    check("target list non-empty", len(targets) > 100)
+    check("target list includes a known field_value", "drive:romance_driven" in keys)
+    check("target list includes a known trope", "slow_burn_romance" in keys)
+    check("target list never invents unused values", all(
+        R.parse_user_rule_key(t["key"]) is not None for t in targets
+    ))
+
+    # --- end-to-end via a real recommend() call ---
+    baseline = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy")
+    baseline_titles = {title for _, title, _, _ in baseline}
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    baseline_has_ya = any(catalog[title_to_id[t]].get("age_category") == "ya" for t in baseline_titles if t in title_to_id)
+    check("sanity: baseline top-20 fantasy contains at least one YA book", baseline_has_ya)
+
+    no_ya = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+                         user_rules={"exclude": ["age_category:ya"]})
+    no_ya_titles = {title for _, title, _, _ in no_ya}
+    check("exclude age_category:ya removes all YA from real recommend() output", not any(
+        catalog[title_to_id[t]].get("age_category") == "ya" for t in no_ya_titles if t in title_to_id
+    ))
+
+    less_romance = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+                                user_rules={"reduce": [{"key": "drive:romance_driven", "strength": 0.8}]})
+    less_romance_titles = [title for _, title, _, _ in less_romance]
+    baseline_romance_rank = next((i for i, t in enumerate(t for _, t, _, _ in baseline)
+                                  if t in title_to_id and catalog[title_to_id[t]].get("drive") == "romance_driven"), None)
+    reduced_romance_count = sum(1 for t in less_romance_titles if t in title_to_id and catalog[title_to_id[t]].get("drive") == "romance_driven")
+    baseline_romance_count = sum(1 for t in baseline_titles if t in title_to_id and catalog[title_to_id[t]].get("drive") == "romance_driven")
+    check(f"reduce drive:romance_driven lowers its representation in top-20 ({baseline_romance_count} -> {reduced_romance_count})",
+          reduced_romance_count <= baseline_romance_count)
+
+    if failures:
+        print(f"  ** {len(failures)} FAILURE(S): {failures}")
+    else:
+        print("  All user-rules tests passed.")
+    return failures
+
+
 def run_all():
     catalog = R.load_catalog()
 
@@ -931,6 +1030,9 @@ def run_all():
     run_contrastive_pairs_diagnostic(catalog, OSNAT_USABLE, "Osnat")
     run_contrastive_pairs_diagnostic(catalog, DANDAN_RATINGS, "Dandan")
     run_contrastive_pairs_diagnostic(catalog, GABRIEL_RATINGS, "Gabriel")
+
+    print("\n=== Scenario 13: user-adjustable rules (none of X / less of X) ===")
+    run_user_rules_tests(catalog)
 
 
 # --- Learning curve: does accuracy actually improve with more ratings? --

@@ -2026,10 +2026,193 @@ def series_position_ready(catalog, id_to_magnitude, book):
     )
 
 
+# --- User-adjustable rules (manual, opt-in) -----------------------------
+# "None of X" / "less of X" -- added 2026-09-05, repo owner's own explicit
+# request: some real preferences (his own examples -- avoiding melodrama,
+# responding less positively to YA) structurally can NEVER show up in a
+# rated history, because an avoidant reader doesn't read the thing they'd
+# dislike in the first place. No amount of more ratings fixes that; an
+# explicit channel is the only way that signal can ever reach the engine.
+#
+# Deliberately a SEPARATE, simpler mechanism from fatigue_overrides
+# (the existing post-read/DNF "why didn't it work" feature) rather than
+# reusing it -- fatigue_overrides clobbers a LEARNED weight and then
+# still interacts with the centroid/similarity machinery (useful for its
+# own purpose: "this field usually matters to you, but discount it here").
+# A standing "never/less show me X" preference wants a flatter, easier-
+# to-reason-about guarantee: does this candidate book carry X, yes or
+# no -- independent of the user's learned profile entirely. Implemented
+# as pure post-processing on an already-computed score, the same
+# architectural slot as _apply_dealbreaker_veto/_apply_series_trajectory_penalty
+# above -- it NEVER touches build_profile()/score_book()'s core weighted
+# average, so a user with no rules set is byte-identical to today, and
+# this carries none of the regression risk the automatic per-value
+# nominal weight-LEARNING experiment did (tried and reverted twice the
+# same day, see docs/scoring-test-protocol.md) -- that was about
+# automatically inferring weights for everyone from ratings data; this is
+# an explicit, per-user, opt-in override that changes nothing for anyone
+# who doesn't set it.
+
+# "less of" default strength when a caller/UI doesn't pick a specific
+# number (a "simple mode" flow) -- "advanced mode" can pass any value in
+# [0.0, 1.0]. 0.6 is a strong-but-not-absolute discount, deliberately
+# short of 1.0 (a full multiplicative zero-out) -- that's what "exclude"
+# is for; "reduce" should still let an otherwise-exceptional match
+# through discounted, not erase it.
+DEFAULT_REDUCE_STRENGTH = 0.6
+
+
+def parse_user_rule_key(key):
+    """key: a bare trope id (e.g. "slow_burn_romance") or "field:value"
+    (e.g. "drive:romance_driven", "age_category:ya"). Returns
+    ("trope", trope_id) or ("field_value", field, value); None if the
+    field half doesn't name a real ORDINAL_FIELDS/NOMINAL_FIELDS field,
+    or (for an ordinal field, which has a known value list in this file)
+    the value half isn't one of its real values. Nominal fields don't
+    have their value list mirrored in Python (it lives in the DB's own
+    CHECK constraints) -- a bogus nominal value simply never matches any
+    book rather than being rejected here, a harmless no-op rather than
+    an error. Deliberately DB-free and pure, so this (and everything
+    built on it) is testable without a live connection."""
+    if ":" in key:
+        field, _, value = key.partition(":")
+        if field in ORDINAL_FIELDS:
+            return ("field_value", field, value) if value in ORDINAL_FIELDS[field] else None
+        if field in NOMINAL_FIELDS:
+            return ("field_value", field, value)
+        return None
+    return ("trope", key)
+
+
+def normalize_user_rules(raw_rules):
+    """raw_rules: {"exclude": [key, ...], "reduce": [{"key": key,
+    "strength": 0.0-1.0} or {"key": key} (defaults to
+    DEFAULT_REDUCE_STRENGTH), ...]}. Either list may be omitted/empty;
+    None or {} means no rules at all -- a full reset, guaranteed
+    byte-identical to not having this feature.
+
+    Returns the normalized internal shape apply_user_rules() checks
+    per-candidate: {"exclude": [target, ...], "reduce": [(target,
+    strength), ...]}, target = parse_user_rule_key()'s return shape.
+    Unparseable keys are dropped with a warning printed, not raised --
+    consistent with this project's existing ratings-loading convention
+    (one bad entry shouldn't crash an entire recommend() call)."""
+    raw_rules = raw_rules or {}
+    exclude, reduce_, bad = [], [], []
+
+    for key in raw_rules.get("exclude") or []:
+        target = parse_user_rule_key(key)
+        (exclude if target else bad).append(target or key)
+
+    for entry in raw_rules.get("reduce") or []:
+        key = entry["key"]
+        strength = max(0.0, min(1.0, entry.get("strength", DEFAULT_REDUCE_STRENGTH)))
+        target = parse_user_rule_key(key)
+        if target:
+            reduce_.append((target, strength))
+        else:
+            bad.append(key)
+
+    if bad:
+        print(f"WARNING: unrecognized user rule key(s), ignored: {bad}")
+
+    return {"exclude": exclude, "reduce": reduce_}
+
+
+def _matches_rule_target(book, target):
+    kind, field_or_value, value = target if target[0] == "field_value" else (target[0], None, target[1])
+    if kind == "trope":
+        return value in (book.get("tropes") or [])
+    return book.get(field_or_value) == value
+
+
+def apply_user_rules(book, score, normalized_rules):
+    """Returns (new_score, excluded). normalized_rules is
+    normalize_user_rules()'s output -- pass None/{} (or skip the call
+    entirely) for a guaranteed no-op. `exclude` checked first (an
+    excluded book's score is irrelevant, it's being dropped from
+    results entirely -- see recommend()'s candidate loop); each matching
+    `reduce` rule applies its own multiplicative discount in turn if a
+    book happens to match more than one."""
+    if not normalized_rules:
+        return score, False
+    for target in normalized_rules.get("exclude", []):
+        if _matches_rule_target(book, target):
+            return score, True
+    for target, strength in normalized_rules.get("reduce", []):
+        if _matches_rule_target(book, target):
+            score = score * (1 - strength)
+    return score, False
+
+
+def list_user_rule_targets(catalog):
+    """Every nameable thing a user could target with a rule, for a
+    frontend search/autocomplete box to search against -- this function
+    is the backend's single source of truth for "what's a valid rule
+    key," so a submitted rule can always be validated against it rather
+    than trusting free text blindly.
+
+    Returns a list of {"key", "kind", "label", ...}:
+    - one row per trope actually used somewhere in the catalog (kind
+      "trope", plus its `group_name` for a frontend to organize by)
+    - one row per (ordinal or nominal field, value) pair actually
+      present on at least one book in the catalog (kind "field_value",
+      plus the `field` name) -- e.g. {"key": "drive:romance_driven",
+      "kind": "field_value", "field": "drive", "label": "Romance-driven"}
+
+    Only surfaces values that actually occur in the catalog (not every
+    theoretically-valid enum value) so the search box never offers a
+    dead-end target that would match zero books. Every produced key is
+    validated through parse_user_rule_key() itself (rather than
+    duplicating its rules here) before being included -- this is what
+    correctly excludes a field's genuine "not applicable" sentinel
+    (e.g. violence_intensity: na, romance_heat_intensity: na -- neither
+    is in ORDINAL_FIELDS' own value list for that field) while still
+    correctly INCLUDING "none" as a real, meaningful bottom-of-scale
+    target for the fields where it genuinely is one (humor_level,
+    violence_frequency, romance_heat_frequency all list "none" as a
+    real scale position, not a stand-in for missing data) -- the same
+    single source of truth guarantees list_user_rule_targets() can never
+    offer something apply_user_rules() would silently no-op on. `label`
+    is a simple title-cased rendering of the value/trope id (e.g.
+    "slow_burn_romance" -> "Slow Burn Romance") -- a real UI would
+    likely want a curated label map instead, this is a reasonable
+    default, not a final presentation layer."""
+    def humanize(s):
+        return s.replace("_", " ").title()
+
+    seen_tropes = {}
+    seen_values = {}
+    for book in catalog.values():
+        for t in (book.get("tropes") or []):
+            seen_tropes[t] = None
+        for field in list(ORDINAL_FIELDS) + list(NOMINAL_FIELDS):
+            val = book.get(field)
+            if val is not None and parse_user_rule_key(f"{field}:{val}") is not None:
+                seen_values[(field, val)] = None
+
+    targets = [
+        {"key": t, "kind": "trope", "label": humanize(t)}
+        for t in sorted(seen_tropes)
+    ]
+    targets += [
+        {"key": f"{field}:{val}", "kind": "field_value", "field": field, "label": humanize(val)}
+        for field, val in sorted(seen_values)
+    ]
+    return targets
+
+
 def recommend(catalog, ratings, top_n=10, genre=None,
               recent_history=None, diversity=0.0, fatigue_overrides=None,
-              discovery_only=False):
+              discovery_only=False, user_rules=None):
     """See _resolve_profile() for ratings/genre/fatigue_overrides.
+
+    user_rules: raw shape for normalize_user_rules() -- explicit,
+    user-supplied "none of X"/"less of X" preferences, applied as the
+    very last step (after the cold-start blend), same as a hard content-
+    warning filter would be. None/{} (the default) is a guaranteed
+    no-op. See the "User-adjustable rules" section above recommend()
+    for the full design rationale.
 
     recent_history: list of titles the user was recently recommended/has
     recently read, most-relevant for the `diversity` param below. Purely
@@ -2068,6 +2251,7 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     validated_fields = validated_dealbreaker_fields(catalog, id_to_magnitude)
     csw = cold_start_weight(catalog, id_to_magnitude)
     series_dna = compute_series_dna(catalog)
+    normalized_rules = normalize_user_rules(user_rules)
 
     diversity = max(0.0, min(diversity, MAX_DIVERSITY))
     recent_books = [
@@ -2102,6 +2286,9 @@ def recommend(catalog, ratings, top_n=10, genre=None,
             final = (1 - csw) * relevance + csw * accessibility
         else:
             final = relevance
+        final, excluded_by_rule = apply_user_rules(book, final, normalized_rules)
+        if excluded_by_rule:
+            continue
         scored.append((final, book["title"], book["author"], contributions))
 
     scored.sort(key=lambda x: -x[0])
@@ -2362,7 +2549,7 @@ def _audit_attribute_ordinal(catalog, id_to_magnitude, field):
     return {"liked": summarize(1), "disliked": summarize(-1)}
 
 
-def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None):
+def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None, user_rules=None):
     """Full attribution trace for one candidate against one profile.
     Returns a dict (see print_score_audit() for a readable rendering):
     {
@@ -2400,9 +2587,10 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
     after_trajectory = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, after_veto)
     if csw > 0:
         demand = GENRE_ACCESSIBILITY_DEMAND.get(book.get("genre_accessibility"), 0.5)
-        final = (1 - csw) * after_trajectory + csw * (1.0 - demand)
+        after_cold_start = (1 - csw) * after_trajectory + csw * (1.0 - demand)
     else:
-        final = after_trajectory
+        after_cold_start = after_trajectory
+    final, excluded_by_rule = apply_user_rules(book, after_cold_start, normalize_user_rules(user_rules))
 
     pipeline = [
         {"stage": "raw score_book()", "score": round(raw_score, 4), "changed": None},
@@ -2412,8 +2600,11 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
          "changed": abs(after_veto - after_series) > 1e-9},
         {"stage": "after _apply_series_trajectory_penalty()", "score": round(after_trajectory, 4),
          "changed": abs(after_trajectory - after_veto) > 1e-9},
-        {"stage": "after cold-start blend", "score": round(final, 4),
-         "changed": abs(final - after_trajectory) > 1e-9, "cold_start_weight": round(csw, 3)},
+        {"stage": "after cold-start blend", "score": round(after_cold_start, 4),
+         "changed": abs(after_cold_start - after_trajectory) > 1e-9, "cold_start_weight": round(csw, 3)},
+        {"stage": "after user_rules", "score": round(final, 4),
+         "changed": abs(final - after_cold_start) > 1e-9 or excluded_by_rule,
+         "excluded": excluded_by_rule},
     ]
 
     matches, mismatches = explain_book(book, centroid, weights, top_n=100)
@@ -2462,7 +2653,8 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
         "title": book["title"],
         "author": book["author"],
         "final_score": round(final, 4),
-        "match_label": match_label(final, user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)),
+        "match_label": "Excluded by user rule" if excluded_by_rule else match_label(final, user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)),
+        "excluded_by_user_rule": excluded_by_rule,
         "pipeline": pipeline,
         "matches": build_rows(matches),
         "mismatches": build_rows(mismatches, negate=True),
