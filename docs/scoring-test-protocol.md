@@ -1705,16 +1705,23 @@ would be tagging on spec with literally nothing to validate against,
 the exact anti-pattern this project's "don't add fields just for
 completeness" rule exists to prevent.
 
-**Reverted in full** (both tropes and the one tagging instance removed
-from local DB; the migration file was deleted rather than committed,
-since nothing had been pushed anywhere) -- not because the tag was
-WRONG (it's a real, accurate fact about the book), but because "if it
-helps apply, if it doesn't dismiss" was the explicit instruction, and
-this cannot currently be shown to help by any real test. Genuinely
-different outcome from the adaptive-threshold revert above (that one
-caused an active, measured regression; this one is simply inert,
-zero effect either direction) -- worth being precise about which kind
-of "didn't work" each experiment was.
+**Initially reverted in full, then RE-ADDED and kept dormant (same
+day, repo owner's own follow-up call).** First reverted (both tropes
+and the one tagging instance removed from local DB) on the reasoning
+that "if it doesn't help, dismiss" meant remove -- but the repo owner
+pushed back correctly: this experiment is genuinely different in kind
+from the adaptive-threshold revert above. That one caused an active,
+measured regression (a real cost to keeping it). This one is simply
+inert -- zero effect in either direction, and the tag itself isn't
+wrong, it's a real, accurate fact about the book that just has no
+training-set leverage YET. Re-added via
+`20260905170000_readd_execution_dna_probe_kept_dormant.sql`,
+re-confirmed byte-identical scorecard. Kept as a harmless, dormant data
+point rather than deleted -- costs nothing to leave in place, and is
+immediately available to start contributing the moment a second
+rater's data gives it real training-set presence. Not a decision that
+the concept is validated; still just a validation probe, tagged on one
+book, awaiting more evidence.
 
 **What would actually unblock this**: a SECOND real account of the
 same competence/favoritism pattern, on a different book, so the
