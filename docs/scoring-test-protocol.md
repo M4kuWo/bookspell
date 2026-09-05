@@ -1731,3 +1731,37 @@ ceiling above -- more disliked/hated ratings specifically (not more
 total ratings) is the actual lever, generalized here to "more real
 examples of any single specific narrative pattern," not a scoring or
 tagging fix.
+
+## Standing methodological finding: Goodreads star ratings and Bookspell ratings can measure genuinely different things (2026-09-05)
+
+Surfaced analyzing Mathias's own Goodreads review text: three books
+(The Hero of Ages, The Well of Ascension, The Path of Daggers) show
+"loved" in `mathias.json` despite 3-star, genuinely critical
+contemporaneous Goodreads reviews ("I did not enjoy this book... too
+long... not believable and sadly overrated" -- Hero of Ages). Checked
+directly with him rather than assuming the discrepancy was an error.
+
+**Confirmed deliberate, not a bug, for two real reasons:**
+1. He's since re-experienced the Mistborn trilogy and The Path of
+   Daggers via GraphicAudio full-cast productions, and his actual
+   enjoyment genuinely improved on re-listen even though his specific
+   critiques (pacing, character logic, believability) still stand.
+   Critique and enjoyment are separable -- this system tracks
+   enjoyment, and a book can be re-experienced differently.
+2. More generally and more importantly: **he rated by a different
+   criterion on Goodreads (perceived quality) than he does for this
+   project (enjoyment)** -- not just occasional conflation (already
+   documented, see the Poppy War correction), but a real, standing
+   difference in what the NUMBER itself was measuring at the time.
+
+**Consequence for any future Goodreads (or other external-source)
+import work**: a contemporaneous star rating is NOT automatically more
+trustworthy than a direct enjoyment-based report just because it's
+closer in time to the reading experience -- for a rater who used a
+different rating criterion on that platform, the two numbers can be
+measuring genuinely different axes, and neither one is simply "more
+correct." This project's own standing rule (a rater's direct report
+outranks an import on conflict, see `data/ratings/README.md`) already
+gets this right by default, but the REASONING matters for any future
+case: don't assume an import disagreement is necessarily catching an
+error in the direct report. Ask, rather than auto-correct.
