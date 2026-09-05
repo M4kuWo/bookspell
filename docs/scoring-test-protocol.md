@@ -1765,3 +1765,59 @@ outranks an import on conflict, see `data/ratings/README.md`) already
 gets this right by default, but the REASONING matters for any future
 case: don't assume an import disagreement is necessarily catching an
 error in the direct report. Ask, rather than auto-correct.
+
+## Execution-DNA validation probes: romance_tone + worldbuilding delivery -- tried, KEPT (2026-09-05)
+
+Follow-up to the True Bastards probe (structurally untestable, one
+instance only). This time real, multi-book contrastive evidence existed
+from Mathias's own Goodreads review text -- see docs/project-log.md.
+
+**understated_romance / melodramatic_romance_subplot** (romance_tone,
+encoded as two tropes rather than a scalar field): tagged Warbreaker,
+Six of Crows, Shadows of Self, The Bands of Mourning, The Lost Metal
+(understated, all liked/loved) and The Wise Man's Fear (melodramatic,
+hated) + The Well of Ascension (melodramatic, loved overall but a real
+documented negative pull, not expected to flip the rating). Both
+Warbreaker and The Wise Man's Fear are in the standard held-out set,
+but -- unlike True Bastards -- other training-set books still carry
+each trope even with those two held out, so this is a genuine
+predictive test, not a structurally-empty one.
+
+Weights on the full pool: `understated_romance` +0.045,
+`melodramatic_romance_subplot` -0.065 -- both correctly signed. Full
+benchmark suite: real, tiny movement in ONE scenario (Mathias,
+author-isolated: Rhythm of War flips Good->Mixed, 0.551->0.547).
+Checked directly: Rhythm of War carries neither new trope at all --
+the shift is a normalization-denominator side effect of adding any new
+weighted trope to the profile (the same mechanism, not a targeted
+error), identical in kind to the Old Man's War/Dragon Reborn
+threshold-crossings already documented and accepted elsewhere in this
+project. Every other scenario (Mathias-full/sparse/series-isolated,
+all of Osnat/Dandan/Gabriel) is byte-identical. **Kept** -- correctly-
+signed real weights, only cost is razor-thin boundary noise on one
+already-fragile prediction, no evidence of a targeted problem.
+
+**worldbuilding_woven_into_narrative**: tagged Red Sister/Grey Sister/
+Holy Sister (loved, explicit direct quote: "unlike many fantasy books
+I've read lately which bombard you with info dumps, here the exposition
+is subtle and intriguing... that is basically how I feel about Book of
+the Ancestor"). Checked directly for a negative counterpart in his own
+rated history (The Way of Kings, The Eye of the World, Words of
+Radiance) -- none found, all loved, none flagged for info-dumping.
+Real weight computed on the full pool (+0.028, correctly signed) since
+3 same-direction examples exist (unlike True Bastards' single
+instance), but **one-sided**: with no disliked-side presence, this
+trope can currently only ever reinforce an already-positive
+prediction, never help catch a dislike. Kept as a real, honest,
+moderate-confidence tag (not dismissed) since it's directionally
+correct and inert everywhere else -- but flagged as needing a real
+negative example before it can be considered validated in the fuller
+sense, same open item as the True Bastards probe.
+
+All three tagged at `confidence: 0.6` (not the default unassessed/1.0)
+via `book_field_confidence`-adjacent per-trope confidence, per the
+repo owner's own explicit framing: apply now using the existing
+confidence/source layer rather than treating "tag now" and "wait for
+real users" as mutually exclusive -- ready for community tagging to
+correct later, not presented as equivalent-confidence to a verified
+structural fact.
