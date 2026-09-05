@@ -786,8 +786,28 @@ def get_confidence(book, field_or_trope):
 
 
 def ordinal_position(field, value):
-    """Returns (position, scale_max) or None if value is NA/missing for this field."""
-    if value is None or value in NA_VALUES:
+    """Returns (position, scale_max) or None if value is NA/missing for this
+    field.
+
+    FIXED 2026-09-05: previously checked `value in NA_VALUES` (a blanket
+    {"na", "none"} set) BEFORE consulting the field's own scale, which
+    incorrectly treated "none" as missing/not-applicable even for the
+    three fields where it's a real, declared bottom-of-scale value
+    (humor_level, violence_frequency, romance_heat_frequency all list
+    "none" as position 0, not a stand-in for absent data) -- silently
+    dropping 325 book-field values catalog-wide from ever contributing
+    to build_profile()'s weighted mean for those fields, for every
+    rater, since they were added. Confirmed directly: ordinal_position
+    ("humor_level", "none") returned None instead of (0, 3).
+
+    Fixed by consulting the scale FIRST -- "not in scale" already
+    correctly captures genuine NA sentinels per field (violence_intensity/
+    romance_heat_intensity's "na" isn't in either field's own value list,
+    so it still correctly returns None), without needing a separate
+    blanket NA_VALUES check that couldn't tell "none" apart from field to
+    field. See docs/scoring-test-protocol.md for the full before/after
+    benchmark."""
+    if value is None:
         return None
     scale = ORDINAL_FIELDS[field]
     if value not in scale:
