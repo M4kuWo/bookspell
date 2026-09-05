@@ -11,6 +11,7 @@ out/
 .env.local
 .env.*.local
 __pycache__/
+tools/dogfood/.venv/
 
 # Claude Code runtime state (not project content)
 .claude/scheduled_tasks.lock
