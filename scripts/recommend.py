@@ -940,7 +940,7 @@ def build_profile(catalog, ratings, full_ratings=None):
         pool_liked = full_liked if field in STRUCTURAL_ORDINAL_FIELDS else liked
         pool_disliked = full_disliked if field in STRUCTURAL_ORDINAL_FIELDS else disliked
         liked_positions = [
-            (pos[0] / pos[1], m) for b, m in pool_liked
+            (pos[0] / pos[1], m * get_confidence(b, field)) for b, m in pool_liked
             if (pos := ordinal_position(field, b.get(field))) is not None
         ]
         liked_mean = weighted_mean(pool_liked, liked_positions)
@@ -948,7 +948,7 @@ def build_profile(catalog, ratings, full_ratings=None):
             continue
         centroid[field] = liked_mean
         disliked_positions = [
-            (pos[0] / pos[1], m) for b, m in pool_disliked
+            (pos[0] / pos[1], m * get_confidence(b, field)) for b, m in pool_disliked
             if (pos := ordinal_position(field, b.get(field))) is not None
         ]
         disliked_mean = weighted_mean(pool_disliked, disliked_positions)
@@ -963,7 +963,7 @@ def build_profile(catalog, ratings, full_ratings=None):
     for field in NOMINAL_FIELDS:
         pool_liked = full_liked if field in STRUCTURAL_NOMINAL_FIELDS else liked
         pool_disliked = full_disliked if field in STRUCTURAL_NOMINAL_FIELDS else disliked
-        liked_vals = [(b.get(field), m) for b, m in pool_liked if b.get(field)]
+        liked_vals = [(b.get(field), m * get_confidence(b, field)) for b, m in pool_liked if b.get(field)]
         if not liked_vals:
             continue
         # magnitude-weighted mode
@@ -974,7 +974,7 @@ def build_profile(catalog, ratings, full_ratings=None):
             total_m += m
         mode_val = max(counts, key=counts.get)
         liked_share = counts[mode_val] / total_m
-        disliked_vals = [(b.get(field), m) for b, m in pool_disliked if b.get(field)]
+        disliked_vals = [(b.get(field), m * get_confidence(b, field)) for b, m in pool_disliked if b.get(field)]
         if disliked_vals:
             total_dm = sum(m for _, m in disliked_vals)
             disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
@@ -992,16 +992,42 @@ def build_profile(catalog, ratings, full_ratings=None):
     # toward defining taste than a "liked" book's). Negative weight =
     # actively penalize (the trope appears in disliked books, not liked
     # ones).
+    #
+    # FIXED 2026-09-05: this loop (and the ORDINAL_FIELDS/NOMINAL_FIELDS
+    # loops above) previously ignored get_confidence() entirely --
+    # confidence only discounted a field/trope's contribution at
+    # SCORING time (score_book()), never at WEIGHT-LEARNING time. A
+    # low-confidence tag on a TRAINING book contributed to the learned
+    # weight at full strength regardless of its own recorded
+    # uncertainty -- confirmed directly: build_profile()'s trope
+    # liked_freq/disliked_freq computation had no get_confidence() call
+    # anywhere. This matters beyond the two new execution-DNA tropes:
+    # real, non-uniform confidence values already exist for several
+    # HIGH_RISK_FIELDS (person, pov_count, drive, narrative_closure,
+    # romance_heat_intensity, and others) from earlier manual-review
+    # passes -- this fix makes ALL of them actually count for less in
+    # training, not just at scoring time. Keeps liked_trope_pairs/
+    # disliked_trope_pairs as (book, magnitude) pairs (not
+    # pre-extracted trope lists) specifically so get_confidence(b, t)
+    # can be looked up per book per trope. total_liked_m/
+    # total_disliked_m deliberately stay undiscounted -- they're a
+    # shared normalizer across every trope (total rating-weight of the
+    # whole pool), not something specific to any one trope's own
+    # confidence; only each trope's OWN numerator (how much of that
+    # pool actually counts as evidence for THIS trope) is discounted.
     trope_weights = {}
-    liked_trope_pairs = [(b.get("tropes") or [], m) for b, m in liked]
-    disliked_trope_pairs = [(b.get("tropes") or [], m) for b, m in disliked]
+    liked_trope_pairs = liked
+    disliked_trope_pairs = disliked
     total_liked_m = sum(m for _, m in liked_trope_pairs) or 1.0
     total_disliked_m = sum(m for _, m in disliked_trope_pairs)
-    all_tropes = set(t for lst, _ in liked_trope_pairs + disliked_trope_pairs for t in lst)
+    all_tropes = set(t for b, _ in liked_trope_pairs + disliked_trope_pairs for t in (b.get("tropes") or []))
     for t in all_tropes:
-        liked_freq = sum(m for lst, m in liked_trope_pairs if t in lst) / total_liked_m
+        liked_freq = sum(
+            m * get_confidence(b, t) for b, m in liked_trope_pairs if t in (b.get("tropes") or [])
+        ) / total_liked_m
         disliked_freq = (
-            sum(m for lst, m in disliked_trope_pairs if t in lst) / total_disliked_m
+            sum(m * get_confidence(b, t) for b, m in disliked_trope_pairs if t in (b.get("tropes") or []))
+            / total_disliked_m
             if total_disliked_m else 0.0
         )
         raw = liked_freq - disliked_freq

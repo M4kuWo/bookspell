@@ -1821,3 +1821,41 @@ confidence/source layer rather than treating "tag now" and "wait for
 real users" as mutually exclusive -- ready for community tagging to
 correct later, not presented as equivalent-confidence to a verified
 structural fact.
+
+## Confidence-in-weight-learning gap -- FIXED and tested (2026-09-05)
+
+Real architectural gap found while discussing the two execution-DNA
+probes' rollout risk: `get_confidence()` only discounted a field/
+trope's contribution at SCORING time (`score_book()`), never at
+WEIGHT-LEARNING time (`build_profile()`). Confirmed directly -- none
+of the ORDINAL_FIELDS/NOMINAL_FIELDS/tropes weight-computation loops
+called `get_confidence()` anywhere. A low-confidence tag on a TRAINING
+book contributed to the learned weight at full strength regardless of
+its own recorded uncertainty -- meaning confidence only ever protected
+against a wrong tag showing up on a CANDIDATE book being scored, never
+against a wrong tag corrupting the weight itself during training. This
+wasn't hypothetical -- real, non-uniform confidence values already
+exist for several HIGH_RISK_FIELDS (person, pov_count, drive,
+narrative_closure, romance_heat_intensity, and others) from earlier
+manual-review passes, so this gap was already live catalog-wide, not
+just relevant to the two new tropes.
+
+Fixed by discounting each contributing book's magnitude by
+`get_confidence(book, field_or_trope)` before it counts toward the
+weighted mean (ordinal), mode/share computation (nominal), or
+liked_freq/disliked_freq (tropes) -- for tropes specifically, only the
+per-trope NUMERATOR is discounted; `total_liked_m`/`total_disliked_m`
+stay undiscounted since they're a shared normalizer across every
+trope, not specific to any one trope's own confidence.
+
+Verified directly: `understated_romance`/`melodramatic_romance_subplot`/
+`worldbuilding_woven_into_narrative` (tagged at confidence 0.6) all
+shrank in magnitude by roughly the expected ~40% (e.g.
+melodramatic_romance_subplot: -0.065 -> -0.039) -- the mechanism works
+as designed. Full benchmark suite: byte-identical to the pre-fix
+state across all 8 scenarios -- none of the catalog's existing
+confidence-override rows happen to land on books in these specific
+held-out test cases, so no further movement was exercised here, but
+the fix is real and will matter the moment a future test scenario (or
+a real user's profile) touches one of the fields/tropes that already
+carry non-default confidence.
