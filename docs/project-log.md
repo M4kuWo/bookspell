@@ -5781,3 +5781,51 @@ Full test coverage added as Scenario 13 in `scripts/scoring_tests.py`.
 Zero regressions on the full benchmark suite. UI/UX (search-box target
 picker, simple vs. advanced strength control, reset) intentionally not
 built yet -- backend only, per explicit instruction.
+
+## 2026-09-05 (later still) -- ordinal_position fix landed, dogfood tool built, explanation artifact, two data gaps closed
+
+**ordinal_position() "none" bug -- LANDED.** Fixed by consulting the
+field's own scale before checking for NA (see this session's earlier
+finding). Full benchmark suite: Mathias essentially unchanged/slightly
+improved, Dandan unchanged, Osnat/Gabriel both moved a small amount
+across a label boundary -- traced directly to a specific
+now-correctly-counted data point for each (not a new bug; the same
+boundary-sensitivity pattern already documented for low-sample raters).
+Judged as a genuine data-fidelity fix, not a speculative mechanism --
+landed on "is the fix correct" (yes, confirmed directly), not "does
+every held-out score improve" (the wrong bar for a bug fix).
+
+**Minimal internal dogfooding tool built** (`tools/dogfood/`) -- a local
+Streamlit app wrapping `scripts/recommend.py` directly: rater picker,
+add/fix-a-rating form (the exact workflow that caught several real
+rating gaps this session), a rule builder with a real search box over
+`list_user_rule_targets()`, and live recommendations with each result
+expanding into its full `audit_book_score()` breakdown. Explicitly not
+the real product UI (see its own README for the full reasoning) --
+built to let a real person exercise the manual-rules mechanism instead
+of only checking it algebraically, and because several open questions
+(`romance_tone` validation, the execution-DNA probe, per-value nominal
+weight learning) are all bottlenecked on having more real testers.
+Smoke-tested to start cleanly; not yet exercised end-to-end by an
+actual person in a browser.
+
+**Two more real rating gaps caught reviewing the recommendation list**:
+Forsworn (tagged, in the catalog, never actually rated -- added as
+liked) and a question about whether "If It Bleeds" (Stephen King) was
+correctly classified fantasy -- confirmed yes, consistent with how
+other real-supernatural-content horror is already tagged in this
+catalog (Bird Box, Mexican Gothic, Lovecraft Country, Horns, NOS4A2),
+though flagged as a genuine boundary case (a story collection, not a
+single sustained narrative) worth the repo owner's own call if he
+thinks collections should be scoped differently.
+
+**Explanation artifact published**: a per-book scoring breakdown for
+the current top-20 fantasy/sci-fi lists (rules applied), showing which
+pipeline stages actually moved each score and the top matching/
+mismatching fields as proportional bars, directly addressing the "the
+order looks a bit questionable" concern -- Foundryside (fantasy #20)
+visibly flagged as tripping the fixed dealbreaker threshold on
+`emotional_resolution` without an active veto (no field is currently
+statistically validated as a dealbreaker for this profile), which is
+exactly the kind of case that makes a ranking feel off without being
+wrong.
