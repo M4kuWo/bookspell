@@ -1642,3 +1642,85 @@ design that keeps the field validated but softens the veto's magnitude
 threshold specifically for borderline mismatches (Old Man's War's 0.251
 sits well below the un-validated fallback bar of 0.3) rather than
 inheriting the full lower validated-field bar of 0.15 automatically.
+
+## Execution-DNA validation probe (protagonist competence/narrative favoritism) -- tried, structurally UNTESTABLE, reverted (2026-09-05)
+
+Direct follow-up to the friend-sourced Book DNA field review earlier
+tonight: repo owner asked to encode the highest-potential "execution
+DNA" concepts as tropes (per this project's own per-value-nominal-
+weight-learning limitation -- tropes already get real per-value
+learning, scalar nominal fields don't yet), tag a small deliberately
+contrastive validation set first, and apply/dismiss based on whether it
+actually helps.
+
+Added `protagonist_undermined_or_diminished` and
+`narrative_favoritism_between_co_leads` as tropes, tagged ONLY on The
+True Bastards (the one book with a real, specific account of this
+pattern -- Jackal repeatedly loses and needs rescue by Fetching, who
+reads as narratively favored despite not being competent) -- Grey
+Bastards deliberately untagged (book 1's arc is straightforward earned
+growth). This is the exact pair `docs/scoring-test-protocol.md`'s
+10-hypothesis review #8 already flagged as a confirmed model failure
+(scored backwards: True Bastards 0.7367 vs. Grey Bastards 0.7268,
+hated outscoring loved).
+
+**Result: the new tropes learned NO weight in the held-out test and
+changed nothing (scores identical to 3+ decimals).** Root cause isn't a
+bug -- it's a hard structural fact about held-out testing: True
+Bastards is the ONLY book in Mathias's entire rated history carrying
+this trope, and it's also the book being predicted in this exact test.
+`build_profile()`'s trope weight is `liked_freq - disliked_freq` over
+the TRAINING pool only -- with the sole real-world instance excluded
+from training (because it's the held-out target), the trope has zero
+training-set presence and therefore zero learnable weight, regardless
+of how real the underlying pattern is. Confirmed the tagging mechanism
+itself works correctly by a separate sanity check: with True Bastards
+included in the FULL (non-held-out) training pool, both tropes learn a
+real, sensibly-signed weight (-0.08 each).
+
+This is the same ceiling already documented in "Would validation even
+detect a new field before we tag it?" (2026-09-03) -- that entry was
+about STATISTICAL detection power for dealbreaker validation
+specifically; this is the more basic version of the same problem,
+applying to plain weight-learning: **a brand-new trope whose only
+known real-world evidence IS the held-out test case can never be
+validated by leave-one-out, no matter how real the pattern is.**
+Structurally identical to why `message_themes`/`protagonist
+competence` were originally flagged "needs more than one account
+before committing to vocabulary" rather than built speculatively --
+this is that exact prediction, now empirically confirmed rather than
+just anticipated.
+
+Checked whether any of the OTHER backlog "execution DNA" concepts
+(`humor_flavor`, `romance_tone`, earnest/ironic tone, worldbuilding
+delivery, consequences/permanence) have enough real contrastive
+evidence across any of the 4 real raters to test at all, before
+building any of them speculatively: **none do.** Concretely checked
+`humor_flavor`'s best real-world test case (Terry Pratchett/Discworld,
+famously dry/witty voice) -- zero Pratchett titles rated by any of the
+4 raters despite ~30 Discworld books in the catalog. `romance_tone` was
+already self-diagnosed by the repo owner as lacking negative training
+examples. No new tagging attempted for any of these tonight --
+would be tagging on spec with literally nothing to validate against,
+the exact anti-pattern this project's "don't add fields just for
+completeness" rule exists to prevent.
+
+**Reverted in full** (both tropes and the one tagging instance removed
+from local DB; the migration file was deleted rather than committed,
+since nothing had been pushed anywhere) -- not because the tag was
+WRONG (it's a real, accurate fact about the book), but because "if it
+helps apply, if it doesn't dismiss" was the explicit instruction, and
+this cannot currently be shown to help by any real test. Genuinely
+different outcome from the adaptive-threshold revert above (that one
+caused an active, measured regression; this one is simply inert,
+zero effect either direction) -- worth being precise about which kind
+of "didn't work" each experiment was.
+
+**What would actually unblock this**: a SECOND real account of the
+same competence/favoritism pattern, on a different book, so the
+trope has training-set presence independent of whatever it's being
+used to predict. Same underlying fix as the dealbreaker-detection
+ceiling above -- more disliked/hated ratings specifically (not more
+total ratings) is the actual lever, generalized here to "more real
+examples of any single specific narrative pattern," not a scoring or
+tagging fix.
