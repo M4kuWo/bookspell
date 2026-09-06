@@ -785,6 +785,37 @@ def get_confidence(book, field_or_trope):
     return book.get("_field_confidence", {}).get(field_or_trope, default)
 
 
+# Below this, a tagged value is treated as too little evidence to
+# influence scoring/weight-learning AT ALL -- added 2026-09-05,
+# repo owner's own request while planning the execution-DNA rollout.
+# Distinct from ordinary confidence discounting (which still lets a
+# 0.5-confidence tag contribute half-strength): a value this uncertain
+# shouldn't contribute even a token amount, since a string of many
+# barely-above-zero contributions could still add up to something
+# misleadingly influential. The row is NOT deleted or hidden -- see
+# scoring_confidence() below -- so real validation later (raising the
+# recorded confidence above this floor) makes it start counting
+# automatically, no re-tagging needed. Checked against existing data
+# before picking 0.3: no currently-recorded confidence value in the
+# catalog sits at or below this floor (lowest existing entries are
+# 0.4), so this doesn't retroactively invalidate any already-accepted
+# tagging work -- it only matters for future low-confidence tags
+# (e.g. a research pass that turns up little to no real discourse for
+# a specific book).
+MIN_CONFIDENCE_TO_COUNT = 0.3
+
+
+def scoring_confidence(book, field_or_trope):
+    """get_confidence(), floored to 0.0 below MIN_CONFIDENCE_TO_COUNT --
+    use this (not get_confidence() directly) anywhere confidence feeds
+    into actual scoring or weight-learning math. get_confidence() itself
+    stays the raw, undiscounted accessor for display/audit purposes
+    (e.g. showing a real "25% confident" number to a human), which
+    should never be silently zeroed."""
+    conf = get_confidence(book, field_or_trope)
+    return conf if conf >= MIN_CONFIDENCE_TO_COUNT else 0.0
+
+
 def ordinal_position(field, value):
     """Returns (position, scale_max) or None if value is NA/missing for this
     field.
@@ -940,7 +971,7 @@ def build_profile(catalog, ratings, full_ratings=None):
         pool_liked = full_liked if field in STRUCTURAL_ORDINAL_FIELDS else liked
         pool_disliked = full_disliked if field in STRUCTURAL_ORDINAL_FIELDS else disliked
         liked_positions = [
-            (pos[0] / pos[1], m * get_confidence(b, field)) for b, m in pool_liked
+            (pos[0] / pos[1], m * scoring_confidence(b, field)) for b, m in pool_liked
             if (pos := ordinal_position(field, b.get(field))) is not None
         ]
         liked_mean = weighted_mean(pool_liked, liked_positions)
@@ -948,7 +979,7 @@ def build_profile(catalog, ratings, full_ratings=None):
             continue
         centroid[field] = liked_mean
         disliked_positions = [
-            (pos[0] / pos[1], m * get_confidence(b, field)) for b, m in pool_disliked
+            (pos[0] / pos[1], m * scoring_confidence(b, field)) for b, m in pool_disliked
             if (pos := ordinal_position(field, b.get(field))) is not None
         ]
         disliked_mean = weighted_mean(pool_disliked, disliked_positions)
@@ -963,7 +994,7 @@ def build_profile(catalog, ratings, full_ratings=None):
     for field in NOMINAL_FIELDS:
         pool_liked = full_liked if field in STRUCTURAL_NOMINAL_FIELDS else liked
         pool_disliked = full_disliked if field in STRUCTURAL_NOMINAL_FIELDS else disliked
-        liked_vals = [(b.get(field), m * get_confidence(b, field)) for b, m in pool_liked if b.get(field)]
+        liked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_liked if b.get(field)]
         if not liked_vals:
             continue
         # magnitude-weighted mode
@@ -974,7 +1005,7 @@ def build_profile(catalog, ratings, full_ratings=None):
             total_m += m
         mode_val = max(counts, key=counts.get)
         liked_share = counts[mode_val] / total_m
-        disliked_vals = [(b.get(field), m * get_confidence(b, field)) for b, m in pool_disliked if b.get(field)]
+        disliked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_disliked if b.get(field)]
         if disliked_vals:
             total_dm = sum(m for _, m in disliked_vals)
             disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
@@ -1023,10 +1054,10 @@ def build_profile(catalog, ratings, full_ratings=None):
     all_tropes = set(t for b, _ in liked_trope_pairs + disliked_trope_pairs for t in (b.get("tropes") or []))
     for t in all_tropes:
         liked_freq = sum(
-            m * get_confidence(b, t) for b, m in liked_trope_pairs if t in (b.get("tropes") or [])
+            m * scoring_confidence(b, t) for b, m in liked_trope_pairs if t in (b.get("tropes") or [])
         ) / total_liked_m
         disliked_freq = (
-            sum(m * get_confidence(b, t) for b, m in disliked_trope_pairs if t in (b.get("tropes") or []))
+            sum(m * scoring_confidence(b, t) for b, m in disliked_trope_pairs if t in (b.get("tropes") or []))
             / total_disliked_m
             if total_disliked_m else 0.0
         )
@@ -1330,7 +1361,7 @@ def score_book(book, centroid, weights):
             sim = 1 - abs(book_val - centroid[field])
         else:
             sim = nominal_similarity(field, book.get(field), centroid[field])
-        w_eff = _redundancy_adjusted_weight(book, field, w) * get_confidence(book, field)
+        w_eff = _redundancy_adjusted_weight(book, field, w) * scoring_confidence(book, field)
         contribution = w_eff * sim
         score += contribution
         total_weight += abs(w_eff)
@@ -1341,7 +1372,7 @@ def score_book(book, centroid, weights):
     book_tropes = set(book.get("tropes") or [])
     for t, w in trope_weights.items():
         if t in book_tropes:
-            w_eff = w * get_confidence(book, t)
+            w_eff = w * scoring_confidence(book, t)
             score += w_eff
             total_weight += abs(w_eff)
             if abs(w) > 0.15:
@@ -1388,7 +1419,7 @@ def explain_book(book, centroid, weights, top_n=5):
             sim = 1 - abs(pos[0] / pos[1] - centroid[field])
         else:
             sim = nominal_similarity(field, book.get(field), centroid[field])
-        w = _redundancy_adjusted_weight(book, field, w) * get_confidence(book, field)
+        w = _redundancy_adjusted_weight(book, field, w) * scoring_confidence(book, field)
 
         if w >= 0:
             matches.append((field, w * sim))
@@ -1405,7 +1436,7 @@ def explain_book(book, centroid, weights, top_n=5):
     for t, w in trope_weights.items():
         if t not in book_tropes:
             continue
-        w = w * get_confidence(book, t)
+        w = w * scoring_confidence(book, t)
         (matches if w >= 0 else mismatches).append((f"trope:{t}", abs(w)))
 
     matches = sorted((m for m in matches if m[1] > 0.1), key=lambda x: -x[1])

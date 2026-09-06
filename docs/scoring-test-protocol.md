@@ -1859,3 +1859,34 @@ held-out test cases, so no further movement was exercised here, but
 the fix is real and will matter the moment a future test scenario (or
 a real user's profile) touches one of the fields/tropes that already
 carry non-default confidence.
+
+## Minimum confidence threshold for scoring/weight-learning -- added (2026-09-05)
+
+Repo owner's own design addition, while planning the melodrama/
+worldbuilding-delivery research pass: below a floor, a tagged value
+shouldn't influence scoring/weight-learning AT ALL, not just be
+heavily discounted -- a string of many barely-above-zero contributions
+could otherwise still add up to something misleadingly influential.
+Distinct from ordinary confidence discounting (a 0.5-confidence tag
+still counts at half strength); this is a hard cutoff for "too little
+evidence to count as evidence at all yet."
+
+Added `MIN_CONFIDENCE_TO_COUNT = 0.3` and `scoring_confidence()` (a
+thin wrapper around `get_confidence()` that floors to 0.0 below the
+threshold) -- `get_confidence()` itself stays the raw, undiscounted
+accessor for display/audit purposes, never silently zeroed. Wired
+`scoring_confidence()` into all 10 real call sites across
+`build_profile()`/`score_book()`/`explain_book()` (left the
+experimental `_per_value` variants untouched, not in production use).
+
+Checked existing data before picking 0.3: no currently-recorded
+confidence value in the catalog sits at or below this floor (lowest
+existing entries are 0.4) -- confirmed via the full benchmark suite,
+byte-identical to before this change. This doesn't retroactively
+invalidate any already-accepted tagging work; it only matters for
+future low-confidence tags, e.g. a research pass that turns up little
+to no real discourse for a specific book -- exactly the situation the
+upcoming melodrama/understated-romance research pass is expected to
+hit for some candidates. The row is never deleted for falling below
+the floor -- real validation later (raising the recorded confidence)
+makes it start counting automatically, no re-tagging needed.
