@@ -6110,3 +6110,47 @@ hosted; verified: romance_tone went 53 -> 59, worldbuilding-delivery
 tags (both directions) went 3 -> 18. Same open item as every migration
 since 2026-09-05: applied and verified on hosted, not yet registered
 in hosted's migration-tracking table.
+
+## 2026-09-06 (later still) -- romance_tone batch 4 + worldbuilding delivery batch 2
+
+Another combined pass per the repo owner's preference from last batch.
+
+**romance_tone batch 4**: 12 reviewed, 8 tagged. Onyx Storm and House
+of Flame and Shadow tagged melodramatic (0.6) -- Onyx Storm consistent
+with Iron Flame, already tagged, same trilogy. Children of Blood and
+Bone and The Host both had unusually strong, repeated, direct
+"melodramatic" characterizations across multiple independent reviews
+(0.6 each). The Queen of Nothing, Uprooted, and Ruin and Rising all
+tagged understated (0.6) with explicit restraint language. Heartless
+Hunter tagged melodramatic at only 0.2 -- "angsty, simmering with
+tension" is a real but weaker lean than the clean cases. Heir of Fire,
+Red Queen, Quicksilver, and When the Moon Hatched left untagged --
+real discourse existed but addressed relationship pacing, banter/
+chemistry, or plot pacing, not presentation-of-emotion.
+
+**worldbuilding delivery batch 2**: 10 reviewed, 9 tagged across both
+directions. Piranesi, Neuromancer, and The Goblin Emperor tagged woven
+(0.6) -- the latter two both fit the "confusing because nothing is
+explained" pattern flagged as a real trap last batch (Gideon the
+Ninth/Gardens of the Moon), now confirmed recurring rather than a
+one-off. Words of Radiance and Red Rising both genuinely disputed,
+tagged at 0.2 woven (real evidence both ways in independent sources
+for each). Snow Crash and The Silmarillion tagged exposition_dump at
+0.6 -- Snow Crash is about as unambiguous a case as exists (a literal
+in-fiction librarian AI character exists specifically to lecture the
+protagonist for pages), The Silmarillion is literally structured as an
+in-world historical chronicle rather than character-POV scenes. The
+Left Hand of Darkness and Consider Phlebas both tagged exposition_dump
+at only 0.2 -- real exposition-delivery mechanisms present (interleaved
+ethnographic "reports," philosophical dialogue-lectures) but genuinely
+disputed or executed well enough that reviewers don't experience it as
+a flaw the way Snow Crash's readers do. Perdido Street Station left
+untagged -- its discourse was about descriptive/prose density, not the
+discovery-vs-exposition delivery axis this trope pair targets.
+
+Migrations: `20260906140000_romance_tone_sweep_batch4.sql` and
+`20260906150000_worldbuilding_delivery_sweep_batch2.sql`. Tested
+together in a rolled-back transaction first, then applied directly to
+hosted; verified: romance_tone went 59 -> 67, worldbuilding-delivery
+went 18 -> 27. Same open registration item as every migration since
+2026-09-05.
