@@ -6302,3 +6302,41 @@ went 42 -> 48. Same open registration item as every migration since
 gaining Supabase auth; worth flagging to the repo owner again
 explicitly rather than letting it go quiet just because it's routine
 at this point.
+
+## 2026-09-07 (later) -- romance_tone batch 8 + worldbuilding delivery batch 6
+
+**romance_tone batch 8**: 11 reviewed, 10 tagged. The City of Brass and
+The Kingdom of Copper (same trilogy, adjacent books) landed on the
+SAME side this time (both understated) but at different confidence --
+book 1 clean at 0.6, book 2 only 0.2 since its "wistful... tragic
+romance and angst" language is a real shift in intensity even though
+it doesn't cross into melodramatic-declaration territory. The Elite
+(melodramatic) stayed consistent with The Selection, and They Both Die
+at the End's understated tag was decided by weighing which of two
+contradicting quotes was actually about the romance itself (Mateo's
+"restrained, intelligent" expression) versus the book's handling of
+its mortality theme more broadly (the "melodrama" quote) -- a useful
+general lesson: when a book has a real melodrama/restraint dispute in
+its reviews, check whether both quotes are actually describing the
+SAME thing (the central relationship) before treating them as a true
+contradiction. The Princess Bride left untagged -- its self-aware,
+comedic framing device is a distinct axis from restrained-vs-
+melodramatic presentation.
+
+**worldbuilding delivery batch 6**: 6 reviewed, 6 tagged (no skips).
+The Shadow of the Torturer is a clean, strong woven example --
+reviewers use almost the exact language as Gideon the Ninth/Neuromancer
+("trusting the reader," "does not spoon-feed"). The Three-Body Problem
+tagged exposition_dump at a full 0.6 (readers directly compare it to
+"reading a physics textbook"). Too Like the Lightning tagged
+exposition_dump at only 0.2 -- its narrator literally addresses the
+reader directly with philosophical exposition (a real, formal device),
+but reviewers specifically credit it with never fully becoming an
+infodump, unlike Snow Crash/Starship Troopers.
+
+Migrations: `20260907120000_romance_tone_sweep_batch8.sql` and
+`20260907130000_worldbuilding_delivery_sweep_batch6.sql`. Tested
+together in a rolled-back transaction first, then applied directly to
+hosted; verified: romance_tone went 94 -> 104, worldbuilding-delivery
+went 48 -> 54. Same open registration item as every migration since
+2026-09-05.
