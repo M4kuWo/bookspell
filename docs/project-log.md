@@ -5884,3 +5884,47 @@ first round (Wise Man's Fear/Well of Ascension/Warbreaker/etc.).
 Full benchmark suite re-confirmed byte-identical throughout. A further
 round of candidates (both directions) is being gathered for one more
 validation pass before any wider catalog rollout is considered.
+
+## 2026-09-06 (later) -- romance_tone evidence standard tightened; drive/tone conflation caught and corrected
+
+Repo owner set a precise, explicit conceptual boundary before any
+wider rollout: `romance_tone` evidence must describe emotional
+PRESENTATION/EXPRESSION specifically. Page-time/plot-importance
+(that's `drive`), pacing (slow/fast burn is a separate axis),
+toxicity/relationship health, craft quality, and explicitness (that's
+`romance_heat_intensity`) do NOT count as supporting evidence either
+way -- his own worked example: a low-drive romance can be either
+melodramatic (tearful declarations, storming off) or understated
+(quiet hand-holding, few words) in the SAME small amount of page time,
+so drive tells you nothing about tone.
+
+Re-applying this standard to the existing candidate set caught two
+real conflations: The Goblin Emperor's and Spinning Silver's original
+"restrained" evidence was actually about how LITTLE romance there was
+("didn't end with the wedding night," "not the main focus"), not how
+it's expressed -- re-researched specifically for presentation and both
+now hold on firmer ground (Goblin Emperor: "mutual respect... rather
+than passion or explicit scenes"; Spinning Silver: "quiet negotiation...
+rather than overt emotional displays"). The Bear and the Nightingale
+did NOT survive re-checking -- its "restrained" read conflated a slow
+build-up with tone; the actual culminating moment is described as
+"quick and fierce"/"emotionally charged" with real reader discomfort
+about the power dynamic. Downgraded to confidence 0.2 (below
+MIN_CONFIDENCE_TO_COUNT) rather than kept at full confidence.
+
+Final third-round batch applied: Throne of Glass confirmed melodramatic
+(0.6) -- and is a clean real-world confirmation of the low-drive/
+melodramatic-tone combination (one reviewer notes the romance is
+"utterly adjacent to" the main plot; another separately calls the
+reactions "melodramatic," fully independent facts). Caraval stays
+disputed (0.2). The Priory of the Orange Tree and Spinning Silver
+confirmed understated (0.6). The Bear and the Nightingale downgraded
+to 0.2. Full benchmark suite unchanged throughout.
+
+**Full catalog-wide sweep for the new execution-DNA tropes is next,
+to be handed to a parallel session** (repo owner's wife's Claude
+session, same evening) -- see `.claude/skills/tag-catalog-batch/
+SKILL.md`'s new priority section for the complete brief: exact trope
+definitions, the evidence-acceptance standard above verbatim,
+calibration anchors from tonight's validated batch, candidate-pool
+queries, and migration/confidence conventions.
