@@ -188,20 +188,24 @@ Nightingale.
 Sister, Holy Sister -- all 3 Book of the Ancestor books, from one
 direct quote about the whole trilogy.
 
-### A real gap in this trope set -- consider closing it during this batch
+### The negative-counterpart gap -- CLOSED (2026-09-06), reference only
 
-`worldbuilding_woven_into_narrative` currently has ZERO negative
-counterpart -- no trope exists yet for "delivered via narrator
-exposition/info-dumps" as opposed to woven-in. Without one, this trope
-can only ever reinforce a good match, never help catch a mismatch (the
-same one-sidedness problem the True Bastards probe hit, but here it's
-fixable). If you find good negative examples during this batch (a
-well-known book with real reader complaints specifically about
-info-dumped exposition, not just "dense worldbuilding" -- density and
-delivery are different axes, see the trope's own definition above),
-propose and add `worldbuilding_via_exposition_dump` (or similar) as a
-new trope value, following the same real-research standard, rather
-than leaving this one-sided forever.
+**DONE, not something to redo.** `worldbuilding_woven_into_narrative`
+used to have zero negative counterpart. `worldbuilding_via_exposition_dump`
+(same group, `setting_worldbuilding`) now exists -- see
+`docs/project-log.md`'s "worldbuilding_woven_into_narrative batch 1"
+entry for the 4 books it launched on (Foundation and Babel at 0.6,
+The Lies of Locke Lamora at 0.6, The Fellowship of the Ring at 0.2)
+and the full evidence behind each. Tag NEW candidates against this
+value the same way as the positive one -- real, specific discourse
+about narrator/footnote-based telling rather than in-scene discovery,
+never just "this book has a lot of lore." One pattern worth carrying
+forward: a book that's confusing because NOTHING is explained (Gideon
+the Ninth, Gardens of the Moon) is a `worldbuilding_woven_into_narrative`
+candidate, not an exposition-dump one -- the two failure modes look
+similar in reader complaints ("I was lost") but come from opposite
+delivery mechanisms, so read the actual complaint before assuming
+which axis it's about.
 
 ### Candidate pool -- don't scan the whole catalog blindly
 

@@ -6045,3 +6045,68 @@ registered in hosted's migration-tracking table (no working
 
 Stopping here per instruction, awaiting direction on batch 3 (continue
 romance_tone, or switch to worldbuilding_woven_into_narrative).
+
+## 2026-09-06 (later still) -- romance_tone batch 3 + worldbuilding_woven_into_narrative batch 1, same session, plus a new trope
+
+Repo owner asked to do both pools in the same pass rather than
+choosing one. Covered a smaller romance_tone batch (9 reviewed, 6
+tagged) plus a first worldbuilding_woven_into_narrative batch (17
+reviewed, 13 tagged) in the same sitting.
+
+**romance_tone batch 3**: Eclipse and Iron Flame tagged melodramatic
+(0.6, clean direct evidence -- consistent with New Moon, already
+tagged, for Eclipse). Sorcery of Thorns and Sweep of the Heart tagged
+understated (0.6). Kingdom of Ash and The Serpent and the Wings of
+Night both genuinely disputed, tagged at 0.2 melodramatic (leaning
+toward the more specific/direct quote in each case). Legendborn, Dead
+Until Dark, and Ruthless Vows left untagged -- real discourse existed
+but addressed pacing/investment/craft quality, not presentation.
+
+**worldbuilding_woven_into_narrative batch 1**: picked 17 well-known
+dense-worldbuilding books. 9 tagged clean at 0.6 (Dune, The Fifth
+Season, Gideon the Ninth, A Game of Thrones, The Poppy War, A Memory
+Called Empire, The Blade Itself, The Way of Kings, Gardens of the
+Moon), 2 tagged disputed at 0.2 (Mistborn: The Final Empire, Ancillary
+Justice -- both have real, direct evidence on both sides from
+independent sources). The Hundred Thousand Kingdoms was reviewed but
+left untagged -- its own reviews explicitly praise it for making "the
+biggest info dump into compelling reading," which doesn't cleanly fit
+"woven" (no info-dump) but also isn't criticized the way a true
+negative example would be, so it didn't fit either bucket cleanly.
+
+Worth flagging a real pattern noticed across two books tagged
+positive here: Gideon the Ninth and Gardens of the Moon are BOTH
+notorious for confusing new readers, but the underlying cause is the
+same mechanism this trope is FOR (zero narrator exposition, pure
+in-scene discovery) rather than its opposite -- "confusing because
+nothing is explained" is different from "confusing because of a wall
+of info-dump," and conflating the two would have meant skipping two
+of the cleanest real examples of this trope in the whole catalog.
+
+**New trope added: `worldbuilding_via_exposition_dump`** (group
+`setting_worldbuilding`, same as its sibling), closing the one-sided
+gap the skill explicitly flagged. Found 4 real, well-documented
+catalog books with reviews describing the opposite delivery style from
+the positive trope -- narrator/footnote-based telling rather than
+discovery -- clearing this project's "2+ real books, changes what gets
+recommended" bar for new vocabulary: **Foundation** (Asimov, 0.6 --
+maybe the cleanest possible example: exposition delivered via
+one-character-explains-to-another dialogue plus literal embedded
+Encyclopedia Galactica quotes), **Babel** (Kuang, 0.6 -- footnotes
+repeatedly criticized by reviewers as not feeling natural, not
+trusting the reader), **The Lies of Locke Lamora** (Lynch, 0.6 --
+flashbacks and character entrances used specifically to explain lore,
+described by multiple reviewers as "mini exposition dumps" breaking
+narrative flow), **The Fellowship of the Ring** (Tolkien, 0.2 --
+weaker/mixed, real evidence for BOTH directions in the same source, so
+tagged at the lower confidence rather than the clean 0.6 the other
+three earned). Migration:
+`20260906130000_worldbuilding_delivery_sweep_batch1.sql`.
+
+Migrations: `20260906120000_romance_tone_sweep_batch3.sql` and
+`20260906130000_worldbuilding_delivery_sweep_batch1.sql`. Both tested
+in a rolled-back transaction together first, then applied directly to
+hosted; verified: romance_tone went 53 -> 59, worldbuilding-delivery
+tags (both directions) went 3 -> 18. Same open item as every migration
+since 2026-09-05: applied and verified on hosted, not yet registered
+in hosted's migration-tracking table.
