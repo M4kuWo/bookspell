@@ -5829,3 +5829,58 @@ visibly flagged as tripping the fixed dealbreaker threshold on
 statistically validated as a dealbreaker for this profile), which is
 exactly the kind of case that makes a ranking feel off without being
 wrong.
+
+## 2026-09-06 -- romance_tone probe expanded with researched examples, MIN_CONFIDENCE_TO_COUNT added, real evidence check corrected two guesses
+
+**Confidence gap in weight-learning fixed and tested.** `get_confidence()`
+only discounted a field/trope's contribution at scoring time, never
+during `build_profile()`'s weight learning -- confirmed real, non-uniform
+confidence values already exist catalog-wide for several HIGH_RISK_FIELDS
+(person, pov_count, drive, etc.) from earlier manual-review passes, so
+this was a live gap, not just relevant to the new execution-DNA tropes.
+Fixed all three weight-learning loops; verified the three probe tropes'
+weights shrank by roughly the expected ~40% (matching their 0.6
+confidence). Full benchmark suite byte-identical -- no existing test
+scenario happens to touch an already-confidence-scored book, but the
+mechanism is confirmed correct.
+
+**MIN_CONFIDENCE_TO_COUNT added** (0.3) -- repo owner's own design
+addition: below this floor, a tagged value is excluded from scoring/
+weight-learning entirely, not just discounted, since many
+barely-above-zero contributions could otherwise still add up to
+something misleading. The row stays recorded (never deleted) --
+real validation later raising the confidence makes it start counting
+automatically. Checked no existing confidence value sits at or below
+0.3 before landing -- confirmed via a byte-identical benchmark suite.
+
+**romance_tone probe expanded with real researched examples, before
+any catalog-wide rollout.** Pulled real reader-discourse evidence
+(not genre-reputation guesses) for 7 candidates. Two guesses turned
+out wrong on inspection -- From Blood and Ash's reviews mostly praise
+the romance as well-executed, and Fourth Wing's real criticism is
+about derivative plot/worldbuilding tropes, not melodramatic romance
+specifically -- exactly the "check even when you feel sure" discipline
+this project already has a policy for, now demonstrated on a brand-new
+field rather than an existing one. Confirmed strong: A Court of Thorns
+and Roses/Twilight/Shatter Me (melodramatic_romance_subplot, reviewer
+language explicitly uses "melodramatic"/"soap opera melodrama"), The
+Goblin Emperor/The Traitor Baru Cormorant (understated_romance,
+explicitly "restrained"/"subtle" and "repressed"/"unassuming" prose
+respectively). Repo owner validated this round before it was applied.
+
+From Blood and Ash/Fourth Wing tagged anyway at confidence 0.2 --
+below MIN_CONFIDENCE_TO_COUNT, so recorded and visible but excluded
+from scoring/weight-learning until real validation raises either one
+above the floor -- the first real-world use of the new threshold
+mechanism for exactly the case it was built for.
+
+None of the 5 newly-tagged books (this round) are in the repo owner's
+own ratings, so this round didn't move his learned weight for either
+trope -- expected, since weight-learning only draws from RATED
+training books; these tags will still correctly affect how these 5
+books score as CANDIDATES using the weight already learned from the
+first round (Wise Man's Fear/Well of Ascension/Warbreaker/etc.).
+
+Full benchmark suite re-confirmed byte-identical throughout. A further
+round of candidates (both directions) is being gathered for one more
+validation pass before any wider catalog rollout is considered.
