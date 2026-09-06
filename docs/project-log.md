@@ -6154,3 +6154,61 @@ together in a rolled-back transaction first, then applied directly to
 hosted; verified: romance_tone went 59 -> 67, worldbuilding-delivery
 went 18 -> 27. Same open registration item as every migration since
 2026-09-05.
+
+## 2026-09-06 (later still) -- romance_tone batch 5 + worldbuilding delivery batch 3
+
+**romance_tone batch 5**: 12 reviewed, 11 tagged -- the highest hit
+rate of any batch so far, mostly because several candidates had
+unusually direct, explicit tone language in their own reviews (several
+reviewers using "restrained"/"melodramatic" as the literal word rather
+than needing inference). Divergent, Harry Potter and the Half-Blood
+Prince, Howl's Moving Castle, American Gods, Iron Widow, House of Sky
+and Breath, and Catching Fire all tagged understated (0.6). City of
+Ashes and City of Glass tagged melodramatic (0.6), consistent with
+City of Bones two batches ago (same series/pairing, same "purple
+prose" characterization). Carry On and Carmilla both genuinely
+disputed with real contradicting quotes in the same source, tagged at
+0.2 melodramatic. Graceling left untagged -- discourse was about
+pacing/distraction, not presentation. Worth noting House of Sky and
+Breath (understated) vs. House of Flame and Shadow (melodramatic,
+tagged batch 4) -- same trilogy, adjacent books, opposite tone --
+another real confirmation that series consistency can't be assumed,
+now recurring often enough to treat as the expected case rather than
+the exception.
+
+**worldbuilding delivery batch 3**: 10 reviewed, 8 tagged. A Storm of
+Swords tagged woven (0.6), consistent with A Game of Thrones (same
+series). Children of Time tagged woven at only 0.2 -- genuinely
+disputed, with a specific complaint about "hundreds of pages about dry
+spider history" pulling against otherwise strong immersion praise. A
+Natural History of Dragons and Black Sun both tagged woven (0.6) --
+the former via its memoir/personal-account structure (same discovery-
+based pattern as Piranesi's journal), the latter via reviewers
+explicitly using the word "woven" themselves. Brave New World,
+Cryptonomicon, and City (Simak) all tagged exposition_dump (0.6) --
+City is maybe the cleanest structural example yet: it's literally
+framed as a series of in-world scholarly annotations and an "Editor's
+Preface" summarizing centuries of critical commentary between stories,
+the same device as Foundation's Encyclopedia Galactica quotes. City of
+Stairs tagged exposition_dump at only 0.2 -- a specific complaint about
+the opening trial scene's "burdensome" worldbuilding, but outweighed by
+much stronger immersion praise elsewhere. A Feast for Crows and
+Blindsight left untagged -- discourse addressed pacing/reflective tone
+or concept density, not the delivery-mechanism axis.
+
+One mistake caught before it ran: `'Howl's Moving Castle'` was
+initially written with double quotes around the title (Postgres
+identifier syntax), the same class of bug as `'The Time Traveler's
+Wife'` two batches ago -- caught immediately by the same
+`UndefinedColumn` error during the rolled-back-transaction test, fixed
+before anything was applied. Worth remembering that this specific
+mistake (double-quoting a title containing an apostrophe) is
+recurring, not a one-off -- future batches should watch for it
+specifically when writing string literals for titles with apostrophes.
+
+Migrations: `20260906160000_romance_tone_sweep_batch5.sql` and
+`20260906170000_worldbuilding_delivery_sweep_batch3.sql`. Tested
+together in a rolled-back transaction first (catching the bug above),
+then applied directly to hosted; verified: romance_tone went 67 -> 78,
+worldbuilding-delivery went 27 -> 35. Same open registration item as
+every migration since 2026-09-05.
