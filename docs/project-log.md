@@ -6212,3 +6212,49 @@ together in a rolled-back transaction first (catching the bug above),
 then applied directly to hosted; verified: romance_tone went 67 -> 78,
 worldbuilding-delivery went 27 -> 35. Same open registration item as
 every migration since 2026-09-05.
+
+## 2026-09-06 (later still) -- romance_tone batch 6 + worldbuilding delivery batch 4
+
+**romance_tone batch 6**: 11 reviewed, 8 tagged. Our Wives Under the
+Sea tagged understated at a full 0.6 with unusually clean, repeated,
+direct evidence (multiple reviewers using "restraint"/"restrained"
+literally). Legends & Lattes and Bookshops & Bonedust (same author,
+same duology) both tagged understated (0.6) with consistent evidence.
+Nevernight and Assistant to the Villain also tagged understated (0.6).
+Allegiant tagged melodramatic (0.6) -- notable because Divergent (book
+1, same trilogy, tagged batch 5) is understated, so the trilogy's tone
+visibly shifts by book 3 rather than staying constant, yet another
+real confirmation that per-book checking is load-bearing, not
+optional. Insurgent (book 2) and Paladin's Grace both tagged at only
+0.2, genuinely disputed. One Last Stop, Emily Wilde's Encyclopaedia of
+Faeries, and Middlegame left untagged -- their discourse addressed
+believability, relationship-dynamic health, or READER emotional
+reaction (crying, yelling at the book) rather than the book's own
+presentation of romantic emotion -- worth flagging that last
+distinction specifically: strong reader reaction to a relationship is
+not the same evidence as a description of how the relationship is
+written, and conflating the two would have been a mistake.
+
+**worldbuilding delivery batch 4**: 8 reviewed, 7 tagged. Hyperion
+tagged woven (0.6) via its Canterbury Tales frame structure -- each
+pilgrim narrates their own story, the same character-account pattern
+as Piranesi and A Natural History of Dragons. Jade City, Neverwhere,
+and His Majesty's Dragon all tagged woven (0.6) with clean, direct,
+repeated evidence (Jade City's reviewers use the word "woven" three
+separate times). Jurassic Park, Harry Potter and the Prisoner of
+Azkaban, and Foundation and Empire all tagged exposition_dump (0.6) --
+Jurassic Park's Ian Malcolm is a well-documented literary example of a
+character existing specifically as a lecture-delivery vehicle (the
+same functional role as Snow Crash's librarian AI, just human), and
+Foundation and Empire repeats book 1's exact "clever-guy-explains-it"
+dialogue pattern. One Hundred Years of Solitude left untagged -- its
+passive, summary-style narration is a general narrative-voice
+characteristic of the whole book, not specifically a lore/rules
+delivery mechanism this trope pair is meant to capture.
+
+Migrations: `20260906180000_romance_tone_sweep_batch6.sql` and
+`20260906190000_worldbuilding_delivery_sweep_batch4.sql`. Tested
+together in a rolled-back transaction first, then applied directly to
+hosted; verified: romance_tone went 78 -> 86, worldbuilding-delivery
+went 35 -> 42. Same open registration item as every migration since
+2026-09-05.
