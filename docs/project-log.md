@@ -5928,3 +5928,74 @@ SKILL.md`'s new priority section for the complete brief: exact trope
 definitions, the evidence-acceptance standard above verbatim,
 calibration anchors from tonight's validated batch, candidate-pool
 queries, and migration/confidence conventions.
+
+## 2026-09-06 -- execution-DNA sweep, romance_tone batch 1 of 20
+
+Picked up the handoff above. Per the repo owner's explicit direction
+this session, working this in bounded batches of ~20 candidates with a
+check-in after each rather than running the whole ~288-book
+romance_tone pool (or the ~505-book worldbuilding_woven_into_narrative
+pool) in one continuous pass -- this entry covers batch 1, romance_tone
+only; worldbuilding_woven_into_narrative not started yet.
+
+Prioritized well-known titles likely to have real, findable discourse
+first, per the skill's own guidance (an obscure book with no reviews
+isn't tractable for this kind of tagging yet): mostly YA/romantasy
+staples (Sarah J. Maas, Cassandra Clare, Twilight, Cinder) plus a few
+adult titles already carrying romance signal from other fields
+(Alchemised, A Dowry of Blood, Daughter of No Worlds, A Discovery of
+Witches, Circe).
+
+21 books reviewed via real web search for presentation-specific
+discourse (never pattern-matched from genre or series reputation).
+18 tagged, 3 explicitly left untagged because the evidence found
+didn't clear the presentation-specific bar either way: **A Court of
+Wings and Ruin** (its own reviews emphasize partnership/equality
+without describing scene-level emotional expression, in real contrast
+to A Court of Mist and Fury's own reviews two books earlier in the
+same series -- consistent with the skill's warning not to assume tone
+from series reputation), **A Court of Frost and Starlight** (reviews
+were pacing/quality complaints -- "bland," "predictable" -- not tone
+evidence), **An Ember in the Ashes** (reviews call the romance
+underdeveloped/"wangst" rather than describing it as either restrained
+or dramatically presented -- a craft-quality complaint, explicitly
+excluded as evidence per the skill).
+
+Of the 18 tagged: 12 at confidence 0.6 (clear, specific presentation
+evidence -- direct quotes like "restraint," "dramatic language...
+almost too flowery," "passionate rather than understated"), 6 at 0.2
+(real but weak or genuinely disputed evidence, e.g. A Discovery of
+Witches had two reviews directly contradicting each other --
+"melodramatic" vs. "bland and mild-mannered" -- recorded rather than
+skipped, per the skill's convention). Both trope values used in real
+proportion (9 melodramatic at 0.6, 3 understated at 0.6; roughly even
+split at 0.2 too) -- not lopsided toward whichever came to mind first.
+
+One real finding worth flagging for whoever does more of this pool:
+Bride (Ali Hazelwood) and Cinder (Marissa Meyer) both only turned up
+banter/wit or underdevelopment commentary, not clean romance_tone
+evidence -- worth double-checking whether "witty banter" and
+"restrained emotional presentation" are being conflated by reviewers
+(and by extension, by this tagging pass) more broadly across
+banter-heavy romance books, since those are meant to be different axes
+per the skill's own exclusion list.
+
+Migration: `20260906100000_romance_tone_sweep_batch1.sql`. Applied
+directly to hosted via a raw psycopg2 connection (tested in a
+rolled-back transaction first, per this project's standing safety
+practice), verified: romance_tone tag count went from 19 to 37. This
+machine still has no working `supabase` CLI auth (no cached token,
+`supabase login` needs an interactive browser step nobody's run here
+yet), so -- same as the two batches logged 2026-09-05 -- this
+migration is applied and verified on hosted but NOT yet registered in
+hosted's migration-tracking table. Those two 2026-09-05 batches'
+migrations (`20260829025000`/`20260905120000`/`20260905130000`) DID
+get registered, but only because a different session with working
+auth ran `db push` overnight and picked them up along the way -- that
+isn't something to rely on happening again. This one stays open until
+someone runs `supabase login` on this machine (or pulls+pushes from
+one that already has it).
+
+Stopping here per instruction -- next: either romance_tone batch 2, or
+switching to the worldbuilding_woven_into_narrative pool, whichever
+the repo owner prefers.
