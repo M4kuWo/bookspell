@@ -71,6 +71,8 @@ change is considered safe to land.
 | Field-pairing/interaction effects (e.g. "dislikes slow pace unless grimdark") | Not tested | Not tested | **Deferred, not attempted** -- ~435 possible field pairs is too many to reliably estimate from a single rater's 10-50 ratings; revisit only for a SPECIFIC pattern that recurs in real feedback, not as a general mechanism |
 | Series-repeat signal (disliking an earlier book in a series should weigh heavily on a later one, unless its own DNA diverges a lot) | Real improvement -- Royal Assassin and Assassin's Quest both move substantially toward correct (0.539->0.427, 0.575->0.476), no effect on anything without an actual disliked series-mate | No interaction -- no shared series between liked/disliked books in this scenario | **Landed** (`SERIES_REPEAT_WEIGHT`, `series_repeat_worst_similarity()`) -- honest limitation: even at full weight, doesn't always cross all the way to "Poor match" (book_similarity()'s trope-overlap component dilutes it, since same-series books naturally differ on plot-specific tropes even when narrative style stays consistent); correctly produces NO effect on the sparse (16-book) scenario, since that training set doesn't include the disliked Farseer book needed to trigger it -- confirms the mechanism only acts on evidence that's actually present, not a coincidence |
 | Per-user calibrated Poor-match threshold (`user_calibrated_poor_threshold()`, replaces the fixed 0.35 `match_label()` cutoff) | Real improvement -- Mathias full: hated_rejection 0%->60%, bucket accuracy 36%->64%; Mathias sparse: 0%->50%, 33%->56%; zero regression on pairwise accuracy or loved recall in either | No interaction tested directly (WEIGHT_CAP_RATINGS has no disliked/hated distinction fine-grained enough), but the redundancy-discount/WEIGHT_CAP mechanisms are untouched -- this only changes label assignment on an already-computed score, never a weight | **Landed** 2026-09-02 -- see "Poor-match threshold diagnostic" section below for full reasoning/numbers. Honest limitation: does nothing for Osnat (still 0% hated_rejection in every variant) or Mathias's series-isolated scenario -- both are cases where the disliked book's raw score itself never drops low enough for ANY plausible threshold to catch, a genuine DNA-similarity/tagging gap (see the Magic Bites/Magic Burns case), not a labeling problem this fix can reach |
+| Trope-weight sample-size shrinkage (`build_profile_trope_shrinkage()`, `n/(n+k)` factor on each trope's raw weight, k swept 1-12) | Genuinely mixed at every k tested, all 4 real raters -- e.g. k=3: Mathias full pairwise 0.84->0.91 (real gain, no bucket/hated_rejection regression) but Osnat pairwise 0.67->0.61 and Dandan bucket 0.71->0.57 (real regressions); Mathias sparse hated_rejection 0.50->0.25 regresses at EVERY k from 1 to 12, never recovers | Confirmed no interaction with person/pov_count (ordinal/nominal loops untouched by construction) | **Deferred** 2026-09-06 -- mechanism does exactly what it's designed to (hidden_talent_prodigy: +0.267->+0.100 at k=5, well-evidenced tropes barely move), but at this dataset's scale you can't tell from sample size alone whether a thin-evidence trope is noise (helps) or a genuine minority signal (hurts, e.g. Royal Assassin/Mathias-sparse) -- same conclusion as the already-deferred Bayesian-average shrinkage above, now confirmed for a trope-only, more targeted version of the same idea. Kept as `build_profile_trope_shrinkage()` in recommend.py, not wired into production, same pattern as `build_profile_per_value()` |
+| Candidate-pool prevalence discount (`score_book_prevalence_discount()`, each field/trope's contribution scaled by `max(0.1, 1-prevalence)` where prevalence = fraction of the WHOLE CATALOG sharing that value -- the friend's IDF-style proposal) | Real improvement, no clear regression -- Mathias full: bucket 0.73->0.82, hated_rejection 0.80->1.00, pairwise unchanged; Mathias sparse: bucket 0.56->0.67, hated_rejection 0.50->0.75, pairwise 0.73->0.70 (small); Dandan: pairwise 0.73->0.87, bucket unchanged; Osnat: pairwise 0.67->0.61 (one real regression, on the rater already flagged with a structural 17-liked/1-disliked data skew) | Assassin's Apprentice (WEIGHT_CAP_RATINGS) raw score 0.257->0.192, moving further in the correct (disliked) direction, not reopening the bug | **Promising, not yet landed** 2026-09-06 -- directly confirms the friend's #2 concern with real numbers: `emotional_resolution`'s near-constant +0.323 (53.0% catalog prevalence) drops to +0.152 for every book sharing that value; `person`'s contribution for a `third_limited` match (53.3% prevalence, the modal/most-common value) drops from 0.227 to 0.106 -- directly answers point #4 (repo owner: "we still see person take a huge weight") for the common case that dominates the Ledger, while a genuinely rare mismatch value (`first`, 29.8% prevalence) stays closer to full strength, which is the mechanism working as intended, not a gap. Needs the isolated/author scenarios and a full scorecard run, plus understanding the Osnat regression, before this is a real landing candidate -- not done yet, this is a first-pass A/B only |
 
 ## Second rater: Osnat (2026-09-01, two rounds)
 
@@ -1890,3 +1892,509 @@ upcoming melodrama/understated-romance research pass is expected to
 hit for some candidates. The row is never deleted for falling below
 the floor -- real validation later (raising the recorded confidence)
 makes it start counting automatically, no re-tagging needed.
+
+## External review: prevalence/discriminatory-value weighting, oversized trope effects, additive-vs-interaction scoring -- audited, not implemented (2026-09-06)
+
+A friend of the repo owner reviewed a Recommendation Ledger run (top-20
+fantasy/sci_fi, "None of: age_category:ya" applied) and raised a
+7-point architectural critique: (1) weights should reflect preference
+strength × discriminatory/information value × confidence, not
+preference strength alone -- conceptually IDF-like, discounting a
+field by how common its matching value is in the CANDIDATE pool, not
+just the rated pool; (2) audit recurring dominant contributors,
+starting with `emotional_resolution`'s near-constant +0.323; (3) add
+preference-evidence tracing (which ratings support a weight, how
+independent they are); (4) be suspicious of oversized trope effects
+built on thin evidence; (5) move toward interaction effects (e.g.
+`romance_drive × romance_tone`) since additive scoring lets several
+mediocre matches overwhelm one highly predictive mismatch; (6)/(7)
+used From Blood and Ash (rank 10, fantasy) and Altered Carbon (rank
+16, sci_fi) as diagnostic probes. Explicitly asked to be evaluated
+against real data, not hand-tuned toward expected results.
+
+Audited empirically (not implemented) before doing anything else, per
+this doc's own standing rule -- checked prior art first, so as not to
+re-litigate settled ground:
+
+- **#1's specific mechanism (candidate-pool prevalence discount) is
+  new** -- the 2026-09-04 10-hypothesis review tested "frequency vs.
+  preference strength" as a claim about the RATED pool and found the
+  weight formula already IS a real discriminative statistic
+  (`|liked_mean - disliked_mean|`), not a raw frequency count. But
+  that review never tested discounting by prevalence in the
+  UNRATED CANDIDATE pool, which is what the friend actually proposed.
+  Confirmed directly in code (`build_profile()`, recommend.py ~970-1066):
+  no ordinal/nominal/trope weight computation anywhere references
+  candidate-pool prevalence -- `REDUNDANCY_DISCOUNTS` is the only
+  prevalence-adjacent mechanism that exists, and it's two hardcoded
+  field pairs, not a general one. The friend's factual claim about the
+  mechanism is exactly correct.
+- **A near-identical group-redundancy discount was already tried and
+  reverted** (2026-09-04, see the entry above from that date) --
+  population-level field correlation doesn't imply per-candidate
+  redundancy; a genuinely dark+violent book confirming both fields is
+  real double-confirmation, not double-counting. Direct warning
+  against a naive implementation of #1 -- any prevalence-discount
+  experiment needs the same two-scenario discipline this doc already
+  requires, not a quick patch.
+- **`emotional_resolution: bittersweet` prevalence**: 53.0% of all
+  tagged books (437/825), 54.2% of fantasy (287/530) -- a real
+  plurality, not the 80-90% the friend guessed. Liked-pool support (86
+  of 109 liked books) spans ~40 independent series/standalone
+  clusters across 27 authors -- genuinely broad, not one-series-driven.
+  10/24 disliked books are ALSO bittersweet (41.7%) -- real separation
+  exists but is moderate. Verdict: the weight is a real, non-spurious
+  signal; its ranking usefulness IS capped by candidate-pool
+  prevalence roughly as claimed, just less extreme than guessed.
+- **Trope evidence checked for independence**: `hidden_talent_prodigy`
+  (+0.267, sci_fi) rests on only 3 liked books (Ender's Shadow,
+  Firestarter, Ender's Game) with ZERO disliked counter-evidence --
+  thin. `underdog_rising` (-0.261) has genuinely balanced evidence (5
+  liked/4 disliked, independent clusters on both sides) yet still
+  swings to 52% of `WEIGHT_CAP` -- the mechanism doesn't shrink toward
+  zero for a small-but-balanced sample the way a
+  significance-weighted estimate would. Both support #4 directly.
+  `revenge` (fantasy) has broad liked support (17 books/~12 clusters)
+  but disliked counter-evidence collapses to ONE series (Poppy
+  War/Dragon Republic, Kuang) once genre-scoped to fantasy -- Red
+  Rising, the friend's other cited disliked-revenge example, is tagged
+  sci_fi and drops out of the fantasy-scoped calculation entirely. A
+  real, previously-unnoticed side effect of genre-scoping thinning
+  evidence independence, not something anyone had caught before.
+- **From Blood and Ash (#6 diagnostic)**: sum of positive contributions
+  1.892 vs. the single `romance_heat_intensity` mismatch (-0.126) --
+  15:1. But the book IS tagged `melodramatic_romance_subplot`
+  (confidence 0.2, from this week's romance_tone probe) -- the
+  interaction signal the friend hypothesized is missing isn't
+  missing from the schema; it's present and deliberately suppressed by
+  `MIN_CONFIDENCE_TO_COUNT` (0.3), because this week's own research
+  found real reader discourse disputing whether this book's romance
+  execution is actually melodramatic ("a perfect slow burn," per
+  reviews). This corrects the friend's hypothesis rather than
+  confirming it as stated: the real next step here is evidence/
+  confidence work on that specific tag, not a new interaction
+  mechanism -- the interaction mechanism already exists.
+- **Altered Carbon (#7 diagnostic)**: does NOT support the friend's
+  suspicion. `person: first` -- 22.0% of liked books (24/109) vs. 50.0%
+  of disliked (12/24). `pace_shape: consistent` -- 22.2% of liked
+  (4/18) vs. 62.5% of disliked (5/8), across 5 independent authors.
+  Both mismatches are backed by real, broad, disproportionate
+  representation in the disliked pool -- DNA values and the penalty
+  both look correct, not a spurious correlation.
+
+**Follow-up question from the repo owner, resolved by reading the code
+directly rather than assumption**: doesn't liking a revenge story in
+sci-fi already inform fantasy revenge scoring, and vice versa? Answer:
+partially, and the split is real, not a memory of a prior agreement --
+`_resolve_profile()`'s own docstring documents it: STRUCTURAL fields
+(`STRUCTURAL_ORDINAL_FIELDS`/`STRUCTURAL_NOMINAL_FIELDS` --
+`overall_pace`, `worldbuilding_density`, `pov_count`, `person`,
+`pace_shape`, `emotional_resolution`, `drive`, and others) are ALREADY
+profiled from the rater's FULL cross-genre rating history regardless of
+which genre is being scored, exactly the cross-genre-informs-taste
+intuition being asked about -- this is why `emotional_resolution`'s
+Step 3 audit above found genuinely broad, 40-cluster evidence; it's
+drawing on all 143 ratings, not just the fantasy subset. TROPES are
+different: `build_profile()`'s trope loop is explicitly, deliberately
+"always genre-scoped" (see its own comment) -- a fantasy candidate's
+trope weights are learned ONLY from fantasy-tagged rated books. This is
+exactly why Red Rising (tagged sci_fi, disliked) dropped out of the
+fantasy-scoped `revenge` calculation in Step 4 above, thinning its
+disliked-side evidence to one series. Whether tropes that plausibly
+transcend genre (revenge, found_family, morally_grey_protagonist) should
+ALSO pool cross-genre evidence like structural fields do -- vs. staying
+scoped, since some tropes genuinely are genre-specific
+(`faster_than_light_travel`, `magic_system_hardness`-adjacent tropes)
+and blending those would be wrong -- is a real, currently-unresolved
+design question, not something this project has previously decided
+either way. Not changed here; flagging as open rather than guessing.
+
+**Bottom line, nothing implemented yet**: #4 (oversized trope effects
+from thin/small-sample evidence, and the genre-scoping evidence-
+thinning found via `revenge`) is real, evidence-backed, and worth a
+genuine experiment next -- something like a sample-size-aware shrinkage
+on trope weights (a small liked/disliked count pulling the learned
+weight toward zero) is the concrete next candidate, tested the normal
+way (two failure scenarios, `scripts/scoring_tests.py`) before landing.
+#3's interaction-effects concern is real but ALREADY MODELED for the
+romance case via the confidence/source layer -- the actual gap is
+strengthening/re-researching a specific low-confidence tag, not adding
+a new mechanism. #1's prevalence-discount idea is plausible and #1's
+own math is confirmed correct as a description of the current
+mechanism, but implementing it needs the same caution the reverted
+2026-09-04 redundancy discount already taught this project. #7 is
+directly contradicted by this catalog's actual data for the specific
+case cited.
+
+## Trope cross-genre backoff -- prototyped, negligible on the motivating case, real (and one alarming) effect on thinner cases (2026-09-06)
+
+Repo owner's own middle-ground proposal, between "tropes always
+genre-scoped" (current) and "tropes always cross-genre" (rejected above
+as too risky blanket): `build_profile_trope_backoff()` blends a
+trope's genre-scoped estimate with its full cross-genre estimate,
+weighted `n/(n+k)` toward the scoped one (k=5), where n = distinct
+scoped liked+disliked book count. As n grows this converges to current
+behavior; as n shrinks it backs off toward the broader pool instead of
+toward zero (contrast with the shrinkage entry above).
+
+Tested against all 4 real raters' full held-out suite: **zero
+measurable effect anywhere** -- byte-identical bucket/pairwise/
+loved_recall/hated_rejection in every scenario. Not a null result on
+the mechanism itself, though: `revenge` (fantasy-scoped, the motivating
+case) barely moved (0.165->0.150) because fantasy's own scoped n=19 is
+already large enough that k=5 barely defers to the cross-genre pool --
+the Red Rising problem isn't really about raw COUNT being thin, it's
+about evidence INDEPENDENCE (2 disliked books, one series) being thin,
+which a plain n/(n+k) on raw book count doesn't capture. Genuinely
+thin-BY-COUNT cases moved a lot more: `hidden_talent_prodigy` (sci_fi)
+0.267->0.114, `underdog_rising` (sci_fi) -0.261->-0.196. One result
+worth flagging before anyone trusts it: `revenge` (sci_fi-scoped)
+**flips sign**, -0.146->+0.023 -- fantasy's much larger positive-revenge
+pool pulling a thin, uncertain sci-fi-specific estimate past neutral.
+A sign flip is a big claim; this needs a dedicated look (does Mathias's
+real sci-fi-revenge reaction actually support "slightly positive," or
+is this the pooling mechanism overreaching exactly the way the "cons"
+side of this idea's discussion predicted) before it's trusted, not
+just accepted because the aggregate held-out numbers stayed flat.
+
+**Status: prototyped, not landed.** The held-out silence here isn't
+evidence of safety -- it's an artifact of none of the fixed held-out
+titles happening to carry these specific thin tropes. A real n needs
+to be independence-aware (distinct series/authors, not raw book count)
+to actually move the Red Rising case the way it was meant to; the
+current version is closer to "correct nudge for a genuinely rare
+trope, unpredictable nudge for a genre-imbalanced one" than a clean win.
+
+## `emotional_resolution` spot-check -- no smoking gun, but a real gap in review coverage (2026-09-06)
+
+Repo owner asked to validate whether "bittersweet"'s 53.0% catalog
+prevalence reflects deliberate tagging or a default-shaped shortcut.
+Two checks: (1) only 14 of 437 bittersweet-tagged books (3.2%) have
+ever had an explicit `book_field_confidence` override for this field --
+96.8% sit at default trust, same untouched-by-review rate as most other
+fields catalog-wide, not something distinctively worse for this one.
+(2) Spot-checked a random sample of 20 against known plot facts: Red
+Rising (major character loss alongside a real victory), Ender's Shadow,
+The Lies of Locke Lamora, Sea of Tranquility all read as genuinely,
+specifically bittersweet, not a shrug default. One borderline case,
+Vicious (V.E. Schwab) -- arguably closer to `ambiguous` given its
+morally-inverted, unresolved ending -- but not clearly wrong either.
+
+**Verdict: no evidence of systematic misapplication found in this
+sample.** The field only has 4 possible values (`happy`/`tragic`/
+`ambiguous`/`bittersweet` -- see book-dna.schema.yaml), so 53% for one
+value is about 2x a no-signal baseline (25%), not the 8-10-category
+red flag it would be with a finer-grained schema -- and "bittersweet"
+being the modal adult-SFF ending style tracks with real genre
+convention (cost-of-victory endings are genuinely common in this
+genre), not an artifact. Not added to `HIGH_RISK_FIELDS` on the
+strength of this pass -- a 20-book spot-check against my own general
+knowledge of these titles is real signal but not the rigorous
+per-book research-grade verification `HIGH_RISK_FIELDS` entries get;
+flagging as worth the repo owner's own attention given how much scoring
+weight rides on it, not asserting it's fully clean.
+
+## `person`: third_limited/third_omniscient grouped for prevalence purposes -- implemented, gated per-user, real prevalence shift, no measurable held-out effect yet (2026-09-06)
+
+Repo owner's observation: third_limited/third_omniscient are "close
+cousins" -- and `nominal_similarity()` already agrees, giving them 0.5
+partial credit against each other (`NOMINAL_PARTIAL_SIMILARITY["person"]`),
+a real, pre-existing precedent for treating them as related rather than
+two arbitrary buckets. Proposed: fold them into one combined prevalence
+figure for the prevalence-discount experiment, UNLESS a specific user's
+own data shows enough evidence to argue they're genuinely different for
+that person.
+
+Built `build_prevalence_lookup_grouped()`: per-user gated via
+`MIN_PREVALENCE_GROUP_SAMPLE` (5, same spirit as `MIN_DEALBREAKER_SAMPLE`)
+-- only groups a `NOMINAL_PARTIAL_SIMILARITY` pair when the user's own
+rated history has fewer than 5 books on at least one side. Checked
+directly for Mathias: only 2 of his 143 rated books are
+third_omniscient (1 loved, 1 disliked) vs. 93 third_limited -- nowhere
+near enough to argue a real distinct reaction, so grouping applies for
+him. Combined prevalence: 65.1% (53.3% + 11.8% -- higher than the
+55% estimate that motivated checking this, strengthening the case, not
+weakening it).
+
+Held-out effect: negligible on the current fixed held-out sets (one
+title moved by 0.007, no verdict changes) -- expected, since none of
+those specific held-out titles happen to be third_omniscient. The real
+effect is on THIRD_OMNISCIENT CANDIDATES specifically (their prevalence
+discount jumps from a mild 11.8%-based factor to the same steep
+65.1%-based factor third_limited already gets) -- not exercised by this
+benchmark's fixed title list, but real for actual recommend() output.
+**Implemented and gated correctly; needs a recommend()-level check
+(not just the fixed held-out titles) to see its real effect before
+folding into any final version of the prevalence-discount experiment.**
+
+**UPDATE (2026-09-06, live recommend() check done)**: ran real
+`recommend()` for Mathias (both genres, "None of: age_category:ya"
+applied) comparing ungrouped vs. grouped prevalence lookup across all
+64 fantasy and 32 sci_fi unrated third_omniscient candidates. Effect is
+real but modest, as expected -- 8 fantasy and 9 sci_fi candidates moved
+by more than 0.005, typically a handful of rank positions each
+direction (e.g. Station Eleven rank 18->16, Needful Things rank 44->39,
+Mythos rank 55->48), nothing crossing dramatically (no top-20 book
+knocked out or a buried book jumping to the top). Confirms the
+mechanism is a fine-tuning correction, not a disruptive one -- safe to
+carry forward.
+
+## Sci-fi/revenge sign flip under trope backoff -- explained, substantively unresolved (2026-09-06)
+
+Traced directly: Mathias's sci-fi-scoped `revenge` evidence is just 2
+books total -- Steelheart (loved) vs. Red Rising (hated), essentially a
+coin-toss sample. The cross-genre pool adds 17 more liked-revenge books
+(all fantasy: The Way of Kings, Prince of Thorns, Best Served Cold,
+Malice, King of Thorns, The Lies of Locke Lamora, and others) against
+only 2 more disliked ones (Poppy War/Dragon Republic) -- an 18-vs-3
+pool overwhelming the noisy 1-vs-1 sci-fi-only comparison, which is
+exactly why the backoff mechanism swings positive. This is NOT a bug in
+the mechanism -- it's doing exactly what "trust the bigger, better-
+evidenced pool when the specific-scope sample is this thin" means to
+do.
+
+Whether that's the RIGHT call substantively is a different, unresolved
+question: it depends on whether Mathias's revenge preference genuinely
+transfers across genre, or whether Red Rising's "hated" rating is
+really about something else that happens to correlate with it being
+revenge-driven sci-fi (protagonist type, execution, aesthetic --
+exactly the confound the friend's original critique #4/#5 warned
+about). Checked directly: Red Rising has NO recorded review, no
+rated_date, and no `_meta` note anywhere explaining why it was hated --
+this is a genuine gap in the data, not something this analysis can
+resolve further without the repo owner's own recollection. Flagging as
+an open question for him rather than guessing either way.
+
+## Candidate-pool prevalence discount -- full validation, all 3 regressions traced and understood (2026-09-06)
+
+Ran the full `build_scorecard()` (all 8 rows: Mathias full/sparse/
+series-isolated/author-isolated, Osnat full/series-isolated, Dandan
+full, Gabriel LOO) with `score_book_prevalence_discount()` swapped in
+for `score_book()`, not just the earlier 4-scenario spot check.
+
+**Clear, substantial wins, no offsetting cost**: Mathias full (bucket
++9.1pt, hated_rejection +20pt, pairwise/loved_recall unchanged),
+Mathias sparse (bucket +11.1pt, hated_rejection +25pt, pairwise -3.3pt),
+Mathias series-isolated (bucket +18.2pt, hated_rejection +40pt),
+Osnat series-isolated (pairwise +5.6pt), Dandan full (pairwise +13.3pt).
+
+**All 3 regressions traced to a specific book and explained, not left
+as unexplained numbers:**
+
+- **Osnat full, pairwise -5.6pt**: turned out to be exactly ONE pair
+  (Divergent vs. Iron Flame) crossing -- and they were already a
+  near-tie at baseline (0.788 vs. 0.781, 0.007 apart). Noise-level, not
+  a systematic problem with the mechanism.
+- **Mathias author-isolated, loved_recall -20pt**: Rhythm of War
+  (loved) drops from Good to Poor (0.595->0.497) once trained with
+  every Sanderson book excluded. Traced to the exact fields: its two
+  matches (`emotional_resolution: bittersweet` 53.0% prevalence,
+  `worldbuilding_density: dense` 61.0% prevalence) both get discounted
+  heavily, while its one mismatch (`magic_system_hardness: hard`, only
+  18.9% prevalence) barely gets discounted at all -- exactly the
+  mechanism working as designed, but in this artificially thinned
+  stress test, the now-smaller matches can no longer outweigh the
+  now-relatively-larger mismatch. The SAME row's Royal Assassin
+  correctly flips from a MISS to a hated_rejection win in exchange --
+  a real trade-off within one test condition, not a one-sided cost.
+- **Gabriel LOO, bucket -14.3pt / loved_recall -20pt**: The Dragon
+  Reborn crosses the Good/Mixed boundary (0.564->0.516). Least
+  concerning of the three -- Gabriel's leave-one-out training set is
+  only 6 books, already the noisiest, smallest-n scenario in this whole
+  suite before any scoring change is applied.
+
+**Verdict: ready to land**, with these three trade-offs documented
+rather than hidden. The wins are large and consistent across Mathias's
+three main scenarios; every regression is either noise-level (Osnat) or
+mechanistically sound but exposed only by a deliberately-harsh stress
+test (author-isolation, a 6-book leave-one-out set) rather than normal
+full-training use. Landing this for real requires deciding HOW
+`field_prevalence`/`trope_prevalence` (computed once per scoring
+session, not per candidate) get threaded through `score_book()`'s many
+call sites (`recommend()`, `explain_book()`, `audit_book_score()`,
+`_apply_series_trajectory_penalty()`'s internal `explain_book()` call)
+-- a real architectural decision, not done in this pass.
+
+## Candidate-pool prevalence discount -- LANDED for real (2026-09-06)
+
+Merged `score_book_prevalence_discount()`'s logic directly into
+`score_book()`/`explain_book()` (new optional `field_prevalence=None,
+trope_prevalence=None` params -- None/None is a byte-identical no-op,
+so any caller that doesn't have genre/catalog context handy is
+unaffected) and removed the now-redundant standalone function, following
+this project's own established landing pattern (edit the real
+module-level names directly, don't leave two near-identical
+implementations lying around).
+
+Threaded `field_prevalence`/`trope_prevalence` through EVERY real
+consumer, not just the two obvious ones -- traced the full call graph
+first rather than assuming: `recommend()`, `explain_match()`,
+`audit_book_score()` (all compute the lookup once via
+`build_prevalence_lookup(catalog, genre)` and pass it down),
+`user_calibrated_poor_threshold()`, `_apply_dealbreaker_veto()` (a real
+catch -- it calls `dealbreaker_flags()` internally, which calls
+`explain_book()`, so it's genuinely part of the scoring pipeline, not
+just a display helper the way it first looked), `dealbreaker_flags()`,
+`_series_trajectory_penalty_factor()`/`_apply_series_trajectory_penalty()`,
+and `series_dnf_outlook()` (self-contained, computes its own lookup
+since nothing threads into it). `tools/dogfood/app.py` also fixed --
+it separately called `build_profile()` unscoped and
+`user_calibrated_poor_threshold()` undiscounted just to compute
+match-label thresholds, which would have silently miscalibrated labels
+against `recommend()`'s now-discounted scores; switched to
+`_resolve_profile()` (genre-scoped) plus the same prevalence lookup.
+
+**Real gap caught while landing, not after**: `scripts/scoring_tests.py`
+calls `R.score_book()`/`R.explain_book()`/etc. directly, with none of
+the new params -- meaning the ENTIRE benchmark suite would have
+silently kept testing the pre-2026-09-06 undiscounted pipeline forever,
+exactly the "benchmark tests a different pipeline than what a live
+user sees" gap `_full_score()`'s own docstring already warns about for
+the veto/trajectory stages. Fixed by adding a `_get_prevalence_cache()`
+helper (same catalog-wide, genre=None lookup every scenario in this
+file already uses unscoped) and threading it through `_full_score()`
+plus every direct `user_calibrated_poor_threshold()`/`dealbreaker_flags()`/
+`explain_book()` call across `run_held_out_test()`,
+`run_leave_one_out_diagnostic()`, `run_weight_cap_check()`,
+`run_ablation_held_out()`, `run_threshold_diagnostic()`, and both
+dealbreaker-flag sanity-check functions.
+
+**Re-ran the full suite after landing**: all 13 scenarios pass, and the
+real numbers now match the earlier validation A/B exactly (Mathias
+full: 9/11 = 82% bucket, Osnat held-out scores byte-identical to the
+"prevalence" column from the validation pass) -- confirms the harness
+now genuinely exercises production behavior rather than a stale
+snapshot of it. Gabriel's LOO pairwise dropped slightly further (33%->20%)
+than the earlier quick A/B showed, because this full landing threads
+the discount through the dealbreaker veto and threshold calibration too
+(the quick validation script only patched `score_book()`) -- a MORE
+complete, not less correct, application of the same already-accepted
+trade-off (Gabriel's 6-book leave-one-out set is the noisiest scenario
+in the suite regardless).
+
+**Consistency check**: `recommend()`'s returned score and
+`audit_book_score()`'s `final_score` for the same book/profile/rules
+verified identical to 1e-5 across the top 5 fantasy candidates (a
+suspected 0.880 vs. 0.8797 "mismatch" while landing turned out to be my
+own test script comparing an unrounded score against `audit_book_score()`'s
+deliberate `round(final, 4)` -- not a real bug, confirmed by relaxing
+the tolerance and rechecking). Live-checked in the dogfood tool's
+browser UI too: rankings genuinely reordered (City of Stairs edged
+ahead of The Shadow of the Gods, exactly the kind of relative reshuffle
+this mechanism is meant to produce), and the expanded audit view's
+pipeline numbers matched the header score exactly.
+
+`build_prevalence_lookup_grouped()` (the third_limited/third_omniscient
+person-grouping refinement) is NOT included in this landing -- it
+remains a separate, already-validated-but-not-requested enhancement,
+available to layer on later.
+
+## Field-conditional series deduplication -- prototyped, tested, REAL REGRESSION found and traced, NOT landed (2026-09-06)
+
+The follow-up flagged back on 2026-09-04 ("Series DNA / dedup
+integration -- investigated, not built"): `_series_deduped()` treats
+every series-mate as equally redundant on EVERY field uniformly (a
+6-book series divides every field's contribution by 6), even though a
+field can genuinely drift across a series while another stays
+constant. Built `build_profile_series_field_dedup()` -- moves
+dedup from "book" granularity to "book, field" granularity for
+ORDINAL_FIELDS/NOMINAL_FIELDS: a series-mate's magnitude for a specific
+field is now divided by how many OTHER rated series-mates share BOTH
+the series AND the exact same value for that field, not just the
+series. If a series' rated books all share one value for a field, this
+is identical to today's behavior; if they genuinely split across
+different values, each value-group is treated as its own independent
+cluster instead of all being diluted together. Deliberately scoped to
+ordinal/nominal fields only, tropes untouched (see the function's own
+module comment for why the shared trope normalizer makes a
+trope-conditional version a separate, harder design question).
+
+**Full 8-row scorecard, all 4 real raters -- a real, consistent
+regression, not a wash:**
+
+| Scenario | bucket | pairwise | hated_rejection |
+|---|---|---|---|
+| Mathias full | -9.1pt | 0 | **-20pt** |
+| Mathias series-isolated | **-18.2pt** | -2.2pt | **-40pt** |
+| Mathias author-isolated | -9.1pt | -2.2pt | -20pt |
+| Osnat full | 0 | +5.6pt | 0 |
+| (Osnat series-isolated / Dandan / Gabriel) | 0 | 0 | 0 |
+
+No domination-scenario interaction (person/pov_count both still hit
+WEIGHT_CAP=0.5 either way).
+
+**Traced to an exact, understood cause, not left as a mystery number**:
+every regression is the SAME two books -- Royal Assassin and Interview
+with the Vampire (both correctly-Poor at baseline, both flip to
+incorrectly-Good/Mixed here) -- both real, since both are first-person
+books this mechanism weakens Mathias's `person` dealbreaker signal
+against. Root cause found directly: the Book of the Ancestor trilogy
+(Red Sister=first-person, Grey Sister/Holy Sister=third_limited, all 3
+loved) is the ONLY series in his rated history where `person` genuinely
+splits within a series. Under the OLD dedup, Red Sister's "first" value
+counted at 1/3 weight (diluted by its own third-limited sequels).
+Under the NEW dedup, it counts at FULL weight as its own value-
+subgroup -- correctly giving a real counterexample (he loved a
+first-person book) its full due, but the net numerical effect is that
+`person`'s liked-vs-disliked separation weakens (weight 0.2504->0.2398
+on the real full profile), softening the exact signal that correctly
+flags Royal Assassin/Interview with the Vampire.
+
+**This is a genuine precision/recall trade-off, not a bug**: giving a
+real counterexample its full weight is conceptually correct and did
+happen for a real reason (Red Sister really is a genuine exception in
+his history) -- but on this specific held-out test, the cost (weakening
+a mostly-correct dealbreaker signal) outweighs the benefit (properly
+representing one real exception) for this rater's actual data. Same
+class of finding as several already-deferred ideas in this document:
+conceptually well-motivated, real mechanism, net negative once tested
+against real data rather than reasoned about in the abstract.
+
+**Verdict: NOT landed.** Kept as `build_profile_series_field_dedup()`
+in recommend.py for reference, not wired into production, same pattern
+as every other deferred/reverted experiment here. Worth reconsidering
+only if a future version specifically protects a user's validated
+dealbreaker fields (`validated_dealbreaker_fields()`) from this
+de-dilution effect, or only applies it when the differing subgroup is
+the cluster's minority rather than any split -- neither built or tested
+here; noted as the concrete next idea if this gets revisited, not
+implemented speculatively.
+
+## Validated-dealbreaker-protected variant -- tried, produces IDENTICAL results, does not fix anything (2026-09-07)
+
+Built the concrete follow-up proposed above: `build_profile_series_
+field_dedup_protected()` -- any field in the user's `validated_
+dealbreaker_fields()` set keeps today's plain book-level dedup
+(`_dedup_factor_plain()`), only non-validated fields get the field-
+conditional treatment.
+
+**Result: byte-identical scorecard to the unprotected version, every
+single row, all 4 raters** -- confirmed directly (`unprotected and
+protected produce byte-identical scores: True` across the full
+held-out set). The safeguard never activates because of a fact worth
+flagging on its own: **`person` is currently NOT a validated
+dealbreaker field for Mathias** -- `field_or_trope_separation()` returns
+0.345 against a `STAT_SEPARATION_THRESHOLD` of 0.65, so
+`validated_dealbreaker_fields(catalog, id_to_magnitude)` returns an
+empty set for his full profile right now. This directly contradicts an
+earlier claim made in this same session (the Recommendation Engine
+Schematic artifact stated "person is currently your one real validated
+dealbreaker field") -- that claim was stale by the time of this check,
+most likely because several ratings were added to `data/ratings/
+mathias.json` afterward (Battle Royale, The Crimson Campaign, The
+Autumn Republic, The Broken Eye, Dragons of Autumn Twilight) and
+`person`'s separation shifted below the validation bar in the
+meantime. Worth remembering: a "validated field" is a live computation
+against current data, not a fact to cache and reuse across a session
+without rechecking.
+
+**Verdict: this specific fix does not work, for a clean, understood
+reason** -- it protects the wrong condition. The regression is driven
+by `person`'s de-dilution, but `person` isn't (currently) validated, so
+"protect validated fields" has nothing to protect. A real fix would
+need to key off something else -- e.g. a lower, still-real separation
+threshold specifically for this purpose (not full dealbreaker-veto
+validation), or the minority-subgroup idea already logged above.
+Neither built here. NOT landed, same as the unprotected version --
+kept in recommend.py as `build_profile_series_field_dedup_protected()`
+for reference.

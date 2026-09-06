@@ -163,7 +163,9 @@ def run_leave_one_out_diagnostic(catalog, ratings, label, quiet=False):
     for held_out_title, true in ratings.items():
         train = {t: r for t, r in ratings.items() if t != held_out_title}
         centroid, weights, id_to_mag, _ = R._resolve_profile(catalog, train)
-        poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_mag, centroid, weights)
+        field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
+        poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_mag, centroid, weights,
+                                                           field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
         validated = R.validated_dealbreaker_fields(catalog, id_to_mag)
         book = catalog[title_to_id[held_out_title]]
         score = _full_score(catalog, id_to_mag, validated, centroid, weights, book)
@@ -181,6 +183,20 @@ def run_leave_one_out_diagnostic(catalog, ratings, label, quiet=False):
 # R._series_trajectory_penalty_factor()'s own docstring.
 _SERIES_DNA_CACHE = None
 
+# Same caching pattern, for the candidate-pool prevalence discount
+# (2026-09-06, LANDED -- see docs/scoring-test-protocol.md). Every
+# scenario in this file runs UNSCOPED (genre=None, blending everything
+# -- none of run_held_out_test()/run_isolated_held_out_test() ever pass
+# a genre), so one catalog-wide lookup is correct for all of them.
+_PREVALENCE_CACHE = None
+
+
+def _get_prevalence_cache(catalog):
+    global _PREVALENCE_CACHE
+    if _PREVALENCE_CACHE is None:
+        _PREVALENCE_CACHE = R.build_prevalence_lookup(catalog, genre=None)
+    return _PREVALENCE_CACHE
+
 
 def _full_score(catalog, id_to_magnitude, validated_fields, centroid, weights, book):
     """score_book() + _apply_series_repeat() + _apply_dealbreaker_veto()
@@ -193,6 +209,13 @@ def _full_score(catalog, id_to_magnitude, validated_fields, centroid, weights, b
     calibrated threshold applies here too: a benchmark that doesn't
     call these would silently test a DIFFERENT pipeline than what a
     live user actually sees.
+
+    Threads the SAME candidate-pool prevalence lookup recommend()/
+    explain_match()/audit_book_score() now compute and pass by default
+    (2026-09-06, LANDED) -- omitting it here would silently benchmark
+    the pre-2026-09-06 undiscounted pipeline forever, exactly the kind
+    of drift this docstring already warns about for the veto/trajectory
+    stages.
 
     A symmetric "validated positive floor" (mirror of the veto, floors
     instead of caps) was designed and tested here 2026-09-03, then
@@ -222,10 +245,13 @@ def _full_score(catalog, id_to_magnitude, validated_fields, centroid, weights, b
     global _SERIES_DNA_CACHE
     if _SERIES_DNA_CACHE is None:
         _SERIES_DNA_CACHE = R.compute_series_dna(catalog)
-    score, _ = R.score_book(book, centroid, weights)
+    field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
+    score, _ = R.score_book(book, centroid, weights, field_prevalence, trope_prevalence)
     score = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
-    score = R._apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, score)
-    score = R._apply_series_trajectory_penalty(_SERIES_DNA_CACHE, book, centroid, weights, score)
+    score = R._apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, score,
+                                       field_prevalence, trope_prevalence)
+    score = R._apply_series_trajectory_penalty(_SERIES_DNA_CACHE, book, centroid, weights, score,
+                                                field_prevalence, trope_prevalence)
     return score
 
 
@@ -259,7 +285,9 @@ def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_
         t: r for t, r in all_ratings.items() if t not in held_out
     }
     centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
-    poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
+    field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
+    poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
+                                                       field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     validated = R.validated_dealbreaker_fields(catalog, id_to_magnitude)
     correct = wrong = soft = 0
     rows = []
@@ -411,7 +439,9 @@ def run_weight_cap_check(catalog, label):
     # weight is suppressed. explain_book()'s mismatch magnitude
     # (w_eff * (1-sim)) is what actually reflects the field's real,
     # dominance-relevant weight.
-    matches, mismatches = R.explain_book(candidate, centroid, weights, top_n=30)
+    field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
+    matches, mismatches = R.explain_book(candidate, centroid, weights, top_n=30,
+                                          field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     mismatch_map = dict(mismatches)
     person_mismatch = mismatch_map.get("person", 0)
     pov_mismatch = mismatch_map.get("pov_count", 0)
@@ -627,7 +657,9 @@ def run_ablation_held_out(catalog, all_ratings, held_out, train_ratings, ablate_
     }
     centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
     weights = _apply_ablation(weights, ablate_fields)
-    poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
+    field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
+    poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
+                                                       field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     validated = R.validated_dealbreaker_fields(catalog, id_to_magnitude)
     rows = []
     for title in held_out:
@@ -752,7 +784,9 @@ def run_threshold_diagnostic(catalog, all_ratings, held_out, train_ratings):
         return rows
 
     variants = {f"fixed {t:.2f}" + (" (old default)" if t == 0.35 else ""): t for t in FIXED_THRESHOLD_SWEEP}
-    calibrated = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
+    field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
+    calibrated = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
+                                                   field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     variants[f"calibrated ({calibrated:.3f}) -- LANDED"] = calibrated
 
     return {name: _metrics_from_rows(rows_for(t)) for name, t in variants.items()}
@@ -775,7 +809,9 @@ def print_threshold_diagnostic(catalog):
     print("  No-negative-signal fallback check (repo owner's caveat):")
     all_positive = {t: r for t, r in REAL_RATINGS.items() if r in ("loved", "liked", "it_was_okay")}
     centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, all_positive)
-    calibrated = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
+    field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
+    calibrated = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
+                                                   field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     print(f"    {len(all_positive)} all-positive ratings (no disliked/hated) -> "
           f"calibrated threshold = {calibrated:.3f} "
           f"({'falls back to default, as intended' if calibrated == 0.35 else 'DID NOT FALL BACK -- BUG'})")
@@ -806,13 +842,15 @@ def check_dealbreaker_flags(catalog, all_ratings, held_out, train_ratings, label
     }
     centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
     validated = validated_fields_fn(id_to_magnitude) if validated_fields_fn else None
+    field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
 
     fp = fp_total = tp = tp_total = 0
     rows = []
     for title in held_out:
         book = catalog[title_to_id[title]]
         true = all_ratings[title]
-        flags = R.dealbreaker_flags(book, centroid, weights, validated_fields=validated)
+        flags = R.dealbreaker_flags(book, centroid, weights, validated_fields=validated,
+                                     field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
         phrases = [p for f, _ in flags if (p := R.describe(f, book))]
         rows.append((title, true, phrases))
         if true in EXPECT_GOOD:
@@ -841,8 +879,10 @@ def run_leave_one_out_flags_check(catalog, ratings, label, validated_fields_fn=N
         train = {t: r for t, r in ratings.items() if t != held_out_title}
         centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
         validated = validated_fields_fn(id_to_magnitude) if validated_fields_fn else None
+        field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
         book = catalog[title_to_id[held_out_title]]
-        flags = R.dealbreaker_flags(book, centroid, weights, validated_fields=validated)
+        flags = R.dealbreaker_flags(book, centroid, weights, validated_fields=validated,
+                                     field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
         phrases = [p for f, _ in flags if (p := R.describe(f, book))]
         rows.append((held_out_title, true, phrases))
         if true in EXPECT_GOOD:

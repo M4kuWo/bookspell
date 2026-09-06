@@ -203,6 +203,17 @@ STRUCTURAL_NOMINAL_FIELDS = {
 # fields the de facto decision-maker for every recommendation.
 WEIGHT_CAP = 0.5
 
+# Pseudo-count for TROPE_SHRINKAGE (see build_profile_trope_shrinkage(),
+# EXPERIMENTAL, not wired into production) -- at n=TROPE_SHRINKAGE_K
+# distinct liked+disliked books carrying a trope, its raw weight is
+# halved; the discount vanishes as n grows past it. 5 chosen as a
+# starting point (2026-09-06): small enough that well-evidenced tropes
+# (10+ books) are barely touched, large enough to meaningfully discount
+# the specific thin cases that motivated this (hidden_talent_prodigy:
+# n=3, zero disliked counter-evidence) -- see
+# docs/scoring-test-protocol.md's 2026-09-06 entry for the A/B numbers.
+TROPE_SHRINKAGE_K = 5
+
 # Hard ceiling on the `diversity` param (see recommend()) -- enforced in
 # code, not just a UI convention. At diversity=1.0 (pure novelty, zero
 # regard for relevance) a "summon something different" request could
@@ -435,12 +446,19 @@ def match_label(score, poor_threshold=DEFAULT_POOR_THRESHOLD):
 
 
 def user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
-                                    default=DEFAULT_POOR_THRESHOLD):
+                                    default=DEFAULT_POOR_THRESHOLD,
+                                    field_prevalence=None, trope_prevalence=None):
     """A per-user replacement for match_label()'s fixed Poor/Mixed
     boundary: the midpoint between THIS user's own mean score on their
     liked/loved training books and their disliked/hated ones (both
     rescored against their own freshly-built profile -- i.e. how the
     model scores the very evidence it was built from).
+
+    field_prevalence/trope_prevalence: pass the SAME prevalence lookup
+    used to score the candidates this threshold will be compared
+    against (see score_book()'s docstring) -- calibrating against
+    undiscounted scores while candidates get discounted ones would
+    silently miscalibrate the Poor/Mixed boundary itself.
 
     Falls back to `default` (unchanged) if the user has no disliked/hated
     ratings to calibrate against -- deliberately: with zero negative
@@ -462,7 +480,7 @@ def user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
         book = catalog.get(bid)
         if book is None:
             continue
-        score, _ = score_book(book, centroid, weights)
+        score, _ = score_book(book, centroid, weights, field_prevalence, trope_prevalence)
         if mag > 0:
             liked_scores.append(score)
         elif mag < 0:
@@ -675,7 +693,8 @@ def series_dnf_outlook(catalog, ratings, series_id, current_position, genre=None
     idx = positions.index(current_position)
 
     centroid, weights, _, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides)
-    scores = [score_book(b, centroid, weights)[0] for b in books]
+    field_prevalence, trope_prevalence = build_prevalence_lookup(catalog, genre)
+    scores = [score_book(b, centroid, weights, field_prevalence, trope_prevalence)[0] for b in books]
 
     current_title, current_score = books[idx]["title"], scores[idx]
     if idx + 1 >= len(books):
@@ -1068,6 +1087,561 @@ def build_profile(catalog, ratings, full_ratings=None):
     return centroid, weights
 
 
+# --- Trope-weight sample-size shrinkage (2026-09-06, EXPERIMENTAL -- ---
+# UNDER TEST, NOT wired into build_profile()/score_book() yet) ----------
+# Motivated by a friend's review of a Recommendation Ledger run: some
+# trope weights are large despite resting on very few rated books --
+# e.g. hidden_talent_prodigy: +0.267 from only 3 liked books (Ender's
+# Shadow, Firestarter, Ender's Game) with ZERO disliked counter-evidence.
+# build_profile()'s trope loop treats `liked_freq - disliked_freq` as
+# equally trustworthy regardless of how many distinct books that
+# estimate is actually built from -- 3 books and 30 books produce
+# equally "confident" weights if the frequency gap happens to be the
+# same. This variant multiplies each trope's raw weight by n/(n+k)
+# before the WEIGHT_CAP clamp, where n = the number of DISTINCT
+# liked+disliked books carrying the trope (unweighted book count --
+# sample SIZE is what's thin here, not any one observation's rating
+# magnitude) and k = TROPE_SHRINKAGE_K. See docs/scoring-test-
+# protocol.md's 2026-09-06 entry for the A/B results this was tested
+# against before any decision to land -- kept side-by-side with
+# build_profile() rather than reassigned, same pattern as
+# build_profile_per_value() below (tried, evaluated, not swapped into
+# production without passing the full test suite first).
+def build_profile_trope_shrinkage(catalog, ratings, full_ratings=None, k=TROPE_SHRINKAGE_K):
+    """Identical to build_profile() for ORDINAL/NOMINAL fields; tropes
+    get an added n/(n+k) sample-size shrinkage factor on the raw weight
+    before the WEIGHT_CAP clamp. See the module-level comment above."""
+    full_ratings = ratings if full_ratings is None else full_ratings
+
+    liked, disliked = _split_by_sign(catalog, ratings)
+    full_liked, full_disliked = _split_by_sign(catalog, full_ratings)
+    liked = _series_deduped(liked)
+    disliked = _series_deduped(disliked)
+    full_liked = _series_deduped(full_liked)
+    full_disliked = _series_deduped(full_disliked)
+
+    centroid = {}
+    weights = {}
+
+    def weighted_mean(pairs, positions):
+        total_w = sum(w for _, w in positions)
+        if total_w == 0:
+            return None
+        return sum(v * w for v, w in positions) / total_w
+
+    for field in ORDINAL_FIELDS:
+        pool_liked = full_liked if field in STRUCTURAL_ORDINAL_FIELDS else liked
+        pool_disliked = full_disliked if field in STRUCTURAL_ORDINAL_FIELDS else disliked
+        liked_positions = [
+            (pos[0] / pos[1], m * scoring_confidence(b, field)) for b, m in pool_liked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        liked_mean = weighted_mean(pool_liked, liked_positions)
+        if liked_mean is None:
+            continue
+        centroid[field] = liked_mean
+        disliked_positions = [
+            (pos[0] / pos[1], m * scoring_confidence(b, field)) for b, m in pool_disliked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        disliked_mean = weighted_mean(pool_disliked, disliked_positions)
+        if disliked_mean is not None:
+            weights[field] = min(WEIGHT_CAP, abs(liked_mean - disliked_mean))
+        else:
+            weights[field] = 0.3
+
+    for field in NOMINAL_FIELDS:
+        pool_liked = full_liked if field in STRUCTURAL_NOMINAL_FIELDS else liked
+        pool_disliked = full_disliked if field in STRUCTURAL_NOMINAL_FIELDS else disliked
+        liked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_liked if b.get(field)]
+        if not liked_vals:
+            continue
+        counts = {}
+        total_m = 0.0
+        for v, m in liked_vals:
+            counts[v] = counts.get(v, 0.0) + m
+            total_m += m
+        mode_val = max(counts, key=counts.get)
+        liked_share = counts[mode_val] / total_m
+        disliked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_disliked if b.get(field)]
+        if disliked_vals:
+            total_dm = sum(m for _, m in disliked_vals)
+            disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
+        else:
+            disliked_share = 0.0
+        centroid[field] = mode_val
+        weights[field] = (
+            min(WEIGHT_CAP, max(0.0, liked_share - disliked_share))
+            if disliked_vals else 0.3 * liked_share
+        )
+
+    trope_weights = {}
+    liked_trope_pairs = liked
+    disliked_trope_pairs = disliked
+    total_liked_m = sum(m for _, m in liked_trope_pairs) or 1.0
+    total_disliked_m = sum(m for _, m in disliked_trope_pairs)
+    all_tropes = set(t for b, _ in liked_trope_pairs + disliked_trope_pairs for t in (b.get("tropes") or []))
+    for t in all_tropes:
+        n = (
+            sum(1 for b, _ in liked_trope_pairs if t in (b.get("tropes") or []))
+            + sum(1 for b, _ in disliked_trope_pairs if t in (b.get("tropes") or []))
+        )
+        liked_freq = sum(
+            m * scoring_confidence(b, t) for b, m in liked_trope_pairs if t in (b.get("tropes") or [])
+        ) / total_liked_m
+        disliked_freq = (
+            sum(m * scoring_confidence(b, t) for b, m in disliked_trope_pairs if t in (b.get("tropes") or []))
+            / total_disliked_m
+            if total_disliked_m else 0.0
+        )
+        raw = (liked_freq - disliked_freq) * (n / (n + k))
+        trope_weights[t] = max(-WEIGHT_CAP, min(WEIGHT_CAP, raw))
+    weights["tropes"] = trope_weights
+
+    return centroid, weights
+
+
+TROPE_BACKOFF_K = 5
+
+
+def build_profile_trope_backoff(catalog, ratings, full_ratings=None, k=TROPE_BACKOFF_K):
+    """EXPERIMENTAL, NOT wired into production -- prototype for the
+    repo owner's own middle-ground proposal (2026-09-06) between
+    build_profile()'s current "tropes always genre-scoped" behavior and
+    a blanket "tropes always cross-genre" change. Identical to
+    build_profile() for ORDINAL/NOMINAL fields. For tropes, computes
+    TWO estimates per trope -- `raw_scoped` (genre-scoped liked/disliked
+    pool, same as build_profile()) and `raw_full` (the FULL cross-genre
+    pool, same `full_ratings` already threaded through for STRUCTURAL
+    fields) -- and blends them: `n/(n+k)` weight on the scoped estimate,
+    `k/(n+k)` on the full one, where n = the number of distinct
+    liked+disliked GENRE-SCOPED books carrying the trope. As n grows,
+    this converges to build_profile()'s current scoped-only behavior;
+    as n shrinks toward 0, it backs off toward the cross-genre estimate
+    instead of toward zero (contrast with build_profile_trope_shrinkage()
+    above, which shrinks toward zero regardless of what the broader
+    pool says).
+
+    Motivated directly by the friend-feedback audit's Step 4 finding:
+    `revenge`'s fantasy-scoped disliked evidence collapses to ONE series
+    (Poppy War/Dragon Republic) once Red Rising (tagged sci_fi) drops
+    out of the fantasy-scoped calculation -- this lets Red Rising count
+    again, proportional to how much fantasy-specific evidence already
+    exists, rather than either ignoring it (current behavior) or
+    trusting it exactly as much as fantasy-specific evidence (a blanket
+    cross-genre merge, which risks blending a genuinely genre-
+    conditional preference into one misleading average -- see
+    docs/scoring-test-protocol.md's 2026-09-06 entry for the full
+    pros/cons discussion this was weighed against before prototyping)."""
+    full_ratings = ratings if full_ratings is None else full_ratings
+
+    liked, disliked = _split_by_sign(catalog, ratings)
+    full_liked, full_disliked = _split_by_sign(catalog, full_ratings)
+    liked = _series_deduped(liked)
+    disliked = _series_deduped(disliked)
+    full_liked = _series_deduped(full_liked)
+    full_disliked = _series_deduped(full_disliked)
+
+    centroid = {}
+    weights = {}
+
+    def weighted_mean(pairs, positions):
+        total_w = sum(w for _, w in positions)
+        if total_w == 0:
+            return None
+        return sum(v * w for v, w in positions) / total_w
+
+    for field in ORDINAL_FIELDS:
+        pool_liked = full_liked if field in STRUCTURAL_ORDINAL_FIELDS else liked
+        pool_disliked = full_disliked if field in STRUCTURAL_ORDINAL_FIELDS else disliked
+        liked_positions = [
+            (pos[0] / pos[1], m * scoring_confidence(b, field)) for b, m in pool_liked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        liked_mean = weighted_mean(pool_liked, liked_positions)
+        if liked_mean is None:
+            continue
+        centroid[field] = liked_mean
+        disliked_positions = [
+            (pos[0] / pos[1], m * scoring_confidence(b, field)) for b, m in pool_disliked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        disliked_mean = weighted_mean(pool_disliked, disliked_positions)
+        if disliked_mean is not None:
+            weights[field] = min(WEIGHT_CAP, abs(liked_mean - disliked_mean))
+        else:
+            weights[field] = 0.3
+
+    for field in NOMINAL_FIELDS:
+        pool_liked = full_liked if field in STRUCTURAL_NOMINAL_FIELDS else liked
+        pool_disliked = full_disliked if field in STRUCTURAL_NOMINAL_FIELDS else disliked
+        liked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_liked if b.get(field)]
+        if not liked_vals:
+            continue
+        counts = {}
+        total_m = 0.0
+        for v, m in liked_vals:
+            counts[v] = counts.get(v, 0.0) + m
+            total_m += m
+        mode_val = max(counts, key=counts.get)
+        liked_share = counts[mode_val] / total_m
+        disliked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_disliked if b.get(field)]
+        if disliked_vals:
+            total_dm = sum(m for _, m in disliked_vals)
+            disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
+        else:
+            disliked_share = 0.0
+        centroid[field] = mode_val
+        weights[field] = (
+            min(WEIGHT_CAP, max(0.0, liked_share - disliked_share))
+            if disliked_vals else 0.3 * liked_share
+        )
+
+    def trope_freqs(liked_pairs, disliked_pairs):
+        total_liked_m = sum(m for _, m in liked_pairs) or 1.0
+        total_disliked_m = sum(m for _, m in disliked_pairs)
+        all_tropes = set(t for b, _ in liked_pairs + disliked_pairs for t in (b.get("tropes") or []))
+        freqs = {}
+        for t in all_tropes:
+            n = (
+                sum(1 for b, _ in liked_pairs if t in (b.get("tropes") or []))
+                + sum(1 for b, _ in disliked_pairs if t in (b.get("tropes") or []))
+            )
+            liked_freq = sum(
+                m * scoring_confidence(b, t) for b, m in liked_pairs if t in (b.get("tropes") or [])
+            ) / total_liked_m
+            disliked_freq = (
+                sum(m * scoring_confidence(b, t) for b, m in disliked_pairs if t in (b.get("tropes") or []))
+                / total_disliked_m
+                if total_disliked_m else 0.0
+            )
+            freqs[t] = (liked_freq - disliked_freq, n)
+        return freqs
+
+    scoped_freqs = trope_freqs(liked, disliked)
+    full_freqs = trope_freqs(full_liked, full_disliked)
+
+    trope_weights = {}
+    for t in set(scoped_freqs) | set(full_freqs):
+        raw_scoped, n_scoped = scoped_freqs.get(t, (0.0, 0))
+        raw_full, _ = full_freqs.get(t, (0.0, 0))
+        blend_w = n_scoped / (n_scoped + k)
+        blended = raw_scoped * blend_w + raw_full * (1 - blend_w)
+        trope_weights[t] = max(-WEIGHT_CAP, min(WEIGHT_CAP, blended))
+    weights["tropes"] = trope_weights
+
+    return centroid, weights
+
+
+def _dedup_factor_for_field(pool, field):
+    """{book_id: divisor} for series-cluster-AND-VALUE-conditional
+    dedup on one specific field -- unlike _series_deduped() (which
+    treats every series-mate as equally redundant on EVERY field
+    uniformly), a book's magnitude for THIS field is only divided by
+    how many OTHER pool members share both its series AND its exact
+    value for this field. A series-mate showing a genuinely different
+    value for this field is real, distinct evidence for it, not a
+    repeat -- even if that same book is still fully redundant for some
+    OTHER field that stays constant across the series (see
+    build_profile_series_field_dedup()'s module comment for the full
+    motivation). Standalones (or a lone rated series-mate) always
+    divide by 1, same as _series_deduped()."""
+    counts = {}
+    for b, _ in pool:
+        series_key = b.get("series_id") or f"standalone:{b['id']}"
+        key = (series_key, b.get(field))
+        counts[key] = counts.get(key, 0) + 1
+    return {
+        b["id"]: counts[(b.get("series_id") or f"standalone:{b['id']}", b.get(field))]
+        for b, _ in pool
+    }
+
+
+# --- Field-conditional series dedup (2026-09-06, EXPERIMENTAL -- UNDER --
+# TEST, NOT wired into build_profile() yet) -----------------------------
+# Logged as a real, scoped follow-up back on 2026-09-04 (see
+# docs/scoring-test-protocol.md's "Series DNA / dedup integration"
+# entry) and explicitly flagged there as bigger/riskier than a quick
+# fix, deserving its own dedicated pass -- this is that pass.
+#
+# _series_deduped() (used by build_profile() today) treats every
+# series-mate as equally redundant on EVERY field: if you rated 6
+# Mistborn Era One books, each one's magnitude gets divided by 6 for
+# ALL fields uniformly, including ones that genuinely change across the
+# series (darkness escalating book to book, say) just as much as ones
+# that stay constant (POV, most likely). That's real information loss --
+# a field that drifts across a series isn't actually redundant evidence
+# the way a stable one is, and it shouldn't be diluted to 1/6th strength
+# just because 5 OTHER books in the same series happen to have a
+# DIFFERENT value on that specific field.
+#
+# This variant moves deduplication from "book" granularity to "book,
+# field" granularity: for each field, group a series' rated books by
+# their ACTUAL VALUE on that field (not just their series_id), and
+# divide a book's magnitude only by the size of its OWN value-group.
+# If all N series-mates share the same value for field F, this is
+# identical to _series_deduped() (divide by N). If the series' rated
+# books split into groups with genuinely different values, each group
+# is treated as its own independent cluster of evidence -- neither
+# group cancels or dilutes the other, and neither is inflated to look
+# like N independent observations either.
+#
+# Deliberately scoped to ORDINAL_FIELDS/NOMINAL_FIELDS only, NOT
+# tropes -- tropes' weight formula shares ONE total_liked_m/
+# total_disliked_m normalizer across every trope (see build_profile()'s
+# own comment on why that stays undiscounted), and switching to a
+# per-trope-conditional divisor would require redesigning what that
+# shared normalizer even means, a separate, not-yet-designed question.
+# Tropes keep today's plain book-level _series_deduped() dedup here,
+# unchanged.
+def build_profile_series_field_dedup(catalog, ratings, full_ratings=None):
+    """Identical to build_profile() for tropes (plain book-level
+    _series_deduped() dedup, unchanged) and identical in every OTHER
+    respect except: ORDINAL_FIELDS/NOMINAL_FIELDS use
+    _dedup_factor_for_field() (per-field-and-value-conditional) instead
+    of the single upfront _series_deduped() pool. See the module
+    comment above for the full motivation."""
+    full_ratings = ratings if full_ratings is None else full_ratings
+
+    liked_raw, disliked_raw = _split_by_sign(catalog, ratings)
+    full_liked_raw, full_disliked_raw = _split_by_sign(catalog, full_ratings)
+    # Tropes still use the plain, book-level dedup -- computed once here,
+    # same as build_profile().
+    liked = _series_deduped(liked_raw)
+    disliked = _series_deduped(disliked_raw)
+
+    centroid = {}
+    weights = {}
+
+    def weighted_mean(pairs, positions):
+        total_w = sum(w for _, w in positions)
+        if total_w == 0:
+            return None
+        return sum(v * w for v, w in positions) / total_w
+
+    for field in ORDINAL_FIELDS:
+        pool_liked = full_liked_raw if field in STRUCTURAL_ORDINAL_FIELDS else liked_raw
+        pool_disliked = full_disliked_raw if field in STRUCTURAL_ORDINAL_FIELDS else disliked_raw
+        liked_div = _dedup_factor_for_field(pool_liked, field)
+        disliked_div = _dedup_factor_for_field(pool_disliked, field)
+        liked_positions = [
+            (pos[0] / pos[1], (m / liked_div[b["id"]]) * scoring_confidence(b, field)) for b, m in pool_liked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        liked_mean = weighted_mean(pool_liked, liked_positions)
+        if liked_mean is None:
+            continue
+        centroid[field] = liked_mean
+        disliked_positions = [
+            (pos[0] / pos[1], (m / disliked_div[b["id"]]) * scoring_confidence(b, field)) for b, m in pool_disliked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        disliked_mean = weighted_mean(pool_disliked, disliked_positions)
+        if disliked_mean is not None:
+            weights[field] = min(WEIGHT_CAP, abs(liked_mean - disliked_mean))
+        else:
+            weights[field] = 0.3
+
+    for field in NOMINAL_FIELDS:
+        pool_liked = full_liked_raw if field in STRUCTURAL_NOMINAL_FIELDS else liked_raw
+        pool_disliked = full_disliked_raw if field in STRUCTURAL_NOMINAL_FIELDS else disliked_raw
+        liked_div = _dedup_factor_for_field(pool_liked, field)
+        disliked_div = _dedup_factor_for_field(pool_disliked, field)
+        liked_vals = [
+            (b.get(field), (m / liked_div[b["id"]]) * scoring_confidence(b, field))
+            for b, m in pool_liked if b.get(field)
+        ]
+        if not liked_vals:
+            continue
+        counts = {}
+        total_m = 0.0
+        for v, m in liked_vals:
+            counts[v] = counts.get(v, 0.0) + m
+            total_m += m
+        mode_val = max(counts, key=counts.get)
+        liked_share = counts[mode_val] / total_m
+        disliked_vals = [
+            (b.get(field), (m / disliked_div[b["id"]]) * scoring_confidence(b, field))
+            for b, m in pool_disliked if b.get(field)
+        ]
+        if disliked_vals:
+            total_dm = sum(m for _, m in disliked_vals)
+            disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
+        else:
+            disliked_share = 0.0
+        centroid[field] = mode_val
+        weights[field] = (
+            min(WEIGHT_CAP, max(0.0, liked_share - disliked_share))
+            if disliked_vals else 0.3 * liked_share
+        )
+
+    trope_weights = {}
+    liked_trope_pairs = liked
+    disliked_trope_pairs = disliked
+    total_liked_m = sum(m for _, m in liked_trope_pairs) or 1.0
+    total_disliked_m = sum(m for _, m in disliked_trope_pairs)
+    all_tropes = set(t for b, _ in liked_trope_pairs + disliked_trope_pairs for t in (b.get("tropes") or []))
+    for t in all_tropes:
+        liked_freq = sum(
+            m * scoring_confidence(b, t) for b, m in liked_trope_pairs if t in (b.get("tropes") or [])
+        ) / total_liked_m
+        disliked_freq = (
+            sum(m * scoring_confidence(b, t) for b, m in disliked_trope_pairs if t in (b.get("tropes") or []))
+            / total_disliked_m
+            if total_disliked_m else 0.0
+        )
+        raw = liked_freq - disliked_freq
+        trope_weights[t] = max(-WEIGHT_CAP, min(WEIGHT_CAP, raw))
+    weights["tropes"] = trope_weights
+
+    return centroid, weights
+
+
+def _dedup_factor_plain(pool):
+    """{book_id: divisor} for _series_deduped()'s own plain, book-level
+    grouping (series only, ignoring field value) -- the fallback
+    build_profile_series_field_dedup_protected() uses for a user's
+    VALIDATED dealbreaker fields, see that function's module comment."""
+    counts = {}
+    for b, _ in pool:
+        key = b.get("series_id") or f"standalone:{b['id']}"
+        counts[key] = counts.get(key, 0) + 1
+    return {
+        b["id"]: counts[b.get("series_id") or f"standalone:{b['id']}"]
+        for b, _ in pool
+    }
+
+
+# --- Field-conditional series dedup, validated-dealbreaker-protected ---
+# (2026-09-07, EXPERIMENTAL -- UNDER TEST, NOT wired into build_profile()
+# yet) -----------------------------------------------------------------
+# build_profile_series_field_dedup() (above) was tested and found a
+# real regression (see docs/scoring-test-protocol.md's 2026-09-06 entry):
+# de-diluting a series where a field genuinely splits (Red Sister vs.
+# its third_limited sequels) gave a real counterexample its full weight,
+# but the net effect softened `person`'s liked-vs-disliked separation
+# enough to stop correctly flagging Royal Assassin/Interview with the
+# Vampire as poor matches -- a real precision/recall trade-off, not a
+# bug. This variant tests the concrete fix proposed there: protect a
+# user's own VALIDATED dealbreaker fields (validated_dealbreaker_fields()
+# -- real, per-user statistical evidence, not a guess) from the
+# de-dilution effect entirely, keeping them on the plain book-level
+# dedup exactly like build_profile() does today, while still applying
+# the field-conditional treatment to every OTHER ordinal/nominal field.
+# The idea: a field that's already proven itself a genuine dealbreaker
+# for this user is exactly the field where a diluted-but-consistent
+# signal is worth MORE than a fully-weighted rare exception -- other,
+# non-validated fields have less to lose from the more granular
+# treatment.
+def build_profile_series_field_dedup_protected(catalog, ratings, full_ratings=None):
+    """Identical to build_profile_series_field_dedup(), except any field
+    in validated_dealbreaker_fields(catalog, full_ratings) uses the
+    plain, book-level _series_deduped() divisor (via
+    _dedup_factor_plain()) instead of the field-conditional one --
+    see the module comment above."""
+    full_ratings = ratings if full_ratings is None else full_ratings
+
+    liked_raw, disliked_raw = _split_by_sign(catalog, ratings)
+    full_liked_raw, full_disliked_raw = _split_by_sign(catalog, full_ratings)
+    liked = _series_deduped(liked_raw)
+    disliked = _series_deduped(disliked_raw)
+    validated_fields = validated_dealbreaker_fields(catalog, full_ratings)
+
+    centroid = {}
+    weights = {}
+
+    def weighted_mean(pairs, positions):
+        total_w = sum(w for _, w in positions)
+        if total_w == 0:
+            return None
+        return sum(v * w for v, w in positions) / total_w
+
+    for field in ORDINAL_FIELDS:
+        pool_liked = full_liked_raw if field in STRUCTURAL_ORDINAL_FIELDS else liked_raw
+        pool_disliked = full_disliked_raw if field in STRUCTURAL_ORDINAL_FIELDS else disliked_raw
+        if field in validated_fields:
+            liked_div = _dedup_factor_plain(pool_liked)
+            disliked_div = _dedup_factor_plain(pool_disliked)
+        else:
+            liked_div = _dedup_factor_for_field(pool_liked, field)
+            disliked_div = _dedup_factor_for_field(pool_disliked, field)
+        liked_positions = [
+            (pos[0] / pos[1], (m / liked_div[b["id"]]) * scoring_confidence(b, field)) for b, m in pool_liked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        liked_mean = weighted_mean(pool_liked, liked_positions)
+        if liked_mean is None:
+            continue
+        centroid[field] = liked_mean
+        disliked_positions = [
+            (pos[0] / pos[1], (m / disliked_div[b["id"]]) * scoring_confidence(b, field)) for b, m in pool_disliked
+            if (pos := ordinal_position(field, b.get(field))) is not None
+        ]
+        disliked_mean = weighted_mean(pool_disliked, disliked_positions)
+        if disliked_mean is not None:
+            weights[field] = min(WEIGHT_CAP, abs(liked_mean - disliked_mean))
+        else:
+            weights[field] = 0.3
+
+    for field in NOMINAL_FIELDS:
+        pool_liked = full_liked_raw if field in STRUCTURAL_NOMINAL_FIELDS else liked_raw
+        pool_disliked = full_disliked_raw if field in STRUCTURAL_NOMINAL_FIELDS else disliked_raw
+        if field in validated_fields:
+            liked_div = _dedup_factor_plain(pool_liked)
+            disliked_div = _dedup_factor_plain(pool_disliked)
+        else:
+            liked_div = _dedup_factor_for_field(pool_liked, field)
+            disliked_div = _dedup_factor_for_field(pool_disliked, field)
+        liked_vals = [
+            (b.get(field), (m / liked_div[b["id"]]) * scoring_confidence(b, field))
+            for b, m in pool_liked if b.get(field)
+        ]
+        if not liked_vals:
+            continue
+        counts = {}
+        total_m = 0.0
+        for v, m in liked_vals:
+            counts[v] = counts.get(v, 0.0) + m
+            total_m += m
+        mode_val = max(counts, key=counts.get)
+        liked_share = counts[mode_val] / total_m
+        disliked_vals = [
+            (b.get(field), (m / disliked_div[b["id"]]) * scoring_confidence(b, field))
+            for b, m in pool_disliked if b.get(field)
+        ]
+        if disliked_vals:
+            total_dm = sum(m for _, m in disliked_vals)
+            disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
+        else:
+            disliked_share = 0.0
+        centroid[field] = mode_val
+        weights[field] = (
+            min(WEIGHT_CAP, max(0.0, liked_share - disliked_share))
+            if disliked_vals else 0.3 * liked_share
+        )
+
+    trope_weights = {}
+    liked_trope_pairs = liked
+    disliked_trope_pairs = disliked
+    total_liked_m = sum(m for _, m in liked_trope_pairs) or 1.0
+    total_disliked_m = sum(m for _, m in disliked_trope_pairs)
+    all_tropes = set(t for b, _ in liked_trope_pairs + disliked_trope_pairs for t in (b.get("tropes") or []))
+    for t in all_tropes:
+        liked_freq = sum(
+            m * scoring_confidence(b, t) for b, m in liked_trope_pairs if t in (b.get("tropes") or [])
+        ) / total_liked_m
+        disliked_freq = (
+            sum(m * scoring_confidence(b, t) for b, m in disliked_trope_pairs if t in (b.get("tropes") or []))
+            / total_disliked_m
+            if total_disliked_m else 0.0
+        )
+        raw = liked_freq - disliked_freq
+        trope_weights[t] = max(-WEIGHT_CAP, min(WEIGHT_CAP, raw))
+    weights["tropes"] = trope_weights
+
+    return centroid, weights
+
+
 # --- Per-value nominal weight learning (2026-09-04, EXPERIMENTAL -- ----
 # UNDER TEST, NOT wired into build_profile()/score_book() yet) ----------
 # Repo owner's own pushback on why `drive: romance_driven`'s weight
@@ -1336,14 +1910,30 @@ def _redundancy_adjusted_weight(book, field, w):
     return w
 
 
-def score_book(book, centroid, weights):
+def score_book(book, centroid, weights, field_prevalence=None, trope_prevalence=None):
     """Confidence discount (2026-08-30): a field/trope's effective weight
     for THIS book is scaled by get_confidence(book, field) before it
     contributes -- an uncertain tag gets less voting power in the
     weighted average rather than being trusted at face value or assumed
     to be a mismatch. Discounting both the numerator (contribution) and
     denominator (total_weight) equally is what keeps this a "count for
-    less" effect rather than a bias toward either match or mismatch."""
+    less" effect rather than a bias toward either match or mismatch.
+
+    Candidate-pool prevalence discount (2026-09-06, LANDED): field_prevalence/
+    trope_prevalence -- from build_prevalence_lookup(catalog, genre), computed
+    ONCE per scoring session by the caller, never per candidate -- further
+    scale w_eff by max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence) when given.
+    A genuine, well-evidenced preference can still fail to RANK one candidate
+    above another if most of the candidate pool already shares the matching
+    value (e.g. emotional_resolution: bittersweet at ~53% catalog prevalence
+    contributed a suspiciously constant +0.323 across nearly every top
+    fantasy match before this landed) -- see docs/scoring-test-protocol.md's
+    2026-09-06 entries for the full validation (8-row scorecard, all 4 real
+    raters, every regression traced to a specific book and understood, not
+    just accepted because the aggregate numbers looked fine) this landed on.
+    None/None (the default) is a guaranteed no-op, byte-identical to
+    pre-2026-09-06 behavior -- callers with no genre/catalog context handy
+    (most of scripts/scoring_tests.py's direct calls) are unaffected."""
     score = 0.0
     total_weight = 0.0
     contributions = []
@@ -1362,6 +1952,9 @@ def score_book(book, centroid, weights):
         else:
             sim = nominal_similarity(field, book.get(field), centroid[field])
         w_eff = _redundancy_adjusted_weight(book, field, w) * scoring_confidence(book, field)
+        if field_prevalence is not None:
+            prevalence = field_prevalence.get(field, {}).get(book.get(field), 0.0)
+            w_eff *= max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence)
         contribution = w_eff * sim
         score += contribution
         total_weight += abs(w_eff)
@@ -1373,6 +1966,9 @@ def score_book(book, centroid, weights):
     for t, w in trope_weights.items():
         if t in book_tropes:
             w_eff = w * scoring_confidence(book, t)
+            if trope_prevalence is not None:
+                prevalence = trope_prevalence.get(t, 0.0)
+                w_eff *= max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence)
             score += w_eff
             total_weight += abs(w_eff)
             if abs(w) > 0.15:
@@ -1384,7 +1980,7 @@ def score_book(book, centroid, weights):
 
 
 
-def explain_book(book, centroid, weights, top_n=5):
+def explain_book(book, centroid, weights, top_n=5, field_prevalence=None, trope_prevalence=None):
     """Splits scoring factors into what's pulling the score UP (matches)
     vs. DOWN (mismatches) for this book against this profile -- the same
     math score_book() uses, decomposed for human explanation instead of
@@ -1406,7 +2002,12 @@ def explain_book(book, centroid, weights, top_n=5):
     > 0.1 to exclude noise-level factors. Same confidence discount as
     score_book() -- see its docstring -- applied to `w` before either
     match or mismatch magnitude is computed, so a low-confidence tag
-    shows up muted in the explanation too, not just the ranking."""
+    shows up muted in the explanation too, not just the ranking.
+    field_prevalence/trope_prevalence: same prevalence-discount mechanism
+    as score_book() (see its docstring) -- pass the SAME lookup used for
+    the candidate's score_book() call so the displayed matches/mismatches
+    stay consistent with the number they're explaining, not a different
+    pipeline than what the user actually sees."""
     matches, mismatches = [], []
 
     for field, w in weights.items():
@@ -1420,6 +2021,9 @@ def explain_book(book, centroid, weights, top_n=5):
         else:
             sim = nominal_similarity(field, book.get(field), centroid[field])
         w = _redundancy_adjusted_weight(book, field, w) * scoring_confidence(book, field)
+        if field_prevalence is not None:
+            prevalence = field_prevalence.get(field, {}).get(book.get(field), 0.0)
+            w *= max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence)
 
         if w >= 0:
             matches.append((field, w * sim))
@@ -1437,11 +2041,153 @@ def explain_book(book, centroid, weights, top_n=5):
         if t not in book_tropes:
             continue
         w = w * scoring_confidence(book, t)
+        if trope_prevalence is not None:
+            prevalence = trope_prevalence.get(t, 0.0)
+            w *= max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence)
         (matches if w >= 0 else mismatches).append((f"trope:{t}", abs(w)))
 
     matches = sorted((m for m in matches if m[1] > 0.1), key=lambda x: -x[1])
     mismatches = sorted((m for m in mismatches if m[1] > 0.1), key=lambda x: -x[1])
     return matches[:top_n], mismatches[:top_n]
+
+
+# --- Candidate-pool prevalence discount (2026-09-06, LANDED) -----------
+# Motivated by a friend's review (relayed by the repo owner) of a
+# Recommendation Ledger run: a field can be a genuine, non-spurious
+# preference (real liked-vs-disliked separation in the RATED pool)
+# while still doing little to RANK one candidate above another, if most
+# of the CANDIDATE pool already shares the matching value -- e.g.
+# emotional_resolution: bittersweet is a real, broad, well-evidenced
+# preference (see docs/scoring-test-protocol.md's 2026-09-06 entries),
+# but matches ~53% of the whole catalog, so agreeing on it barely
+# discriminates two candidates that both have it. This is a DIFFERENT
+# axis from build_profile_trope_shrinkage() below (which discounts a
+# WEIGHT for being built on too little RATED evidence) -- this discounts
+# a SCORING CONTRIBUTION for the matching VALUE being too common in the
+# CANDIDATE pool being ranked, regardless of how well-evidenced the
+# underlying preference is. Deliberately linear (1 - prevalence), not
+# log-IDF -- with prevalences observed so far topping out around 53%, a
+# log curve would barely differ from linear in the range that matters;
+# simpler is better until real data says otherwise.
+# PREVALENCE_DISCOUNT_FLOOR keeps even a near-universal value from being
+# discounted to zero. Full validation (8-row scorecard, all 4 real
+# raters, every regression traced to a specific book) in
+# docs/scoring-test-protocol.md before this landed -- see score_book()'s
+# own docstring for the numbers.
+PREVALENCE_DISCOUNT_FLOOR = 0.1
+
+
+def build_prevalence_lookup(catalog, genre=None):
+    """(field_prevalence, trope_prevalence) for the prevalence discount:
+    field_prevalence[field][value] / trope_prevalence[trope] = fraction
+    of the CANDIDATE pool (book_dna-tagged books in `genre`, or the
+    whole catalog if genre is None) sharing that value/trope. Computed
+    once per scoring session, not per candidate -- pass the result into
+    score_book()/explain_book() for every book scored in the same run."""
+    pool = [b for b in catalog.values() if genre is None or genre in (b.get("genre") or [])]
+    n = len(pool) or 1
+    field_prevalence = {}
+    for field in list(ORDINAL_FIELDS) + list(NOMINAL_FIELDS):
+        counts = {}
+        for b in pool:
+            v = b.get(field)
+            if v is None:
+                continue
+            counts[v] = counts.get(v, 0) + 1
+        field_prevalence[field] = {v: c / n for v, c in counts.items()}
+    trope_counts = {}
+    for b in pool:
+        for t in (b.get("tropes") or []):
+            trope_counts[t] = trope_counts.get(t, 0) + 1
+    trope_prevalence = {t: c / n for t, c in trope_counts.items()}
+    return field_prevalence, trope_prevalence
+
+
+# Minimum rated-book count a user needs on the MINORITY side of a
+# NOMINAL_PARTIAL_SIMILARITY pair (e.g. person's third_limited/
+# third_omniscient, already given 0.5 partial credit at scoring time --
+# see nominal_similarity()) before build_prevalence_lookup_grouped()
+# trusts that this user has a real, distinct reaction to that value
+# worth keeping separate for prevalence purposes. Below this, the pair
+# is folded into one combined prevalence figure instead. Same spirit
+# and rough magnitude as MIN_DEALBREAKER_SAMPLE (3) -- checked directly
+# for Mathias (2026-09-06): only 2 of his rated books are
+# third_omniscient (1 loved, 1 disliked) vs. 93 third_limited, nowhere
+# near enough to distinguish a real omniscient-specific reaction from
+# noise, so grouping is correct for him specifically -- this constant
+# is what makes that a per-user check, not a blanket assumption.
+MIN_PREVALENCE_GROUP_SAMPLE = 5
+
+
+def build_prevalence_lookup_grouped(catalog, ratings, genre=None, min_sample=MIN_PREVALENCE_GROUP_SAMPLE):
+    """Like build_prevalence_lookup(), but for any field with a
+    NOMINAL_PARTIAL_SIMILARITY pair, pools the pair's prevalence
+    together UNLESS the given user's OWN `ratings` show at least
+    `min_sample` rated books on EACH side of the pair -- i.e. only
+    collapse two values into one combined prevalence figure when this
+    specific user doesn't have enough evidence to argue they're
+    genuinely different for them. `ratings`: {title: rating_label}, the
+    SAME shape passed to _resolve_profile()/recommend() -- this makes
+    the grouping decision per-user, not a global catalog property (see
+    MIN_PREVALENCE_GROUP_SAMPLE's comment for why, and Mathias's
+    concrete numbers that motivated this)."""
+    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    user_value_counts = {}
+    for title in ratings:
+        bid = title_to_id.get(title)
+        if bid is None:
+            continue
+        book = catalog[bid]
+        for field in NOMINAL_PARTIAL_SIMILARITY:
+            v = book.get(field)
+            if v is None:
+                continue
+            user_value_counts.setdefault(field, {})
+            user_value_counts[field][v] = user_value_counts[field].get(v, 0) + 1
+
+    # Union-find per field over pairs that qualify for grouping (at
+    # least one side has fewer than min_sample rated books for THIS user).
+    group_of = {}
+    for field, pairs in NOMINAL_PARTIAL_SIMILARITY.items():
+        parent = {}
+
+        def find(v):
+            parent.setdefault(v, v)
+            while parent[v] != v:
+                v = parent[v]
+            return v
+
+        for pair in pairs:
+            a, b = tuple(pair)
+            counts = user_value_counts.get(field, {})
+            if counts.get(a, 0) < min_sample or counts.get(b, 0) < min_sample:
+                ra, rb = find(a), find(b)
+                if ra != rb:
+                    parent[ra] = rb
+        group_of[field] = {v: find(v) for v in parent}
+
+    pool = [b for b in catalog.values() if genre is None or genre in (b.get("genre") or [])]
+    n = len(pool) or 1
+    field_prevalence = {}
+    for field in list(ORDINAL_FIELDS) + list(NOMINAL_FIELDS):
+        grouping = group_of.get(field, {})
+        group_counts = {}
+        for b in pool:
+            v = b.get(field)
+            if v is None:
+                continue
+            key = grouping.get(v, v)
+            group_counts[key] = group_counts.get(key, 0) + 1
+        field_prevalence[field] = {
+            v: group_counts[grouping.get(v, v)] / n
+            for v in set(b.get(field) for b in pool if b.get(field) is not None)
+        }
+    trope_counts = {}
+    for b in pool:
+        for t in (b.get("tropes") or []):
+            trope_counts[t] = trope_counts.get(t, 0) + 1
+    trope_prevalence = {t: c / n for t, c in trope_counts.items()}
+    return field_prevalence, trope_prevalence
 
 
 # A mismatch magnitude this large is treated as a likely personal
@@ -1694,7 +2440,7 @@ def validated_dealbreaker_fields(catalog, id_to_magnitude, min_strength=STAT_SEP
 
 
 def dealbreaker_flags(book, centroid, weights, top_n=5, threshold=DEALBREAKER_THRESHOLD,
-                       validated_fields=None):
+                       validated_fields=None, field_prevalence=None, trope_prevalence=None):
     """A subset of explain_book()'s mismatches strong enough to plausibly
     function as a personal dealbreaker for this book/user, not just one
     of several things slightly off. Computed over explain_book()'s FULL
@@ -1735,7 +2481,8 @@ def dealbreaker_flags(book, centroid, weights, top_n=5, threshold=DEALBREAKER_TH
     investigated, not a real lever" and the design discussion that
     followed it). Surfacing the strong mismatch as an explicit flag next
     to the score sidesteps that math problem instead of re-fighting it."""
-    _, mismatches = explain_book(book, centroid, weights, top_n=100)
+    _, mismatches = explain_book(book, centroid, weights, top_n=100,
+                                  field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     if validated_fields:
         flags = [(f, m) for f, m in mismatches if f in validated_fields and m >= VALIDATED_DEALBREAKER_MAGNITUDE]
     else:
@@ -1863,7 +2610,8 @@ SERIES_TRAJECTORY_DIVERGENCE_THRESHOLD = 0.15
 SERIES_TRAJECTORY_MAX_PENALTY = 0.3
 
 
-def _series_trajectory_penalty_factor(series_dna, book, centroid, weights):
+def _series_trajectory_penalty_factor(series_dna, book, centroid, weights,
+                                       field_prevalence=None, trope_prevalence=None):
     """Returns a multiplier in [1 - SERIES_TRAJECTORY_MAX_PENALTY, 1.0] --
     1.0 = no penalty, the common case (most books aren't series entry
     points with a real divergent trajectory). `series_dna`:
@@ -1895,7 +2643,8 @@ def _series_trajectory_penalty_factor(series_dna, book, centroid, weights):
     if float(own_position) != float(earliest_position):
         return 1.0
 
-    matches, _ = explain_book(book, centroid, weights, top_n=100)
+    matches, _ = explain_book(book, centroid, weights, top_n=100,
+                               field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     strong_fields = {f: c for f, c in matches if c > 0.15 and not f.startswith("trope:")}
     if not strong_fields:
         return 1.0
@@ -1937,8 +2686,10 @@ def _series_trajectory_penalty_factor(series_dna, book, centroid, weights):
     return 1 - min(SERIES_TRAJECTORY_MAX_PENALTY, total_divergence)
 
 
-def _apply_series_trajectory_penalty(series_dna, book, centroid, weights, score):
-    return score * _series_trajectory_penalty_factor(series_dna, book, centroid, weights)
+def _apply_series_trajectory_penalty(series_dna, book, centroid, weights, score,
+                                      field_prevalence=None, trope_prevalence=None):
+    return score * _series_trajectory_penalty_factor(series_dna, book, centroid, weights,
+                                                       field_prevalence, trope_prevalence)
 
 
 # Veto/cap ceiling: just under GOOD_MATCH_THRESHOLD, so a vetoed book can
@@ -1950,7 +2701,8 @@ def _apply_series_trajectory_penalty(series_dna, book, centroid, weights, score)
 DEALBREAKER_VETO_CAP = GOOD_MATCH_THRESHOLD - 0.001
 
 
-def _apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, score):
+def _apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, score,
+                             field_prevalence=None, trope_prevalence=None):
     """ELECTRE-style veto (option #2 from the aggregation-shape design
     discussion, 2026-09-02): if `book` mismatches on a field/trope
     that's statistically validated as a dealbreaker for THIS user (see
@@ -1990,7 +2742,8 @@ def _apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, ce
     flags."""
     if not validated_fields:
         return score
-    flags = dealbreaker_flags(book, centroid, weights, validated_fields=validated_fields)
+    flags = dealbreaker_flags(book, centroid, weights, validated_fields=validated_fields,
+                               field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     if not flags:
         return score
     return min(score, DEALBREAKER_VETO_CAP)
@@ -2329,6 +3082,7 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     csw = cold_start_weight(catalog, id_to_magnitude)
     series_dna = compute_series_dna(catalog)
     normalized_rules = normalize_user_rules(user_rules)
+    field_prevalence, trope_prevalence = build_prevalence_lookup(catalog, genre)
 
     diversity = max(0.0, min(diversity, MAX_DIVERSITY))
     recent_books = [
@@ -2350,10 +3104,12 @@ def recommend(catalog, ratings, top_n=10, genre=None,
             continue
         if not series_position_ready(catalog, id_to_magnitude, book):
             continue
-        relevance, contributions = score_book(book, centroid, weights)
+        relevance, contributions = score_book(book, centroid, weights, field_prevalence, trope_prevalence)
         relevance = _apply_series_repeat(catalog, id_to_magnitude, book, relevance)
-        relevance = _apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, relevance)
-        relevance = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, relevance)
+        relevance = _apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, relevance,
+                                             field_prevalence, trope_prevalence)
+        relevance = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, relevance,
+                                                      field_prevalence, trope_prevalence)
         if diversity > 0 and recent_books:
             novelty = 1 - max(book_similarity(book, h) for h in recent_books)
             relevance = (1 - diversity) * relevance + diversity * novelty
@@ -2416,13 +3172,19 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     centroid, weights, id_to_magnitude, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides)
     validated = validated_dealbreaker_fields(catalog, id_to_magnitude)
     series_dna = compute_series_dna(catalog)
-    score, _ = score_book(book, centroid, weights)
+    field_prevalence, trope_prevalence = build_prevalence_lookup(catalog, genre)
+    score, _ = score_book(book, centroid, weights, field_prevalence, trope_prevalence)
     score = _apply_series_repeat(catalog, id_to_magnitude, book, score)
-    score = _apply_dealbreaker_veto(catalog, id_to_magnitude, validated, book, centroid, weights, score)
-    score = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, score)
-    poor_threshold = user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
-    matches, mismatches = explain_book(book, centroid, weights, top_n=top_n)
-    flags = dealbreaker_flags(book, centroid, weights, validated_fields=validated)
+    score = _apply_dealbreaker_veto(catalog, id_to_magnitude, validated, book, centroid, weights, score,
+                                     field_prevalence, trope_prevalence)
+    score = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, score,
+                                              field_prevalence, trope_prevalence)
+    poor_threshold = user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
+                                                     field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
+    matches, mismatches = explain_book(book, centroid, weights, top_n=top_n,
+                                        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
+    flags = dealbreaker_flags(book, centroid, weights, validated_fields=validated,
+                               field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
 
     matches_labeled = [(label, p) for label, _ in matches if (p := describe(label, book))]
     mismatches_labeled = [(label, p) for label, _ in mismatches if (p := describe(label, book))]
@@ -2654,14 +3416,17 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
     # inconsistent consumers.
     deduped_id_to_magnitude = _series_deduped_id_to_magnitude(catalog, id_to_magnitude)
     series_dna = compute_series_dna(catalog)
+    field_prevalence, trope_prevalence = build_prevalence_lookup(catalog, genre)
     book = catalog[title_to_id[title]]
 
-    raw_score, _ = score_book(book, centroid, weights)
+    raw_score, _ = score_book(book, centroid, weights, field_prevalence, trope_prevalence)
     after_series = _apply_series_repeat(catalog, id_to_magnitude, book, raw_score)
     after_veto = _apply_dealbreaker_veto(
-        catalog, id_to_magnitude, validated_fields, book, centroid, weights, after_series
+        catalog, id_to_magnitude, validated_fields, book, centroid, weights, after_series,
+        field_prevalence, trope_prevalence
     )
-    after_trajectory = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, after_veto)
+    after_trajectory = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, after_veto,
+                                                         field_prevalence, trope_prevalence)
     if csw > 0:
         demand = GENRE_ACCESSIBILITY_DEMAND.get(book.get("genre_accessibility"), 0.5)
         after_cold_start = (1 - csw) * after_trajectory + csw * (1.0 - demand)
@@ -2684,7 +3449,8 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
          "excluded": excluded_by_rule},
     ]
 
-    matches, mismatches = explain_book(book, centroid, weights, top_n=100)
+    matches, mismatches = explain_book(book, centroid, weights, top_n=100,
+                                        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
 
     def build_rows(rows, negate=False):
         out = []
@@ -2723,14 +3489,15 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
             out.append(row)
         return out
 
-    dealbreaker = dealbreaker_flags(book, centroid, weights, validated_fields=validated_fields)
+    dealbreaker = dealbreaker_flags(book, centroid, weights, validated_fields=validated_fields,
+                                     field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     series_sim = series_repeat_worst_similarity(catalog, id_to_magnitude, book)
 
     return {
         "title": book["title"],
         "author": book["author"],
         "final_score": round(final, 4),
-        "match_label": "Excluded by user rule" if excluded_by_rule else match_label(final, user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)),
+        "match_label": "Excluded by user rule" if excluded_by_rule else match_label(final, user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights, field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)),
         "excluded_by_user_rule": excluded_by_rule,
         "pipeline": pipeline,
         "matches": build_rows(matches),

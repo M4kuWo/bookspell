@@ -61,16 +61,28 @@ on a network you don't trust.
   0.0-1.0 slider), a visible list of active rules each with its own
   remove button, and "Reset all rules."
 - **Recommendations**: genre + count, then a real `recommend()` call
-  with the active rules applied. Each result expands into its full
-  `audit_book_score()` pipeline (every stage's score, top matches/
-  mismatches) -- not just a ranked list, the actual "why" for each one.
+  with the active rules applied. Each result shows its cover (from
+  `books.cover_url`, fetched separately from `R.load_catalog()`'s own
+  query -- cover art has no scoring use, so it's kept out of the shared
+  engine's query) next to an expander with its full `audit_book_score()`
+  pipeline (every stage's score, top matches/mismatches) -- not just a
+  ranked list, the actual "why" for each one. The same cover also
+  previews in "Add or fix a rating" once a book is picked.
 
-## Known limitations (as of first build, 2026-09-05)
+## Known limitations
 
-- Smoke-tested (starts cleanly, serves the page, imports `recommend.py`
-  without error) but not yet exercised end-to-end by an actual person
-  clicking through every control in a browser -- do that before trusting
-  it fully.
+- Exercised end-to-end in a browser (2026-09-06): rater picker, rating
+  add/fix, rule search/exclude/reduce/remove/reset, and recommendations
+  with the audit breakdown all confirmed working. One real UX pattern
+  to know: a few sidebar sections (ratings count, active-rules list)
+  are rendered *before* the button logic that mutates them in script
+  order, so a change sometimes only shows on the *next* rerun, not the
+  one triggered by the click itself -- not a bug, just Streamlit's
+  top-to-bottom script execution; a stale-looking screenshot right
+  after a click doesn't necessarily mean the click failed.
+- ~2 of 873 catalog books have no `cover_url` -- those just show no
+  image (not a broken-image icon), same silent-skip pattern as any
+  other optional field in this tool.
 - No auth, no multi-user support, no persistence beyond the same
   `data/ratings/*.json` files every other script already reads/writes.
   Two people should not run this against the same rater file at the

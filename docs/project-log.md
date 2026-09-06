@@ -6340,3 +6340,466 @@ together in a rolled-back transaction first, then applied directly to
 hosted; verified: romance_tone went 94 -> 104, worldbuilding-delivery
 went 48 -> 54. Same open registration item as every migration since
 2026-09-05.
+
+## 2026-09-06 (later) -- dogfood tool exercised end-to-end in browser, book covers added
+
+Per this project's own UI-testing convention (CLAUDE.md: "start the dev
+server and use the feature in a browser before reporting the task as
+complete"), actually clicked through every control of `tools/dogfood/
+app.py` rather than trusting the earlier smoke test. Confirmed working:
+rater picker, rule search/filter, "None of this" (verified it actually
+removes YA books from `recommend()` output, not just cosmetically),
+"Less of this" with custom strength, per-rule remove buttons, "Reset
+all rules," and the full `audit_book_score()` pipeline breakdown
+(all 6 stages render with correct scores).
+
+Found one real side effect, not a code bug: testing "Add or fix a
+rating" against "City of Stairs" (picked as an arbitrary unrated
+example) actually added a genuine new rating to `data/ratings/
+mathias.json` (137 -> 138) rather than a no-op, since that book turned
+out not to already be rated. Reverted immediately via `git checkout --
+data/ratings/mathias.json` once caught -- a reminder to check `git
+diff` after any UI test that writes to a real data file, even an
+"internal only" one.
+
+Also hit, twice, a pattern worth knowing rather than re-debugging next
+time: a few sidebar sections (ratings-on-file count, the active-rules
+list) are rendered *earlier in script order* than the button logic
+that mutates the state they display, so a click's effect sometimes
+only shows on the *next* rerun, not the one the click itself triggers.
+Confirmed via `get_page_text` twice that the underlying state was
+actually already correct both times a screenshot looked stale (once
+after "Reset all rules," once after removing a rule) -- not a bug, just
+Streamlit's top-to-bottom execution model.
+
+Then added book covers (repo owner's request): `books.cover_url` (871/
+873 populated, real Hardcover CDN URLs) is fetched via a small separate
+query in `app.py` (`load_cover_urls()`), kept out of
+`R.load_catalog()`'s own query since cover art has no scoring use --
+deliberately not widening the shared engine's query for a display-only
+field. Covers now show next to each recommendation and as a preview in
+the rating picker once a book is selected. Verified rendering correctly
+in-browser for both spots.
+
+## 2026-09-06 (later still) -- another read-but-unrated gap caught: The Blinding Knife
+
+Repo owner reported The Blinding Knife (Brent Weeks, Lightbringer #2)
+got recommended despite already being read. Checked `data/ratings/
+mathias.json` -- confirmed genuinely missing (same pattern as the
+Demon Cycle/Age of Madness gaps caught 2026-09-05). Checked the
+Goodreads export directly: rated 3 stars (2021/02/04), no written
+review. Book 1 (The Black Prism) is also 3 stars and already on file as
+`it_was_okay` -- so this one wasn't a case of a conflicting direct
+report overriding an import, just a straightforward missed match. Most
+likely cause: it wasn't yet in the catalog at the 2026-09-04 import
+time, or the "(Lightbringer, #2)" suffix broke the importer's fuzzy
+title match -- confirmed it IS in the catalog and tagged now. Added as
+`it_was_okay` (1:1 star mapping, consistent with book 1).
+
+Worth flagging as a standing pattern rather than a one-off: this is now
+the third time (Demon Cycle/Age of Madness, then Horns/NOS4A2/Forsworn,
+now this) that a "why did this get recommended, I already read it"
+report has turned up a real rating-file gap rather than a scoring bug.
+The Goodreads import's own "unmatched" set (37 of 109 rated-and-read
+titles didn't match at import time) is a real, still-live source of
+these -- worth a dedicated pass re-running the matcher against today's
+larger catalog rather than waiting for each one to surface individually
+via a recommendation complaint.
+
+## 2026-09-06 (later still) -- re-ran the Goodreads matcher against today's catalog, 5 new gaps closed, one author-contamination bug caught
+
+Followed through on the above: re-ran `scripts/import_goodreads.py`
+against the repo owner's real export and today's larger catalog.
+Matched rose from 72 to 82 of 109 rated-and-read titles (regenerated
+`data/ratings/mathias_goodreads.json`, git-tracked draft file). Of the
+10 newly matched, 5 were already correctly on file in `mathias.json`
+from earlier direct reports (Horns, NOS4A2, The Trouble With Peace, The
+Wisdom of Crowds, The Blinding Knife) -- cross-checked, all consistent,
+nothing overwritten. 5 were genuinely new and added: The Crimson
+Campaign/The Autumn Republic (Powder Mage 2-3, loved, completing the
+trilogy -- previously blocked as "not yet in the catalog", noted back
+on 2026-09-02), The Broken Eye (Lightbringer #3, disliked -- continues
+the series' souring trend after Black Prism/Blinding Knife, its review
+text specifically calling out anachronistic prose, info-dumps, weak
+female characters, and heavy-handed religious preachiness), Battle
+Royale (hated), and Dragons of Autumn Twilight (liked) -- all via the
+plain 1:1 star mapping, no conflicting direct report existed for any of
+these five. 27 titles remain unmatched; none looked like an obvious
+near-miss worth chasing this round.
+
+While checking Battle Royale, caught a real instance of the recurring
+author-contamination bug: its `author` field held "Koushun Takami,
+Urszula Knap, Maciej Kamuda" -- the latter two are the Polish edition's
+translators, not co-authors. Same class of bug as Sapkowski/David
+French and Death Masks/Simon Vance. Fixed via
+`20260906030000_fix_battle_royale_author_contamination.sql`, tested in
+a rolled-back transaction first, applied to local, pushed to hosted via
+`supabase db push --linked`, and verified matching on both sides
+(`supabase db query --linked` confirms hosted now reads "Koushun
+Takami" alone).
+
+Full `scripts/scoring_tests.py` suite re-run after all the ratings-file
+changes -- all 13 scenarios still pass, no regressions.
+
+## 2026-09-06 (later) -- audited external scoring-architecture critique against real catalog data, nothing implemented
+
+A friend of the repo owner reviewed a Recommendation Ledger run and
+raised 7 points: prevalence/discriminatory-value weighting (roughly
+IDF-like), auditing recurring dominant contributors like
+`emotional_resolution`'s near-constant +0.323, preference-evidence
+tracing, oversized trope effects from thin evidence, additive-vs-
+interaction scoring, and two diagnostic books (From Blood and Ash,
+Altered Carbon). Explicitly asked for empirical evaluation, not
+hand-tuning toward expected results. Full audit (checked prior art in
+docs/scoring-test-protocol.md first, then verified each claim against
+real catalog/ratings data) recorded in that doc's new entry under
+today's date -- see there for the full findings. Short version:
+oversized-trope-effects-from-thin-evidence is real and evidence-backed
+(worth a genuine next experiment); the romance-interaction concern
+turned out to already be modeled via the confidence/source layer (From
+Blood and Ash's melodramatic-romance tag exists but is confidence-
+gated below MIN_CONFIDENCE_TO_COUNT, not missing from the schema); the
+Altered Carbon suspicion is directly contradicted by real, broad
+patterns in both flagged fields; the prevalence-discount idea is
+plausible but implementing it needs the same caution the reverted
+2026-09-04 redundancy-discount experiment already taught this project.
+Nothing changed in scoring code -- this is a diagnostic pass only, per
+this doc's own "check against real data before hand-tuning" discipline.
+
+## 2026-09-06 (later still) -- two scoring experiments prototyped and A/B tested (neither landed yet), one design question answered from code
+
+Repo owner asked four follow-ups to the friend-feedback audit above:
+(1) confirm whether cross-genre evidence already informs trope scoring
+the way it does structural fields; (2) prototype the trope-weight
+shrinkage idea; (3) test the prevalence/IDF proposal; (4) re-examine
+`person`'s weight.
+
+(1) Answered directly from code, not memory -- see
+docs/scoring-test-protocol.md's "Follow-up question" entry under
+today's date. STRUCTURAL fields (person, pov_count, pace_shape,
+emotional_resolution, etc.) already pool the rater's FULL cross-genre
+history; tropes are deliberately always genre-scoped. Whether tropes
+like `revenge` should also cross genres is a real, open, previously
+undecided design question, not something this project had already
+settled.
+
+(2) `build_profile_trope_shrinkage()` prototyped (n/(n+k) sample-size
+discount on each trope's raw weight) and A/B tested across all 4 real
+raters with a full k-sweep (1-12). Genuinely mixed: real gains for
+Mathias at several k values, but Osnat's pairwise accuracy and Dandan's
+bucket accuracy regress at nearly every k tested, and Mathias-sparse's
+hated_rejection regresses at EVERY k with no recovery. Same conclusion
+already on record for the more general "Bayesian-average shrinkage"
+idea (deferred 2026-08/09) -- confirmed again for this more targeted,
+trope-only version. **Deferred, not landed** -- kept in recommend.py as
+an experimental variant, not wired into production, full numbers in
+scoring-test-protocol.md.
+
+(3) `score_book_prevalence_discount()` prototyped (each field/trope
+contribution scaled by how common its matching value is across the
+WHOLE CATALOG, `max(0.1, 1-prevalence)`) and A/B tested the same way.
+Meaningfully more promising: real gains for Mathias (full and sparse)
+and Dandan with no bucket/hated_rejection regressions; one real
+regression (Osnat's pairwise accuracy, on the rater already flagged
+with a structural 17-liked/1-disliked data skew). Directly confirms the
+friend's `emotional_resolution: +0.323` concern with real numbers
+(53.0% catalog prevalence, discounts to +0.152) and directly answers
+point (4) for the common case. **Promising but not yet landed** --
+needs the isolated/author scenarios, a full scorecard run, and
+understanding the Osnat regression before it's a real landing
+candidate; this was a first-pass A/B only.
+
+(4) `person`'s current real weight in Mathias's actual profile (not
+the synthetic domination scenario) is 0.266 -- substantial but not the
+historical 0.5 extreme. Its contribution to The Shadow of the Gods
+(person: third_limited, the modal/most-common value at 53.3% catalog
+prevalence) is 0.227 at baseline, 0.106 under the prevalence discount
+-- directly confirms (3) meaningfully reduces exactly the repeated
+"person: +0.227" pattern that showed up across nearly every book in the
+earlier Recommendation Ledger, since that value happens to be genuinely
+common. A rarer mismatch value (`first`, 29.8% prevalence) stays closer
+to full strength under the same mechanism -- working as intended
+(rarity should cut both ways), not a gap.
+
+Both A/B scripts were built as standalone comparisons (single import of
+`recommend`, direct function-name swaps, never monkeypatching a
+separately-imported module) specifically to avoid the exact
+module-identity pitfall CLAUDE.md documents from the 2026-09-04
+per-value nominal weight-learning incident -- confirmed directly via
+`R is T.R` before trusting any result.
+
+## 2026-09-06 (later still) -- three more follow-ups from the repo owner: trope backoff prototype, emotional_resolution spot-check, person grouping
+
+(1) `build_profile_trope_backoff()` prototyped -- the repo owner's own
+middle-ground between "tropes always genre-scoped" and "always
+cross-genre," blending each trope's genre-scoped estimate with its
+cross-genre one, weighted by how much scoped evidence exists. Zero
+effect on all 4 raters' held-out benchmarks (an artifact of none of the
+fixed held-out titles carrying the specific thin tropes this targets,
+not evidence of safety). Real movement on genuinely thin-by-count
+tropes (hidden_talent_prodigy 0.267->0.114, underdog_rising
+-0.261->-0.196), but barely touched `revenge`/fantasy (the original
+Red Rising motivating case) since its scoped n=19 isn't actually thin
+by raw count -- the real problem there is evidence INDEPENDENCE (one
+series), which this mechanism doesn't measure. One result flagged for
+caution rather than presented as a win: `revenge`/sci_fi flips sign
+(-0.146->+0.023) under this mechanism -- needs a dedicated look before
+trusting it, not just because the aggregate numbers stayed flat.
+**Prototyped, not landed.**
+
+(2) Spot-checked whether `emotional_resolution: bittersweet`'s 53.0%
+catalog prevalence reflects deliberate tagging or a default-shaped
+shortcut, per the repo owner's request. Only 14/437 (3.2%) bittersweet
+tags have an explicit confidence override -- same untouched-by-review
+rate as most fields, not distinctively worse. Spot-checked 20 random
+titles against known plot facts -- all read as genuinely bittersweet
+(Red Rising, Ender's Shadow, Locke Lamora, Sea of Tranquility), one
+defensibly-borderline case (Vicious, arguably closer to ambiguous).
+**No smoking gun found** -- the field only has 4 possible values, so
+53% is ~2x a no-signal baseline, not the red flag it'd be with a
+finer-grained schema, and tracks with real adult-SFF convention
+(cost-of-victory endings genuinely are common). Not added to
+HIGH_RISK_FIELDS on the strength of this pass alone -- flagged as worth
+the repo owner's own attention given how much scoring weight rides on
+it, full writeup in scoring-test-protocol.md.
+
+(3) Repo owner's observation that `person`'s third_limited/
+third_omniscient are "close cousins" -- confirmed the engine already
+agrees (`nominal_similarity()` gives them 0.5 partial credit against
+each other, a real pre-existing precedent). Built
+`build_prevalence_lookup_grouped()`: pools their prevalence together
+for the discount experiment, but ONLY when a specific user's own rated
+history has fewer than `MIN_PREVALENCE_GROUP_SAMPLE` (5) books on
+either side of the pair -- gated per-user exactly as the repo owner
+proposed, not a blanket rule. Checked directly for Mathias: 2 rated
+third_omniscient books (1 loved, 1 disliked) vs. 93 third_limited --
+nowhere near enough to argue a distinct reaction, so grouping applies
+for him. Combined prevalence is 65.1% (53.3% + 11.8%), higher than the
+55% estimate that motivated checking this in the first place. Negligible
+effect on the current held-out benchmark (no verdict changes -- none of
+those specific titles happen to be third_omniscient); the real effect
+is on third_omniscient CANDIDATES during actual recommend() calls,
+which this benchmark's fixed title list doesn't exercise. Implemented
+and gated correctly; still needs a live recommend()-level check before
+folding into a final prevalence-discount landing candidate.
+
+Full `scripts/scoring_tests.py` suite re-run after all three additions
+-- still 13/13, no regressions from any of the new experimental code.
+
+## 2026-09-06 (later still) -- Red Rising fully resolved: review recorded, message_intensity corrected, general revenge-preference insight captured
+
+Asked the repo owner directly why Red Rising was hated (no prior
+review/notes existed for it). His answer confirmed the friend-feedback
+critique's interaction hypothesis exactly, and surfaced two separate,
+real findings:
+
+1. **A general taste fact, distinct from this one book**: he likes
+   revenge specifically when it's unapologetic, deserved, and reaches a
+   satisfying fruition (cited Punisher-style revenge, Kratos/God of
+   War, The Count of Monte Cristo). Red Rising's revenge arc violates
+   this on every count -- the infiltration/assimilation plot undercuts
+   "unapologetic," and the book's anti-violence theme undercuts
+   "satisfying fruition." This means the earlier sci-fi/revenge sign-
+   flip investigation was chasing the wrong lever -- the real
+   distinguishing feature was never genre, it's whether revenge is
+   portrayed as deserved-and-cathartic vs. undercut-and-moralized-
+   against, which the current single `revenge` trope tag can't
+   distinguish. Not fixed here (inventing new trope vocabulary needs to
+   clear this project's own bar first, not something to do
+   unilaterally) -- flagged as a real, concrete candidate
+   (`revenge_denied_or_undercut` or similar) if the repo owner wants to
+   pursue it.
+2. **A real, checkable tagging gap**: his description ("felt like it
+   was trying to teach you that all of this is wrong... naive, childish
+   and unrealistic") reads as a heavy-handed message, but Red Rising was
+   tagged `message_intensity: moderate`. Fixed via
+   `20260906040000_fix_red_rising_message_intensity.sql` (moderate ->
+   heavy_handed) -- tested in a rolled-back transaction, applied local
+   then hosted, verified matching on both sides.
+
+`data/ratings/mathias.json` updated with BOTH pieces, kept deliberately
+distinct per the repo owner's explicit request: `reviews["Red Rising"]`
+is the book-specific reasoning (message/theme complaint, the
+infiltration arc reading as unrealistic given the severity of the
+wrong done to him, the derivative-of-Battle-Royale/inferior-to-The-
+Hunger-Games comparison, the high-school-drama-vibe complaint);
+`_meta.notes` gets a separate UPDATE entry for the general revenge-
+preference pattern, explicitly framed as "a note about a general
+preference pattern, not a restatement of the review above." Full
+`scoring_tests.py` suite re-run clean (13/13) after the migration.
+
+**Correction, same session**: the "new" `revenge_denied_or_undercut`
+trope idea the repo owner asked to have logged is actually a RECURRENCE
+of an entry already in docs/schema/book-dna.md's backlog from
+2026-09-03 (same Red Rising example, same "I don't know how this could
+be caught by a pattern recognition system" quote already on record) --
+today's investigation re-derived it independently rather than finding
+something genuinely new. Updated that existing entry rather than
+creating a duplicate; repo owner explicitly not convinced it's the
+right fix, logged as skepticism, not a decision to build.
+
+## 2026-09-06 (later still) -- prevalence discount fully validated: full scorecard, all 3 regressions traced and understood
+
+Repo owner asked to finish validating the candidate-pool prevalence
+discount before moving to series-aware deduplication. Ran the full
+8-row `build_scorecard()` (not just the earlier 4-scenario spot check)
+with `score_book_prevalence_discount()` swapped in. Clear, substantial
+wins with no offsetting cost on Mathias's three main scenarios (bucket
+accuracy +9 to +18 points, hated_rejection +20 to +40 points) plus
+Dandan (pairwise +13.3pt) and Osnat series-isolated (pairwise +5.6pt).
+
+All 3 regressions traced to a specific book, not left unexplained:
+Osnat's pairwise drop is one already-near-tied pair (Divergent/Iron
+Flame, 0.007 apart at baseline) crossing -- noise. Mathias's
+author-isolated loved_recall drop is Rhythm of War, mechanistically
+explained (its common-value matches get discounted heavily while its
+rare-value mismatch barely does, in a stress test that deliberately
+excludes all Sanderson training data) -- the same row gains a correct
+Royal Assassin flip in exchange, a real trade-off, not a one-sided
+cost. Gabriel's drop is the least concerning -- his leave-one-out set
+is only 6 books, the noisiest scenario in the whole suite already.
+Full numbers and reasoning in scoring-test-protocol.md.
+
+**Verdict: ready to land.** Not yet wired into production -- doing so
+for real requires deciding how to thread the precomputed prevalence
+lookup through score_book()'s several call sites, a real architectural
+decision flagged for the repo owner rather than done unilaterally.
+
+## 2026-09-06 (later still) -- candidate-pool prevalence discount LANDED in production
+
+Repo owner asked to land it. Merged `score_book_prevalence_discount()`
+into `score_book()`/`explain_book()` directly (new optional params,
+None/None is a byte-identical no-op) and removed the now-redundant
+standalone function. Traced the FULL call graph before touching
+anything, rather than assuming only `recommend()` mattered -- found
+`_apply_dealbreaker_veto()` calls `dealbreaker_flags()` internally,
+which calls `explain_book()`, meaning it's genuinely part of the
+scoring pipeline, not just a display helper. Threaded the lookup
+through `recommend()`, `explain_match()`, `audit_book_score()`,
+`user_calibrated_poor_threshold()`, `_apply_dealbreaker_veto()`,
+`dealbreaker_flags()`, `_apply_series_trajectory_penalty()`, and
+`series_dnf_outlook()`. Also fixed `tools/dogfood/app.py`, which
+separately (and unscoped) recomputed its own match-label threshold --
+would have silently miscalibrated labels against `recommend()`'s now-
+discounted scores otherwise.
+
+Caught a real gap while landing, not after: `scripts/scoring_tests.py`
+itself calls `score_book()`/etc. directly with none of the new params
+-- left as-is, the ENTIRE benchmark suite would have silently kept
+testing the pre-2026-09-06 undiscounted pipeline forever. Fixed by
+threading the same lookup through `_full_score()` and every other
+direct call site in that file. Full suite re-run after: 13/13 pass,
+numbers match the earlier validation A/B exactly.
+
+Verified `recommend()` and `audit_book_score()` agree on the same
+book/profile to 1e-5 (a suspected mismatch while checking this turned
+out to be my own test comparing an unrounded score against
+`audit_book_score()`'s deliberate 4-decimal rounding, not a real bug).
+Live-checked in the dogfood tool's browser: rankings genuinely
+reordered (City of Stairs now edges out The Shadow of the Gods), audit
+view's pipeline numbers matched the header score exactly. Full writeup
+and numbers in scoring-test-protocol.md.
+
+Not included in this landing: `build_prevalence_lookup_grouped()` (the
+person-value-grouping refinement) stays a separate, already-validated,
+not-yet-requested enhancement.
+
+## 2026-09-06 (later still) -- series-aware deduplication tried, real regression found and traced, NOT landed
+
+Repo owner asked to tackle the follow-up flagged 2026-09-04 (does
+`compute_series_dna()` inform smarter dedup than `_series_deduped()`'s
+uniform per-book treatment). Built `build_profile_series_field_dedup()`
+-- moves dedup from book granularity to book-AND-field granularity, so
+a series-mate is only treated as redundant with others sharing its
+SAME value on a given field, not just its series. Full 8-row scorecard
+across all 4 raters: a real, consistent regression on Mathias's three
+richest scenarios (bucket -9 to -18pt, hated_rejection -20 to -40pt),
+offset only by a small Osnat pairwise gain (+5.6pt).
+
+Traced to an exact cause, not left unexplained: every regression is
+the same two books (Royal Assassin, Interview with the Vampire, both
+correctly-Poor at baseline) flipping to incorrectly-Good. Root cause:
+the Book of the Ancestor trilogy (Red Sister=first-person, its two
+third_limited sequels, all loved) is the only series in his history
+where `person` genuinely splits -- the new mechanism gives Red Sister's
+"first" value its full weight instead of the old 1/3-diluted-by-
+sequels weight, which is conceptually correct (it's a real
+counterexample) but nets out weakening the `person` dealbreaker signal
+that otherwise correctly flags those two disliked books. A genuine
+precision/recall trade-off, not a bug -- same class of result as
+several already-deferred ideas in scoring-test-protocol.md.
+
+**Verdict: NOT landed.** Kept in recommend.py as a reference
+implementation, not wired into production. Full numbers, the exact
+traced mechanism, and a concrete note on what a future version would
+need (protecting validated dealbreaker fields specifically, or only
+de-diluting a minority subgroup) are in scoring-test-protocol.md.
+Production untouched -- full scoring_tests.py suite re-run clean
+(13/13) throughout.
+
+## 2026-09-07 -- validated-dealbreaker-protected dedup variant tried, produces identical results (the safeguard never engages)
+
+Repo owner asked to try the concrete fix proposed at the end of the
+last entry: protect a user's VALIDATED dealbreaker fields from the
+series-dedup de-dilution effect. Built `build_profile_series_field_
+dedup_protected()` and tested it the same rigorous way. Result: byte-
+identical to the unprotected version on every single scorecard row,
+all 4 raters -- confirmed directly.
+
+Why: `person` -- the field actually causing the regression -- is
+currently NOT a validated dealbreaker field for Mathias (separation
+0.345 vs. the 0.65 threshold), so the "protect validated fields"
+safeguard has nothing to protect. This directly contradicts an earlier
+claim in this same session (the Recommendation Engine Schematic
+artifact said person was his one validated dealbreaker field) -- that
+was true earlier in the session and went stale once several more
+ratings were added afterward. Real reminder: a "validated field" is a
+live computation, not a fact to carry forward without rechecking.
+
+**Verdict: this fix doesn't work, for a clean, understood reason** -- it
+protects the wrong condition, not a coincidentally-null result. Neither
+series-dedup variant is landing. Full numbers and the concrete
+alternative ideas (a softer separation threshold specifically for this
+purpose, or protecting only the minority subgroup) are in
+scoring-test-protocol.md. Production untouched throughout.
+
+## 2026-09-07 (later) -- synced with the parallel tagging session: 2 merge conflicts resolved, 14 hosted migrations repaired
+
+Repo owner asked to check in with the repo/DB given the parallel
+session (his wife's Claude) has been steadily running the execution-DNA
+catalog sweep. `git fetch` found 8 new commits already; stashed this
+session's own uncommitted work (prevalence-discount landing + both
+series-dedup experiments) rather than committing without being asked,
+pulled cleanly (fast-forward), then `git stash pop` -- exactly one
+conflict, in `docs/project-log.md` (both sessions append to the same
+file, the same pattern CLAUDE.md already documents). Resolved by
+keeping both blocks in full, their entries first (direct continuation
+of the handoff point), this session's after -- no content dropped,
+consistent with the append-only convention. A second round of the same
+thing happened mid-sync (one more batch landed from the other session
+while this check was in progress) -- same resolution, same clean
+result. Checked for duplicate migration timestamps across the merged
+set: none.
+
+**Found and fixed a real instance of the exact hosted-tracking-drift
+problem CLAUDE.md warns about**: all 14 of the other session's new
+migrations showed a `local` timestamp with no matching `remote` entry
+in `supabase migration list --linked` -- their log entries say "applied
+directly to hosted" (not `supabase db push`), so hosted's own migration-
+tracking table never recorded them, even though the DATA is genuinely
+there. Did NOT blindly `migration repair` on that alone. Verified
+first, per CLAUDE.md's explicit requirement: applied all 14 migration
+files to LOCAL Postgres, then diffed local vs. hosted's actual
+`book_tropes` rows for the 3 tropes involved (`understated_romance`,
+`melodramatic_romance_subplot`, `worldbuilding_woven_into_narrative`)
+by exact (trope, title) pair AND by confidence value -- byte-identical,
+137/137 rows, both checks. Only then ran `supabase migration repair
+--status applied --linked` for all 14 versions; `supabase migration
+list --linked` now shows zero local/remote mismatches anywhere in the
+whole migration history, not just these 14.
+
+Full `scripts/scoring_tests.py` suite re-run after the sync (with the
+now-larger tagged catalog): still 13/13, no regressions. This session's
+own uncommitted work (recommend.py/scoring_tests.py/dogfood tool/
+ratings-file changes, still not committed per the standing "never
+commit without being asked" rule) is intact and unaffected throughout.

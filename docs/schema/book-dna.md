@@ -1136,6 +1136,28 @@ Deliberately deferred, not in v0.1:
   `message_intensity: heavy_handed`). Not built — needs more than one
   data point (Red Rising) before it clears this project's "does this
   change what gets recommended" bar.
+
+  **UPDATE (2026-09-06)**: this exact gap resurfaced independently, via
+  a friend's scoring-architecture review and the resulting sci-fi/
+  revenge cross-genre-pooling investigation (see
+  scoring-test-protocol.md) — worth noting for future sessions that
+  this is a RECURRENCE of the same open question, not a new one; check
+  this backlog before re-deriving a finding from scratch. Concretely
+  proposed name this time: `revenge_denied_or_undercut` (or similar) as
+  a trope-level counterpart to plain `revenge`. Repo owner's own
+  reaction: logged per his instruction, but **explicitly not convinced
+  this is the right fix** — still exactly one real data point (Red
+  Rising), same bar as before. Also fixed a related, separate,
+  higher-confidence finding from the same conversation: Red Rising's
+  `message_intensity` was corrected from `moderate` to `heavy_handed`
+  (`20260906040000_fix_red_rising_message_intensity.sql`) based on his
+  own detailed explanation — that fix stands on its own regardless of
+  whether a new trope ever gets built. Given the `message_themes`
+  proposal directly below this entry already offers a more general,
+  revenge-non-specific mechanism for exactly this class of problem
+  (objectively-tagged authorial stance, same weight-learning as any
+  other trope), that may be the better investment if/when this clears
+  the bar for real — not a revenge-specific sub-trope.
 - **`message_themes` — a trope-like controlled vocabulary for a book's
   authorial STANCE, not just its intensity** — repo owner's own
   follow-up proposal (2026-09-03) to the entry above: "a small

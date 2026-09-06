@@ -11,6 +11,7 @@ import json
 import os
 import sys
 
+import psycopg2
 import streamlit as st
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts"))
@@ -24,6 +25,20 @@ st.set_page_config(page_title="Bookspell dogfood", layout="wide")
 @st.cache_resource
 def load_catalog():
     return R.load_catalog()
+
+
+@st.cache_resource
+def load_cover_urls():
+    # Not part of R.load_catalog()'s query -- book_dna/scoring has no use
+    # for cover art, so it's fetched here rather than widening the shared
+    # engine's query for a display-only field.
+    conn = psycopg2.connect(R.DATABASE_URL)
+    cur = conn.cursor()
+    cur.execute("select id, cover_url from books where cover_url is not null")
+    urls = {bid: url for bid, url in cur.fetchall()}
+    cur.close()
+    conn.close()
+    return urls
 
 
 @st.cache_resource
@@ -50,6 +65,8 @@ def save_rater_data(name, data):
 
 catalog = load_catalog()
 all_titles = sorted(b["title"] for b in catalog.values())
+title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+cover_urls = load_cover_urls()
 
 st.title("Bookspell dogfood tool")
 st.caption("Internal only -- not the real product UI. See tools/dogfood/README.md.")
@@ -65,6 +82,10 @@ st.sidebar.metric("Ratings on file", len(ratings))
 # --- Add/fix a rating (the exact gap-catching workflow from tonight) -----
 with st.sidebar.expander("Add or fix a rating"):
     title_pick = st.selectbox("Book", [""] + all_titles, key="rating_title")
+    if title_pick:
+        cover = cover_urls.get(title_to_id.get(title_pick))
+        if cover:
+            st.image(cover, width=80)
     label_pick = st.selectbox("Rating", [""] + list(R.RATING_LABELS.keys()), key="rating_label")
     if st.button("Save rating") and title_pick and label_pick:
         ratings[title_pick] = label_pick
@@ -126,14 +147,26 @@ top_n = st.slider("How many", 5, 30, 20)
 
 if st.button("Get recommendations", type="primary"):
     recs = R.recommend(catalog, ratings, top_n=top_n, genre=genre, user_rules=st.session_state.rules)
-    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
-    id_to_magnitude = {title_to_id[t]: R.RATING_LABELS[l] for t, l in ratings.items() if t in title_to_id}
-    centroid, weights = R.build_profile(catalog, id_to_magnitude)
-    poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights)
+    # Genre-scoped (matches recommend()'s own profile) and prevalence-aware
+    # (matches recommend()'s own now-discounted scores, landed 2026-09-06) --
+    # a plain build_profile() call here would silently calibrate the
+    # Poor/Mixed threshold against a different pipeline than what recs
+    # actually went through.
+    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, ratings, genre)
+    field_prevalence, trope_prevalence = R.build_prevalence_lookup(catalog, genre)
+    poor_threshold = R.user_calibrated_poor_threshold(
+        catalog, id_to_magnitude, centroid, weights,
+        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence,
+    )
 
     for i, (score, title, author, contributions) in enumerate(recs, 1):
         label = R.match_label(score, poor_threshold)
-        with st.expander(f"{i}. {title} -- {author} -- {score:.3f} ({label})"):
+        cover = cover_urls.get(title_to_id.get(title))
+        col_cover, col_expander = st.columns([1, 11])
+        with col_cover:
+            if cover:
+                st.image(cover, width=60)
+        with col_expander, st.expander(f"{i}. {title} -- {author} -- {score:.3f} ({label})"):
             audit = R.audit_book_score(catalog, ratings, title, genre=genre, user_rules=st.session_state.rules)
             st.write("**Pipeline:**")
             st.table(audit["pipeline"])
