@@ -6803,3 +6803,53 @@ now-larger tagged catalog): still 13/13, no regressions. This session's
 own uncommitted work (recommend.py/scoring_tests.py/dogfood tool/
 ratings-file changes, still not committed per the standing "never
 commit without being asked" rule) is intact and unaffected throughout.
+
+## 2026-09-07 (later) -- romance_tone batch 9 + worldbuilding delivery batch 7; the migration-registration backlog is CLEAR
+
+Picked up this machine's combined-batch work after pulling the sync
+above. **Directly confirmed via `supabase_migrations.schema_migrations`
+that every romance_tone/worldbuilding migration this machine has
+applied since 2026-09-05 -- batches 1 through 8/6, i.e. everything up
+through `20260907130000` -- is now registered**, evidently swept up by
+whatever session ran the sync logged just above. This machine still has
+no working `supabase` CLI auth of its own, so this doesn't change the
+underlying gap, but the backlog itself is gone as of this check --
+only today's two new files (below) are pending now, not the whole
+history. Worth a fresh flag if a full week goes by without another
+sync from a machine that has auth, rather than assuming this happens
+automatically.
+
+**romance_tone batch 9**: 10 reviewed, 7 tagged. Never Let Me Go's
+understated tag required separating two different melodrama
+complaints in its own reviews -- one about the central Tommy/Kathy
+romance specifically ("restraint and subtlety," direct), another about
+a late plot-revelation scene's exposition delivery (unrelated to the
+romance) -- the same kind of same-book, different-axis confusion
+flagged for They Both Die at the End last batch, now the second
+occurrence. Legend, Black Leopard Red Wolf, and A Study in Drowning
+left untagged -- discourse addressed series-wide impressions, general
+prose subtlety, or craft-quality complaints, not this book's specific
+presentation of romantic emotion.
+
+**worldbuilding delivery batch 7**: 8 reviewed, 6 tagged. Dune Messiah
+is a clean, well-documented example of a sequel moving to the OPPOSITE
+side of this trope pair from its predecessor -- reviewers explicitly
+contrast it against Dune (already tagged woven), noting Herbert chose
+to fully explain what the original left deliberately ambiguous.
+Children of Ruin does the same relative to Children of Time (tagged
+woven at low confidence/disputed) -- both sequels adding more
+exposition than their book-1s, a pattern worth watching for
+specifically when tagging sequels: check whether reviewers make an
+explicit before/after comparison, since that's stronger evidence than
+either book's isolated review. A Fire Upon the Deep and Dungeon Crawler
+Carl left untagged -- the former's discourse was about prose density/
+quality rather than delivery mechanism, and the latter's LitRPG system-
+notification text is a distinct embedded-system-text format rather
+than a clean fit for either side of this trope pair.
+
+Migrations: `20260907140000_romance_tone_sweep_batch9.sql` and
+`20260907150000_worldbuilding_delivery_sweep_batch7.sql`. Tested
+together in a rolled-back transaction first, then applied directly to
+hosted; verified: romance_tone went 104 -> 111, worldbuilding-delivery
+went 54 -> 60. These two specific files are the only ones now pending
+registration in hosted's migration-tracking table (see above).
