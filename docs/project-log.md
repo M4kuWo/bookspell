@@ -5999,3 +5999,49 @@ one that already has it).
 Stopping here per instruction -- next: either romance_tone batch 2, or
 switching to the worldbuilding_woven_into_narrative pool, whichever
 the repo owner prefers.
+
+## 2026-09-06 (later) -- execution-DNA sweep, romance_tone batch 2 of 20
+
+Repo owner chose to continue romance_tone rather than switch pools.
+Picked 20 more well-known candidates from the ~256 remaining (mostly
+YA romantasy/paranormal staples with heavy existing discourse: Bardugo,
+Holly Black, Kiera Cass, Sarah J. Maas's Throne of Glass entries,
+Anne Rice, Outlander, plus a few literary-adjacent romance-forward
+titles like The Song of Achilles and The Time Traveler's Wife).
+
+16 tagged (6 melodramatic at 0.6, 3 melodramatic at 0.2, 5 understated
+at 0.6, 2 understated at 0.2), 4 left untagged where the real discourse
+found addressed authenticity, craft quality, banter, or genre-appeal
+rather than presentation-of-emotion specifically: **Strange the
+Dreamer** ("authentic rather than melodramatic" reads as a quality
+judgment, not a tone one), **House of Earth and Blood** (reviews split
+on whether the romance "clicked," nothing about how it's expressed),
+**Kingdom of the Wicked** (banter/bickering described, same
+banter-vs-tone ambiguity flagged after Bride last batch), **Zodiac
+Academy: The Awakening** (reviews were pure genre-appeal/guilty-pleasure
+commentary).
+
+Two same-author, same-trilogy-adjacent pairs worth noting for whoever
+does more of this pool: **Shadow and Bone** and **Siege and Storm**
+(Bardugo) landed differently -- book 1 genuinely disputed (0.2,
+understated lean), book 2 has a clean, specific "melodramatic" quote
+about the Mal/Alina dynamic (0.6). **The Cruel Prince** and **The
+Wicked King** (Holly Black) landed the SAME direction (both understated
+0.6) with consistent evidence across both books, unlike the Bardugo
+pair -- a real example of a series being consistent in one case and
+not the other, reinforcing why each book needs its own check rather
+than a series-wide assumption either way.
+
+Migration: `20260906110000_romance_tone_sweep_batch2.sql` (one bug
+caught before it ran: an unescaped apostrophe in `"The Time Traveler's
+Wife"` used double quotes, which Postgres parses as an identifier, not
+a string literal -- `UndefinedColumn` error caught it immediately;
+fixed to `'The Time Traveler''s Wife'`). Tested in a rolled-back
+transaction first, then applied directly to hosted; verified:
+romance_tone tag count went from 37 to 53. Same open item as every
+migration since 2026-09-05 -- applied and verified on hosted, not yet
+registered in hosted's migration-tracking table (no working
+`supabase` auth on this machine).
+
+Stopping here per instruction, awaiting direction on batch 3 (continue
+romance_tone, or switch to worldbuilding_woven_into_narrative).
