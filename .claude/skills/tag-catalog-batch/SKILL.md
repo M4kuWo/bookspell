@@ -68,24 +68,228 @@ a value not listed there. If you think a real gap exists in the
 vocabulary (a trope or value that should exist but doesn't), don't
 silently work around it -- note it in your final report instead.
 
-## Step 0: PRIORITY BATCH -- `romance_driven` catalog audit (2026-09-04, PARTIALLY DONE)
+## Step 0: PRIORITY BATCH -- execution-DNA trope sweep (2026-09-06, NEW -- do this first)
 
-**This takes priority over Step 2's normal untagged-books work below.**
-Do this first.
+**This takes priority over everything below, including the romance_driven
+audit reference section right after it (that one is fully DONE now --
+kept only for its calibration-anchor pattern and judgment-call
+methodology, which this new batch reuses).**
 
-**UPDATE (2026-09-04, later): Tier 1 and Tier 3 are DONE -- see
-docs/project-log.md's "romance_driven catalog audit, Tier 1 + Tier 3
-complete" entry.** Tier 1's 20 live candidates were each individually
-reviewed; 12 reclassified to `romance_driven`
-(`20260904025000_romance_driven_audit_tier1.sql`), 8 confirmed
-correctly unchanged (6 with per-book reasoning logged, 2 were the
-already-resolved calibration anchors). Tier 3's 19 candidates were
-fully reviewed too -- zero reclassifications warranted, a legitimate
-"nothing to do here" result, not a skipped review. **Tier 2 (~173
-books, occasional heat) is still open** -- its size warrants a
-dedicated pass; re-run Tier 2's query below for the current live list
-before starting (it drifts as more books get tagged). Don't re-review
-Tier 1 or Tier 3.
+### What this is
+
+Three new tropes were added and validated on a small, real-evidence-backed
+set of books tonight (2026-09-05/06) -- see `docs/project-log.md`'s
+"romance_tone probe" and "worldbuilding delivery" entries for the full
+story. They now need a real catalog-wide sweep, the same way the 5
+gap-sweep tropes (`sapphic_romance`, `alternate_history`, etc.) already
+got one earlier the same night. This is genuinely harder tagging work
+than most of this skill's normal fields -- these are SUBJECTIVE
+EXECUTION/CRAFT judgments (how something is written), not plot-event
+facts (whether something happened), and this project already caught
+itself guessing wrong twice tonight on exactly this kind of call (see
+"The evidence standard" below for why that matters and what to do
+about it).
+
+`romance_tone`, as two tropes:
+- `understated_romance` -- the romantic relationship is written with
+  restraint: grounded, low on contrived misunderstandings/toxic
+  push-pull, quiet in how affection is actually shown on the page.
+- `melodramatic_romance_subplot` -- repetitive "will they/won't they"
+  tension, soap-opera-style romantic drama, heightened declarations and
+  confrontations, played for extended emotional intensity rather than
+  restraint.
+
+`worldbuilding delivery`, as one trope so far (see "A real gap in this
+trope" below):
+- `worldbuilding_woven_into_narrative` -- lore/rules delivered through
+  character discovery and dialogue rather than narrator exposition.
+  Distinct from `worldbuilding_density` (how MUCH lore exists, not how
+  it's delivered) -- a book can be `worldbuilding_density: dense` and
+  still earn this trope (Book of the Ancestor is tagged dense on all 3
+  books and still the cleanest example of this trope existing).
+
+### The evidence standard -- read this before tagging a single book
+
+This is the single most important thing in this section. The repo
+owner set an explicit, precise boundary for `romance_tone` after this
+project's own research caught itself guessing wrong twice (From Blood
+and Ash and Fourth Wing were initially assumed melodramatic from genre
+reputation alone -- real research showed the opposite; The Bear and
+the Nightingale was initially tagged understated by conflating a slow
+courtship BUILD-UP with a restrained EMOTIONAL PRESENTATION -- the
+actual culminating scene turned out to be "quick and fierce," not
+restrained at all):
+
+**`romance_tone` evidence must describe emotional PRESENTATION/
+EXPRESSION specifically -- how the feeling is shown on the page when a
+romantic scene happens. The following do NOT count as evidence for
+EITHER value, no matter how strongly worded:**
+- how much romance there is, or how central it is to the plot (that's
+  `drive`, a completely different, already-existing field -- do NOT
+  infer tone from drive; a low-drive romance can be melodramatic OR
+  understated in the exact same small amount of page time, and so can
+  a high-drive one)
+- how fast or slow the relationship develops ("slow burn" is a pacing
+  fact, not a tone fact -- a slow-burn romance can still explode into
+  melodrama once it lands, and a fast-developing one can stay quiet)
+- whether the relationship is toxic, healthy, or has a power imbalance
+  (that's a relationship-dynamic/content fact, closer to
+  `content_warnings`, not a presentation-style fact)
+- whether the romance is well-written, "expertly woven," or feels
+  contrived (that's a craft-quality judgment, orthogonal to tone -- a
+  badly-written romance can still be attempting either restraint or
+  melodrama)
+- explicitness/heat level (that's `romance_heat_intensity`, already a
+  separate field -- a closed-door romance can be melodramatic in its
+  emotional beats, and an explicit one can be emotionally restrained)
+
+The only valid evidence is a real, findable description of HOW
+characters express emotion in actual scenes: dramatic declarations,
+storming off, tearful confrontations, repeated identical arguments
+(melodramatic) vs. quiet gestures, understatement, restrained internal
+narration, unshowy affection (understated). Ground every tag in real
+research (web search for reader reviews/discourse quoting or
+describing actual scenes), never pattern-matched from genre or a
+book's general reputation -- both of tonight's caught mistakes came
+from skipping this step.
+
+### Confidence conventions
+
+- Real, clear, presentation-specific evidence found -> tag at
+  confidence 0.6 (`ai_inferred`).
+- Genuinely disputed in real discourse, or you can only find
+  drive/pacing/toxicity/quality evidence and nothing presentation-
+  specific -> tag at confidence 0.2, NOT full confidence, and NOT
+  skipped either -- `MIN_CONFIDENCE_TO_COUNT` (0.3) means this gets
+  recorded and stays excluded from scoring/weight-learning until real
+  validation raises it, which is exactly what it's for. Don't use 0.2
+  as a shortcut to skip research, though -- it's for evidence you
+  genuinely found and it genuinely came out mixed, not for "I didn't
+  look."
+- If the repo owner (or another rater) has personally read the book
+  and confirms the tag directly -> confidence 1.0, `source:
+  manual_review`.
+
+### Calibration anchors -- already validated tonight, do NOT re-review these
+
+`melodramatic_romance_subplot` (confidence 0.6): A Court of Thorns and
+Roses, Twilight, Shatter Me, Throne of Glass, The Wise Man's Fear, The
+Well of Ascension.
+`melodramatic_romance_subplot` (confidence 0.2, disputed -- feel free
+to re-research and raise if you find clearer evidence): Caraval, From
+Blood and Ash, Fourth Wing.
+`understated_romance` (confidence 0.6): Warbreaker, Six of Crows,
+Shadows of Self, The Bands of Mourning, The Lost Metal, The Goblin
+Emperor, The Traitor Baru Cormorant, The Priory of the Orange Tree,
+Spinning Silver.
+`understated_romance` (confidence 0.2, disputed): The Bear and the
+Nightingale.
+`worldbuilding_woven_into_narrative` (confidence 0.6): Red Sister, Grey
+Sister, Holy Sister -- all 3 Book of the Ancestor books, from one
+direct quote about the whole trilogy.
+
+### A real gap in this trope set -- consider closing it during this batch
+
+`worldbuilding_woven_into_narrative` currently has ZERO negative
+counterpart -- no trope exists yet for "delivered via narrator
+exposition/info-dumps" as opposed to woven-in. Without one, this trope
+can only ever reinforce a good match, never help catch a mismatch (the
+same one-sidedness problem the True Bastards probe hit, but here it's
+fixable). If you find good negative examples during this batch (a
+well-known book with real reader complaints specifically about
+info-dumped exposition, not just "dense worldbuilding" -- density and
+delivery are different axes, see the trope's own definition above),
+propose and add `worldbuilding_via_exposition_dump` (or similar) as a
+new trope value, following the same real-research standard, rather
+than leaving this one-sided forever.
+
+### Candidate pool -- don't scan the whole catalog blindly
+
+```sql
+-- romance_tone candidates: anything with existing romance signal
+select distinct b.title, b.author, d.drive, d.romance_heat_frequency
+from books b join book_dna d on d.book_id = b.id
+left join book_tropes t on t.book_id = b.id
+where d.drive = 'romance_driven'
+   or d.romance_heat_frequency in ('occasional', 'frequent')
+   or t.trope_id in (
+     'enemies_to_lovers','friends_to_lovers','forbidden_love','love_triangle',
+     'fated_mates','soulmate_bond','arranged_marriage','marriage_of_convenience',
+     'fake_dating','forced_proximity','only_one_bed','age_gap_romance',
+     'second_chance_romance','grumpy_sunshine','slow_burn_romance',
+     'monster_or_fae_romance','insta_love','hidden_identity_romance',
+     'reverse_harem_or_why_choose','sapphic_romance','mlm_romance'
+   )
+order by b.title;
+
+-- worldbuilding delivery candidates: dense worldbuilding is where this
+-- axis actually matters (a light-worldbuilding book has little
+-- exposition either way to judge the delivery of)
+select b.title, b.author
+from books b join book_dna d on d.book_id = b.id
+where d.worldbuilding_density = 'dense'
+order by b.title;
+```
+
+Both pools are large (likely 150-300+ books combined) -- work through
+them in reasonably-sized batches like any other pass this skill
+describes, prioritizing well-known books with real, findable discourse
+first (an obscure book with no reviews to check against isn't tractable
+for this kind of tagging yet). Don't force a tag on a book where you
+can't find real presentation-specific evidence either way -- leaving a
+book untagged for these two tropes is the correct, honest outcome when
+the evidence isn't there, exactly like this skill's existing "don't
+force-tag" policy for every other field.
+
+### Before you finish this batch
+
+Sanity-check your own batch before reporting done: are you tagging
+BOTH directions (melodramatic AND understated, not just whichever
+came to mind first), and does your low-confidence-tag rate look like
+genuine research turning up mixed evidence rather than an excuse to
+skip real research on the harder calls? If every single tag you
+produced is confidence 0.6 with none at 0.2, either you got
+consistently clean evidence (possible) or you're not finding/reporting
+the genuinely disputed cases (more likely at any real scale) -- be
+honest about which.
+
+### Migration conventions for this batch
+
+Same conventions as everywhere else in this project (see CLAUDE.md):
+idempotent SQL (`on conflict do nothing`), title+author-scoped (never a
+raw UUID), tested in a rolled-back transaction first. **Reserve
+timestamps starting at `20260906100000`** and increment from there --
+this project has hit real same-day migration-timestamp collisions
+before (see CLAUDE.md's own documented incidents); run
+`ls supabase/migrations/ | sort | uniq -d` before you push to confirm
+nothing collides with whatever else has landed since this was written.
+Since you're working directly against hosted (see "Setup" above), you
+don't need a separate local-apply step -- just test-in-transaction,
+apply to hosted, then commit the migration file so it's part of the
+tracked history (the repo owner's own local Postgres will pick it up
+next time he re-syncs).
+
+Log what you did to `docs/project-log.md` when you're done, same as
+every other change in this project -- how many books reviewed, how
+many tagged at each confidence level, and specifically flag any book
+where the evidence was genuinely difficult to find or interpret, the
+same way this project's own research flagged Caraval/The Bear and the
+Nightingale as real judgment calls rather than clean yeses.
+
+---
+
+## Step 0 (previous, DONE) -- `romance_driven` catalog audit -- reference only
+
+Kept for its judgment-call methodology and calibration-anchor pattern,
+which the batch above reuses -- not something to redo. **All three
+tiers are complete** -- see `docs/project-log.md`'s "romance_driven
+catalog audit, Tier 1 + Tier 3 complete" and "romance_driven Tier 2
+audit complete" entries. Tier 1 (20 candidates): 12 reclassified, 8
+confirmed correctly unchanged. Tier 3 (19 candidates): zero
+reclassifications, a legitimate "nothing to do here" result. Tier 2
+(214 candidates): 19 reclassified, 195 confirmed correctly unchanged.
+`book_dna.drive` has 45 `romance_driven` rows total. Don't re-review
+any of this.
 
 ### What changed
 
