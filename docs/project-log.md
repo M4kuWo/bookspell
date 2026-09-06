@@ -6258,3 +6258,47 @@ together in a rolled-back transaction first, then applied directly to
 hosted; verified: romance_tone went 78 -> 86, worldbuilding-delivery
 went 35 -> 42. Same open registration item as every migration since
 2026-09-05.
+
+## 2026-09-07 -- romance_tone batch 7 + worldbuilding delivery batch 5
+
+New day, repo re-synced first (fetched clean, no new commits overnight
+this time) before continuing the same combined-batch pattern.
+
+**romance_tone batch 7**: 10 reviewed, 8 tagged -- an unusually clean
+batch, six of the eight landed at a full 0.6 with direct, explicit
+reviewer language. Notably, She Who Became the Sun was tagged
+melodramatic (0.6) off the AUTHOR'S OWN stated intent ("I love writing
+in that slightly melodramatic register") rather than reader discourse
+-- about as authoritative as evidence gets, and worth remembering as a
+source type to actively look for (author interviews), not just reader
+reviews. TJ Klune's duology split again: The House in the Cerulean Sea
+(book 1) tagged understated, Somewhere Beyond the Sea (book 2) tagged
+melodramatic ("sappy," "cartoonish," "preachy") -- now the third
+same-author sequel pair to diverge in tone (after ACOTAR/ACOWAR and
+Shadow and Bone/Siege and Storm), reinforcing that this is the norm
+for this pool, not the exception. The Ballad of Songbirds and Snakes
+and The Mists of Avalon left untagged -- discourse addressed whether
+the relationship even counts as a genuine romance, or general
+narrative-voice style, not presentation specifically.
+
+**worldbuilding delivery batch 5**: 6 reviewed, 6 tagged (no skips).
+Starship Troopers tagged exposition_dump at a full 0.6 -- one of the
+most canonical examples in the genre, with literal in-story civics-
+class lecture flashbacks explicitly designed to teach the reader the
+setting's political philosophy. The Dispossessed, Rendezvous with
+Rama, and The Diamond Age all tagged exposition_dump at only 0.2 --
+each had a real, specific complaint (political dialogue, committee-
+meeting scenes, front-loaded worldbuilding) but none as clean or
+totalizing as Starship Troopers/Snow Crash/Foundation. Roadside Picnic
+and The Golden Compass both tagged woven (0.6) with clean, direct
+evidence.
+
+Migrations: `20260907100000_romance_tone_sweep_batch7.sql` and
+`20260907110000_worldbuilding_delivery_sweep_batch5.sql`. Tested
+together in a rolled-back transaction first, then applied directly to
+hosted; verified: romance_tone went 86 -> 94, worldbuilding-delivery
+went 42 -> 48. Same open registration item as every migration since
+2026-09-05 -- now spanning two calendar days without this machine
+gaining Supabase auth; worth flagging to the repo owner again
+explicitly rather than letting it go quiet just because it's routine
+at this point.
