@@ -7222,3 +7222,39 @@ one-sided count. `worldbuilding_woven_into_narrative` 35->39,
 
 Both tested in a rolled-back transaction against hosted first, then
 applied for real; counts verified before/after as noted above.
+
+## 2026-09-07 (later still): execution-DNA sweep, romance_tone batch 13 + worldbuilding batch 10
+
+Same fresh-candidate-file discipline as batch 12/9. The rolled-back
+transaction test caught a real SQL bug before it reached hosted --
+`("Emily Wilde's Encyclopaedia of Faeries", 'Heather Fawcett')` used
+double quotes around the title (a SQL identifier), not single quotes
+(a string literal), because the title's own apostrophe made a
+sloppy copy-paste look plausible; Postgres correctly errored
+("column ... does not exist") instead of silently doing the wrong
+thing. Fixed to `'Emily Wilde''s Encyclopaedia of Faeries'` (doubled
+apostrophe as the escape) before re-testing. Exactly this kind of thing
+is what the rolled-back-transaction step exists to catch.
+
+romance_tone: 11 candidates researched, 7 tagged (5 understated, 2
+melodramatic; 2 of the 7 disputed at 0.2). 4 left untagged (The
+Everlasting, Tower of Dawn, Graceling, A Study in Drowning -- real
+discourse found for each, but it addressed prominence/pacing/
+relationship-dynamics/quality, not a clean presentation read).
+`understated_romance` 61->66, `melodramatic_romance_subplot` 69->71.
+Migration: `20260907220000_romance_tone_sweep_batch13.sql`.
+
+worldbuilding delivery: 7 candidates researched, 6 tagged (2 clean
+woven, 2 clean exposition-dump, 2 disputed -- one on each side). 1 left
+untagged (Ninth House -- real discourse found, but it addressed
+worldbuilding density/depth, not the delivery mechanism itself).
+Notable: The Lord of the Rings landed cleanly on the exposition-dump
+side, anchored on the widely-discussed Council of Elrond chapter
+("nearly 50 pages of exposition," "layers of reported speech").
+`worldbuilding_woven_into_narrative` 39->42, `worldbuilding_via_
+exposition_dump` 32->35. Migration:
+`20260907230000_worldbuilding_delivery_sweep_batch10.sql`.
+
+Both tested in a rolled-back transaction against hosted first (catching
+the SQL bug above), then applied for real; counts verified before/after
+as noted above.
