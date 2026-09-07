@@ -6860,3 +6860,39 @@ audiobooks, a real gap the repo owner caught. Checked before landing:
 full scorecard, byte-identical to old (both-fields-always-on) behavior
 except Mathias-full's pairwise accuracy improved 84%->87%, no
 regressions. Full writeup: scoring-test-protocol.md.
+
+## 2026-09-07 (later still): work_type widened for audio-only originals; audiobook edition batch skill written; format_preference set for Mathias
+
+Repo owner wants Audible Originals (full-cast audio dramas with no
+print/ebook counterpart at all -- e.g. original SFF audio dramas, not
+adaptations of existing print books) included in the catalog when
+in-scope, flagged distinctly rather than looking like an under-tagged
+normal book. Widened `books.work_type`'s CHECK constraint (previously
+novella/novel only, built 2026-08-29) to also allow `'audio_original'`
+-- reused the existing controlled-vocabulary field rather than adding a
+separate boolean flag, since nothing in `scripts/recommend.py` reads
+work_type for scoring (checked first), so widening it is safe. Migration
+`20260907140000_work_type_audio_original.sql`, applied to both local
+and hosted (`supabase db push --linked`), verified.
+
+Wrote `.claude/skills/tag-audiobook-editions/SKILL.md` for the other
+Claude session (repo owner's wife's, working the tagging batches) to
+pick up: dramatized full-cast edition research (GraphicAudio, BBC
+Audio -- BBC confirmed as a real second producer, not just GraphicAudio,
+per the repo owner's own "BBC dramatized" example) on existing catalog
+books, plus Audible Originals as brand-new audio-only catalog entries.
+Deliberately kept SEPARATE from the ongoing romance_tone/worldbuilding
+combined batches -- reasoning written into the skill itself: those two
+tropes share evidence-gathering (reading the same reviews serves both
+judgment calls), while audiobook edition research starts from a
+completely different source (a producer's own catalog listing, not
+reviews of our books) with a much lower per-candidate hit rate, so
+combining would dilute focus on both without saving anything. The one
+allowed overlap: opportunistic notes if a romance_tone/worldbuilding
+reviewer happens to notice a GraphicAudio/BBC mention while already
+reading a book's reviews -- not a required additional check.
+
+Also set Mathias's `_meta.format_preference` to `"audiobook"` in
+`data/ratings/mathias.json`, per his own direct statement ("it's been
+years since I read more than one physical book a year") -- not a guess,
+a direct report, per today's format-preference gating fix.

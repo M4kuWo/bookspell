@@ -53,20 +53,29 @@ up without checking whether the blocker cleared).
   `recommend.py` field-handling changes (ORDINAL_FIELDS/NOMINAL_FIELDS
   or wherever the right shape is), removing the old trope pair once
   ported. Scoring-side only, no new data fetching.
-- [ ] **Audiobook edition data -- scoped pilot before full 824-book
-  sweep.** Only Wind and Truth (GraphicAudio) has a populated
-  `audiobook_editions` row. Two sub-problems of very different cost:
-  standard-edition narrator data (check first whether Hardcover's API
-  exposes narrator as a contributor role -- same source already used
-  for author verification -- possibly near-bulk-fetchable) and
-  dramatized/full-cast editions (GraphicAudio, BBC Audio/Radio drama,
-  and to a lesser extent Audible Originals -- see 2026-09-07 chat for
-  the market scan; expensive if checked book-by-book blind since most
-  titles won't have one). Cheaper path for the dramatized side: pull
-  each producer's own SFF catalog listing first, intersect against our
-  825 titles, only deep-research the actual matches. Run a small pilot
-  batch first to get a real per-book cost reading before committing to
-  the full catalog.
+- [ ] **Audiobook edition data -- ready to hand off, see
+  `.claude/skills/tag-audiobook-editions/SKILL.md`** (written
+  2026-09-07). Only Wind and Truth (GraphicAudio) has a populated
+  `audiobook_editions` row. Two sub-tasks, deliberately NOT combined
+  with the romance_tone/worldbuilding batches (different research
+  modality, different candidate-list source -- see the skill's own
+  "why not combined" section for the full reasoning):
+  - Sub-task A: dramatized full-cast editions (GraphicAudio, BBC Audio)
+    on EXISTING catalog books -- cross-reference each producer's own
+    catalog against ours FIRST (cheap), only deep-research real
+    matches. Can run in large batches, it's a lookup, not a judgment
+    call.
+    - Note (2026-09-07): also worth checking whether Hardcover's API
+      exposes standard-edition narrator data as a contributor role
+      (same source already used for author verification) -- possibly
+      near-bulk-fetchable, cheaper than the dramatized-edition path.
+      Not yet checked; add as a Sub-task A0 if it pans out.
+  - Sub-task B: Audible Originals (audio-only, no print counterpart) --
+    genuinely NEW catalog entries, `books.work_type = 'audio_original'`
+    (migration `20260907140000_work_type_audio_original.sql`, already
+    landed). Full ingestion+tagging, same batch-size discipline as
+    `tag-catalog-batch` (15-20/session), `book_length`/`page_count`
+    left NULL, `audiobook_length` the real length signal.
 
 ## P2 (ongoing/routine, not new decisions)
 

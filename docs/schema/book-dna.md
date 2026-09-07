@@ -755,6 +755,14 @@ Deliberately deferred, not in v0.1:
   Populating this at real scale is still blocked on the same
   data-sourcing problem as before (Hardcover's API likely doesn't carry
   GraphicAudio editions; needs per-book research).
+
+  **UPDATE (2026-09-07)**: real-scale population handed off as
+  `.claude/skills/tag-audiobook-editions/SKILL.md` -- covers GraphicAudio
+  AND BBC Audio/Radio drama (a second confirmed real producer, not just
+  GraphicAudio) for existing catalog books, plus Audible Originals
+  (audio-only, no print counterpart -- see `books.work_type`'s new
+  `'audio_original'` value, migration `20260907140000_work_type_audio_
+  original.sql`) as brand-new catalog entries. Not yet run.
 - **`solarpunk`** (setting_worldbuilding) — flagged during trope research
   as real but weaker/niche; not added.
 - **Retroactive tagging of `elves`/`dwarves`/`fae_or_fairies`/`orcs`/
