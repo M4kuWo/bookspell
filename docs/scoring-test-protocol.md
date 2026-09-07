@@ -2398,3 +2398,76 @@ validation), or the minority-subgroup idea already logged above.
 Neither built here. NOT landed, same as the unprotected version --
 kept in recommend.py as `build_profile_series_field_dedup_protected()`
 for reference.
+
+## Graduated dealbreaker veto -- built and structurally verified, NOT landed (revealed a bigger finding instead) (2026-09-07)
+
+Follow-up to the person-dealbreaker-threshold investigation (see the
+protected-variant entry above): the 2026-09-05 adaptive-threshold
+experiment correctly found `person` statistically real for Mathias via
+a permutation test, but reverting it was blamed on the flat veto's cap
+being a blunt instrument -- Old Man's War (a genuine exception, loved
+despite mismatching `person`) got the exact same hard clamp to
+`DEALBREAKER_VETO_CAP` as his clearest dealbreaker cases, for no
+compensating gain (bucket accuracy 91%->82%, loved_recall 100%->80%).
+
+**First design tried, ruled out with real data before writing any
+code around it**: scale the cap by the flagged field's OWN mismatch
+magnitude. Checked directly -- for a NOMINAL field, that magnitude is a
+function of (book's value, centroid's value, learned weight) only, so
+it's IDENTICAL across every candidate sharing the same value pair.
+Confirmed: Red Sister, Royal Assassin, Assassin's Apprentice, Interview
+with the Vampire, and Circe all show `person_mismatch == 0.169` against
+the same fantasy profile, despite raw scores of 0.474/0.342/0.265/0.224/
+0.461 and wildly different real outcomes (loved vs. hated). Per-candidate
+field-magnitude graduation cannot distinguish a real dealbreaker hit from
+a genuine exception -- ruled out before implementation, not after.
+
+**What actually varies per candidate is the raw score itself** -- how
+much OTHER evidence this book has going for it. Built
+`_apply_dealbreaker_veto_graduated()` instead: pulls the score toward
+the cap by a fraction between `DEALBREAKER_VETO_PULL_FLOOR` (0.5, for a
+flag right at the validated-magnitude floor) and 1.0 (a flag at or above
+`WEIGHT_CAP` severity -- reproduces the flat clamp exactly), rather than
+clamping outright. Verified analytically: correctly degrades to the
+existing flat behavior at max severity, softens for borderline severity.
+
+**Testing it exposed a much bigger problem than "which veto shape is
+better"**: scanning Mathias's FULL rated fantasy pool for person=first
+books (not just the held-out set) shows `person` mismatches at 0.169 --
+clears `VALIDATED_DEALBREAKER_MAGNITUDE` (0.15) -- for every single one,
+but the label split is 18 loved/liked vs. only 5 hated/disliked (3 of
+which are the same Farseer trilogy). 11 of those loved/liked books score
+*above* `DEALBREAKER_VETO_CAP` (Grave Peril, The Pariah, The Martyr, The
+Traitor, Prince of Fools, The Wheel of Osheim, Blackwing, Hard-Boiled
+Wonderland, Death Masks, Emperor of Thorns, King of Thorns, Summer
+Knight). Forcing `person` into `validated_fields` (replicating the
+2026-09-05 setup, since it doesn't validate under today's data) and
+running either veto shape against these would incorrectly suppress 11
+genuinely loved/liked books to catch effectively 3 real cases (Circe,
+Interview with the Vampire, and one trilogy). This is NOT a flaw in the
+graduated veto -- it's confirmation that `STAT_SEPARATION_THRESHOLD`
+(0.65) is currently doing its job correctly by keeping `person` OUT of
+the validated set. Sci-fi's person mismatch (0.144) doesn't even clear
+the 0.15 floor at all, so no fantasy-style false-positive risk there,
+but also nothing to test against.
+
+**Consequence for testing the graduated veto itself**: `validated_
+dealbreaker_fields()` currently returns an EMPTY set for all 4 real
+raters (confirmed directly, see the person-threshold diagnostic this
+session opened with) -- meaning the existing flat veto is ALSO
+currently dormant in production for everyone, not just a Mathias/person
+issue. There is no real rater/field pair today where the graduated veto
+would fire with genuine validated evidence, so its benefit over the
+flat version can't be demonstrated on real data right now -- both are
+equally inert. Landing an unproven mechanism would break this project's
+own standing rule (every scoring change checked against real scenarios
+before landing, not just "looks right").
+
+**Verdict: built, structurally verified, NOT landed.** Kept as
+`_apply_dealbreaker_veto_graduated()` in recommend.py (EXPERIMENTAL
+comment block, not wired into `_full_score()`/`recommend()`/
+`explain_match()`/`audit_book_score()`) for whenever a field/user pair
+DOES validate in the future -- at that point, re-run this same
+force-validated comparison against real held-out data before landing,
+the way this entry did, rather than assuming the structural argument
+alone is enough.

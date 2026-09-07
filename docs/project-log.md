@@ -6803,3 +6803,39 @@ now-larger tagged catalog): still 13/13, no regressions. This session's
 own uncommitted work (recommend.py/scoring_tests.py/dogfood tool/
 ratings-file changes, still not committed per the standing "never
 commit without being asked" rule) is intact and unaffected throughout.
+
+## 2026-09-07: person dealbreaker threshold investigation + graduated veto prototype (not landed)
+
+Dug into why `person` dropped out of Mathias's validated-dealbreaker set
+(0.75-0.82 -> 0.412 -> 0.345 over this session, per `STAT_SEPARATION_
+THRESHOLD`=0.65). Checked all 4 raters directly: `validated_dealbreaker_
+fields()` currently returns an EMPTY set for every single one, not just
+Mathias/person -- the veto mechanism is dormant catalog-wide right now,
+which is the real explanation for `hated_rejection`'s persistent
+weakness across this whole session's benchmarks.
+
+Built `_apply_dealbreaker_veto_graduated()` (recommend.py) to address
+the specific reason the 2026-09-05 adaptive-threshold experiment
+reverted -- the flat veto's cap has no notion of how much other evidence
+a candidate has going for it, so a genuine exception (Old Man's War)
+gets the same hard clamp as a clear dealbreaker. Ruled out scaling by
+the flagged field's own mismatch magnitude first (proven with real data
+to be constant across candidates sharing a value pair -- Red Sister/
+Royal Assassin/Interview with the Vampire/Circe all show identical
+`person` mismatch magnitude despite opposite real outcomes); graduated
+instead by how far the raw score sits above the cap, scaled by how
+severe the flagged mismatch is in absolute terms across fields.
+
+Testing it surfaced a bigger finding: scanning Mathias's full rated
+fantasy pool for person=first books shows 18 loved/liked vs. 5 hated/
+disliked, 11 of the loved/liked ones scoring above the veto cap
+(Dresden Files, Broken Empire trilogy, Raven's Mark, etc.) -- `person`
+genuinely isn't a real dealbreaker for him in fantasy anymore, which is
+exactly why the 0.65 threshold correctly excludes it today, not a bug
+to work around. Since nothing currently validates for any rater, the
+graduated veto's benefit over the flat one can't be demonstrated against
+real evidence right now -- both are equally inert in production.
+
+**Not landed.** Kept in recommend.py as an EXPERIMENTAL function for
+whenever a field/user pair does validate in the future. Full writeup:
+docs/scoring-test-protocol.md, "Graduated dealbreaker veto" entry.

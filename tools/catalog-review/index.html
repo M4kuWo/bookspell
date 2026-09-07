@@ -163,10 +163,17 @@ const ANON_KEY = 'sb_publishable_DXG7hpWr3UEnDGT60DcKZg_hbRNDUXI';
 const FIELD_GROUPS = [
   { title: 'Point of view & structure', fields: ['pov_count','person','narrator_reliability','timeline','form','prose_density','prose_complexity'] },
   { title: 'Pacing & tone', fields: ['overall_pace','pace_shape','drive','darkness','humor_level','emotional_register','message_intensity','intellectual_weight'] },
-  { title: 'Content & shape', fields: ['romance_heat_frequency','romance_heat_intensity','violence_frequency','violence_intensity','worldbuilding_density','stakes_scope','narrative_closure','emotional_resolution','ends_on_cliffhanger'] },
+  { title: 'Content & shape', fields: ['romance_heat_frequency','romance_heat_intensity','violence_frequency','violence_intensity','worldbuilding_density','stakes_scope','personal_stakes','narrative_closure','emotional_resolution','ends_on_cliffhanger'] },
   { title: 'Tropes & craft', fields: ['magic_system_hardness','scifi_hardness'] },
+  { title: 'Reader fit', fields: ['genre_accessibility'] },
   { title: 'Bibliographic', fields: ['genre','age_category','book_length','audiobook_length'] },
 ];
+// audiobook_native's narration-quality fields (narrator_performance,
+// narrator_cast, narration_pace_vs_prose, accent_authenticity,
+// production_quality) are deliberately NOT included above -- schema-defined
+// but 0/825 books actually have data for them as of 2026-09-07 (only
+// audiobook_length itself has been fetched). Adding empty filter dropdowns
+// for them would be pure clutter until a real data source exists.
 const ALL_SCALAR_FIELDS = FIELD_GROUPS.flatMap(g => g.fields);
 const FIELD_LABELS = {
   pov_count:'POV count', person:'Person', narrator_reliability:'Narrator reliability', timeline:'Timeline', form:'Form',
@@ -175,8 +182,9 @@ const FIELD_LABELS = {
   emotional_register:'Emotional register', message_intensity:'Message intensity', intellectual_weight:'Intellectual weight',
   romance_heat_frequency:'Romance heat (freq)', romance_heat_intensity:'Romance heat (intensity)',
   violence_frequency:'Violence (freq)', violence_intensity:'Violence (intensity)', worldbuilding_density:'Worldbuilding density',
-  stakes_scope:'Stakes scope', narrative_closure:'Narrative closure', emotional_resolution:'Emotional resolution',
+  stakes_scope:'Stakes scope', personal_stakes:'Personal stakes', narrative_closure:'Narrative closure', emotional_resolution:'Emotional resolution',
   ends_on_cliffhanger:'Ends on cliffhanger', magic_system_hardness:'Magic hardness', scifi_hardness:'Sci-fi hardness',
+  genre_accessibility:'Genre accessibility',
   genre:'Genre', age_category:'Age category', book_length:'Book length', audiobook_length:'Audiobook length',
 };
 // Fields whose absence is a real data gap worth flagging (vs. legitimately n/a).

@@ -2749,6 +2749,66 @@ def _apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, ce
     return min(score, DEALBREAKER_VETO_CAP)
 
 
+# EXPERIMENTAL (2026-09-07, prototyped alongside _apply_dealbreaker_veto,
+# NOT wired into recommend()/explain_match()/audit_book_score() -- see
+# docs/scoring-test-protocol.md's 2026-09-07 entry before landing this).
+#
+# Motivated by the exact gap the 2026-09-05 adaptive-threshold experiment
+# hit and reverted over (see STAT_SEPARATION_THRESHOLD's docstring): once
+# `person` validates, Mathias's genuine exceptions (Old Man's War, and --
+# discovered during the 2026-09-06 series-dedup investigation -- Red
+# Sister) got the SAME flat cap as his clearest dealbreaker cases (Royal
+# Assassin, Interview with the Vampire), because the flat veto has no
+# notion of "how much other evidence backs this book despite the flag."
+#
+# A live check (2026-09-07) of exactly this ruled out the first idea
+# tried -- scaling the cap by the FLAGGED FIELD's own mismatch magnitude
+# -- as a dead end: for a NOMINAL field, that magnitude is a function of
+# (book's value, centroid's value, learned weight) only, so it's IDENTICAL
+# across every candidate sharing the same value pair. Confirmed directly:
+# Red Sister, Royal Assassin, Assassin's Apprentice, Interview with the
+# Vampire, and Circe all show person_mismatch == 0.1688 against the same
+# profile, despite wildly different raw scores (0.474, 0.342, 0.265,
+# 0.224, 0.461) and wildly different real outcomes (loved vs. hated).
+# Per-candidate field-magnitude graduation cannot distinguish them.
+#
+# What DOES vary per candidate is the raw score itself -- i.e. how much
+# OTHER evidence this specific book has going for it. So this version
+# graduates the PULL toward the cap (not the cap itself) by two things:
+# how far the raw score sits above the cap (a book already near/below the
+# cap is untouched, same as the flat version), and separately, how
+# SEVERE the strongest flagged mismatch is in absolute terms (comparing
+# ACROSS different possible dealbreaker fields, where magnitude does
+# carry real information -- a near-floor 0.15 mismatch is trusted less
+# than one nearing WEIGHT_CAP). A borderline-severity flag pulls the
+# score only halfway to the cap; a max-severity flag pulls it all the
+# way, reproducing the flat version's behavior exactly at that extreme.
+DEALBREAKER_VETO_PULL_FLOOR = 0.5
+DEALBREAKER_VETO_SEVERITY_SPAN = WEIGHT_CAP - VALIDATED_DEALBREAKER_MAGNITUDE
+
+
+def _apply_dealbreaker_veto_graduated(catalog, id_to_magnitude, validated_fields, book, centroid, weights, score,
+                                       field_prevalence=None, trope_prevalence=None):
+    """EXPERIMENTAL -- see the comment block above. Same trigger condition
+    as _apply_dealbreaker_veto() (only fires with a non-empty validated_fields
+    and a real flag), but instead of clamping score to DEALBREAKER_VETO_CAP
+    outright, pulls it toward the cap by a fraction between
+    DEALBREAKER_VETO_PULL_FLOOR (weakest qualifying flag) and 1.0 (a flag
+    at or above WEIGHT_CAP severity -- identical to the flat clamp)."""
+    if not validated_fields:
+        return score
+    flags = dealbreaker_flags(book, centroid, weights, validated_fields=validated_fields,
+                               field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
+    if not flags:
+        return score
+    if score <= DEALBREAKER_VETO_CAP:
+        return score
+    strongest = max(m for _, m in flags)
+    severity = min(1.0, max(0.0, (strongest - VALIDATED_DEALBREAKER_MAGNITUDE) / DEALBREAKER_VETO_SEVERITY_SPAN))
+    pull = DEALBREAKER_VETO_PULL_FLOOR + (1 - DEALBREAKER_VETO_PULL_FLOOR) * severity
+    return score - pull * (score - DEALBREAKER_VETO_CAP)
+
+
 def _resolve_profile(catalog, ratings, genre=None, fatigue_overrides=None):
     """Shared by recommend() and explain_match(): resolves rating titles
     to ids, applies genre scoping, builds the profile, applies fatigue
