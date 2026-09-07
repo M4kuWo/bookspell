@@ -7384,3 +7384,25 @@ via_exposition_dump` 41->43. Migration:
 
 Both tested in a rolled-back transaction against hosted first, then
 applied for real; counts verified before/after as noted above.
+
+## 2026-09-07 (later still): execution-DNA sweep, romance_tone batch 18 + worldbuilding batch 15
+
+romance_tone: second consecutive thin batch -- 7 candidates researched,
+only 1 tagged (disputed). The easy, well-known candidates in this pool
+appear largely exhausted; remaining candidates are increasingly ones
+where real discourse exists but doesn't land on presentation
+specifically, or where the central relationship's romantic status is
+itself ambiguous (Mickey7's farcical tone, for instance, doesn't fit
+either side of this trope pair at all). `melodramatic_romance_subplot`
+76->77. Migration: `20260907320000_romance_tone_sweep_batch18.sql`.
+
+worldbuilding delivery: still productive -- 7 candidates researched, 6
+tagged (5 clean woven, 2 disputed exposition-dump). Homeland tagged on
+both sides: strong majority evidence for woven, plus one specific, real
+narrator-aside complaint that's a genuine minority exception, not
+invented to force balance. `worldbuilding_woven_into_narrative` 53->58,
+`worldbuilding_via_exposition_dump` 43->45. Migration:
+`20260907330000_worldbuilding_delivery_sweep_batch15.sql`.
+
+Both tested in a rolled-back transaction against hosted first, then
+applied for real; counts verified before/after as noted above.
