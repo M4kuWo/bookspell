@@ -7188,3 +7188,37 @@ exposition_dump` 26->30. Migration:
 
 Both tested in a rolled-back transaction against hosted first, then
 applied for real; counts verified before/after as noted above.
+
+## 2026-09-07 (later still): execution-DNA sweep, romance_tone batch 12 + worldbuilding batch 9
+
+Applied the fix from the batch 11 process note: both candidate pools
+were re-queried fresh and saved to complete files before picking any
+titles this time, not read from a truncated console dump. The
+rolled-back-transaction test confirmed all 14 inserts across both files
+were genuinely new (zero silent no-ops from already-tagged books, vs.
+2 of 6 last batch) -- the fix worked.
+
+romance_tone: 10 candidates researched, 8 tagged (3 clean understated/
+melodramatic, 5 more split across clean and disputed-at-0.2 -- A Court
+of Wings and Ruin, Wizard And Glass, and To Kill a Kingdom all had real
+discourse that came out genuinely contradictory rather than a clean
+read). 2 left untagged (An Ember in the Ashes, Ruthless Vows -- real
+discourse found, but all of it was insta-love/drive/pacing/quality
+complaints, not a presentation-of-emotion read). `understated_romance`
+58->61, `melodramatic_romance_subplot` 64->69. Migration:
+`20260907200000_romance_tone_sweep_batch12.sql`.
+
+worldbuilding delivery: 6 candidates researched, all 6 tagged (5 clean,
+1 disputed -- Ancillary Sword, where one strand of discourse praises
+character-focused worldbuilding and another calls the same book's
+worldbuilding "less adventurous and more obvious" than its predecessor).
+Notable finds: God Emperor of Dune and Seveneves both landed cleanly on
+the exposition-dump side (Dune's God Emperor is literally described as
+"a philosophy thesis with characters," in-world lecture excerpts
+heading every chapter), helping balance out this trope's previously
+one-sided count. `worldbuilding_woven_into_narrative` 35->39,
+`worldbuilding_via_exposition_dump` 30->32. Migration:
+`20260907210000_worldbuilding_delivery_sweep_batch9.sql`.
+
+Both tested in a rolled-back transaction against hosted first, then
+applied for real; counts verified before/after as noted above.
