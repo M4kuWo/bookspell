@@ -74,9 +74,19 @@ worth deferring to a later session rather than batching in for
 ## P2 (ongoing/routine, not new decisions)
 
 - [ ] **Continue the romance_tone/worldbuilding_delivery tagging
-  sweep** -- batch 8 of a planned ~20 done as of 2026-09-07. Remember
-  the mandatory density self-check (CLAUDE.md) before ending any batch
-  session.
+  sweep** -- as of 2026-09-07 end-of-session: romance_tone batch 19,
+  worldbuilding-delivery batch 16 done (~136 romance_tone candidates
+  and ~399 worldbuilding candidates remain). Remember the mandatory
+  density self-check (CLAUDE.md) before ending any batch session.
+  **For romance_tone specifically, default to a broad search + targeted
+  follow-up per candidate (not a single search)** -- see
+  project-log.md's 2026-09-07 session-wrap-up entry: the easy,
+  heavily-reviewed candidate pool is depleting, single searches are
+  increasingly landing nothing usable or (once, caught) misattributing
+  a quote to the wrong romance pairing in a book with more than one.
+  worldbuilding-delivery isn't showing this depletion yet -- single
+  searches there are still landing 5-6 clean tags routinely, no process
+  change needed for that pool for now.
 - [ ] **Catalog tagging completion** -- 873 books total, 45 untagged as
   of 2026-09-07. Checked the "finish partially-tagged series" angle
   first per standing policy: turned out all 6 partially-tagged series

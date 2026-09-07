@@ -7448,3 +7448,88 @@ delivery mechanism specifically). `worldbuilding_woven_into_narrative`
 
 Both tested in a rolled-back transaction against hosted first, then
 applied for real; counts verified before/after as noted above.
+
+## 2026-09-07 (session wrap-up): full day's session summary, stopping here for token economy
+
+Repo owner asked to stop for today (explicitly not wanting to spend a
+full session's budget in one sitting) and log a summary of everything
+done, including an observation about melodrama's diminishing hit rate
+and what that implies for future batches. This entry ties together the
+whole session, which each ran as its own dated entry above -- nothing
+here is new work, just the roundup asked for.
+
+**What happened today, in order:**
+1. Confirmed the prior session's work was already committed and pushed
+   to `main` (README refresh, TODO system, format-preference fix,
+   `work_type` widening, audiobook-editions skill) -- checked off the
+   one remaining P0 TODO item.
+2. Catalog-completion check surfaced a real data-quality finding: all 6
+   "partially-tagged series" turned out to be fully tagged already --
+   the "missing" rows were either omnibus/compilation duplicates (4) or
+   currently-unpublished books (2), not real gaps. Flagged to the repo
+   owner rather than unilaterally fixed; landed a new "omnibus/
+   compilation editions" future-fields entry in book-dna.md per his
+   answer, and updated TODO.md so any session (including the other
+   Claude session) knows to skip these and future look-alikes.
+3. Ran the execution-DNA trope sweep for 9 consecutive batches:
+   romance_tone batches 11-19, worldbuilding-delivery batches 8-16.
+   Every batch tested in a rolled-back transaction against hosted
+   before applying for real, migration files idempotent and
+   individually logged above.
+
+**Running totals, start of session -> now:**
+- `understated_romance`: 56 -> 79 (+23)
+- `melodramatic_romance_subplot`: 57 -> 79 (+22)
+- `worldbuilding_woven_into_narrative`: 34 -> 60 (+26)
+- `worldbuilding_via_exposition_dump`: 26 -> 49 (+23)
+- 94 new trope rows added today across both pools.
+- Remaining candidate pools as of the last refresh: ~136 romance_tone,
+  ~399 worldbuilding-delivery.
+
+**Two real process bugs caught and fixed mid-session** (both already
+logged in detail above, worth restating here since they're standing
+lessons for whoever picks this sweep up next): (1) picking candidates
+from a truncated console dump instead of a saved full query result led
+to wasted research on already-tagged books (batch 11); fixed by always
+writing the full candidate list to a file first. (2) a title containing
+a Unicode curly apostrophe (U+2019) silently matched zero rows in an
+INSERT...SELECT even after "fixing" the quoting with a standard SQL
+escape, because the stored character wasn't an ASCII apostrophe at all
+(batch 13, recurred in batch 16) -- no Postgres error, just a quiet
+no-op; only the rolled-back-transaction row-count check caught it. Any
+apostrophe-containing title needs its literal character copied from a
+live query result, not retyped.
+
+**Observation for whoever continues this sweep: melodrama's hit rate
+is dropping as the easy candidate pool depletes, and this needs a
+process response, not just more searching at the same depth.** Batch 14
+came back four-for-four understated with zero melodramatic hits despite
+researching 11 books -- not because melodrama is genuinely rarer in this
+catalog, but because that batch's candidate picks happened to skew
+toward quieter, more literary titles. Batch 15 fixed this by
+*deliberately* seeking out books with a known-intense/dramatic
+reputation rather than picking candidates neutrally, and the balance
+came back immediately (3 of 4 tags melodrama-leaning). But batches 17
+and 18 then came back thin on BOTH directions at once (2 tags across 18
+combined candidates) -- a different problem: the pool of famous,
+heavily-reviewed candidates that reliably surface clean presentation-
+specific discourse in a single search is genuinely running low, and
+what's left skews toward books where real discourse exists but doesn't
+land on tone specifically (prominence/pacing/quality complaints
+instead), or toward relationships whose romantic status is itself
+ambiguous. Batch 19 tested a fix -- a broad search plus a second,
+targeted follow-up search per candidate, at the repo owner's request --
+and it worked: not only did the follow-up searches let two disputed-
+but-real evidence points get found (where a single search likely would
+have surfaced nothing usable), it also caught a real misattribution in
+progress (a "melodramatic" quote for Sword of Destiny that turned out
+to describe a different romance pairing than the one the first search
+seemed to be about). **Recommendation: default to the two-search
+(broad + targeted follow-up) approach for romance_tone from here on,
+not just when yield looks thin** -- it's slower per candidate, but the
+remaining pool is shifting toward exactly the kind of book (less
+iconic, thinner review footprint) where a single search is most likely
+to either find nothing or misattribute what it does find. The
+worldbuilding-delivery pool doesn't show this same depletion yet
+(~399 candidates remain, and single-search batches are still landing
+5-6 clean tags routinely) -- no change needed there for now.
