@@ -7258,3 +7258,33 @@ exposition_dump` 32->35. Migration:
 Both tested in a rolled-back transaction against hosted first (catching
 the SQL bug above), then applied for real; counts verified before/after
 as noted above.
+
+## 2026-09-07 (later still): execution-DNA sweep, romance_tone batch 14 + worldbuilding batch 11
+
+romance_tone: 11 candidates researched, only 4 tagged, all understated
+-- a real skew, not an artifact of avoiding melodrama. 7 left untagged
+(Daughter of the Moon Goddess, The Familiar, Legend, The Grey Bastards,
+Prince of Fools, The Book Eaters, Katabasis) because their real
+discourse addressed prominence/pacing/quality/buildup rather than a
+clean presentation read, or (Prince of Fools, The Grey Bastards)
+barely had a central romantic relationship to judge tone on at all.
+**Process note**: this batch's candidate picks leaned toward quieter,
+more literary titles (Starling House, Light From Uncommon Stars, How
+to Stop Time), which likely explains the skew -- next romance_tone
+batch should deliberately mix in known-intense romantasy candidates to
+keep both directions represented, the way batch 11/12 did.
+`understated_romance` 66->70, `melodramatic_romance_subplot` unchanged
+at 71. Migration: `20260907240000_romance_tone_sweep_batch14.sql`.
+
+worldbuilding delivery: 8 candidates researched, 5 tagged (3 clean
+woven, 1 clean exposition-dump, 1 disputed). 3 left untagged (The
+Wandering Inn -- no discourse addressing delivery mechanism
+specifically; A Desolation Called Peace -- only generic "woven prose"
+praise, not specific to worldbuilding; Blood Over Bright Haven -- a
+single vague mention of an early "struggle" with exposition, too thin
+to anchor). `worldbuilding_woven_into_narrative` 42->45,
+`worldbuilding_via_exposition_dump` 35->37. Migration:
+`20260907250000_worldbuilding_delivery_sweep_batch11.sql`.
+
+Both tested in a rolled-back transaction against hosted first, then
+applied for real; counts verified before/after as noted above.
