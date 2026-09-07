@@ -16,6 +16,15 @@ There are two real sub-tasks here, run as separate passes -- see "Why
 this isn't combined with the romance_tone/worldbuilding batches" below
 for why they don't share a batch with each other, or with those.
 
+**This will take a long time end-to-end across many sessions -- that's
+expected and fine, don't try to compress it.** Every step below has an
+explicit stopping point. Do ONE bounded step, then stop and report,
+the same discipline `tag-catalog-batch` already uses -- never chain
+multiple steps together in one sitting because "it would be more
+efficient," and never try to clear an entire sub-task in one session
+just because the remaining work looks small. A slower, real, checkable
+pace beats a fast one that quietly skips verification.
+
 ## Setup (one-time)
 
 Same as `tag-catalog-batch`: `DATABASE_URL` set to the **hosted**
@@ -75,34 +84,38 @@ There may be others (Big Finish leans licensed-IP/tie-in rather than
 novel adaptations, less likely to overlap much; note anything else you
 find credible evidence of in your report, don't just silently skip it).
 
-### Step A1: build the candidate list FIRST, cheaply -- don't check book-by-book
+### Step A1a: pull ONE producer's catalog listing, then stop
 
 Most of our 825 books have no dramatized edition at all. Checking each
-one individually would be hugely wasteful. Instead:
+one individually against the whole catalog would be hugely wasteful --
+but pulling and cross-referencing BOTH producers' full catalogs in one
+sitting is still doing two separate things in one go. Split it:
 
-1. Pull GraphicAudio's SFF/fantasy catalog listing (their site is
-   browsable by genre) -- get a list of titles+authors they've
-   produced.
-2. Pull BBC Audio's drama catalog similarly (their site and general
-   audio-drama reference sources both work).
-3. Cross-reference both lists against our actual catalog:
-   ```sql
-   select title, author from books order by title;
-   ```
-   (or export this once and match locally/in your own working memory --
-   whichever is more reliable for you). A fuzzy title+author match is
-   fine; note anything ambiguous rather than guessing.
-4. Only the INTERSECTION needs deep research. Expect this to be a small
-   number (tens, not hundreds) -- report the actual count you find, so
-   future sessions know whether this pool is exhausted or still growing
-   as the catalog grows.
+- **Session 1**: pull GraphicAudio's SFF/fantasy catalog listing (their
+  site is browsable by genre) -- get a list of titles+authors they've
+  produced. Stop and report the raw list (size, and the list itself or
+  where it's saved) before doing anything else.
+- **Session 2**: same for BBC Audio's drama catalog (their site and
+  general audio-drama reference sources both work). Stop and report.
 
-This step can be done in ONE larger pass across the whole catalog --
-it's a lookup/cross-reference operation, not per-book judgment work, so
-the usual 15-20-books-per-batch discipline doesn't apply here. Report
-back with the full candidate list before moving to Step A2.
+Don't cross-reference against our catalog in the same session you
+pulled the listing -- that's Step A1b, next.
 
-### Step A2: research each real match, then insert
+### Step A1b: cross-reference ONE producer's list against our catalog, then stop
+
+```sql
+select title, author from books order by title;
+```
+(or export this once and match locally/in your own working memory --
+whichever is more reliable for you). A fuzzy title+author match is
+fine; note anything ambiguous rather than guessing. Do this for
+GraphicAudio's list in one session, BBC Audio's in another -- report
+the intersection (expect a small number, tens not hundreds) and stop
+before starting any deep research. Future sessions can tell from your
+report whether this pool is exhausted or still growing as the catalog
+grows.
+
+### Step A2: research a bounded batch of real matches, then insert and stop
 
 For each confirmed match, find: `edition_type` (`dramatized_full_cast`
 for these two producers, `standard`/`abridged`/`other` if you find a
@@ -131,11 +144,13 @@ where (b.title, b.author) = ('Exact Title', 'Exact Author')
 on conflict do nothing;
 ```
 
-Work in batches of however many real matches Step A1 turned up per
-session -- this is genuinely faster per-book than romance_tone-style
-tagging (existence + metadata, not a craft judgment call), so don't
-artificially cap at 15-20 if you have more confirmed matches ready and
-verified.
+Cap each session at **10-15 confirmed matches**, then stop and report,
+same discipline as `tag-catalog-batch`'s per-book batches -- even
+though this is faster per-book than romance_tone-style tagging
+(existence + metadata, not a craft judgment call), a bounded session
+still beats "keep going since it's fast," both for verification quality
+and for cost. If Step A1b found more matches than one session's cap,
+that's expected -- just means more sessions, not a bigger one.
 
 ## Sub-task B: Audible Originals (audio-only, no print counterpart)
 
@@ -173,7 +188,7 @@ For Book DNA on an audio_original entry:
   `dramatized_full_cast` if that's the more informative distinction --
   use judgment, note which you picked and why in your report).
 
-### Candidate discovery
+### Candidate discovery -- its own session, stop before tagging anything
 
 Browse Audible's own "Audible Originals" SFF/fantasy catalog listing.
 For each one, check it's genuinely audio-only (no print/ebook edition
@@ -181,9 +196,11 @@ exists anywhere -- if it turns out to have a print counterpart you
 find, it's a normal book, ingest it the regular way via
 `tag-catalog-batch`, not this path) and genuinely in scope (sci-fi/
 fantasy, per this catalog's v1 scope -- see CLAUDE.md's "Catalog scope"
-section, same bar as any other book).
+section, same bar as any other book). Report the candidate list and
+stop -- don't roll straight into ingestion+tagging in the same session,
+same reason as Steps A1a/A1b above.
 
-### Ingestion + tagging
+### Ingestion + tagging -- bounded batches of 15-20, same as tag-catalog-batch
 
 Same conventions as `tag-catalog-batch`'s Step 3 (full Book DNA fields,
 genre, tropes, content warnings, confidence layer for genuine

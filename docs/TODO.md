@@ -18,64 +18,59 @@ Priority is P0 (do next) / P1 (soon, real value) / P2 (ongoing/routine)
 / P3 (blocked or parked -- not actionable right now, don't pick these
 up without checking whether the blocker cleared).
 
+**Token-economy note (2026-09-07)**: a heavy session today -- pace
+future work accordingly. Cheap/quick items are ordered first within
+each tier on purpose; the genuinely taxing ones (marked below) are
+worth deferring to a later session rather than batching in for
+"efficiency," which just concentrates cost instead of reducing it.
+
 ## P0
 
-- [ ] **Push latest commits** (`43a14f3`, `6d98f29`) so the live GitHub
-  Pages catalog tool and today's scoring investigation are actually on
-  `main`. Trivial, just needs a go-ahead.
-- [ ] **Gate `book_length`/`audiobook_length` by listener format
-  preference.** Both are always-on `ORDINAL_FIELDS` today, learned and
-  scored for every user regardless of whether they've ever listened to
-  an audiobook -- a pure print reader can pick up a spurious
-  `audiobook_length` preference from coincidental correlation and have
-  it silently affect every candidate's score, and vice versa. Fix:
-  default to `book_length` only; add a per-user format-preference
-  setting (`data/ratings/{name}.json`, same convention as everything
-  else per-user) that swaps in `audiobook_length` for a self-identified
-  audiobook listener, keeps both for someone who does both. Small,
-  self-contained, no new data needed. (Raised 2026-09-07.)
+- [x] **Gate `book_length`/`audiobook_length` by listener format
+  preference.** LANDED 2026-09-07 -- see scoring-test-protocol.md.
+  Mathias's own `_meta.format_preference` set to `"audiobook"` per his
+  direct statement.
+- [ ] **Push today's commits** so everything landed today (TODO system,
+  format-preference fix, `work_type` widening, the audiobook-editions
+  skill, the catalog tool updates) is actually on `main` and hosted.
+  Cheap -- just needs a go-ahead.
 
 ## P1
 
-- [ ] **Promote `romance_tone` (`understated_romance`/
-  `melodramatic_romance_subplot`) and `worldbuilding_delivery`
-  (`worldbuilding_woven_into_narrative`/`worldbuilding_via_exposition_
-  dump`) from trope pairs to real scalar fields.** Both pairs show ZERO
-  overlap in the actual data (confirmed 2026-09-07) -- genuinely
-  one-axis spectrums, not independent tags. They were deliberately
-  built as tropes first as a cheap validation probe (reusing existing
-  trope machinery) before committing to schema -- see book-dna.md's
-  "Romance TONE/execution-quality" backlog entry and
+- [ ] **Audiobook edition data -- ready to hand off to the other Claude
+  session, see `.claude/skills/tag-audiobook-editions/SKILL.md`**
+  (written 2026-09-07, updated with explicit bounded-session
+  discipline). Runs on a SEPARATE session's token budget, not this
+  one -- fine to kick off any time regardless of this session's own
+  economizing. Expect this to take many sessions end-to-end; that's
+  by design, not a problem to fix. In order:
+  1. Step A1a: pull GraphicAudio's catalog listing (own session), then
+     BBC Audio's (another session).
+  2. Step A1b: cross-reference each list against ours (own session
+     per producer), report the real match count.
+  3. Step A2: research + insert confirmed matches, capped at 10-15 per
+     session.
+  4. Sub-task B (Audible Originals, audio-only new entries,
+     `work_type = 'audio_original'`): candidate discovery as its own
+     session, then ingestion+tagging in normal 15-20/session batches.
+  - Open sub-question, not yet checked: whether Hardcover's API exposes
+    standard-edition narrator data as a contributor role (same source
+    already used for author verification) -- possibly near-bulk-
+    fetchable, cheaper than the dramatized-edition path. Check this
+    before starting Step A1a if whoever picks this up has a spare cheap
+    session for it.
+- [ ] **(Taxing -- defer) Promote `romance_tone`/`worldbuilding_
+  delivery` from trope pairs to real scalar fields.** Both pairs show
+  ZERO overlap in the actual data (confirmed 2026-09-07) -- genuinely
+  one-axis spectrums, not independent tags. Deliberately built as
+  tropes first as a cheap validation probe before committing to schema
+  -- see book-dna.md's "Romance TONE/execution-quality" entry and
   scoring-test-protocol.md's 2026-09-05 "Execution-DNA validation
-  probes" entry. The probe validated (correctly-signed weights,
-  confirmed in production). Converting needs: a migration adding the
-  real columns + backfilling existing trope rows into them,
-  `recommend.py` field-handling changes (ORDINAL_FIELDS/NOMINAL_FIELDS
-  or wherever the right shape is), removing the old trope pair once
-  ported. Scoring-side only, no new data fetching.
-- [ ] **Audiobook edition data -- ready to hand off, see
-  `.claude/skills/tag-audiobook-editions/SKILL.md`** (written
-  2026-09-07). Only Wind and Truth (GraphicAudio) has a populated
-  `audiobook_editions` row. Two sub-tasks, deliberately NOT combined
-  with the romance_tone/worldbuilding batches (different research
-  modality, different candidate-list source -- see the skill's own
-  "why not combined" section for the full reasoning):
-  - Sub-task A: dramatized full-cast editions (GraphicAudio, BBC Audio)
-    on EXISTING catalog books -- cross-reference each producer's own
-    catalog against ours FIRST (cheap), only deep-research real
-    matches. Can run in large batches, it's a lookup, not a judgment
-    call.
-    - Note (2026-09-07): also worth checking whether Hardcover's API
-      exposes standard-edition narrator data as a contributor role
-      (same source already used for author verification) -- possibly
-      near-bulk-fetchable, cheaper than the dramatized-edition path.
-      Not yet checked; add as a Sub-task A0 if it pans out.
-  - Sub-task B: Audible Originals (audio-only, no print counterpart) --
-    genuinely NEW catalog entries, `books.work_type = 'audio_original'`
-    (migration `20260907140000_work_type_audio_original.sql`, already
-    landed). Full ingestion+tagging, same batch-size discipline as
-    `tag-catalog-batch` (15-20/session), `book_length`/`page_count`
-    left NULL, `audiobook_length` the real length signal.
+  probes" entry; the probe already validated (correctly-signed
+  weights, confirmed in production). Converting needs a migration +
+  backfill + `recommend.py` field-handling changes + removing the old
+  trope pair -- real, multi-step engineering work, not urgent. Good
+  candidate for a session with a fresh token budget.
 
 ## P2 (ongoing/routine, not new decisions)
 

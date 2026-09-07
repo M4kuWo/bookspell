@@ -6896,3 +6896,27 @@ Also set Mathias's `_meta.format_preference` to `"audiobook"` in
 `data/ratings/mathias.json`, per his own direct statement ("it's been
 years since I read more than one physical book a year") -- not a guess,
 a direct report, per today's format-preference gating fix.
+
+## 2026-09-07 (later still): bounded-session discipline added to the audiobook-editions skill; TODO reordered for token economy
+
+Repo owner flagged today's session used an exorbitant amount of tokens
+and asked to economize going forward, and separately asked that the
+new `tag-audiobook-editions` skill explicitly not try to do everything
+in one go (accepting that the full audiobook data-fetch project will
+take a long time end-to-end).
+
+Updated the skill: every step now has an explicit stopping point
+(pull one producer's catalog listing -> stop; cross-reference one
+producer's list -> stop; research+insert a batch capped at 10-15
+confirmed matches -> stop; same split for Audible Originals'
+candidate-discovery vs. ingestion+tagging) -- mirrors
+`tag-catalog-batch`'s existing "one bounded batch, then stop and
+report" discipline rather than the more open-ended "large batches,
+it's just a lookup" framing this was first written with.
+
+Reordered `docs/TODO.md`: cheap/done items first, genuinely taxing
+ones (the romance_tone/worldbuilding_delivery scalar-field promotion)
+explicitly marked "(Taxing -- defer)" and pushed later rather than
+implied as equally next-up. Noted that the audiobook-editions skill
+runs on a separate Claude session's own token budget, so it's fine to
+kick off regardless of this session's economizing.
