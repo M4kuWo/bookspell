@@ -6853,3 +6853,48 @@ together in a rolled-back transaction first, then applied directly to
 hosted; verified: romance_tone went 104 -> 111, worldbuilding-delivery
 went 54 -> 60. These two specific files are the only ones now pending
 registration in hosted's migration-tracking table (see above).
+
+## 2026-09-07 (later still) -- romance_tone batch 10, cut short by the session's web search cap
+
+Started a normal combined batch (14 romance_tone candidates queued,
+worldbuilding not yet started). Hit this session's web search budget
+cap (200/200 calls used) four books into the romance_tone research --
+`WebSearch` began returning "session has used its web search budget"
+instead of results.
+
+**Did not fabricate tags for the remaining candidates.** This
+project's evidence standard for romance_tone/worldbuilding-delivery
+requires real, findable discourse, not inference from genre or
+pattern-matching -- continuing to write `book_tropes` rows without
+being able to check real reviews would have violated that standard
+outright, so the honest move was to stop, tag only what real search
+results already supported, and report the blocker rather than
+quietly degrading quality or inventing evidence to keep the batch
+size looking normal.
+
+Of the 4 books actually researched: **Illuminae** and **Empire of the
+Vampire** both tagged melodramatic (0.6) on clean, direct, repeated
+"melodramatic" language from multiple independent reviewers. **Anansi
+Boys** was reviewed but explicitly left untagged -- the only discourse
+found was about a consent/deception plot point (Spider impersonating
+Fat Charlie to sleep with Rosie), which is relationship-dynamic
+evidence, explicitly excluded by this trope's own evidence standard,
+not presentation-of-emotion evidence. **Mr. Penumbra's 24-Hour
+Bookstore** also left untagged -- discourse addressed the love
+interest's character depth, not tone.
+
+Migration: `20260907160000_romance_tone_sweep_batch10.sql`. Tested in
+a rolled-back transaction first, then applied directly to hosted;
+verified: romance_tone went 111 -> 113. No worldbuilding-delivery work
+happened this turn at all.
+
+**Flagged to the repo owner directly, not just logged here**: this
+session cannot run further real-evidence-backed batches of either
+pool until the web search budget resets or
+`CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` is raised -- whichever the
+repo owner prefers is his call, not something to route around
+silently (e.g. by relying on pattern-matching/genre-reputation
+instead of real research, which is exactly the mistake this whole
+priority batch exists to avoid, per the "From Blood and Ash/Fourth
+Wing" and "Bear and the Nightingale" false starts logged back on
+2026-09-05/06).
