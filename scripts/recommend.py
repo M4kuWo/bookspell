@@ -956,7 +956,7 @@ def _n_independent_clusters(catalog, id_to_magnitude):
     return len(clusters)
 
 
-def build_profile(catalog, ratings, full_ratings=None):
+def build_profile(catalog, ratings, full_ratings=None, format_preference=None):
     """Returns (centroid, weights) -- centroid is the target feature profile
     (a rating-magnitude-weighted average of positively-rated books),
     weights say how much each feature matters for THIS user specifically.
@@ -965,8 +965,32 @@ def build_profile(catalog, ratings, full_ratings=None):
     genre-scoped) pool used for CONTENT fields and tropes.
     full_ratings: same shape, the unscoped pool used for STRUCTURAL
     fields (see STRUCTURAL_*_FIELDS above) -- defaults to `ratings` when
-    not given, i.e. no genre scoping in play."""
+    not given, i.e. no genre scoping in play.
+
+    format_preference (2026-09-07, LANDED): 'print' (or None, the
+    default), 'audiobook', or 'mixed' -- gates whether `book_length` and
+    `audiobook_length` participate at all. Before this, BOTH fields were
+    always-on ORDINAL_FIELDS, learned and scored for every user
+    regardless of whether they'd ever actually listened to an audiobook
+    -- a pure print reader could pick up a spurious `audiobook_length`
+    preference from coincidental correlation among their liked books
+    (which fields get discounted for redundancy has nothing to do with
+    whether the field is even relevant to how this person reads), and
+    it would silently affect every candidate's score, symmetrically for
+    an audiobook-only listener and `book_length`. Default ('print'/None)
+    excludes `audiobook_length` entirely and keeps `book_length` --
+    matches this project's primary format so far; 'audiobook' is the
+    mirror image; 'mixed' keeps both fields exactly as before this
+    landed (a genuine mixed-format reader cares about both signals).
+    Read from a rater's `data/ratings/{name}.json`'s `_meta.
+    format_preference` by callers, not by this function -- build_profile()
+    itself just takes the resolved value."""
     full_ratings = ratings if full_ratings is None else full_ratings
+    exclude_length_fields = set()
+    if format_preference == "audiobook":
+        exclude_length_fields = {"book_length"}
+    elif format_preference != "mixed":
+        exclude_length_fields = {"audiobook_length"}
 
     liked, disliked = _split_by_sign(catalog, ratings)
     full_liked, full_disliked = _split_by_sign(catalog, full_ratings)
@@ -987,6 +1011,8 @@ def build_profile(catalog, ratings, full_ratings=None):
         return sum(v * w for v, w in positions) / total_w
 
     for field in ORDINAL_FIELDS:
+        if field in exclude_length_fields:
+            continue
         pool_liked = full_liked if field in STRUCTURAL_ORDINAL_FIELDS else liked
         pool_disliked = full_disliked if field in STRUCTURAL_ORDINAL_FIELDS else disliked
         liked_positions = [
@@ -2809,7 +2835,7 @@ def _apply_dealbreaker_veto_graduated(catalog, id_to_magnitude, validated_fields
     return score - pull * (score - DEALBREAKER_VETO_CAP)
 
 
-def _resolve_profile(catalog, ratings, genre=None, fatigue_overrides=None):
+def _resolve_profile(catalog, ratings, genre=None, fatigue_overrides=None, format_preference=None):
     """Shared by recommend() and explain_match(): resolves rating titles
     to ids, applies genre scoping, builds the profile, applies fatigue
     overrides. Returns (centroid, weights, id_to_magnitude, matches_genre).
@@ -2838,7 +2864,12 @@ def _resolve_profile(catalog, ratings, genre=None, fatigue_overrides=None):
     suppress a trope the user is fatigued on even though their rating
     history says they like it. A deliberate manual exception to their
     own average, not a re-estimate of it -- so it's a clobber, not a
-    blend."""
+    blend.
+
+    format_preference: passed straight through to build_profile() (see
+    its docstring) -- 'print'/None (default), 'audiobook', or 'mixed'.
+    Callers should read this from the rater's `_meta.format_preference`,
+    not guess it."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
 
     id_to_magnitude = {}
@@ -2866,7 +2897,7 @@ def _resolve_profile(catalog, ratings, genre=None, fatigue_overrides=None):
     else:
         scoped_ratings = id_to_magnitude
 
-    centroid, weights = build_profile(catalog, scoped_ratings, id_to_magnitude)
+    centroid, weights = build_profile(catalog, scoped_ratings, id_to_magnitude, format_preference)
 
     if fatigue_overrides:
         for key, val in fatigue_overrides.items():
@@ -3094,8 +3125,8 @@ def list_user_rule_targets(catalog):
 
 def recommend(catalog, ratings, top_n=10, genre=None,
               recent_history=None, diversity=0.0, fatigue_overrides=None,
-              discovery_only=False, user_rules=None):
-    """See _resolve_profile() for ratings/genre/fatigue_overrides.
+              discovery_only=False, user_rules=None, format_preference=None):
+    """See _resolve_profile() for ratings/genre/fatigue_overrides/format_preference.
 
     user_rules: raw shape for normalize_user_rules() -- explicit,
     user-supplied "none of X"/"less of X" preferences, applied as the
@@ -3136,7 +3167,7 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     replacing recommend()'s default behavior with them."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     centroid, weights, id_to_magnitude, matches_genre = _resolve_profile(
-        catalog, ratings, genre, fatigue_overrides
+        catalog, ratings, genre, fatigue_overrides, format_preference
     )
     validated_fields = validated_dealbreaker_fields(catalog, id_to_magnitude)
     csw = cold_start_weight(catalog, id_to_magnitude)
@@ -3188,7 +3219,7 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     return scored[:top_n]
 
 
-def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, top_n=5):
+def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, top_n=5, format_preference=None):
     """Why does/doesn't `title` match this user's profile, in readable
     language? Works for ANY book in the catalog, not just ones
     recommend() would surface as a top result -- including a deliberately
@@ -3229,7 +3260,7 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
         raise ValueError(f"{title!r} not found in catalog")
     book = catalog[title_to_id[title]]
 
-    centroid, weights, id_to_magnitude, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides)
+    centroid, weights, id_to_magnitude, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides, format_preference)
     validated = validated_dealbreaker_fields(catalog, id_to_magnitude)
     series_dna = compute_series_dna(catalog)
     field_prevalence, trope_prevalence = build_prevalence_lookup(catalog, genre)
@@ -3448,7 +3479,7 @@ def _audit_attribute_ordinal(catalog, id_to_magnitude, field):
     return {"liked": summarize(1), "disliked": summarize(-1)}
 
 
-def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None, user_rules=None):
+def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None, user_rules=None, format_preference=None):
     """Full attribution trace for one candidate against one profile.
     Returns a dict (see print_score_audit() for a readable rendering):
     {
@@ -3463,7 +3494,7 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
     }"""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     centroid, weights, id_to_magnitude, matches_genre = _resolve_profile(
-        catalog, ratings, genre, fatigue_overrides
+        catalog, ratings, genre, fatigue_overrides, format_preference
     )
     id_to_title = {bid: catalog[bid]["title"] for bid in id_to_magnitude}
     validated_fields = validated_dealbreaker_fields(catalog, id_to_magnitude)

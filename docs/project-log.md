@@ -6839,3 +6839,24 @@ real evidence right now -- both are equally inert in production.
 **Not landed.** Kept in recommend.py as an EXPERIMENTAL function for
 whenever a field/user pair does validate in the future. Full writeup:
 docs/scoring-test-protocol.md, "Graduated dealbreaker veto" entry.
+
+## 2026-09-07 (later): created docs/TODO.md; landed format-preference gating for book_length/audiobook_length
+
+Created `docs/TODO.md` -- a prioritized, mutable, cross-cutting task
+backlog, distinct from project-log.md's append-only history and
+book-dna.md's schema-specific "Future fields backlog". CLAUDE.md now
+points to it. Seeded from today's session: format-preference gating,
+romance_tone/worldbuilding_delivery scalar-field promotion, audiobook
+edition data fetch, plus the already-known parked/blocked items
+(graduated veto, series field-conditional dedup) and a pointer to
+book-dna.md's schema-idea backlog rather than duplicating it.
+
+Landed the format-preference gating fix (P0 on the new TODO): added
+`format_preference` ('print'/None default, 'audiobook', 'mixed') to
+`build_profile()`/`_resolve_profile()`/`recommend()`/`explain_match()`/
+`audit_book_score()` in recommend.py -- `book_length`/`audiobook_length`
+were both always-on regardless of whether a user actually listens to
+audiobooks, a real gap the repo owner caught. Checked before landing:
+full scorecard, byte-identical to old (both-fields-always-on) behavior
+except Mathias-full's pairwise accuracy improved 84%->87%, no
+regressions. Full writeup: scoring-test-protocol.md.

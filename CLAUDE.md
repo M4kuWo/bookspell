@@ -5,10 +5,12 @@ this project has been worked on from multiple machines and Claude
 accounts, and a few real mistakes have already happened from one session
 not knowing what another had already established. This file is the fix.
 
-Also read the tail of `docs/project-log.md` (the running history) and
+Also read the tail of `docs/project-log.md` (the running history),
 `docs/schema/book-dna.md` (the schema, including its "Future fields
-backlog" of deferred ideas) before making non-trivial changes — don't
-re-litigate decisions already made there.
+backlog" of deferred ideas), and `docs/TODO.md` (the prioritized,
+cross-cutting task backlog — mutable, not append-only) before making
+non-trivial changes — don't re-litigate decisions already made there,
+and check `docs/TODO.md` before picking your own next task.
 
 ## Database & migrations
 

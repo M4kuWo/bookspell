@@ -2471,3 +2471,29 @@ DOES validate in the future -- at that point, re-run this same
 force-validated comparison against real held-out data before landing,
 the way this entry did, rather than assuming the structural argument
 alone is enough.
+
+## Format-preference gating for book_length/audiobook_length -- LANDED (2026-09-07)
+
+Repo owner caught a real gap: `book_length` and `audiobook_length` were
+both always-on `ORDINAL_FIELDS`, learned and scored for every user
+regardless of whether they've ever listened to an audiobook -- a pure
+print reader could pick up a spurious `audiobook_length` preference
+from coincidental correlation among liked books, silently affecting
+every candidate's score, and symmetrically for an audiobook-only
+listener and `book_length`.
+
+Added `format_preference` ('print'/None default, 'audiobook', 'mixed')
+to `build_profile()`/`_resolve_profile()`/`recommend()`/
+`explain_match()`/`audit_book_score()` -- default now excludes
+`audiobook_length` and keeps `book_length`; 'audiobook' is the mirror;
+'mixed' keeps both fields exactly as before this landed. Read from a
+rater's `_meta.format_preference` by callers (not guessed).
+
+**Checked before landing** (this project's standing rule): full
+scorecard, new default (print-only) vs. old behavior (both fields
+always on, forced via `format_preference='mixed'`) -- byte-identical on
+every row except Mathias-full's pairwise accuracy, which IMPROVED
+84%->87%. No regressions anywhere. Makes sense: `audiobook_length`
+correlates with `book_length` (longer books tend to have longer
+audiobooks too), so removing the redundant always-on copy barely moves
+anything, with one small genuine win from removing noise.

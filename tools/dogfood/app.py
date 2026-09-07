@@ -79,6 +79,21 @@ ratings = rater_data["ratings"]
 
 st.sidebar.metric("Ratings on file", len(ratings))
 
+# --- Format preference (2026-09-07) -- gates book_length/audiobook_length,
+# see recommend.py's build_profile() docstring and data/ratings/README.md.
+rater_meta = rater_data.setdefault("_meta", {})
+FORMAT_LABELS = {"print": "Print/ebook", "audiobook": "Audiobook", "mixed": "Both"}
+current_format = rater_meta.get("format_preference", "print")
+format_pick = st.sidebar.selectbox(
+    "Reading format", list(FORMAT_LABELS.keys()),
+    index=list(FORMAT_LABELS.keys()).index(current_format) if current_format in FORMAT_LABELS else 0,
+    format_func=lambda k: FORMAT_LABELS[k],
+)
+if format_pick != current_format:
+    rater_meta["format_preference"] = format_pick
+    save_rater_data(rater_name, rater_data)
+    st.rerun()
+
 # --- Add/fix a rating (the exact gap-catching workflow from tonight) -----
 with st.sidebar.expander("Add or fix a rating"):
     title_pick = st.selectbox("Book", [""] + all_titles, key="rating_title")
@@ -146,13 +161,15 @@ genre = st.selectbox("Genre", ["fantasy", "sci_fi"])
 top_n = st.slider("How many", 5, 30, 20)
 
 if st.button("Get recommendations", type="primary"):
-    recs = R.recommend(catalog, ratings, top_n=top_n, genre=genre, user_rules=st.session_state.rules)
+    recs = R.recommend(catalog, ratings, top_n=top_n, genre=genre, user_rules=st.session_state.rules,
+                        format_preference=format_pick)
     # Genre-scoped (matches recommend()'s own profile) and prevalence-aware
     # (matches recommend()'s own now-discounted scores, landed 2026-09-06) --
     # a plain build_profile() call here would silently calibrate the
     # Poor/Mixed threshold against a different pipeline than what recs
-    # actually went through.
-    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, ratings, genre)
+    # actually went through. Same format_preference as the recommend() call
+    # above, for the same reason (2026-09-07).
+    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, ratings, genre, format_preference=format_pick)
     field_prevalence, trope_prevalence = R.build_prevalence_lookup(catalog, genre)
     poor_threshold = R.user_calibrated_poor_threshold(
         catalog, id_to_magnitude, centroid, weights,
@@ -167,7 +184,8 @@ if st.button("Get recommendations", type="primary"):
             if cover:
                 st.image(cover, width=60)
         with col_expander, st.expander(f"{i}. {title} -- {author} -- {score:.3f} ({label})"):
-            audit = R.audit_book_score(catalog, ratings, title, genre=genre, user_rules=st.session_state.rules)
+            audit = R.audit_book_score(catalog, ratings, title, genre=genre, user_rules=st.session_state.rules,
+                                        format_preference=format_pick)
             st.write("**Pipeline:**")
             st.table(audit["pipeline"])
             st.write("**Top matches (pulled score up):**")

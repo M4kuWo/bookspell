@@ -45,6 +45,19 @@ first time by `scripts/import_goodreads.py`, which pulls both this and
 `rated_dates` directly from a Goodreads library export's `My Review`
 and `Date Read` columns when present.
 
+## `_meta.format_preference` (optional, 2026-09-07)
+
+`'print'` (or omitted -- same as `'print'`), `'audiobook'`, or
+`'mixed'`. Gates whether `scripts/recommend.py`'s `build_profile()`
+learns/uses `book_length` (print/omitted default), `audiobook_length`
+(`'audiobook'`), or both (`'mixed'`) -- see that function's docstring
+and `docs/scoring-test-protocol.md`'s 2026-09-07 "Format-preference
+gating" entry for why this exists (both fields were previously
+always-on for every rater regardless of whether they've ever listened
+to an audiobook). **Never guess this for a rater** -- leave it unset
+(print-only default) unless they've actually told you their listening
+habits.
+
 ## Reconciling a rater's own report against an imported source
 
 **When a rater has directly told this project a rating (in conversation,
