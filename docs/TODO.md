@@ -126,8 +126,10 @@ worth deferring to a later session rather than batching in for
   "universe/series/book" hierarchy) explicitly describes this exact
   case: a `universe` ("The First Law World") containing "The First Law"
   as a real series, with standalones (Best Served Cold, The Heroes, Red
-  Country) linking to the universe directly with no series at all. That
-  was never implemented -- no First Law universe row exists (only
+  Country, and Sharp Ends -- a short story collection, not yet in our
+  catalog at all, a separate ingestion-scope question) linking to the
+  universe directly with no series at all. That was never implemented
+  -- no First Law universe row exists (only
   Cosmere and Middle-earth do), so "First Law World" was created as an
   ad-hoc series instead, disconnected from "The First Law" and "The Age
   of Madness" (both real, correctly-linked series in the same

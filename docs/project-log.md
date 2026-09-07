@@ -7601,3 +7601,21 @@ since this doesn't affect scoring at all, there's no urgency pressure
 the way a scoring bug would carry. Logged as a real TODO item instead,
 with the exact mechanism documented so whoever picks it up doesn't have
 to re-diagnose it.
+
+## 2026-09-08 (later): correction to First Law World's book_count -- 4 standalones, not 3
+
+Repo owner caught a mistake in the fix above within the same session:
+"First Law World" was set to book_count=3, matching how many of its
+standalones are currently linked in OUR catalog -- the wrong standard.
+There are 4 real published standalones in that continuity (Best Served
+Cold, The Heroes, Red Country, and Sharp Ends -- a short story
+collection), we just hadn't ingested Sharp Ends. Confirmed it isn't in
+`books` at all. `book_count` should reflect the real-world series
+length regardless of what's currently tagged -- same standard already
+used for Winds of Winter/Doors of Stone (not counted because
+unpublished, not because untagged). Fixed via
+`20260908010000_fix_first_law_world_book_count.sql` (3 -> 4), applied
+to both local and hosted.
+
+Whether to actually ingest Sharp Ends (a short story collection, not a
+novel) is a separate, unresolved scope question -- not decided here.
