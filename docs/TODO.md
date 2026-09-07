@@ -121,25 +121,57 @@ worth deferring to a later session rather than batching in for
   curated count if one exists, (c) at minimum, stop displaying
   `book_count`/`status` in the catalog tool until re-sourced, so wrong
   data isn't worse than no data. No option chosen yet.
-- [ ] **"First Law World" is a modeling workaround, not really fixed by
-  the value correction above.** The schema's own design doc (book-dna.md,
-  "universe/series/book" hierarchy) explicitly describes this exact
-  case: a `universe` ("The First Law World") containing "The First Law"
-  as a real series, with standalones (Best Served Cold, The Heroes, Red
-  Country, and Sharp Ends -- a short story collection, not yet in our
-  catalog at all, a separate ingestion-scope question) linking to the
-  universe directly with no series at all. That was never implemented
-  -- no First Law universe row exists (only
-  Cosmere and Middle-earth do), so "First Law World" was created as an
-  ad-hoc series instead, disconnected from "The First Law" and "The Age
-  of Madness" (both real, correctly-linked series in the same
-  continuity). Doesn't affect scoring (Series DNA/aggregation works
-  fine off each book's own `series_id`, and this pseudo-series doesn't
-  cross-contaminate the other two) -- a modeling/display gap only. Real
-  fix: create a "The First Law World" universe row, set `universe_id`
-  on all First-Law-continuity books (the trilogy, Age of Madness, and
-  the 3 standalones), matching the Cosmere/Middle-earth pattern already
-  in use. Not done here -- flagged, not attempted.
+- [ ] **Catalog-wide shared-universe linking audit -- not urgent, but
+  needs to be done properly rather than one series at a time.** Only 2
+  `universe` rows exist (Cosmere, Middle-earth), but the First Law case
+  below is confirmed NOT to be the only gap -- the repo owner also
+  flagged (2026-09-08) that Mark Lawrence's books share one continuity
+  across FOUR of his series in this catalog: `The Broken Empire`
+  (Prince/King/Emperor of Thorns), `The Red Queen's War` (Prince of
+  Fools and sequels), `Book of the Ancestor` (Red Sister and sequels),
+  and `The Library Trilogy` (only book 1, *The Book That Wouldn't
+  Burn*, is in our catalog so far). Confirmed via direct query: none of
+  these 10 books have `universe_id` set. Unlike Cosmere/Middle-earth,
+  **there's no single official name for this shared world** (Lawrence
+  hasn't branded it the way Sanderson branded Cosmere) -- that's a real
+  wrinkle this audit needs a policy for, not just a data-entry task:
+  either find/confirm an informal name the author or fandom actually
+  uses, or accept a repo-chosen descriptive name (e.g. "The Broken
+  Empire World") and document that it's an internal label, not an
+  official one. Also surfaced in passing: at least one connected book
+  (*The Girl and the Stars*, Library Trilogy book 2) isn't in our
+  catalog yet at all -- same "real-world connection outruns our
+  ingestion" pattern as Sharp Ends below.
+
+  **This needs a real audit, not a one-off fix**: group the catalog by
+  author (or by known cross-author shared settings, if any exist) and
+  check each author with 2+ series for whether they're actually
+  connected continuities vs. genuinely separate settings -- don't
+  assume connection just because it's the same author. Two known
+  starting cases below; there are very likely more not yet found.
+  Nothing here affects scoring (Series DNA/aggregation already works
+  off each book's own `series_id` directly, confirmed for First Law) --
+  this is a real-world-accuracy/display gap, hence not urgent, but a
+  genuine one worth doing right rather than patching individual
+  examples as they get noticed.
+
+  - **First Law**: a `universe` ("The First Law World") should contain
+    `The First Law` (real series) plus `The Age of Madness` (real
+    series) plus the 3-in-catalog-of-4-real standalones (Best Served
+    Cold, The Heroes, Red Country, and Sharp Ends -- a short story
+    collection not yet in our catalog, a separate ingestion-scope
+    question) linking to the universe directly with no series. Matches
+    book-dna.md's own "universe/series/book" design doc exactly --
+    just never implemented. Doesn't cross-contaminate The First
+    Law/Age of Madness's own correct series_ids.
+  - **Mark Lawrence**: see above -- 4 series (10 in-catalog books),
+    no official shared-world name, one known missing book (*The Girl
+    and the Stars*).
+
+  Real fix for both: create the `universe` row(s), set `universe_id` on
+  every book in the continuity (standalones get `universe_id` with no
+  `series_id`, per the design doc), matching the Cosmere/Middle-earth
+  pattern already in use. Not done here -- flagged, not attempted.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 

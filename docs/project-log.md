@@ -7619,3 +7619,25 @@ to both local and hosted.
 
 Whether to actually ingest Sharp Ends (a short story collection, not a
 novel) is a separate, unresolved scope question -- not decided here.
+
+## 2026-09-08 (later still): shared-universe linking is a catalog-wide gap, not just First Law -- TODO expanded
+
+Repo owner flagged a second, independent case of the same gap: Mark
+Lawrence's `The Broken Empire`, `The Red Queen's War`, `Book of the
+Ancestor`, and `The Library Trilogy` are all explicitly one shared
+continuity (confirmed: Prince of Thorns/Prince of Fools share a world,
+Red Sister/The Girl and the Stars share a world), but none of the 10
+in-catalog books across those 4 series have `universe_id` set --
+confirmed via direct query. Unlike First Law, there's no single
+official name for this shared world (Lawrence hasn't branded it the
+way Sanderson branded Cosmere), which the eventual fix will need a real
+policy for, not just data entry. Also surfaced: *The Girl and the
+Stars* (Library Trilogy book 2) isn't in our catalog yet at all.
+
+Generalized `docs/TODO.md`'s First-Law-specific entry into a proper
+catalog-wide "shared-universe linking audit" item -- explicitly not
+urgent (doesn't affect scoring, Series DNA already works fine off
+per-book series_id), but flagged as something that needs a real
+author-by-author audit rather than one-off fixes each time a new case
+gets noticed. First Law and Mark Lawrence are the two known starting
+cases; more are likely to exist, not yet searched for.
