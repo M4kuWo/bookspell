@@ -7406,3 +7406,45 @@ invented to force balance. `worldbuilding_woven_into_narrative` 53->58,
 
 Both tested in a rolled-back transaction against hosted first, then
 applied for real; counts verified before/after as noted above.
+
+## 2026-09-07 (later still): execution-DNA sweep, romance_tone batch 19 (deeper-research pass) + worldbuilding batch 16
+
+Repo owner asked to invest more per search on romance_tone this batch,
+given the last two batches' thin yield -- a broad search followed by a
+targeted follow-up per candidate, rather than one search, to check for
+contradicting evidence before tagging.
+
+It caught a real near-miss: the first search on Sword of Destiny
+surfaced a review calling a passage "melodramatic," but didn't make
+clear which of the book's two romance threads it was describing. A
+second, targeted search pinned down the actual quoted passage and
+confirmed it was Geralt's overwrought internal monologue about Essi
+Daven -- a different pairing from the book's main Geralt/Yennefer
+relationship, which separate discourse in the same search independently
+described as "bitter and restrained." A single shallow search would
+have risked either tagging the wrong pairing's tone, or missing that
+the book genuinely contains both registers for two distinct
+relationships. Tagged both, correctly attributed: melodramatic for
+Geralt/Essi, understated for Geralt/Yennefer (consistent with Blood of
+Elves, already tagged understated for the same pairing).
+
+romance_tone: 4 candidates researched this way, 3 tagged (Sword of
+Destiny tagged on both sides as above). 1 left untagged after the
+deeper check confirmed the evidence genuinely doesn't land cleanly (The
+Last Graduate -- all discourse concerned Orion's prominence/absence,
+not tone; a targeted follow-up on the climactic declaration turned up
+only "awkward, yet also endearing and sincere," too thin to anchor).
+`understated_romance` 77->79, `melodramatic_romance_subplot` 77->79.
+Migration:
+`20260907340000_romance_tone_sweep_batch19.sql`.
+
+worldbuilding delivery: normal single-search cadence, 6 candidates
+researched, 5 tagged (2 clean woven, 1 clean exposition-dump, 3
+disputed -- A Master of Djinn tagged on both sides). 1 left untagged
+(Between Two Fires -- discourse addressed tone/POV shifts, not
+delivery mechanism specifically). `worldbuilding_woven_into_narrative`
+58->60, `worldbuilding_via_exposition_dump` 45->49. Migration:
+`20260907350000_worldbuilding_delivery_sweep_batch16.sql`.
+
+Both tested in a rolled-back transaction against hosted first, then
+applied for real; counts verified before/after as noted above.
