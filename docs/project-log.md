@@ -7288,3 +7288,35 @@ to anchor). `worldbuilding_woven_into_narrative` 42->45,
 
 Both tested in a rolled-back transaction against hosted first, then
 applied for real; counts verified before/after as noted above.
+
+## 2026-09-07 (later still): execution-DNA sweep, romance_tone batch 15 + worldbuilding batch 12
+
+romance_tone: deliberately picked known-intense/romantasy-reputation
+candidates this batch to correct batch 14's understated-only skew. 8
+candidates researched, 4 tagged (2 melodramatic disputed at 0.2, 1
+melodramatic clean, 1 understated clean) -- a much better direction
+balance. Notable: Kingdom of the Wicked was left untagged by an earlier
+session's batch 1 for lack of clean evidence; re-researching it this
+pass turned up a direct, clean "dark, melodramatic, over the top"
+characterization not found before -- a legitimate re-research win, not
+a re-litigation of a settled call (the earlier session genuinely
+couldn't find that evidence at the time). 4 left untagged (Glass Sword
+-- the "dramatic" discourse found was about the book's plot/action, not
+the romance's presentation specifically, and the romance itself reads
+as more restrained by circumstance; Cress, An Absolutely Remarkable
+Thing, Kings of Paradise -- real discourse found but it addressed
+chemistry/integration/prominence, not presentation).
+`understated_romance` 70->71, `melodramatic_romance_subplot` 71->74.
+Migration: `20260907260000_romance_tone_sweep_batch15.sql`.
+
+worldbuilding delivery: 6 candidates researched, 4 tagged (2 clean
+woven, 1 clean exposition-dump, 1 disputed). 2 left untagged (Watership
+Down -- the El-ahrairah myths are delivered as dedicated in-world
+storytelling chapters, not clearly a narrator-exposition-vs-discovery
+case either way; The Magicians -- discourse was too synthesized/hedged
+for a clean read). `worldbuilding_woven_into_narrative` 45->47,
+`worldbuilding_via_exposition_dump` 37->39. Migration:
+`20260907270000_worldbuilding_delivery_sweep_batch12.sql`.
+
+Both tested in a rolled-back transaction against hosted first, then
+applied for real; counts verified before/after as noted above.
