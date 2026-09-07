@@ -6804,6 +6804,152 @@ own uncommitted work (recommend.py/scoring_tests.py/dogfood tool/
 ratings-file changes, still not committed per the standing "never
 commit without being asked" rule) is intact and unaffected throughout.
 
+## 2026-09-07 (later) -- romance_tone batch 9 + worldbuilding delivery batch 7; the migration-registration backlog is CLEAR
+
+Picked up this machine's combined-batch work after pulling the sync
+above. **Directly confirmed via `supabase_migrations.schema_migrations`
+that every romance_tone/worldbuilding migration this machine has
+applied since 2026-09-05 -- batches 1 through 8/6, i.e. everything up
+through `20260907130000` -- is now registered**, evidently swept up by
+whatever session ran the sync logged just above. This machine still has
+no working `supabase` CLI auth of its own, so this doesn't change the
+underlying gap, but the backlog itself is gone as of this check --
+only today's two new files (below) are pending now, not the whole
+history. Worth a fresh flag if a full week goes by without another
+sync from a machine that has auth, rather than assuming this happens
+automatically.
+
+**romance_tone batch 9**: 10 reviewed, 7 tagged. Never Let Me Go's
+understated tag required separating two different melodrama
+complaints in its own reviews -- one about the central Tommy/Kathy
+romance specifically ("restraint and subtlety," direct), another about
+a late plot-revelation scene's exposition delivery (unrelated to the
+romance) -- the same kind of same-book, different-axis confusion
+flagged for They Both Die at the End last batch, now the second
+occurrence. Legend, Black Leopard Red Wolf, and A Study in Drowning
+left untagged -- discourse addressed series-wide impressions, general
+prose subtlety, or craft-quality complaints, not this book's specific
+presentation of romantic emotion.
+
+**worldbuilding delivery batch 7**: 8 reviewed, 6 tagged. Dune Messiah
+is a clean, well-documented example of a sequel moving to the OPPOSITE
+side of this trope pair from its predecessor -- reviewers explicitly
+contrast it against Dune (already tagged woven), noting Herbert chose
+to fully explain what the original left deliberately ambiguous.
+Children of Ruin does the same relative to Children of Time (tagged
+woven at low confidence/disputed) -- both sequels adding more
+exposition than their book-1s, a pattern worth watching for
+specifically when tagging sequels: check whether reviewers make an
+explicit before/after comparison, since that's stronger evidence than
+either book's isolated review. A Fire Upon the Deep and Dungeon Crawler
+Carl left untagged -- the former's discourse was about prose density/
+quality rather than delivery mechanism, and the latter's LitRPG system-
+notification text is a distinct embedded-system-text format rather
+than a clean fit for either side of this trope pair.
+
+Migrations: `20260907140000_romance_tone_sweep_batch9.sql` and
+`20260907150000_worldbuilding_delivery_sweep_batch7.sql`. Tested
+together in a rolled-back transaction first, then applied directly to
+hosted; verified: romance_tone went 104 -> 111, worldbuilding-delivery
+went 54 -> 60. These two specific files are the only ones now pending
+registration in hosted's migration-tracking table (see above).
+
+## 2026-09-07 (later still) -- romance_tone batch 10, cut short by the session's web search cap
+
+Started a normal combined batch (14 romance_tone candidates queued,
+worldbuilding not yet started). Hit this session's web search budget
+cap (200/200 calls used) four books into the romance_tone research --
+`WebSearch` began returning "session has used its web search budget"
+instead of results.
+
+**Did not fabricate tags for the remaining candidates.** This
+project's evidence standard for romance_tone/worldbuilding-delivery
+requires real, findable discourse, not inference from genre or
+pattern-matching -- continuing to write `book_tropes` rows without
+being able to check real reviews would have violated that standard
+outright, so the honest move was to stop, tag only what real search
+results already supported, and report the blocker rather than
+quietly degrading quality or inventing evidence to keep the batch
+size looking normal.
+
+Of the 4 books actually researched: **Illuminae** and **Empire of the
+Vampire** both tagged melodramatic (0.6) on clean, direct, repeated
+"melodramatic" language from multiple independent reviewers. **Anansi
+Boys** was reviewed but explicitly left untagged -- the only discourse
+found was about a consent/deception plot point (Spider impersonating
+Fat Charlie to sleep with Rosie), which is relationship-dynamic
+evidence, explicitly excluded by this trope's own evidence standard,
+not presentation-of-emotion evidence. **Mr. Penumbra's 24-Hour
+Bookstore** also left untagged -- discourse addressed the love
+interest's character depth, not tone.
+
+Migration: `20260907160000_romance_tone_sweep_batch10.sql`. Tested in
+a rolled-back transaction first, then applied directly to hosted;
+verified: romance_tone went 111 -> 113. No worldbuilding-delivery work
+happened this turn at all.
+
+**Flagged to the repo owner directly, not just logged here**: this
+session cannot run further real-evidence-backed batches of either
+pool until the web search budget resets or
+`CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION` is raised -- whichever the
+repo owner prefers is his call, not something to route around
+silently (e.g. by relying on pattern-matching/genre-reputation
+instead of real research, which is exactly the mistake this whole
+priority batch exists to avoid, per the "From Blood and Ash/Fourth
+Wing" and "Bear and the Nightingale" false starts logged back on
+2026-09-05/06).
+
+## 2026-09-07 (later still) -- audit of all execution-DNA tags applied so far, no web search needed
+
+With the search budget blocking further tagging, used the gap to audit
+everything applied across all 10 romance_tone batches and 7
+worldbuilding-delivery batches (113 romance_tone rows, 60
+worldbuilding-delivery rows, including the pre-existing calibration
+anchors from before this machine's batches started). Everything
+checked out clean; no fixes needed. Specifically verified:
+
+- **No book carries contradictory tags.** Zero books have both
+  `understated_romance` and `melodramatic_romance_subplot`, and zero
+  have both `worldbuilding_woven_into_narrative` and
+  `worldbuilding_via_exposition_dump`.
+- **Migration-file insert counts reconcile exactly against the live
+  DB.** Summed every batch file's `insert into book_tropes` count: 94
+  for romance_tone, 57 for worldbuilding-delivery. Adding back the
+  pre-existing calibration-anchor rows from before this machine's work
+  (19 romance_tone, 3 worldbuilding) lands exactly on the live totals
+  (113 and 60) -- confirms nothing silently no-op'd via `on conflict`
+  and nothing was double-applied.
+- **Confidence distribution looks like genuine mixed research, not a
+  shortcut.** Roughly 75-80% of tags at 0.6, 20-25% at 0.2, holding
+  steady across both trope pairs -- consistent with the skill's own
+  sanity-check guidance that an all-0.6 batch would be a red flag.
+- **Spot-checked 41 cross-reference claims made in migration
+  comments** ("consistent with X, already tagged Y") against the live
+  database one by one -- every single one matched exactly (right
+  trope, right confidence). This is the check that would have caught a
+  claim written from memory instead of a real earlier tag.
+- **No leftover instances of the double-quoted-apostrophe-title bug**
+  anywhere across all 17 files (the two instances that did occur --
+  `The Time Traveler's Wife`, `Howl's Moving Castle` -- were both
+  caught and fixed before ever being applied, confirmed by the
+  rolled-back-transaction tests at the time).
+- `book_dna` row count unchanged at 828 throughout -- confirms none of
+  these trope-only migrations touched the main tagging table.
+- **The One** (the catalog's one known duplicate-title pair, fixed
+  back on 2026-09-04) was never a candidate in any of these batches --
+  confirmed zero rows for it under any of the four trope IDs.
+- All four trope IDs used are spelled correctly and registered with
+  the right `group_name` in the `tropes` table (`romance_relationships`
+  for the romance pair, `setting_worldbuilding` for the worldbuilding
+  pair) -- no typo variants exist anywhere in the catalog.
+
+This audit doesn't require the web search that's currently capped, so
+it was a good use of the gap; it does NOT substitute for the
+underlying evidence-quality question (whether each individual tag's
+*reasoning* was correct), which was already verified per-batch at tag
+time and isn't something a database-only pass can re-check without
+redoing the original research.
+
 ## 2026-09-07: person dealbreaker threshold investigation + graduated veto prototype (not landed)
 
 Dug into why `person` dropped out of Mathias's validated-dealbreaker set
@@ -6920,3 +7066,44 @@ explicitly marked "(Taxing -- defer)" and pushed later rather than
 implied as equally next-up. Noted that the audiobook-editions skill
 runs on a separate Claude session's own token budget, so it's fine to
 kick off regardless of this session's economizing.
+
+## 2026-09-07 (later still): real migration-timestamp collision found and fixed during push (romance_tone batch 9 vs. work_type widening)
+
+While pushing today's commits, `git fetch` surfaced 3 new commits from
+the other machine (romance_tone batch 9/worldbuilding batch 7, batch
+10, and an audit) that weren't visible when this session's own
+`20260907140000_work_type_audio_original.sql` was written earlier
+today -- an exact repeat of the same-day timestamp-collision pattern
+CLAUDE.md already documents, this time between that file and
+`20260907140000_romance_tone_sweep_batch9.sql`.
+
+Checked before touching anything: this session's `work_type` migration
+was ALREADY applied to hosted via `supabase db push` (confirmed via
+`supabase migration list --linked` showing 20260907140000 as a clean
+local/remote match) -- so per CLAUDE.md, that one could not be renamed.
+The other machine's batch9/worldbuilding-batch7/batch10 files were
+applied directly to hosted (their own log entry confirms this, and
+says these 3 were "the only ones now pending registration"), so hosted
+had their DATA but no tracking-table entry for it yet under any
+number -- renaming was safe for these.
+
+Verified their data was genuinely on hosted before doing anything else
+(REST spot-checks against the hosted anon-key endpoint, not a guess):
+`Matched` has `understated_romance` at confidence 0.2, `Illuminae` has
+`melodramatic_romance_subplot` at 0.6, `Dune Messiah` has
+`worldbuilding_via_exposition_dump` at 0.6 -- all three matching their
+respective migration files exactly.
+
+Fix: renamed `20260907140000_romance_tone_sweep_batch9.sql` to
+`20260907170000_romance_tone_sweep_batch9.sql` (the colliding one,
+since it lacked a tracking entry under any number), applied all 3
+pending files to LOCAL Postgres, confirmed local romance_tone/
+worldbuilding-delivery counts landed exactly on the other machine's own
+reported totals (113/60), then ran `supabase migration repair --status
+applied --linked` for all 3 versions (150000/160000/170000, the
+renamed one). `supabase migration list --linked` now shows 137
+migrations, zero local/remote drift anywhere.
+
+Resolved the resulting `docs/project-log.md` merge conflict the same
+way as every previous instance of this (see the 2026-09-07 sync entry
+above): kept both blocks in full, no content dropped.
