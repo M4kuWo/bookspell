@@ -6898,3 +6898,54 @@ instead of real research, which is exactly the mistake this whole
 priority batch exists to avoid, per the "From Blood and Ash/Fourth
 Wing" and "Bear and the Nightingale" false starts logged back on
 2026-09-05/06).
+
+## 2026-09-07 (later still) -- audit of all execution-DNA tags applied so far, no web search needed
+
+With the search budget blocking further tagging, used the gap to audit
+everything applied across all 10 romance_tone batches and 7
+worldbuilding-delivery batches (113 romance_tone rows, 60
+worldbuilding-delivery rows, including the pre-existing calibration
+anchors from before this machine's batches started). Everything
+checked out clean; no fixes needed. Specifically verified:
+
+- **No book carries contradictory tags.** Zero books have both
+  `understated_romance` and `melodramatic_romance_subplot`, and zero
+  have both `worldbuilding_woven_into_narrative` and
+  `worldbuilding_via_exposition_dump`.
+- **Migration-file insert counts reconcile exactly against the live
+  DB.** Summed every batch file's `insert into book_tropes` count: 94
+  for romance_tone, 57 for worldbuilding-delivery. Adding back the
+  pre-existing calibration-anchor rows from before this machine's work
+  (19 romance_tone, 3 worldbuilding) lands exactly on the live totals
+  (113 and 60) -- confirms nothing silently no-op'd via `on conflict`
+  and nothing was double-applied.
+- **Confidence distribution looks like genuine mixed research, not a
+  shortcut.** Roughly 75-80% of tags at 0.6, 20-25% at 0.2, holding
+  steady across both trope pairs -- consistent with the skill's own
+  sanity-check guidance that an all-0.6 batch would be a red flag.
+- **Spot-checked 41 cross-reference claims made in migration
+  comments** ("consistent with X, already tagged Y") against the live
+  database one by one -- every single one matched exactly (right
+  trope, right confidence). This is the check that would have caught a
+  claim written from memory instead of a real earlier tag.
+- **No leftover instances of the double-quoted-apostrophe-title bug**
+  anywhere across all 17 files (the two instances that did occur --
+  `The Time Traveler's Wife`, `Howl's Moving Castle` -- were both
+  caught and fixed before ever being applied, confirmed by the
+  rolled-back-transaction tests at the time).
+- `book_dna` row count unchanged at 828 throughout -- confirms none of
+  these trope-only migrations touched the main tagging table.
+- **The One** (the catalog's one known duplicate-title pair, fixed
+  back on 2026-09-04) was never a candidate in any of these batches --
+  confirmed zero rows for it under any of the four trope IDs.
+- All four trope IDs used are spelled correctly and registered with
+  the right `group_name` in the `tropes` table (`romance_relationships`
+  for the romance pair, `setting_worldbuilding` for the worldbuilding
+  pair) -- no typo variants exist anywhere in the catalog.
+
+This audit doesn't require the web search that's currently capped, so
+it was a good use of the gap; it does NOT substitute for the
+underlying evidence-quality question (whether each individual tag's
+*reasoning* was correct), which was already verified per-batch at tag
+time and isn't something a database-only pass can re-check without
+redoing the original research.
