@@ -15,13 +15,16 @@ for the full, dated history of every decision, bug, and fix.
 
 | | |
 |---|---|
-| Books in catalog | 911 |
-| Fully tagged | 563 |
-| Series tracked | 357 |
-| Tropes in vocabulary | 123 |
+| Books in catalog | 873 |
+| Fully tagged | 825 |
+| Series tracked | 343 |
+| Tropes in vocabulary | 133 |
 | Content warning types | 37 |
 | Shared universes | 2 (Cosmere, Middle-earth) |
 | Raters with real data | 4 (Mathias, Osnat, Dandan, Gabriel) |
+
+Browse the tagged catalog yourself: [live catalog review tool](https://m4kuwo.github.io/bookspell/tools/catalog-review/)
+(read-only, queries the hosted database directly).
 
 ## How the recommendation logic works, in plain terms
 
@@ -165,19 +168,19 @@ The full design writeup with worked examples is in
 
 Near-term, roughly in order:
 
-1. **Grow the tagged catalog.** 563 of 911 books are tagged; 348 remain
-   untagged and ready for the next tagging pass (up from 50 after a
-   2026-09-02 expansion — bulk popularity pull plus every specifically-
-   flagged missing title from both real raters, guaranteed via a
-   targeted, individually-confirmed ingestion rather than left to chance
-   in the popularity ranking). A rough spot-check of the smaller original
-   50 suggested most were genuinely out of v1 scope (literary fiction,
-   thrillers, memoir pulled in by Hardcover's genre search) rather than a
-   real backlog — still needs a full triage pass to confirm which
-   specific titles to tag vs. delete, not done yet, and now a bigger pool
-   to triage. Priority for what IS in-scope: finish partially-tagged
-   series before tagging new standalones (Series DNA needs 2+ tagged
-   books per series to compute anything).
+1. **Grow the tagged catalog.** 825 of 873 books are tagged; ~48 remain.
+   Priority for what IS in-scope: finish partially-tagged series before
+   tagging new standalones (Series DNA needs 2+ tagged books per series
+   to compute anything). Two ongoing execution-DNA trope sweeps
+   (`romance_tone`, `worldbuilding_delivery` — real presentation-style
+   signals, validated against production scoring, run as `book_tropes`
+   pairs rather than new scalar fields for now) are ~10 batches into a
+   ~20-batch plan. A new audiobook-edition data project
+   (`.claude/skills/tag-audiobook-editions/SKILL.md`) is queued but not
+   yet started — dramatized full-cast editions (GraphicAudio, BBC Audio)
+   and audio-only Audible Originals (`books.work_type = 'audio_original'`).
+   See [`docs/TODO.md`](docs/TODO.md) for the full prioritized backlog
+   across all of this, not just tagging.
 2. **Recruit more real readers.** Grew from 1 to 4 real raters this
    session (Osnat, Dandan, and Gabriel joined Mathias's original list) —
    still far from enough: most scoring conclusions in
@@ -259,18 +262,24 @@ fields backlog" section at the bottom of
   threshold let small-sample noise "validate" several spurious fields at
   once, which briefly collapsed one rater's loved-book recall to 0% in
   testing before the threshold was corrected; see
-  `docs/scoring-test-protocol.md`'s "Veto/cap mechanism" entry. Doesn't
-  help every rater yet — it only engages once someone has enough of
-  their own disliked-book history to validate a field statistically (see
-  the roadmap item above), and a real, pre-existing limitation in how
-  categorical fields match surfaced during stress-testing (not fixed,
-  see roadmap).
+  `docs/scoring-test-protocol.md`'s "Veto/cap mechanism" entry.
+  **Currently dormant for all 4 real raters** (confirmed 2026-09-07,
+  `validated_dealbreaker_fields()` returns empty for every one right
+  now) — the threshold is doing its job, not broken: e.g. `person` was
+  Mathias's clearest candidate early on, but turned out not to be a
+  real dealbreaker once enough of his rating history filled in (18 of
+  23 rated first-person fantasy books are loved/liked). A graduated
+  (non-flat-cap) version of the mechanism is built and structurally
+  verified but can't be proven against real data until some field/rater
+  pair actually validates — see `docs/scoring-test-protocol.md`'s
+  "Graduated dealbreaker veto" entry. Real per-rater data growth is the
+  actual blocker here, not more engineering.
 - **Most scoring conclusions are still tuned against one rater.** 4 real
   raters exist now (up from 1), but most ideas in
   `docs/scoring-test-protocol.md` — including "this idea doesn't work"
-  verdicts — were established against Mathias's ~55 ratings specifically
-  and only lightly re-checked against the other 3, whose datasets are
-  newer and thinner. The doc explicitly tracks which ideas are
+  verdicts — were established against Mathias's ratings specifically
+  (143 and growing) and only lightly re-checked against the other 3,
+  whose datasets are newer and thinner. The doc explicitly tracks which ideas are
   "deferred" (not disproven, just not shown to help *this* rater at
   *this* scale) vs. genuinely rejected, specifically so more/different
   rater data can revisit them rather than assume they're settled.
@@ -328,6 +337,10 @@ already been through:
 docs/
   project-log.md               running history — what got built, argued
                                 over, and changed, and why (start here)
+  TODO.md                       prioritized, mutable task backlog —
+                                different from project-log.md (append-
+                                only history) and book-dna.md's schema-
+                                idea backlog
   scoring-test-protocol.md     scoring-engine test scenarios + a running
                                 log of what's been tried, landed, or deferred
   schema/
@@ -360,16 +373,28 @@ supabase/
 
 tools/
   catalog-review/                internal QA tool — browse/filter the
-                                  full tagged catalog in a browser
+                                  full tagged catalog in a browser; also
+                                  hosted live at
+                                  https://m4kuwo.github.io/bookspell/tools/catalog-review/
   rate-books/                    public, no-account intake form — a
                                   friend searches the live catalog and
                                   taps a rating, saved straight into
                                   hosted (see its own README for the
                                   submit -> export flow)
+  dogfood/                       internal Streamlit tool — pick a rater,
+                                  add/fix ratings, build "none of X"/
+                                  "less of X" rules, see live
+                                  recommendations with a full per-book
+                                  score breakdown (repo owner only, not
+                                  for external testers)
 
 .claude/skills/
   tag-catalog-batch/             batch-tagging skill for outsourced
                                   tagging sessions
+  tag-audiobook-editions/        batch skill for audiobook edition data
+                                  (dramatized full-cast editions, audio-
+                                  only Audible Originals) — separate from
+                                  tag-catalog-batch's Book DNA sweeps
 
 CLAUDE.md                        working conventions for this repo —
                                   read before touching migrations or data
