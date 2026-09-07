@@ -7320,3 +7320,40 @@ for a clean read). `worldbuilding_woven_into_narrative` 45->47,
 
 Both tested in a rolled-back transaction against hosted first, then
 applied for real; counts verified before/after as noted above.
+
+## 2026-09-07 (later still): execution-DNA sweep, romance_tone batch 16 + worldbuilding batch 13
+
+romance_tone: 6 candidates researched, all 6 tagged (4 understated -- 1
+disputed, 2 melodramatic -- 1 disputed). No skips.
+
+The rolled-back-transaction test caught a second instance of the same
+apostrophe bug from batch 13's log entry, this time on a title with a
+Unicode curly apostrophe ("Emily Wilde's Map of the Otherlands" --
+right single quotation mark, U+2019) rather than a straight ASCII one.
+Escaping it as `''` (the correct SQL escape for a literal ASCII
+apostrophe) still didn't match, because the actual character in
+`books.title` isn't an apostrophe at all in the ASCII sense --
+`select title from books where title ilike 'Emily Wilde%Otherlands%'`
+confirmed the stored value uses U+2019. INSERT...SELECT with a WHERE
+clause matching zero rows fails SILENTLY (no error, just zero rows
+inserted) -- the rolled-back transaction test's row-count check is what
+caught it, not a Postgres error this time, which is a more dangerous
+failure mode than batch 13's (that one at least errored loudly).
+**Standing lesson for this trope sweep**: any title containing an
+apostrophe needs its exact character verified against the live
+`books.title` value before writing the migration, not assumed to be
+either straight or curly -- copy the literal title from a query result
+rather than retyping it.
+
+worldbuilding delivery: 6 candidates researched, all 6 tagged clean (4
+woven, 2 exposition-dump) -- unusually strong, unambiguous evidence
+across the board this batch, not a relaxed bar.
+`understated_romance` 71->75, `melodramatic_romance_subplot` 74->76,
+`worldbuilding_woven_into_narrative` 47->51, `worldbuilding_via_
+exposition_dump` 39->41. Migrations:
+`20260907280000_romance_tone_sweep_batch16.sql`,
+`20260907290000_worldbuilding_delivery_sweep_batch13.sql`.
+
+Both tested in a rolled-back transaction against hosted first (catching
+the apostrophe bug above), then applied for real; counts verified
+before/after as noted above.
