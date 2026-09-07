@@ -595,6 +595,19 @@ belong in frozen per-book tag data at all.
   both "a lot of commitment," for different reasons a single field
   couldn't capture.
 
+  **UPDATE (2026-09-08)**: this exact First Law example was never
+  actually implemented as designed. No "The First Law World" universe
+  row exists — "First Law World" was created as an ad-hoc `series`
+  instead (holding the 3 standalones, disconnected from "The First Law"
+  and "The Age of Madness," which are their own correct series). Doesn't
+  affect scoring, but the intended universe/series hierarchy above is
+  still just a design, not a built fact for this case — see
+  `docs/TODO.md` for the concrete fix. Also surfaced the same day: real
+  scale problem with `book_count`/`status` themselves — see
+  `docs/project-log.md`'s 2026-09-08 entry for the ingestion-level root
+  cause (Hardcover's raw, uncurated `books_count`/`is_completed` fields),
+  affecting an estimated ~200 of 343 series rows, not just this one.
+
 ## Resolved during review
 
 - **`darkness` / `humor_level` granularity** — keeping both as 4-point

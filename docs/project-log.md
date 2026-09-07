@@ -7533,3 +7533,71 @@ to either find nothing or misattribute what it does find. The
 worldbuilding-delivery pool doesn't show this same depletion yet
 (~399 candidates remain, and single-search batches are still landing
 5-6 clean tags routinely) -- no change needed there for now.
+
+## 2026-09-08: series.status/book_count is systemically unreliable catalog-wide -- 5 flagged examples fixed, root cause found, broader fix deferred
+
+Repo owner flagged 4 specific series showing wrong status/book_count in
+the catalog review tool (The Divine Cities as 4-book ongoing when it's
+a completed trilogy; Between Earth and Sky as ongoing when complete;
+First Law World -- Best Served Cold's series -- as 17-book ongoing when
+it's 3 completed standalones; The Dresden Files as 79 books), plus one
+already-correct field noticed in passing (Before They Are Hanged's
+3-book count, wrongly paired with "ongoing").
+
+**Root cause found in `scripts/ingest-seed-catalog.js`, not a random
+data-entry error:**
+- `status`: `fetchSeriesCompletion()` reads Hardcover's `is_completed`
+  field and maps anything other than a literal `true` to `'ongoing'`
+  -- including null/missing data. Hardcover leaves this field
+  sparse/uncurated for most series, so a genuinely-finished series with
+  no explicit `is_completed=true` flag silently defaults to "ongoing."
+- `book_count`: pulled directly from Hardcover's raw `books_count` on
+  the series object -- a count of every edition/omnibus/box-set/
+  translation Hardcover has tagged under that series slug, not a
+  curated "real mainline installments" number.
+
+**This is NOT isolated to the 4-5 flagged series.** A broader query
+(book_count > 15, or > 4x the number of catalog-linked books) returned
+over 200 of the table's 343 rows, including obviously-wrong classics
+(The Chronicles of Amber: 111, Sword of Truth: 85, Oz: 81) alongside
+subtler ones (Malazan Book of the Fallen showing 34 for a 3-book-linked
+completed series). Confirmed via `grep` that neither `status` nor
+`book_count` is read anywhere in `scripts/recommend.py` -- this is a
+display-only bug (`tools/catalog-review/`), not a scoring bug, which is
+why it's never surfaced in any scoring test.
+
+**Fixed the 5 specifically-flagged series** (verified individually,
+not assumed): The Divine Cities (completed, 3 -- City of Stairs/Blades/
+Miracles), Between Earth and Sky (completed, 3 -- already correct
+count), The Age of Madness (completed, 3 -- A Little Hatred/Trouble
+With Peace/Wisdom of Crowds, no further installment announced), First
+Law World (completed, 3 -- Best Served Cold/Heroes/Red Country, same
+reasoning), The Dresden Files (book_count only, 79 -> 18 -- verified via
+web search: 18 published novels as of 2026, a 19th announced-but-
+unpublished title not counted, matching this project's existing
+"don't count unpublished books" convention). Migration
+`20260908000000_fix_series_status_and_book_count_spot_check.sql`,
+applied to both local and hosted via `supabase db push`, verified live
+on hosted via REST.
+
+**Also surfaced, not fixed**: "First Law World" is itself a modeling
+workaround, not really a series -- the schema's own design doc
+(book-dna.md, "universe/series/book" hierarchy section) explicitly
+describes this exact case as a `universe` ("The First Law World")
+containing "The First Law" as a real series, with the standalones
+linking to the universe directly with no series. That was never
+actually implemented: no First Law universe row exists (only Cosmere
+and Middle-earth do), and "First Law World" was created as an ad-hoc
+series instead. Doesn't affect scoring (Series DNA/aggregation already
+works fine off `series_id` directly per book, and this pseudo-series
+doesn't cross-contaminate The First Law trilogy or The Age of Madness,
+which have their own correct series_ids) -- purely a modeling/display
+gap. Not restructured here -- flagged in TODO.md instead.
+
+**NOT attempted**: a catalog-wide re-fix of all ~200 other affected
+series. Real per-series verification (checking actual publication
+status/counts) doesn't scale to that many rows in one sitting, and
+since this doesn't affect scoring at all, there's no urgency pressure
+the way a scoring bug would carry. Logged as a real TODO item instead,
+with the exact mechanism documented so whoever picks it up doesn't have
+to re-diagnose it.

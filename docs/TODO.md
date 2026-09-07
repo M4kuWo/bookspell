@@ -103,6 +103,41 @@ worth deferring to a later session rather than batching in for
   don't count them as real gaps when checking series completion. The
   other ~39 untagged books are standalones or in series with zero
   tagged books yet -- still open, not yet re-surveyed this session.
+- [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
+  -- ~200 of 343 series rows affected, root cause found 2026-09-08.**
+  `status` defaults to `'ongoing'` whenever Hardcover's `is_completed`
+  flag isn't explicitly `true` (including simply missing data);
+  `book_count` is Hardcover's raw per-series edition/omnibus/box-set
+  count, not a curated mainline-installment number. Doesn't affect
+  scoring at all (neither field is read by `scripts/recommend.py`) --
+  purely a `tools/catalog-review/` display bug, so no urgency pressure,
+  but real and visible to anyone browsing the tool. 5 specifically-
+  flagged series already fixed (see project-log.md's 2026-09-08 entry)
+  -- the other ~195+ would need real per-series verification (publication
+  status, a curated book count), which doesn't scale to a single
+  session. Options for whoever picks this up: (a) manually verify+fix
+  the most-viewed/highest-profile series first rather than the whole
+  table at once, (b) find a better Hardcover field/endpoint for a
+  curated count if one exists, (c) at minimum, stop displaying
+  `book_count`/`status` in the catalog tool until re-sourced, so wrong
+  data isn't worse than no data. No option chosen yet.
+- [ ] **"First Law World" is a modeling workaround, not really fixed by
+  the value correction above.** The schema's own design doc (book-dna.md,
+  "universe/series/book" hierarchy) explicitly describes this exact
+  case: a `universe` ("The First Law World") containing "The First Law"
+  as a real series, with standalones (Best Served Cold, The Heroes, Red
+  Country) linking to the universe directly with no series at all. That
+  was never implemented -- no First Law universe row exists (only
+  Cosmere and Middle-earth do), so "First Law World" was created as an
+  ad-hoc series instead, disconnected from "The First Law" and "The Age
+  of Madness" (both real, correctly-linked series in the same
+  continuity). Doesn't affect scoring (Series DNA/aggregation works
+  fine off each book's own `series_id`, and this pseudo-series doesn't
+  cross-contaminate the other two) -- a modeling/display gap only. Real
+  fix: create a "The First Law World" universe row, set `universe_id`
+  on all First-Law-continuity books (the trilogy, Age of Madness, and
+  the 3 standalones), matching the Cosmere/Middle-earth pattern already
+  in use. Not done here -- flagged, not attempted.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 
