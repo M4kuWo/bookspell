@@ -7107,3 +7107,40 @@ migrations, zero local/remote drift anywhere.
 Resolved the resulting `docs/project-log.md` merge conflict the same
 way as every previous instance of this (see the 2026-09-07 sync entry
 above): kept both blocks in full, no content dropped.
+
+## 2026-09-07 (later still): found omnibus/compilation rows masquerading as untagged books in 4 partially-tagged series
+
+New session, picked up from `docs/TODO.md`'s catalog-tagging-completion
+item. 873 books total, 45 untagged. Queried which untagged books sit in
+the 6 partially-tagged series (the CLAUDE.md priority — finishing these
+unlocks Series DNA) before tagging anything.
+
+All 6 turned out to be non-books, not real tagging gaps:
+`The Farseer Trilogy`, `The Foundation Trilogy`, `Villains Duology`,
+and `Monk and Robot` each exist as their own `books` row at
+`position_in_series = 1` (page count matching 2-3 combined volumes),
+sitting alongside the individually-tagged book they duplicate
+(`Assassin's Apprentice`, `Foundation`, `Vicious`, `A Psalm for the
+Wild-Built`) — an omnibus/compilation edition with no field
+distinguishing it from a real standalone entry. `The Winds of Winter`
+and `The Doors of Stone` are real future ASOIAF/Kingkiller books that
+simply haven't been published yet (no `publication_year`/`page_count`
+for the former, a `2030` placeholder for the latter).
+
+Brought to the repo owner rather than unilaterally deleting or tagging
+anything. Decision: leave the database untouched this session. The
+unpublished-book rows are irrelevant as-is (nothing to do until they're
+published). The omnibus rows raised a real schema question — repo
+owner wants a future field modeling book "versions" per series
+(compilation vs. standalone, and whether a compilation is pure
+repackaging vs. adds real new content), so compilations can be tracked
+without either deleting them or having them masquerade as tagging gaps.
+Wrote this up as a new "Future fields backlog" entry in
+`docs/schema/book-dna.md` (not built yet, needs repo-owner sign-off on
+exact vocabulary) and updated `docs/TODO.md`'s catalog-completion item
+so any session — including the other Claude session working the
+audiobook-editions/romance_tone batches — knows to skip these 6 and any
+future entry matching the same pattern (a book row duplicating an
+already-tagged book at the same series position, or a book with no real
+publication yet) rather than force-tagging them or treating them as
+real gaps.

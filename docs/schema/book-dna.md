@@ -756,6 +756,40 @@ Deliberately deferred, not in v0.1:
   data-sourcing problem as before (Hardcover's API likely doesn't carry
   GraphicAudio editions; needs per-book research).
 
+- **A real way to model omnibus/compilation editions**, distinct from
+  the individual volumes they collect. Surfaced 2026-09-07 while
+  checking partially-tagged series for the catalog-completion TODO:
+  `The Farseer Trilogy`, `The Foundation Trilogy`, `Villains Duology`,
+  and `Monk and Robot` all exist as their own `books` row (each sitting
+  at `position_in_series = 1`, page count roughly matching 2-3 combined
+  volumes) *alongside* the individually-tagged books they collect
+  (`Assassin's Apprentice`, `Foundation`, `Vicious`, `A Psalm for the
+  Wild-Built` respectively) — same series, same position number,
+  because there's currently no field distinguishing "this row is a
+  compilation of other rows in this series" from "this is its own
+  book." This makes those series look partially-tagged (Series DNA
+  needs >= 2 tagged books, and these omnibus rows sit untagged forever
+  by design) when they're actually fully tagged at the individual-book
+  level. Proposed shape: a `books.edition_kind` (or similar) field —
+  standalone/compilation, plus a second flag on compilations for
+  whether they're pure repackaging or add real new content (e.g. an
+  omnibus with an exclusive bonus novella is a different case from a
+  pure combine-and-reprint) — so compilation rows can be excluded from
+  "needs tagging" queries and Series DNA completion counts without
+  being deleted (they're real catalog entries, e.g. useful for a reader
+  choosing which physical/ebook edition to buy). Not built yet — needs
+  a repo-owner decision on the exact vocabulary/shape. Until it exists,
+  **skip tagging any book that duplicates an already-tagged book's
+  content at the same series position** (omnibus/compilation editions)
+  — don't force a value in, and don't count it as a real tagging gap.
+  Also encountered, but a separate case (not a schema gap, just
+  currently-nonexistent books): `The Winds of Winter` (GRRM, ASOIAF #6)
+  and `The Doors of Stone` (Rothfuss, Kingkiller #3) are both real
+  future entries in already-tagged series but neither has been
+  published yet (no `publication_year`/`page_count` for the former,
+  `publication_year = 2030` placeholder for the latter) — nothing to
+  read or tag. Skip these too; re-check once actually published.
+
   **UPDATE (2026-09-07)**: real-scale population handed off as
   `.claude/skills/tag-audiobook-editions/SKILL.md` -- covers GraphicAudio
   AND BBC Audio/Radio drama (a second confirmed real producer, not just

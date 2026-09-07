@@ -30,10 +30,9 @@ worth deferring to a later session rather than batching in for
   preference.** LANDED 2026-09-07 -- see scoring-test-protocol.md.
   Mathias's own `_meta.format_preference` set to `"audiobook"` per his
   direct statement.
-- [ ] **Push today's commits** so everything landed today (TODO system,
-  format-preference fix, `work_type` widening, the audiobook-editions
-  skill, the catalog tool updates) is actually on `main` and hosted.
-  Cheap -- just needs a go-ahead.
+- [x] **Push today's commits** -- confirmed 2026-09-07: `main` is up to
+  date with `origin/main`, working tree clean, README refresh
+  (e18576a) is the latest commit on both.
 
 ## P1
 
@@ -78,10 +77,22 @@ worth deferring to a later session rather than batching in for
   sweep** -- batch 8 of a planned ~20 done as of 2026-09-07. Remember
   the mandatory density self-check (CLAUDE.md) before ending any batch
   session.
-- [ ] **Catalog tagging completion** -- check how many books remain
-  untagged; prioritize finishing partially-tagged series (>= 2 tagged
-  books needed for Series DNA to compute anything) over new
-  standalones, per the standing CLAUDE.md policy.
+- [ ] **Catalog tagging completion** -- 873 books total, 45 untagged as
+  of 2026-09-07. Checked the "finish partially-tagged series" angle
+  first per standing policy: turned out all 6 partially-tagged series
+  (Farseer Trilogy, Foundation, Villains, Monk and Robot, A Song of Ice
+  and Fire, Kingkiller Chronicle) are actually fully tagged at the
+  individual-book level already -- the "missing" row in each is either
+  an omnibus/compilation duplicate of an already-tagged book (4 of them
+  -- see book-dna.md's new "omnibus/compilation editions" future-fields
+  entry, a real schema gap, not yet built) or a currently-unpublished
+  book (Winds of Winter, Doors of Stone -- nothing to tag yet). **Skip
+  all 6, and any future entry matching the same pattern** (a book row
+  duplicating an already-tagged book at the same series position, or a
+  book with no real publication yet) -- don't force-tag these, and
+  don't count them as real gaps when checking series completion. The
+  other ~39 untagged books are standalones or in series with zero
+  tagged books yet -- still open, not yet re-surveyed this session.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 
