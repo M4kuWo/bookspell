@@ -7357,3 +7357,30 @@ exposition_dump` 39->41. Migrations:
 Both tested in a rolled-back transaction against hosted first (catching
 the apostrophe bug above), then applied for real; counts verified
 before/after as noted above.
+
+## 2026-09-07 (later still): execution-DNA sweep, romance_tone batch 17 + worldbuilding batch 14
+
+romance_tone: an unusually thin batch -- 11 candidates researched, only
+2 tagged (both understated). 9 left untagged, several for reasons
+outside the normal "prominence/pacing/quality" pattern: The Left Hand
+of Darkness's Genly/Estraven bond is explicitly described in its own
+discourse as beyond or other than romantic love, genuinely unclear
+whether this trope even applies; Gideon the Ninth's central pair reads
+in reviews as "siblings, not lovers"; The Windup Girl has no central
+romantic relationship to judge tone on at all. Rest were real discourse
+that just didn't land on presentation specifically (Hundred Thousand
+Kingdoms, Dark Matter, Iron Gold) or turned up no discourse at all
+(Winter, White Night, Uglies, Mists of Avalon). `understated_romance`
+75->77, `melodramatic_romance_subplot` unchanged at 76. Migration:
+`20260907300000_romance_tone_sweep_batch17.sql`.
+
+worldbuilding delivery: 6 candidates researched, 4 tagged (2 clean
+woven, 2 disputed exposition-dump). 2 left untagged (Ancillary Mercy,
+The Passage -- both had real discourse but it addressed trilogy-wide
+themes or was genuinely ambiguous, not a clean delivery-mechanism
+verdict). `worldbuilding_woven_into_narrative` 51->53, `worldbuilding_
+via_exposition_dump` 41->43. Migration:
+`20260907310000_worldbuilding_delivery_sweep_batch14.sql`.
+
+Both tested in a rolled-back transaction against hosted first, then
+applied for real; counts verified before/after as noted above.
