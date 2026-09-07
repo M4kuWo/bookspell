@@ -7144,3 +7144,47 @@ future entry matching the same pattern (a book row duplicating an
 already-tagged book at the same series position, or a book with no real
 publication yet) rather than force-tagging them or treating them as
 real gaps.
+
+## 2026-09-07 (later still): execution-DNA sweep, romance_tone batch 11 + worldbuilding batch 8
+
+romance_tone: 12 candidates researched, 8 tagged (2 clean understated,
+3 clean melodramatic, 3 disputed at 0.2 -- House of Earth and Blood,
+Lightlark, Strange the Dreamer, each with real but genuinely
+contradictory discourse). 4 left untagged entirely -- A Touch of
+Darkness, One Last Stop, Kingdom of the Wicked (all real discourse
+found, but every bit of it was drive/pacing/quality/genre-comparison,
+never a clean presentation-of-emotion read) -- plus Zodiac Academy's
+positive tag is worth flagging as an easy, high-confidence one (soapy/
+Gossip-Girl/over-the-top language, repeated across sources).
+`understated_romance` 56->58, `melodramatic_romance_subplot` 57->64.
+Migration: `20260907180000_romance_tone_sweep_batch11.sql`.
+
+worldbuilding delivery: 6 candidates researched, all 6 had real enough
+discourse to tag (2 clean woven, 2 clean exposition-dump, 2 disputed at
+0.2 -- Mistborn: The Final Empire and Gideon the Ninth, both with
+directly contradictory reader accounts of the delivery mechanism
+itself, not just its quality).
+
+**Process note, not a data bug**: of the 6 candidates picked, The Fifth
+Season turned out to already carry an identical `worldbuilding_woven_
+into_narrative` (0.6) tag from batch 1 (2026-09-06) -- my insert was a
+harmless no-op (`on conflict do nothing`), just wasted research on an
+already-settled book. Gideon the Ninth and Mistborn both already
+carried a woven-side tag from earlier batches too; this session's
+inserts only added the new, genuinely disputed exposition-dump side for
+each, which is real information (not a duplicate, not a contradiction --
+the existing confirmed/disputed value on one side and a new disputed
+value on the other side coexist correctly, and 0.2 values don't count
+in scoring anyway). Root cause: for this sub-batch I picked candidates
+from a console dump of the candidate-pool query that got cut off at
+its default output limit rather than confirming presence in the full,
+fresh result (the way the romance_tone half of this batch was checked,
+written to a file first). **Going forward: always write the full
+candidate-pool query result to a file and confirm a title's presence
+there before spending research budget on it, for both trope pools.**
+`worldbuilding_woven_into_narrative` 34->35, `worldbuilding_via_
+exposition_dump` 26->30. Migration:
+`20260907190000_worldbuilding_delivery_sweep_batch8.sql`.
+
+Both tested in a rolled-back transaction against hosted first, then
+applied for real; counts verified before/after as noted above.
