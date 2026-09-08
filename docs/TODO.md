@@ -78,26 +78,33 @@ worth deferring to a later session rather than batching in for
   guessing. **Whoever picks this up next needs a fresh/raised
   `CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION`** -- that's the repo
   owner's call.
-  **Still-open confirmed matches from Step A1b, not yet researched**
-  (~74 more already-tagged books across these series, none touched
-  this session): Crescent City (3 books -- House of Earth and Blood/
-  Sky and Breath/Flame and Shadow), The Demon Cycle (5), The Dresden
-  Files (14), **Mistborn Era One (5) + Mistborn Era Two/Wax and Wayne
-  (4) -- use these leaf series, NOT the umbrella "Mistborn" row (0
-  books)**, Red Rising Saga (6), Secret Projects' remaining 3 books
-  (The Frugal Wizard's Handbook for Surviving Medieval England, The
-  Sunlit Man, Isles of the Emberdark), **Stormlight Archive Era One
-  (7) -- NOT the umbrella "The Stormlight Archive" row (0 books);
-  Stormlight Archive Era Two has 0 books tagged, nothing to match
-  yet**, The Murderbot Diaries (10), Throne of Glass (9). **Flagged,
-  needs a deliberate judgment call rather than a silent match**:
-  GraphicAudio's "Riyria Revelations" only matches our omnibus row
-  ("The Riyria Revelations (Omnibus)") -- decide whether a dramatized-
-  edition record belongs on an omnibus row before inserting; "Riyria
-  Chronicles" and "Kate Daniels: Wilmington Years" (GA) have no
+  **Progress as of 2026-09-08 (later): Step A2 batch 3 done -- 10 more
+  editions inserted (18 -> 28 total), Crescent City now fully covered
+  and the Mistborn trilogy proper (Final Empire/Well of Ascension/Hero
+  of Ages) plus its Secret History/Eleventh Metal companion bundle now
+  covered.** Also done: The Frugal Wizard's Handbook for Surviving
+  Medieval England, The Sunlit Man. Isles of the Emberdark checked --
+  no confirmed GraphicAudio edition exists yet (published 2025-07-01,
+  plausibly just not produced yet) -- worth a re-check later, not
+  permanently closed. Full detail in project-log.md's 2026-09-08 "Step
+  A2 batch 3" entry, including the Secret History/Eleventh Metal
+  bundled-release judgment call (same shape as the still-open Riyria
+  case below).
+  **Still-open confirmed matches from Step A1b, not yet researched**:
+  The Demon Cycle (5), The Dresden Files (14), **Mistborn Era Two/Wax
+  and Wayne (4: The Alloy of Law, Shadows of Self, The Bands of
+  Mourning, The Lost Metal)**, Red Rising Saga (6), **Stormlight
+  Archive Era One (7) -- NOT the umbrella "The Stormlight Archive" row
+  (0 books); Stormlight Archive Era Two has 0 books tagged, nothing to
+  match yet**, The Murderbot Diaries (10), Throne of Glass (9).
+  **Flagged, needs a deliberate judgment call rather than a silent
+  match**: GraphicAudio's "Riyria Revelations" only matches our omnibus
+  row ("The Riyria Revelations (Omnibus)") -- decide whether a
+  dramatized-edition record belongs on an omnibus row before inserting;
+  "Riyria Chronicles" and "Kate Daniels: Wilmington Years" (GA) have no
   matching row in our catalog at all, not a match. Remaining steps, in
   order:
-  1. Step A2 batch 3+: research + insert the still-open matches above,
+  1. Step A2 batch 4+: research + insert the still-open matches above,
      capped at 10-15 per session (own session, needs a fresh search
      budget) -- Dresden Files (14 books) alone will need to span
      multiple sessions at that cap.

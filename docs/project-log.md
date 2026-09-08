@@ -8086,3 +8086,73 @@ SEARCHES_PER_SESSION` budget. Whether to raise that limit is the repo
 owner's call, not something to route around by pattern-matching/
 guessing instead of real research -- same reasoning CLAUDE.md already
 documents for exactly this situation.
+
+## 2026-09-08 (later still): audiobook-editions skill, Step A2 batch 3 -- Crescent City, Secret Projects' remaining books, Mistborn Era One
+
+Researched Crescent City (3 books), Secret Projects' remaining 3 books
+(Frugal Wizard's Handbook, The Sunlit Man, Isles of the Emberdark), and
+Mistborn Era One (Final Empire/Well of Ascension/Hero of Ages plus the
+Secret History/Eleventh Metal companion-story bundle) from the
+still-open Step A1b list. **10 confirmed matches inserted**
+(`20260908100000_audiobook_editions_graphicaudio_batch3.sql`):
+House of Earth and Blood, House of Sky and Breath, House of Flame and
+Shadow (all 3 Crescent City books, each a 2-part GraphicAudio
+dramatization -- completes Crescent City), The Frugal Wizard's Handbook
+for Surviving Medieval England (single release, 7h55m confirmed), The
+Sunlit Man (single release, runtime not found), Mistborn: The Final
+Empire, The Well of Ascension, The Hero of Ages (the original trilogy,
+each 3 parts -- completes the trilogy proper), and Mistborn: Secret
+History + The Eleventh Metal.
+
+**Isles of the Emberdark checked, not inserted** -- no confirmed
+GraphicAudio edition found (it's Secret Projects' most recent
+book, published 2025-07-01; plausible GraphicAudio simply hasn't
+produced it yet). Not guessed at; flagged for a future re-check rather
+than silently skipped.
+
+**A real judgment call, same shape as the Riyria-omnibus flag from Step
+A1b**: GraphicAudio's "Mistborn: Secret History, The Eleventh Metal,
+and Allomancer Jak and the Pits of Eltania" is ONE bundled release
+(2018-05-29, ~6h total) covering three companion stories, only two of
+which are separate rows in our catalog (Secret History, The Eleventh
+Metal -- Allomancer Jak and the Pits of Eltania isn't in our catalog at
+all, nothing to attach it to). Recorded as two `audiobook_editions`
+rows, one per catalog book, both pointing at the same bundle
+`source_url` -- both with `runtime_minutes` left NULL since the ~6h
+combined total can't be cleanly attributed per-story. No confident
+narrator list was found specifically for the Secret History portion of
+the bundle (left NULL); The Eleventh Metal's cast WAS specifically
+confirmed (4 names) and is recorded.
+
+**Most cast lists this batch are truncated to the single confirmed
+part with a stated total, or left NULL, rather than guessed**: several
+Crescent City and Mistborn-trilogy books have a runtime confirmed for
+only one of their parts (e.g. House of Sky and Breath Part 1 = 12h15m,
+House of Flame and Shadow Part 1 = 13h7m, Well of Ascension Parts 2+3 =
+7h each but Part 1 not found) -- consistent with this skill's standing
+practice (see ACOTAR batch 2 above), the TOTAL `runtime_minutes` was
+left NULL in every one of these cases rather than summing a partial
+figure or guessing the missing part. The Hero of Ages had no reliable
+cast or runtime found at all for this specific title -- both left
+NULL; only its existence and part count (3) were confirmed with
+confidence.
+
+**Verification**: tested in a rolled-back transaction first (including
+an idempotency re-run check -- row count unchanged on re-run), then
+applied to hosted via `supabase db push --db-url` (this session had no
+stored Supabase access token/link, so used the CLI's direct `--db-url`
+flag rather than `supabase link`, confirmed via `--dry-run` first).
+`audiobook_editions` row count 18 -> 28. `supabase migration list
+--db-url` confirms `20260908100000` has both a `local` and matching
+`remote` entry, no gap.
+
+**Still open for a future Step A2 session** (unchanged list from batch
+2's report, minus what this batch just completed): The Demon Cycle
+(5), The Dresden Files (14), Mistborn Era Two/Wax and Wayne (4 -- The
+Alloy of Law, Shadows of Self, The Bands of Mourning, The Lost Metal),
+Red Rising Saga (6), Stormlight Archive Era One (7), The Murderbot
+Diaries (10), Throne of Glass (9). Isles of the Emberdark (checked, no
+edition yet -- worth a re-check in a later session rather than treated
+as permanently closed). Riyria omnibus/Riyria Chronicles/Kate Daniels:
+Wilmington Years judgment calls from Step A1b still unresolved, same as
+before.
