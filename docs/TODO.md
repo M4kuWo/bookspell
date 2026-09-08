@@ -90,21 +90,29 @@ worth deferring to a later session rather than batching in for
   A2 batch 3" entry, including the Secret History/Eleventh Metal
   bundled-release judgment call (same shape as the still-open Riyria
   case below).
+  **Progress as of 2026-09-09: Step A2 batch 4 done -- 10 more editions
+  inserted (28 -> 38 total). Mistborn Era Two/Wax and Wayne now fully
+  covered (The Alloy of Law, Shadows of Self, The Bands of Mourning,
+  The Lost Metal) and Stormlight Archive Era One now fully covered**
+  (The Way of Kings, Words of Radiance, Oathbringer, Rhythm of War,
+  Edgedancer, Dawnshard, plus Wind and Truth which already had an
+  edition from the 2026-09-05 seed row). The Way of Kings and
+  Oathbringer have no cast list recorded (existence + part count only,
+  nothing individually-named reliably found). Full detail in
+  project-log.md's 2026-09-09 "Step A2 batch 4" entry, including a
+  cast-list cross-contamination near-miss that was caught before
+  inserting (a search result mixed in a different GraphicAudio
+  production's credits).
   **Still-open confirmed matches from Step A1b, not yet researched**:
-  The Demon Cycle (5), The Dresden Files (14), **Mistborn Era Two/Wax
-  and Wayne (4: The Alloy of Law, Shadows of Self, The Bands of
-  Mourning, The Lost Metal)**, Red Rising Saga (6), **Stormlight
-  Archive Era One (7) -- NOT the umbrella "The Stormlight Archive" row
-  (0 books); Stormlight Archive Era Two has 0 books tagged, nothing to
-  match yet**, The Murderbot Diaries (10), Throne of Glass (9).
-  **Flagged, needs a deliberate judgment call rather than a silent
-  match**: GraphicAudio's "Riyria Revelations" only matches our omnibus
-  row ("The Riyria Revelations (Omnibus)") -- decide whether a
-  dramatized-edition record belongs on an omnibus row before inserting;
-  "Riyria Chronicles" and "Kate Daniels: Wilmington Years" (GA) have no
-  matching row in our catalog at all, not a match. Remaining steps, in
-  order:
-  1. Step A2 batch 4+: research + insert the still-open matches above,
+  The Demon Cycle (5), The Dresden Files (14), Red Rising Saga (6),
+  The Murderbot Diaries (10), Throne of Glass (9). **Flagged, needs a
+  deliberate judgment call rather than a silent match**: GraphicAudio's
+  "Riyria Revelations" only matches our omnibus row ("The Riyria
+  Revelations (Omnibus)") -- decide whether a dramatized-edition record
+  belongs on an omnibus row before inserting; "Riyria Chronicles" and
+  "Kate Daniels: Wilmington Years" (GA) have no matching row in our
+  catalog at all, not a match. Remaining steps, in order:
+  1. Step A2 batch 5+: research + insert the still-open matches above,
      capped at 10-15 per session (own session, needs a fresh search
      budget) -- Dresden Files (14 books) alone will need to span
      multiple sessions at that cap.

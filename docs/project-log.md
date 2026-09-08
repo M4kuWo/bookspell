@@ -8176,3 +8176,49 @@ edition yet -- worth a re-check in a later session rather than treated
 as permanently closed). Riyria omnibus/Riyria Chronicles/Kate Daniels:
 Wilmington Years judgment calls from Step A1b still unresolved, same as
 before.
+
+## 2026-09-09: audiobook-editions skill, Step A2 batch 4 -- Mistborn Era Two complete, Stormlight Archive Era One complete
+
+Researched the two series flagged as still-open from batch 3: Mistborn
+Era Two/Wax and Wayne (all 4 books) and Stormlight Archive Era One (6
+of the 7 books -- Wind and Truth already had an edition from the
+2026-09-05 schema-design seed row, correctly not re-inserted). **10
+confirmed matches inserted**
+(`20260909000000_audiobook_editions_graphicaudio_batch4.sql`): The
+Alloy of Law (single release, 8h confirmed), Shadows of Self (single
+release, runtime not found), The Bands of Mourning (2 parts), The Lost
+Metal (2 parts) -- completing Mistborn Era Two -- and The Way of Kings
+(5 parts), Words of Radiance (5 parts), Oathbringer (6 parts), Rhythm
+of War (6 parts), Edgedancer (single release, ~4h confirmed),
+Dawnshard (single release, ~5h confirmed) -- completing Stormlight
+Archive Era One.
+
+**Two books (The Way of Kings, Oathbringer) have no cast list recorded
+at all** -- multiple searches turned up only generic "full cast"
+descriptions with no individually-named credits reliably attributable
+to these specific titles (as opposed to another GraphicAudio Sanderson
+title's credits bleeding into the search results, a real risk this
+session hit once and caught -- see next paragraph). Left `narrators`
+NULL rather than guess; existence and part count (5 and 6
+respectively) are the only points confirmed with confidence for these
+two.
+
+**One near-miss caught before inserting**: a search for Words of
+Radiance's cast returned a result snippet that also contained the full
+credits list for a DIFFERENT GraphicAudio production ("White Sand:
+Volume Two") mixed into the same result. Cross-checked that the names
+attributed to Words of Radiance in the search's own summary line were
+distinct from the White Sand names before recording them -- they were,
+so Words of Radiance's cast was recorded, but this is exactly the kind
+of contamination this skill's research needs to stay alert for.
+
+**Verification**: tested in a rolled-back transaction first (including
+an idempotency re-run check -- row count unchanged on re-run), then
+applied to hosted via `supabase db push --db-url`. `audiobook_editions`
+row count 28 -> 38. `supabase migration list --db-url` confirms 167
+migrations total tracked, zero gaps.
+
+**Still open for a future Step A2 session**: The Demon Cycle (5), The
+Dresden Files (14), Red Rising Saga (6), The Murderbot Diaries (10),
+Throne of Glass (9). Isles of the Emberdark and the Riyria/Kate Daniels
+judgment calls from earlier batches remain unresolved, same as before.
