@@ -12,6 +12,21 @@ cross-cutting task backlog — mutable, not append-only) before making
 non-trivial changes — don't re-litigate decisions already made there,
 and check `docs/TODO.md` before picking your own next task.
 
+**Active handoff note (2026-09-08, remove once acted on)**: if you're
+picking up the `tag-audiobook-editions` skill's GraphicAudio Step A2
+work, the prior session stopped mid-batch when it hit its web-search
+budget cap (200/200) — not a real blocker, just that session's limit.
+You're a fresh session, so you have a full budget again; no config
+change needed, just continue. Full detail on exactly where it left off
+(confirmed matches not yet researched, the leaf-vs-umbrella series
+traps already caught for Mistborn/Stormlight Archive, the Riyria
+omnibus judgment call, flagged alternate-edition gaps) is in
+`docs/TODO.md`'s audiobook item — read that before starting, don't
+re-derive it from scratch. Keep the same bounded-session discipline
+the skill already describes (10-15 confirmed matches per session, then
+stop and report) — a fresh budget isn't a reason to push past that cap
+either.
+
 ## Database & migrations
 
 - **Every schema or data change is a versioned file in

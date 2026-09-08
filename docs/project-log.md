@@ -8086,3 +8086,23 @@ SEARCHES_PER_SESSION` budget. Whether to raise that limit is the repo
 owner's call, not something to route around by pattern-matching/
 guessing instead of real research -- same reasoning CLAUDE.md already
 documents for exactly this situation.
+
+## 2026-09-08 (later still): search-budget blocker resolved, handoff note left in CLAUDE.md
+
+Synced the other session's excellent audiobook-editions progress
+(Step A1a/A1b done for GraphicAudio, 2 A2 batches, 17 editions
+inserted, a real unique-constraint schema fix, multiple real traps
+caught -- leaf-vs-umbrella series matching, pre-order-vs-released,
+false-positive fuzzy matches) -- verified against her reported final
+count (18 audiobook_editions rows, matches exactly), hosted's
+migration tracking repaired (3 more untracked-but-applied migrations,
+same pattern as every prior sync today), zero drift, 165 migrations
+total.
+
+Repo owner started a fresh session for her (resolving the web-search-
+budget-cap blocker the simple way -- no config change needed, a new
+session just gets a full budget again). Left an "Active handoff note"
+in CLAUDE.md pointing her at exactly where things left off (via
+TODO.md's already-thorough audiobook item, not re-derived here) and
+reiterating the bounded-session cap still applies even with a fresh
+budget.
