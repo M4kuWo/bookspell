@@ -7775,3 +7775,106 @@ Migration: `20260908060000_worldbuilding_delivery_sweep_batch18.sql`.
 
 Both tested in a rolled-back transaction against hosted first, then
 applied for real; counts verified before/after as noted above.
+
+## 2026-09-08 (later): audiobook-editions skill, Step A1a for GraphicAudio -- series catalog pulled, standalones and authors NOT captured
+
+First real work on `.claude/skills/tag-audiobook-editions/SKILL.md`
+since it was written -- confirmed via this doc's own history that no
+prior session had done Step A1a for either producer yet. Per the
+skill's bounded-step discipline, did ONLY Step A1a for ONE producer
+(GraphicAudio) this session -- no cross-referencing against our catalog
+(that's Step A1b, a separate session), no BBC Audio (that's its own
+Session 2).
+
+**Pulled GraphicAudio's Fantasy and Science Fiction genre listings**
+(graphicaudio.net redirects to graphicaudiointernational.net) -- both
+pages render a static series-name list, which came through cleanly.
+**Real limitation hit**: the "Stand-Alone Titles" subcategory under
+each genre, and author-name attribution for any series, load
+dynamically via JS on this site and were NOT captured by a static-HTML
+fetch -- three separate fetch attempts at the standalone-titles URLs
+either 404'd or returned only nav-menu content, no actual title/author
+data. This is a real, honest partial result, not a shortcut -- flagging
+it explicitly rather than presenting an incomplete list as complete.
+
+**Series catalog pulled** (deduped, alphabetical -- author names not
+available on these pages):
+
+Fantasy genre (108 series): A Court of Thorns and Roses, Agent of
+Exiles, Alcatraz, American Craftsmen, Arkham Horror, Battle Mage
+Farmer, Black River Irregulars, Blood and Ash, Bookman Histories, Book
+of the Black Earth, Bubba Ho-Tep, Cemetery Girl Trilogy, Chaos Queen,
+Corum, Corvis Rebaine, Crave, Crescent City, Crown of Hearts and Chaos,
+Dante Valentine, Demigods of San Francisco, Demon Cycle, Demon Days
+Vampire Nights World, The Demon Queen Trials, The DemonWars Saga, The
+Divine Dungeon, Dresden Files, Elantris, Elemental, Emberverse, The
+Empyrean, Enchanted Highlands, Eric Carter, Esther Diamond, Fallen
+Blade, Fey Spy Academy, Forest Kingdom Saga, Fred the Vampire
+Accountant, Frost and Nectar, Gang of Ghouls, Ghost Finders, Gideon
+Sable, Gods and Monsters, Gunnie Rose, The Harbinger, Hellboy, Heroes
+Road, Hidden Legacy, Honey and Ice, Innkeeper Chronicles, Iron
+Kingdoms Chronicles, Ishmael Jones Mystery, Jig the Goblin, Jill
+Kismet, Kate Daniels, Kate Daniels: Wilmington Years, Kelvin of Rud,
+The Kingdom of Crows, The Kurtherian Gambit, Legacy of the Mercenary
+King, Legends of the First Empire, The Legends of Thezmarr, Leveling
+Up, Married To Magic, Mercy Thompson, Mick Oberon Job, The Midnight
+Project, Midnight Texas, Mistborn, Modern Arthur Trilogy, The
+Murderbot Diaries, Mystwalker, Nekropolis, Night Huntress, Night
+Huntress World, Ordinary Magic, The Origin Mystery, Playing Gods,
+Reawakening Trilogy, Red Rising Saga, Red Rising: Sons of Ares, Riyria
+Chronicles, Riyria Revelations, Rogue Angel, Ruthless Boys of the
+Zodiac, Rylee Adamson, Rylee Adamson Epilogues, Sacred Throne, Saga of
+Recluce, Saga of the First King, Saga of the Redeemed, Scorched
+Continent, The Second Dark Ages, Secret Projects, Shadow City: Silver
+Wolf, Shadow Ops, Shadow Saga, Shield of Sparrows, Silver, Sir Apropos
+of Nothing, Souls of the Road, Spellsinger, Stormlight Archive, The
+Sun Eater, Super Powereds, A Tale of the Coven, Tamora Carter, Templar
+Chronicles, Terra Ignota, Throne of Glass, Tony Mandolin Mystery,
+Vampire Earth, Vampire Hunter D, Warbreaker, Warlock Holmes, The
+Warrior, White Sand, Widdershins Adventures, The Wolf's Hour, World of
+the Lupi, Zodiac Academy.
+
+Science Fiction genre (59 series, real overlap with the Fantasy list
+above -- e.g. Kate Daniels, The Murderbot Diaries, Red Rising Saga,
+Stormlight-adjacent Secret Projects, Emberverse, Terra Ignota, Vampire
+Earth/Hunter D, The Warrior are tagged under both genres on their
+site): Alliance-Union Universe, American Craftsmen, AstroNuts, Atrum
+Terra Trilogy, Bastard of The Apocalypse, Battle Mage Farmer, The
+Black Ghost, Bookman Histories, The Boys, Bubba Ho-Tep, Deathlands,
+Deathstalker, The Divine Dungeon, Doomsday Warrior, Earth Blood, E-Day
+Trilogy, Emberverse, The Finder Chronicles, Galactic Football League,
+The Generations Trilogy, Gideon Smith, The Great Insurrection, Hellboy,
+Innkeeper Chronicles, Kate Daniels, Kate Daniels: Wilmington Years, The
+Kurtherian Gambit, The Lost Fleet, The Midnight Project, The Murderbot
+Diaries, Nuclear Bombshell, The Origin Mystery, Outlanders, Playing
+Gods, Reawakening Trilogy, Red Rising Saga, Red Rising: Sons of Ares,
+Rogue Clone, Safe Zone, The Second Dark Ages, Secret Projects, Serrano
+Legacy, Shadow Ops, Space Team Universe, The Sun Eater, Sun Symbol,
+Super Powereds, The Survivalist, Tangent Knights, Terra Ignota, The
+Trader, Twilight Imperium, Vagrant Queen, Vampire Earth, Vampire
+Hunter D, Vatta's Peace, Vatta's War, The War Machine, The Warrior,
+Wasted Space, Windswept.
+
+**Immediately recognizable overlap with our own catalog just from
+series names alone** (NOT yet verified against `books`/`series` --
+that's Step A1b, deliberately not done this session): Mistborn,
+Stormlight Archive, Warbreaker, Elantris, White Sand, Secret Projects
+(all Sanderson -- consistent with 2026-09-08's earlier Cosmere-linking
+work), Dresden Files, Throne of Glass, A Court of Thorns and Roses,
+Red Rising Saga, The Murderbot Diaries, Riyria Revelations/Chronicles,
+Kate Daniels, Legends of the First Empire, The Sun Eater, Mercy
+Thompson, Terra Ignota. This is exactly the kind of "expect tens not
+hundreds" real-match pool the skill's Step A1b anticipated -- a
+promising sign the source is worth the BBC Audio pull too, not
+evidence the whole approach doesn't work.
+
+**Not done, by design**: cross-referencing this list against `books`/
+`series` (Step A1b -- next session), BBC Audio's catalog (its own
+Session 2), any `audiobook_editions` inserts (Step A2, requires A1b
+first). **Flagged for whoever does Step A1b or re-pulls this**: a
+JS-capable fetch (browser automation, or GraphicAudio's own search/API
+if one exists) would be needed to get the Stand-Alone Titles
+subcategories and per-series author names that a static fetch can't
+reach -- worth checking whether that's easily available before
+Step A1b starts, since author names would make fuzzy-matching more
+reliable than title-only.

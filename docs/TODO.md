@@ -36,17 +36,31 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
-- [ ] **Audiobook edition data -- ready to hand off to the other Claude
-  session, see `.claude/skills/tag-audiobook-editions/SKILL.md`**
-  (written 2026-09-07, updated with explicit bounded-session
-  discipline). Runs on a SEPARATE session's token budget, not this
-  one -- fine to kick off any time regardless of this session's own
-  economizing. Expect this to take many sessions end-to-end; that's
-  by design, not a problem to fix. In order:
-  1. Step A1a: pull GraphicAudio's catalog listing (own session), then
-     BBC Audio's (another session).
-  2. Step A1b: cross-reference each list against ours (own session
-     per producer), report the real match count.
+- [ ] **Audiobook edition data, see `.claude/skills/tag-audiobook-
+  editions/SKILL.md`** (written 2026-09-07). Runs on a SEPARATE
+  session's token budget, not this one -- fine to kick off any time
+  regardless of this session's own economizing. Expect this to take
+  many sessions end-to-end; that's by design, not a problem to fix.
+  **Progress as of 2026-09-08: Step A1a done for GraphicAudio** (series-
+  level catalog pulled and logged in full in project-log.md's
+  2026-09-08 "audiobook-editions skill, Step A1a" entry -- 108 Fantasy-
+  genre series + 59 Science Fiction-genre series, real overlap between
+  the two). **Real limitation hit and flagged**: GraphicAudio's site
+  loads author names and its "Stand-Alone Titles" subcategory
+  dynamically via JS -- a static-HTML fetch could only get series
+  names, not authors or standalone (non-series) titles. Whoever
+  continues this should check whether a JS-capable fetch (browser
+  automation, or a GraphicAudio search/API) is available before
+  starting Step A1b, since author names would make matching more
+  reliable than title-only. Remaining steps, in order:
+  1. Step A1a for BBC Audio (its own session -- not yet started).
+  2. Step A1b: cross-reference GraphicAudio's series list against ours
+     (own session), report the real match count -- promising signs
+     already visible just from series names (Mistborn, Stormlight
+     Archive, Dresden Files, Throne of Glass, Red Rising Saga, The
+     Murderbot Diaries, and more, per the project-log.md entry), but
+     not yet formally verified against `books`/`series`. Then the same
+     for BBC Audio's list once pulled.
   3. Step A2: research + insert confirmed matches, capped at 10-15 per
      session.
   4. Sub-task B (Audible Originals, audio-only new entries,
@@ -55,9 +69,7 @@ worth deferring to a later session rather than batching in for
   - Open sub-question, not yet checked: whether Hardcover's API exposes
     standard-edition narrator data as a contributor role (same source
     already used for author verification) -- possibly near-bulk-
-    fetchable, cheaper than the dramatized-edition path. Check this
-    before starting Step A1a if whoever picks this up has a spare cheap
-    session for it.
+    fetchable, cheaper than the dramatized-edition path.
 - [ ] **(Taxing -- defer) Promote `romance_tone`/`worldbuilding_
   delivery` from trope pairs to real scalar fields.** Both pairs show
   ZERO overlap in the actual data (confirmed 2026-09-07) -- genuinely
