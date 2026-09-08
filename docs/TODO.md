@@ -121,10 +121,22 @@ worth deferring to a later session rather than batching in for
   curated count if one exists, (c) at minimum, stop displaying
   `book_count`/`status` in the catalog tool until re-sourced, so wrong
   data isn't worse than no data. No option chosen yet.
+- [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
+  Sanderson's real Cosmere books were actually linked to the existing
+  "The Cosmere" universe row (a duplicate "Cosmere" *series* row also
+  existed, holding 2 misplaced books). Fixed: 22 more books linked
+  (Mistborn both eras, full Stormlight Archive, Elantris novellas,
+  Secret Projects' 2 real Cosmere entries -- The Frugal Wizard's
+  Handbook deliberately excluded, it's not actually Cosmere despite
+  the series grouping), duplicate series row deleted. See
+  project-log.md. This was low-risk enough to fix immediately (unlike
+  First Law/Mark Lawrence below) because the universe already existed
+  with an official name -- no naming-policy decision needed.
 - [ ] **Catalog-wide shared-universe linking audit -- not urgent, but
   needs to be done properly rather than one series at a time.** Only 2
   `universe` rows exist (Cosmere, Middle-earth), but the First Law case
-  below is confirmed NOT to be the only gap -- the repo owner also
+  below is confirmed NOT to be the only gap (Cosmere itself had the
+  same gap, just fixed above, see checked item) -- the repo owner also
   flagged (2026-09-08) that Mark Lawrence's books share one continuity
   across FOUR of his series in this catalog: `The Broken Empire`
   (Prince/King/Emperor of Thorns), `The Red Queen's War` (Prince of
@@ -159,11 +171,17 @@ worth deferring to a later session rather than batching in for
     `The First Law` (real series) plus `The Age of Madness` (real
     series) plus the 3-in-catalog-of-4-real standalones (Best Served
     Cold, The Heroes, Red Country, and Sharp Ends -- a short story
-    collection not yet in our catalog, a separate ingestion-scope
-    question) linking to the universe directly with no series. Matches
-    book-dna.md's own "universe/series/book" design doc exactly --
-    just never implemented. Doesn't cross-contaminate The First
-    Law/Age of Madness's own correct series_ids.
+    collection not yet in our catalog) linking to the universe directly
+    with no series. Matches book-dna.md's own "universe/series/book"
+    design doc exactly -- just never implemented. Doesn't cross-
+    contaminate The First Law/Age of Madness's own correct series_ids.
+    **Sharp Ends should be ingested normally** (resolved 2026-09-08,
+    was flagged as a possible scope question) -- confirmed Arcanum
+    Unbounded and The Last Wish/Sword of Destiny (the same kind of
+    continuity-forward short-story collection) are already in our
+    catalog, already fully tagged as regular novels. This project has
+    already been treating this category as in-scope; add it via
+    normal ingestion, same as any other book.
   - **Mark Lawrence**: see above -- 4 series (10 in-catalog books),
     no official shared-world name, one known missing book (*The Girl
     and the Stars*).

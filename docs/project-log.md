@@ -7641,3 +7641,45 @@ per-book series_id), but flagged as something that needs a real
 author-by-author audit rather than one-off fixes each time a new case
 gets noticed. First Law and Mark Lawrence are the two known starting
 cases; more are likely to exist, not yet searched for.
+
+## 2026-09-08 (later still): Cosmere universe linking fixed; Sharp Ends' ingestion-scope question resolved
+
+Repo owner pushed back on treating Sharp Ends/Arcanum Unbounded-style
+books as a scope gray area: these are continuity-forward short-story
+collections in an established world (his comparison: Sharp Ends is to
+First Law what The Last Wish is to the Witcher), not throwaway
+anthologies. Checked directly: **Arcanum Unbounded and The Last Wish/
+Sword of Destiny are already in our catalog, already fully tagged as
+regular novels** -- this project has already been treating this exact
+category as in-scope. Resolves the "separate ingestion-scope question"
+flagged in the two prior entries today: Sharp Ends should be ingested
+normally, not held back as a special case.
+
+While checking Arcanum Unbounded specifically, found it wasn't linked
+to the real "The Cosmere" universe at all -- it was linked to a
+DUPLICATE "The Cosmere" *series* row instead (same book_count-from-
+raw-Hardcover bug as everything else, 45). Broader check: only 3 of
+Sanderson's real Cosmere books (Elantris, Tress of the Emerald Sea,
+Warbreaker) were linked to the actual universe row -- Mistborn (both
+eras) and the entire Stormlight Archive, the two most central Cosmere
+series, weren't linked at all.
+
+Fixed via `20260908020000_link_cosmere_books_to_universe.sql`: 22 books
+gained `universe_id` (kept their existing `series_id` too, since
+book-dna.md's design allows both at once), Arcanum Unbounded/Sixth of
+the Dusk moved off the duplicate series onto the universe directly
+(matching the Elantris/Tress/Warbreaker standalone-in-universe
+pattern), duplicate series row deleted (verified zero remaining
+references first). **Deliberately excluded The Frugal Wizard's
+Handbook for Surviving Medieval England** despite sharing a series
+grouping ("Secret Projects") with two real Cosmere entries -- it's
+explicitly NOT part of the Cosmere, checked individually rather than
+assumed from the series. Tested in a rolled-back transaction first,
+applied to both local and hosted via `supabase db push`, verified live
+on hosted via REST.
+
+Cosmere now has 25 correctly-linked books total (up from 3) -- the
+same universe-linking gap already flagged for First Law and Mark
+Lawrence in `docs/TODO.md`, just discovered a third time on a universe
+that already existed and had an official name, making this instance
+low-risk enough to fix immediately rather than defer to the audit.
