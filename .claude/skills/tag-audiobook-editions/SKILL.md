@@ -86,7 +86,8 @@ find credible evidence of in your report, don't just silently skip it).
 
 ### Step A1a: pull ONE producer's catalog listing, then stop
 
-Most of our 825 books have no dramatized edition at all. Checking each
+Most of our 873 books (tagged or not -- dramatized-edition data isn't
+gated on Book DNA tagging status) have no dramatized edition at all. Checking each
 one individually against the whole catalog would be hugely wasteful --
 but pulling and cross-referencing BOTH producers' full catalogs in one
 sitting is still doing two separate things in one go. Split it:
