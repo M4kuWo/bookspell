@@ -7683,3 +7683,20 @@ same universe-linking gap already flagged for First Law and Mark
 Lawrence in `docs/TODO.md`, just discovered a third time on a universe
 that already existed and had an official name, making this instance
 low-risk enough to fix immediately rather than defer to the audit.
+
+## 2026-09-08 (later still): two catalog-scope clarifications recorded
+
+Repo owner clarified two policy points prompted by the Sharp Ends/
+Arcanum Unbounded discussion: (1) a short-story collection is in scope
+even when its stories are unconnected/not part of a bigger continuity
+-- it just needs to be genuinely sci-fi/fantasy, same as any other
+book; connected-continuity (Sharp Ends-style) isn't a requirement, just
+one way a collection can also be valuable. (2) A story existing both as
+its own standalone catalog entry AND inside a separate anthology (e.g.
+Edgedancer as Stormlight Archive #2.5, also collected in Arcanum
+Unbounded) is expected and both rows should be kept -- not a duplicate
+to merge, a genuinely different situation from the omnibus/compilation-
+edition-duplicate case found earlier today. Both recorded in CLAUDE.md's
+"Catalog scope & series hierarchy" section so future tagging sessions
+don't mistakenly flag either pattern as a problem. Documentation only,
+no data changed.

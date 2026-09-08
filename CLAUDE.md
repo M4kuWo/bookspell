@@ -197,6 +197,21 @@ and check `docs/TODO.md` before picking your own next task.
   should just group by `series_id` directly — no special-casing needed
   to exclude parent series or shared universes, the data model already
   does it for free.
+- **Short-story collections are in scope, connected-continuity or not**
+  (clarified 2026-09-08) — a pure anthology of unrelated stories is a
+  real book like any other as long as it's genuinely sci-fi/fantasy;
+  it doesn't need to push a shared continuity forward the way *Sharp
+  Ends*/*Arcanum Unbounded*/*The Last Wish* do to belong here. Both
+  kinds get tagged as normal novels, same `work_type`.
+- **A story appearing both as its own standalone entry AND inside a
+  separate anthology is expected, not a duplicate to merge or
+  remove** (clarified 2026-09-08) — e.g. *Edgedancer* is its own
+  catalog row (Stormlight Archive #2.5) and is also one of the stories
+  collected in *Arcanum Unbounded*, a separate catalog row. Keep both;
+  this is a different situation from the omnibus/compilation-duplicate
+  case (`docs/schema/book-dna.md`'s "omnibus/compilation editions"
+  future-fields entry — one edition of the same book represented
+  twice), not the same problem wearing a different face.
 
 ## Recommendation engine (`scripts/recommend.py`)
 
