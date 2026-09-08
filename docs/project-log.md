@@ -7750,3 +7750,28 @@ applied for real; counts verified before/after as noted above.
 narrative` 62, `worldbuilding_via_exposition_dump` 51. Remaining
 candidate pools as of this batch's refresh: ~130 romance_tone,
 ~393 worldbuilding-delivery.
+
+## 2026-09-08 (later): execution-DNA sweep, romance_tone batch 21 + worldbuilding batch 18
+
+romance_tone: continued the deeper broad+follow-up search approach. 6
+candidates researched (12 searches), 2 tagged. The extra rigor caught
+another real misattribution risk: a first search on The Magician King
+suggested a restrained Quentin/Julia dynamic, but a second, targeted
+search confirmed Quentin/Julia is explicitly PLATONIC in this book --
+the actual romance (Quentin/Poppy) is casual and has no clean tone-
+specific discourse. Left untagged rather than risk tagging the wrong
+relationship's tone onto the book. Also skipped Winter's Heart after
+two searches turned up only "wooden"/"awkward"/"bland" craft-quality
+criticism of Rand's poly arrangement -- real, but a writing-competence
+complaint, not a restrained-vs-melodramatic presentation choice, so it
+doesn't cleanly fit either trope value. `understated_romance` 80->81,
+`melodramatic_romance_subplot` 79->80. Migration:
+`20260908050000_romance_tone_sweep_batch21.sql`.
+
+worldbuilding delivery: normal cadence, 6 candidates researched, 3
+tagged (2 clean woven, 1 disputed). `worldbuilding_woven_into_
+narrative` 62->64, `worldbuilding_via_exposition_dump` 51->52.
+Migration: `20260908060000_worldbuilding_delivery_sweep_batch18.sql`.
+
+Both tested in a rolled-back transaction against hosted first, then
+applied for real; counts verified before/after as noted above.
