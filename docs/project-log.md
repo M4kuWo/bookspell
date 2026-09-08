@@ -8222,3 +8222,42 @@ migrations total tracked, zero gaps.
 Dresden Files (14), Red Rising Saga (6), The Murderbot Diaries (10),
 Throne of Glass (9). Isles of the Emberdark and the Riyria/Kate Daniels
 judgment calls from earlier batches remain unresolved, same as before.
+
+## 2026-09-09 (later): audiobook-editions skill, Step A2 batch 5 -- Demon Cycle complete, Red Rising Saga complete
+
+Researched the two remaining shorter series from batch 4's still-open
+list: The Demon Cycle (all 5 books) and Red Rising Saga (all 6 books).
+**11 confirmed matches inserted**
+(`20260909010000_audiobook_editions_graphicaudio_batch5.sql`): The
+Warded Man, The Desert Spear, The Daylight War, The Skull Throne, The
+Core -- completing The Demon Cycle -- and Red Rising, Golden Son,
+Morning Star, Iron Gold, Dark Age, Light Bringer -- completing Red
+Rising Saga.
+
+**Two books got a real summed total rather than a left-NULL partial**,
+different from this skill's usual "leave NULL unless the whole total
+is directly stated" caution: Red Rising's GraphicAudio release was
+described as two parts "each clocking in at 7 hours" (both parts
+equally and specifically confirmed, not just one), and Golden Son had
+BOTH Part 1 (9h, released 2023-08-14) and Part 2 (8h, released
+2023-10-02) independently confirmed. In both cases the total was summed
+from two genuinely confirmed numbers, not extrapolated from a single
+part -- kept distinct from every other book this batch (and prior
+batches) where only one part's runtime was found and the total was
+correctly left NULL.
+
+**Two books (The Skull Throne, Dark Age) have no graphicaudio.net
+product page reliably returned by search** -- recorded against their
+confirmed Amazon listings instead (both real, verifiable listings, not
+a downgrade in confidence, just a different source domain).
+
+**Verification**: tested in a rolled-back transaction first (including
+an idempotency re-run check -- row count unchanged on re-run), then
+applied to hosted via `supabase db push --db-url`. `audiobook_editions`
+row count 38 -> 49. `supabase migration list --db-url` confirms 168
+migrations total tracked, zero gaps.
+
+**Still open for a future Step A2 session**: The Dresden Files (14),
+The Murderbot Diaries (10), Throne of Glass (9). Isles of the Emberdark
+and the Riyria/Kate Daniels judgment calls from earlier batches remain
+unresolved, same as before.

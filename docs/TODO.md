@@ -103,16 +103,26 @@ worth deferring to a later session rather than batching in for
   cast-list cross-contamination near-miss that was caught before
   inserting (a search result mixed in a different GraphicAudio
   production's credits).
+  **Progress as of 2026-09-09 (later): Step A2 batch 5 done -- 11 more
+  editions inserted (49 total). The Demon Cycle now fully covered**
+  (The Warded Man, The Desert Spear, The Daylight War, The Skull
+  Throne, The Core) **and Red Rising Saga now fully covered** (Red
+  Rising, Golden Son, Morning Star, Iron Gold, Dark Age, Light
+  Bringer). Full detail in project-log.md's 2026-09-09 "Step A2 batch
+  5" entry, including the two books (Red Rising, Golden Son) where
+  BOTH parts' runtimes were independently confirmed and genuinely
+  summed to a total, distinct from the usual "leave NULL" case where
+  only one part is confirmed.
   **Still-open confirmed matches from Step A1b, not yet researched**:
-  The Demon Cycle (5), The Dresden Files (14), Red Rising Saga (6),
-  The Murderbot Diaries (10), Throne of Glass (9). **Flagged, needs a
-  deliberate judgment call rather than a silent match**: GraphicAudio's
-  "Riyria Revelations" only matches our omnibus row ("The Riyria
-  Revelations (Omnibus)") -- decide whether a dramatized-edition record
-  belongs on an omnibus row before inserting; "Riyria Chronicles" and
-  "Kate Daniels: Wilmington Years" (GA) have no matching row in our
-  catalog at all, not a match. Remaining steps, in order:
-  1. Step A2 batch 5+: research + insert the still-open matches above,
+  The Dresden Files (14), The Murderbot Diaries (10), Throne of Glass
+  (9). **Flagged, needs a deliberate judgment call rather than a silent
+  match**: GraphicAudio's "Riyria Revelations" only matches our omnibus
+  row ("The Riyria Revelations (Omnibus)") -- decide whether a
+  dramatized-edition record belongs on an omnibus row before inserting;
+  "Riyria Chronicles" and "Kate Daniels: Wilmington Years" (GA) have no
+  matching row in our catalog at all, not a match. Remaining steps, in
+  order:
+  1. Step A2 batch 6+: research + insert the still-open matches above,
      capped at 10-15 per session (own session, needs a fresh search
      budget) -- Dresden Files (14 books) alone will need to span
      multiple sessions at that cap.
