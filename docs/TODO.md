@@ -41,29 +41,34 @@ worth deferring to a later session rather than batching in for
   session's token budget, not this one -- fine to kick off any time
   regardless of this session's own economizing. Expect this to take
   many sessions end-to-end; that's by design, not a problem to fix.
-  **Progress as of 2026-09-08: Step A1a done for GraphicAudio** (series-
-  level catalog pulled and logged in full in project-log.md's
-  2026-09-08 "audiobook-editions skill, Step A1a" entry -- 108 Fantasy-
-  genre series + 59 Science Fiction-genre series, real overlap between
-  the two). **Real limitation hit and flagged**: GraphicAudio's site
-  loads author names and its "Stand-Alone Titles" subcategory
-  dynamically via JS -- a static-HTML fetch could only get series
-  names, not authors or standalone (non-series) titles. Whoever
-  continues this should check whether a JS-capable fetch (browser
-  automation, or a GraphicAudio search/API) is available before
-  starting Step A1b, since author names would make matching more
-  reliable than title-only. Remaining steps, in order:
-  1. Step A1a for BBC Audio (its own session -- not yet started).
-  2. Step A1b: cross-reference GraphicAudio's series list against ours
-     (own session), report the real match count -- promising signs
-     already visible just from series names (Mistborn, Stormlight
-     Archive, Dresden Files, Throne of Glass, Red Rising Saga, The
-     Murderbot Diaries, and more, per the project-log.md entry), but
-     not yet formally verified against `books`/`series`. Then the same
-     for BBC Audio's list once pulled.
-  3. Step A2: research + insert confirmed matches, capped at 10-15 per
-     session.
-  4. Sub-task B (Audible Originals, audio-only new entries,
+  **Progress as of 2026-09-08: Steps A1a + A1b done for GraphicAudio.**
+  Full detail in project-log.md's two 2026-09-08 "audiobook-editions
+  skill" entries. **Step A2 is ready to start** -- confirmed real
+  matches, ~86 already-tagged books total across 20 series:
+  A Court of Thorns and Roses (5 books), Blood and Ash (1), Crescent
+  City (3), The Demon Cycle (5), The Dresden Files (14), Elantris (2),
+  Innkeeper Chronicles (1), Kate Daniels (2), The Legends of the First
+  Empire (1), **Mistborn Era One (5) + Mistborn Era Two/Wax and Wayne
+  (4) -- use these leaf series, NOT the umbrella "Mistborn" row (0
+  books)**, Red Rising Saga (6), Secret Projects (3), **Stormlight
+  Archive Era One (7) -- NOT the umbrella "The Stormlight Archive" row
+  (0 books); Stormlight Archive Era Two has 0 books tagged, nothing to
+  match yet**, Terra Ignota (1), The Empyrean (3), The Murderbot
+  Diaries (10), The Sun Eater (2), Throne of Glass (9), **Warbreaker
+  (1 book, standalone -- match by `books.title`, it has no series_id,
+  links directly to the Cosmere universe)**, Zodiac Academy (1).
+  **Flagged, needs a deliberate judgment call rather than a silent
+  match**: GraphicAudio's "Riyria Revelations" only matches our
+  omnibus row ("The Riyria Revelations (Omnibus)") -- decide whether a
+  dramatized-edition record belongs on an omnibus row before inserting;
+  "Riyria Chronicles" and "Kate Daniels: Wilmington Years" (GA) have no
+  matching row in our catalog at all, not a match. Remaining steps, in
+  order:
+  1. Step A2: research + insert confirmed matches above, capped at
+     10-15 per session (own session).
+  2. Step A1a for BBC Audio (its own session -- not yet started), then
+     its own Step A1b.
+  3. Sub-task B (Audible Originals, audio-only new entries,
      `work_type = 'audio_original'`): candidate discovery as its own
      session, then ingestion+tagging in normal 15-20/session batches.
   - Open sub-question, not yet checked: whether Hardcover's API exposes

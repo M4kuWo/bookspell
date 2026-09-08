@@ -7878,3 +7878,84 @@ subcategories and per-series author names that a static fetch can't
 reach -- worth checking whether that's easily available before
 Step A1b starts, since author names would make fuzzy-matching more
 reliable than title-only.
+
+## 2026-09-08 (later still): audiobook-editions skill, Step A1b for GraphicAudio -- 20 confirmed series matches (~86 books), 2 real-data traps caught before Step A2
+
+Cross-referenced GraphicAudio's 153 deduped series names (logged above)
+against our `series` table -- normalized-name exact match first, then a
+fuzzy substring pass to catch near-misses, then individually verified
+every fuzzy hit rather than trusting the substring match.
+
+**20 confirmed real matches** (title normalized-matches one of our
+`series.name` rows, book count = how many of our books are actually
+linked and taggable for Step A2): A Court of Thorns and Roses (5),
+Blood and Ash (1), Crescent City (3), The Demon Cycle (5), The Dresden
+Files (14), Elantris (2), Innkeeper Chronicles (1), Kate Daniels (2),
+The Legends of the First Empire (1), Red Rising Saga (6), Secret
+Projects (3), Terra Ignota (1), The Empyrean (3), The Murderbot Diaries
+(10), The Sun Eater (2), Throne of Glass (9), Zodiac Academy (1) --
+plus Mistborn and Stormlight Archive, corrected below, and Warbreaker,
+also below. **~86 already-tagged books total across the confirmed
+pool** -- comfortably inside the skill's own "expect tens not hundreds"
+estimate for Step A1b, and enough for several Step A2 sessions at the
+10-15/session cap.
+
+**Real trap #1, caught before it became a bad insert**: GraphicAudio's
+"Mistborn" and "Stormlight Archive" series names matched our series
+table exactly -- but both matches were the **umbrella** series rows
+with `book_count = 0`, exactly the leaf-vs-umbrella pattern CLAUDE.md
+already documents (`books.series_id` always points at a leaf, e.g.
+Mistborn's real books link to "Mistborn Era One"/"Era Two", never the
+parent "Mistborn" row). The real, taggable targets are the leaf series:
+**Mistborn Era One** (5 books) and **Mistborn Era Two (Wax and Wayne)**
+(4 books), **Stormlight Archive Era One** (7 books) and **Stormlight
+Archive Era Two** (0 books, nothing to match yet). A naive
+"series.name matched, so I have a target" approach would have tried to
+attach `audiobook_editions` rows to book-less umbrella series and found
+nothing to link them to. Whoever does Step A2 for these: match against
+the Era-specific leaf series, not the bare "Mistborn"/"Stormlight
+Archive" names.
+
+**Real trap #2**: GraphicAudio's "Warbreaker" listing has no series-row
+match at all -- Warbreaker in our catalog has `series_id = NULL` and
+links directly to the Cosmere universe as a standalone (per this same
+day's earlier Cosmere-linking work). Real match, 1 book, just not
+reachable via a `series.name` query -- a reminder that Step A2 for any
+GraphicAudio "series" that's actually a single-book work in our catalog
+needs a `books.title` match, not only a `series.name` one.
+
+**Flagged, not treated as a clean match**: GraphicAudio lists both
+"Riyria Chronicles" and "Riyria Revelations" as separate series. Our
+catalog only has **"The Riyria Revelations (Omnibus)"** -- an omnibus
+row (per book-dna.md's still-unbuilt "omnibus/compilation editions"
+future-fields entry), not individual books. No "Riyria Chronicles" row
+exists at all. Attaching a GraphicAudio dramatized-edition record to an
+omnibus row is genuinely ambiguous (GraphicAudio likely dramatizes
+individual books, not the omnibus packaging) -- left for whoever does
+Step A2 to judge deliberately, not silently matched. Also flagged:
+GraphicAudio's "Kate Daniels: Wilmington Years" is a real, distinct
+spin-off series with no matching row in our catalog at all (different
+books from the already-matched "Kate Daniels") -- not a match, not an
+error, just nothing to link yet.
+
+**False positives caught and excluded** (the fuzzy substring pass
+flagged these; each was individually verified and rejected, not
+assumed): "Saga of the Redeemed", "The DemonWars Saga", "Saga of
+Recluce", "Shadow Saga", "Saga of the First King", and "Forest Kingdom
+Saga" (all GraphicAudio series) fuzzy-matched against our catalog's
+single "Saga" series purely on the common word "Saga" -- checked what
+that series actually is, and it's *Saga, Vol. 1-2* (Fiona Staples/Brian
+K. Vaughan), the out-of-scope graphic novel CLAUDE.md already documents
+as having its Book DNA removed (2026-09-04 decision). None of these are
+real matches. Also rejected on individual check: "Outlanders" (GA, a
+James Axler post-apocalyptic series) vs. our "Outlander" (Diana
+Gabaldon, an unrelated work); "Shield of Sparrows" (GA) vs. our "The
+Sparrow" (Mary Doria Russell, unrelated); "Vagrant Queen" (GA) vs. our
+"The Vagrant" (Peter Newman, unrelated); "The Trader" (GA) vs. our "The
+Liveship Traders" (Robin Hobb) -- thematically adjacent (both about
+trading ships) but different, unverified works, not assumed to match.
+
+**Not done, by design**: any research or `audiobook_editions` inserts
+(Step A2 -- next session, capped at 10-15 confirmed matches per the
+skill's own discipline). BBC Audio's Step A1a/A1b (separate sessions,
+not started).
