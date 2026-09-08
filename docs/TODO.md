@@ -41,31 +41,54 @@ worth deferring to a later session rather than batching in for
   session's token budget, not this one -- fine to kick off any time
   regardless of this session's own economizing. Expect this to take
   many sessions end-to-end; that's by design, not a problem to fix.
-  **Progress as of 2026-09-08: Steps A1a + A1b done for GraphicAudio.**
-  Full detail in project-log.md's two 2026-09-08 "audiobook-editions
-  skill" entries. **Step A2 is ready to start** -- confirmed real
-  matches, ~86 already-tagged books total across 20 series:
-  A Court of Thorns and Roses (5 books), Blood and Ash (1), Crescent
-  City (3), The Demon Cycle (5), The Dresden Files (14), Elantris (2),
-  Innkeeper Chronicles (1), Kate Daniels (2), The Legends of the First
-  Empire (1), **Mistborn Era One (5) + Mistborn Era Two/Wax and Wayne
-  (4) -- use these leaf series, NOT the umbrella "Mistborn" row (0
-  books)**, Red Rising Saga (6), Secret Projects (3), **Stormlight
-  Archive Era One (7) -- NOT the umbrella "The Stormlight Archive" row
-  (0 books); Stormlight Archive Era Two has 0 books tagged, nothing to
-  match yet**, Terra Ignota (1), The Empyrean (3), The Murderbot
-  Diaries (10), The Sun Eater (2), Throne of Glass (9), **Warbreaker
-  (1 book, standalone -- match by `books.title`, it has no series_id,
-  links directly to the Cosmere universe)**, Zodiac Academy (1).
-  **Flagged, needs a deliberate judgment call rather than a silent
-  match**: GraphicAudio's "Riyria Revelations" only matches our
-  omnibus row ("The Riyria Revelations (Omnibus)") -- decide whether a
-  dramatized-edition record belongs on an omnibus row before inserting;
-  "Riyria Chronicles" and "Kate Daniels: Wilmington Years" (GA) have no
-  matching row in our catalog at all, not a match. Remaining steps, in
-  order:
-  1. Step A2: research + insert confirmed matches above, capped at
-     10-15 per session (own session).
+  **Progress as of 2026-09-08: Steps A1a + A1b done for GraphicAudio,
+  Step A2 batch 1 done (12 editions inserted).** Full detail in
+  project-log.md's four 2026-09-08 "audiobook-editions skill" entries.
+  **Also landed a real schema fix**: `audiobook_editions` had no unique
+  constraint to make `on conflict do nothing` actually idempotent --
+  added `unique (book_id, source_url)` (migration
+  `20260908070000_audiobook_editions_unique_constraint.sql`), verified
+  by re-running the batch-1 insert file twice in the same test
+  transaction and confirming no duplicate rows.
+  **Batch 1 done** (`20260908080000_audiobook_editions_graphicaudio_
+  batch1.sql`): From Blood and Ash, Sweep of the Heart, Age of Myth,
+  Too Like the Lightning, Zodiac Academy: The Awakening, Elantris, The
+  Hope of Elantris, The Emperor's Soul, Magic Bites, Magic Burns,
+  Warbreaker (11 `fully_released`), plus Empire of Silence recorded
+  correctly as `announced` (a real pre-order catch -- GraphicAudio's
+  own "Pre-Order Announcement!" post, Part 1 ships 2026-10-30, Part 2
+  2027-01-07, both still in the future). Howling Dark (Sun Eater #2)
+  checked and skipped -- no confirmed GraphicAudio listing exists yet,
+  consistent with book 1 not being out.
+  **Real gaps flagged for a future Step A2 session, not silently
+  skipped**: Elantris and Warbreaker EACH have a second real
+  GraphicAudio edition (a "Tenth Anniversary" re-recording alongside
+  the original) that wasn't inserted this batch due to incomplete
+  runtime/completion data -- add as a genuine second row per book
+  (the schema now supports this cleanly via the new unique constraint)
+  once that data is confirmed.
+  **Still-open confirmed matches from Step A1b, not yet researched**
+  (~74 more already-tagged books across these series): A Court of
+  Thorns and Roses (5 books), Crescent City (3), The Demon Cycle (5),
+  The Dresden Files (14), Kate Daniels (2 -- Magic Bites/Burns are
+  done, this is now complete), The Legends of the First Empire (1),
+  **Mistborn Era One (5) + Mistborn Era Two/Wax and Wayne (4) -- use
+  these leaf series, NOT the umbrella "Mistborn" row (0 books)**, Red
+  Rising Saga (6), Secret Projects (3), **Stormlight Archive Era One
+  (7) -- NOT the umbrella "The Stormlight Archive" row (0 books);
+  Stormlight Archive Era Two has 0 books tagged, nothing to match
+  yet**, The Murderbot Diaries (10), The Sun Eater (2 -- Empire of
+  Silence is announced-only per above; Howling Dark not yet a real
+  GraphicAudio listing), Throne of Glass (9). **Flagged, needs a
+  deliberate judgment call rather than a silent match**: GraphicAudio's
+  "Riyria Revelations" only matches our omnibus row ("The Riyria
+  Revelations (Omnibus)") -- decide whether a dramatized-edition record
+  belongs on an omnibus row before inserting; "Riyria Chronicles" and
+  "Kate Daniels: Wilmington Years" (GA) have no matching row in our
+  catalog at all, not a match. Remaining steps, in order:
+  1. Step A2 batch 2+: research + insert the still-open matches above,
+     capped at 10-15 per session (own session) -- Dresden Files (14
+     books) alone will need to span multiple sessions at that cap.
   2. Step A1a for BBC Audio (its own session -- not yet started), then
      its own Step A1b.
   3. Sub-task B (Audible Originals, audio-only new entries,

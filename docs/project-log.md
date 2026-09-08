@@ -7959,3 +7959,89 @@ trading ships) but different, unverified works, not assumed to match.
 (Step A2 -- next session, capped at 10-15 confirmed matches per the
 skill's own discipline). BBC Audio's Step A1a/A1b (separate sessions,
 not started).
+
+## 2026-09-08 (later still): audiobook-editions skill, Step A2 batch 1 -- 12 GraphicAudio editions inserted, plus a real schema fix
+
+Researched and inserted the first batch of confirmed GraphicAudio
+matches from Step A1b, prioritizing the smaller series/standalones for
+complete-per-series coverage this session rather than partially
+covering a large one (Dresden Files' 14 books, Throne of Glass's 9,
+etc. -- left for future sessions). 12 books, all real, individually
+verified via search (Audible/Amazon/GraphicAudio product listings),
+not guessed.
+
+**Real schema gap found and fixed first**: `audiobook_editions` had no
+unique constraint besides its auto-generated `id` PK. The skill's own
+`on conflict do nothing` INSERT example would have been silently
+ineffective if ever re-applied -- two identical inserts create two rows
+with different fresh UUIDs, not a real conflict, violating this
+project's standing idempotent-SQL requirement. A constraint on
+`book_id` alone would be wrong (this table is deliberately one-to-many
+-- a book can have more than one real edition, confirmed true twice in
+this very batch, see below); `source_url` is the column that's
+naturally distinct per real edition while still allowing several per
+book. Added `unique (book_id, source_url)` via
+`20260908070000_audiobook_editions_unique_constraint.sql`, then
+verified the fix actually works by re-running the batch-1 insert file
+a second time inside the same test transaction and confirming the row
+count didn't change.
+
+**12 confirmed editions inserted** (`20260908080000_audiobook_editions_
+graphicaudio_batch1.sql`), all `production_company = 'GraphicAudio'`:
+From Blood and Ash (Jennifer L. Armentrout, 2 parts, 660 min total,
+25-name cast), Sweep of the Heart (Ilona Andrews, 668 min, 45-name
+cast), Age of Myth (Michael J. Sullivan, 2 parts, 21-name cast, runtime
+not reliably found), Too Like the Lightning (Ada Palmer, 2 parts,
+11-name cast, runtime ambiguous between per-part/total so left NULL
+rather than guessed), Zodiac Academy: The Awakening (Caroline Peckham/
+Susanne Valenti, 22-name cast), Elantris (Brandon Sanderson, 2 parts,
+13-name cast -- see judgment call below), The Hope of Elantris
+(Brandon Sanderson, 39 min, 17-name cast), The Emperor's Soul (Brandon
+Sanderson, 211 min, 19-name cast, 2013 Hugo winner for Best Novella),
+Magic Bites (Ilona Andrews, 11-name cast), Magic Burns (Ilona Andrews,
+29-name cast), Warbreaker (Brandon Sanderson, 3 parts, 14-name cast --
+see judgment call below), and Empire of Silence (Christopher Ruocchio
+-- see real catch below).
+
+**Real catch, exactly the trap the skill's own Wind and Truth precedent
+warns about**: Empire of Silence's GraphicAudio adaptation is a
+PRE-ORDER, not a released edition -- a GraphicAudio social post
+explicitly titled "Pre-Order Announcement!" and Amazon listings give
+Part 1's release date as 2026-10-30 and Part 2's as 2027-01-07, both
+after today (2026-09-08). Recorded honestly as `release_status =
+'announced'`, `parts_released = 0`, not assumed released the way the
+rest of this batch's confirmed-out editions were. Also checked Howling
+Dark (Sun Eater book 2) on the reasoning that if book 1 isn't even out
+yet, book 2 almost certainly isn't either -- confirmed no clear
+GraphicAudio product listing exists for it at all, so it wasn't
+inserted (not even as 'announced' -- no confirmed evidence to record).
+
+**Two real judgment calls, both about the same underlying pattern**:
+GraphicAudio has re-recorded "Tenth Anniversary" editions of both
+Elantris and Warbreaker alongside their original recordings -- two
+genuinely different real editions of the same book. For each, inserted
+only the edition with more reliable data this session (Elantris: the
+newer Tenth Anniversary 2-part edition, since it's the one actively
+sold now, though Part 2's runtime wasn't confirmed so total
+runtime_minutes is NULL; Warbreaker: the ORIGINAL 3-part edition,
+since all three parts have independently confirmed Amazon listings,
+while the newer 2-part re-recording's completion status wasn't
+confirmed). The other edition in each pair is a real, flagged gap for
+a future session to add as a genuine second row on the same book -- not
+a duplicate, exactly the one-to-many case the new unique constraint
+was designed to allow.
+
+**Verification**: tested both migrations together in a rolled-back
+transaction first (including the idempotency re-run check above), then
+applied to hosted for real. `audiobook_editions` row count 1 -> 13 (the
+pre-existing count of 1 is the Wind and Truth seed row from
+2026-09-05's schema-design pass, untouched by this batch).
+
+**Not done, by design**: the two flagged alternate-edition gaps above,
+Howling Dark or any other Sun Eater book, BBC Audio's Step A1a/A1b
+(separate sessions), and any further GraphicAudio batches beyond this
+one (Dresden Files, Throne of Glass, Red Rising Saga, Mistborn both
+eras, The Demon Cycle, The Murderbot Diaries, Crescent City, The
+Empyrean, Secret Projects, Stormlight Archive Era One, and the flagged
+Riyria-omnibus/Riyria-Chronicles/Kate-Daniels-Wilmington-Years cases
+from Step A1b all remain for future Step A2 sessions).
