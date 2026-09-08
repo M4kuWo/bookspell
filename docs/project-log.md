@@ -7700,3 +7700,78 @@ edition-duplicate case found earlier today. Both recorded in CLAUDE.md's
 "Catalog scope & series hierarchy" section so future tagging sessions
 don't mistakenly flag either pattern as a problem. Documentation only,
 no data changed.
+
+## 2026-09-08 (new session): execution-DNA sweep, romance_tone batch 20 + worldbuilding batch 17
+
+New session. Pulled 5 commits from the other Claude session first
+(series.status/book_count fixes, Cosmere universe linking, catalog-
+scope clarifications -- all summarized above, all orthogonal to this
+sweep) -- fast-forward merge, no conflicts, confirmed no migration
+timestamp collisions and hosted's migration-tracking table shows the
+new versions cleanly registered. `book_tropes` counts for all four
+sweep tropes matched exactly where 2026-09-07's session left them
+before starting this batch.
+
+romance_tone: continued the broad-search + targeted-follow-up approach
+per the standing recommendation. 6 candidates researched (12 searches
+total), only 1 tagged (disputed) -- confirms the depletion problem
+flagged yesterday is real, not a shallow-search artifact: even doubling
+the search depth, 5 of 6 candidates turned up nothing usable. The
+deeper approach still paid for itself twice, in both directions: (1)
+on The Last Wish, a first search surfaced "melodrama at its finest,"
+which looked like a clean hit; a second, targeted search found the
+actual review context -- the phrase describes Geralt's general moral/
+political entanglements across the whole collection, not the Geralt/
+Yennefer romance's presentation. Left untagged; a single search would
+likely have produced a real false positive. (2) On The Everlasting, a
+first search suggested clean, unambiguous restraint; a second search
+specifically hunting for counter-evidence found real, separate
+criticism calling the same romance "saccharine" and "sentimental" --
+genuinely disputed, not the clean 0.6 tag the first search alone would
+have supported. `understated_romance` 79->80, `melodramatic_romance_
+subplot` unchanged at 79. Migration:
+`20260908030000_romance_tone_sweep_batch20.sql`.
+
+worldbuilding delivery: normal single-search cadence, still productive.
+7 candidates researched, 4 tagged (2 clean woven, 2 disputed exposition-
+dump). 3 left untagged (Caraval -- discourse was about worldbuilding
+being thin/confusing/contradictory, a density-and-coherence complaint,
+not a delivery-mechanism read; Carry On, Daughter of No Worlds -- only
+generic quality/creativity praise, nothing about narrator-exposition-
+vs-discovery specifically). `worldbuilding_woven_into_narrative`
+60->62, `worldbuilding_via_exposition_dump` 49->51. Migration:
+`20260908040000_worldbuilding_delivery_sweep_batch17.sql`.
+
+Both tested in a rolled-back transaction against hosted first, then
+applied for real; counts verified before/after as noted above.
+
+**Running totals across the whole sweep so far**: `understated_romance`
+80, `melodramatic_romance_subplot` 79, `worldbuilding_woven_into_
+narrative` 62, `worldbuilding_via_exposition_dump` 51. Remaining
+candidate pools as of this batch's refresh: ~130 romance_tone,
+~393 worldbuilding-delivery.
+
+## 2026-09-08 (later): execution-DNA sweep, romance_tone batch 21 + worldbuilding batch 18
+
+romance_tone: continued the deeper broad+follow-up search approach. 6
+candidates researched (12 searches), 2 tagged. The extra rigor caught
+another real misattribution risk: a first search on The Magician King
+suggested a restrained Quentin/Julia dynamic, but a second, targeted
+search confirmed Quentin/Julia is explicitly PLATONIC in this book --
+the actual romance (Quentin/Poppy) is casual and has no clean tone-
+specific discourse. Left untagged rather than risk tagging the wrong
+relationship's tone onto the book. Also skipped Winter's Heart after
+two searches turned up only "wooden"/"awkward"/"bland" craft-quality
+criticism of Rand's poly arrangement -- real, but a writing-competence
+complaint, not a restrained-vs-melodramatic presentation choice, so it
+doesn't cleanly fit either trope value. `understated_romance` 80->81,
+`melodramatic_romance_subplot` 79->80. Migration:
+`20260908050000_romance_tone_sweep_batch21.sql`.
+
+worldbuilding delivery: normal cadence, 6 candidates researched, 3
+tagged (2 clean woven, 1 disputed). `worldbuilding_woven_into_
+narrative` 62->64, `worldbuilding_via_exposition_dump` 51->52.
+Migration: `20260908060000_worldbuilding_delivery_sweep_batch18.sql`.
+
+Both tested in a rolled-back transaction against hosted first, then
+applied for real; counts verified before/after as noted above.
