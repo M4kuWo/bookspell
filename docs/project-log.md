@@ -8045,3 +8045,44 @@ eras, The Demon Cycle, The Murderbot Diaries, Crescent City, The
 Empyrean, Secret Projects, Stormlight Archive Era One, and the flagged
 Riyria-omnibus/Riyria-Chronicles/Kate-Daniels-Wilmington-Years cases
 from Step A1b all remain for future Step A2 sessions).
+
+## 2026-09-08 (later still): audiobook-editions skill, Step A2 batch 2 -- cut short by this session's web search cap, same precedent as 2026-09-07's romance_tone batch 10
+
+Queued A Court of Thorns and Roses (5 books), Crescent City (3), and
+Secret Projects' remaining 3 books for this batch. Finished the full
+ACOTAR series (5/5 confirmed, real editions, all fully released) before
+this session's web search budget hit its cap (200/200 calls) partway
+into researching Crescent City's first book.
+
+**Did not fabricate data for the rest.** Exactly the same call as the
+2026-09-07 "romance_tone batch 10, cut short by search cap" precedent
+this doc already documents: stopped, inserted only what real search
+results actually supported, and reported the blocker rather than
+guessing at Crescent City (House of Earth and Blood / House of Sky and
+Breath / House of Flame and Shadow) or Secret Projects' remaining
+books (The Frugal Wizard's Handbook for Surviving Medieval England,
+The Sunlit Man, Isles of the Emberdark) -- none of those were
+researched at all this session, not even partially.
+
+**5 confirmed editions inserted** (`20260908090000_audiobook_editions_
+graphicaudio_batch2.sql`), completing the full ACOTAR series: A Court
+of Thorns and Roses (2 parts, 715 min total, 12-name cast), A Court of
+Mist and Fury (2 parts, 11-name cast, only Part 1's runtime was
+confirmed as part-specific so total left NULL), A Court of Wings and
+Ruin (3 parts, 1122 min total with a clean per-part breakdown that
+sums correctly, 23-name cast), A Court of Frost and Starlight (single
+release, 24-name cast, runtime not reliably found), A Court of Silver
+Flames (2 parts, 8-name cast, only Part 2's runtime was confirmed so
+total left NULL). Tested in a rolled-back transaction with an
+idempotency re-run check first (row count unchanged on re-run,
+confirming the new unique constraint works as intended), then applied
+to hosted. `audiobook_editions` row count 13 -> 18.
+
+**Flagged for whoever picks up Step A2 next**: this session's web
+search budget is exhausted for the remainder of it -- Crescent City,
+the rest of Secret Projects, and everything else on the still-open
+list need a session with a fresh (or raised) `CLAUDE_CODE_MAX_WEB_
+SEARCHES_PER_SESSION` budget. Whether to raise that limit is the repo
+owner's call, not something to route around by pattern-matching/
+guessing instead of real research -- same reasoning CLAUDE.md already
+documents for exactly this situation.
