@@ -8785,3 +8785,127 @@ has been all session (same pattern as GraphicAudio's Throne of Glass/
 Dresden Files thin-batch findings). Ingestion, if it happens, should
 wait for the repo owner's call on the two flagged scope questions
 rather than defaulting to including or excluding either title.
+
+## 2026-09-09 (later still): catalog tagging batch -- 18 untagged standalones tagged
+
+Ran `.claude/skills/tag-catalog-batch/SKILL.md` on a pre-selected,
+pre-filtered batch of 18 currently-untagged, in-scope, standalone
+books (no partially-tagged series existed among the untagged pool
+this session, confirmed already run) -- migration
+`20260909080000_catalog_tagging_batch.sql`, applied directly to
+hosted, tested in a rolled-back transaction first (including an
+idempotency re-run check) per CLAUDE.md's convention. `book_dna` row
+count 828 -> 846.
+
+**Books tagged**: The Moon Is a Harsh Mistress (Heinlein), Ubik (Philip
+K. Dick), We (Zamyatin), The Sirens of Titan (Vonnegut), The Stars My
+Destination (Bester), The Island of Doctor Moreau (H. G. Wells),
+Tigana (Guy Gavriel Kay), The Starless Sea (Morgenstern), The Ten
+Thousand Doors of January (Harrow), The Once and Future Witches
+(Harrow), The Illustrated Man (Bradbury), The Paper Menagerie and
+Other Stories (Ken Liu), Timeline (Crichton), Under the Dome (Stephen
+King), The Running Man (Richard Bachman/Stephen King), The Mist
+(Stephen King), The Power (Naomi Alderman), The Ministry for the
+Future (Kim Stanley Robinson). Every book confirmed standalone
+(`series_id` null) before tagging, per the batch's own pre-selection.
+
+**HIGH_RISK_FIELDS checks done via web search rather than recall
+alone**: Ubik's actual POV structure (confirmed third-limited,
+centered on Joe Chip with Runciter and a few later characters getting
+POV time -- `pov_count: few`, not `single` as initially assumed);
+Tigana's POV character count (confirmed 5 named POV characters --
+Devin, Catriana, Dianora, Baerd, and antagonist Alberico, with Alessan
+deliberately never used as POV -- `pov_count: several`) and pacing
+(confirmed genuinely slow/deliberate, not medium); The Island of
+Doctor Moreau's narrator reliability (confirmed the frame narrative's
+introduction explicitly casts doubt on Prendick's account without
+resolving it -- correctly `ambiguous`, not the initially-assumed
+`reliable`). This last one is exactly the kind of correction the
+HIGH_RISK check exists to catch -- initial instinct was "obviously a
+straightforward first-person account," and the check found a real,
+textually-supported reason to change it.
+
+**Genuinely uncertain calls flagged via `book_field_confidence`/
+`book_tropes.confidence`, not silently guessed**: We's `drive`
+(character_driven vs. a more plot/message-driven read, 0.6) and
+`humor_level` (0.5, genuinely unclear how much of its dry irony reads
+as "humor" per se); Under the Dome's `overall_pace` (0.5 -- a
+1000+-page book that reads fast scene-to-scene but has real
+subplot-heavy stretches); Sirens of Titan's `stakes_scope` (0.6,
+`cosmic` chosen over `global` since the book's real "stakes" are more
+a cosmic-scale narrative revelation than a civilization under direct
+threat). Trope-level low-confidence tags (0.5-0.6): Ubik's
+`mind_uploading_or_digital_immortality` and `cosmic_horror` (both real
+but interpretive fits for half-life/entropy themes that predate the
+genre's later, more literal versions of these tropes); Doctor Moreau's
+`uplift` (a loose historical-era fit -- vivisection instead of genetic
+engineering, but thematically the same "species elevated by human
+intervention" idea); Starless Sea's `twist_ending` and
+`hidden_identity_romance`; Ten Thousand Doors' `retrospective_memoir_
+narration`; Once and Future Witches' `revenge`; Illustrated Man's
+`satirical_or_comedic_scifi` and `dying_earth` (anthology-wide tags
+where the fit is real but not uniform across every story); Under the
+Dome's `first_contact` (a late, minor-but-real plot beat -- checked
+against CLAUDE.md's explicit caution about pattern-matching this
+specific trope from "aliens are present" alone, per the Empire of
+Silence precedent) and `black_and_white_morality`; The Mist's
+`black_and_white_morality`; Ministry for the Future's
+`sudden_apocalypse_event` (the opening heat-wave disaster is regional,
+not full-civilizational collapse, but functions as the book's
+inciting apocalyptic event).
+
+**Author field**: only The Running Man has a multi-name author field
+(`Richard Bachman, Stephen King`) -- checked and confirmed NOT
+contamination (Bachman is King's own pseudonym for this book, both
+names are the genuine author under two identities, not an
+illustrator/translator/narrator credit). No other book in this batch
+had a multi-name author field.
+
+**genre_accessibility**: computed via the documented formula
+(prose_complexity/overall_pace/worldbuilding_density/pov_count/
+intellectual_weight average, bucketed), then adjusted for premise
+familiarity per book -- e.g. Timeline and The Running Man adjusted
+down to `gateway` (mainstream commercial thrillers with very familiar
+premises despite moderate craft-field demand), We and Ministry for the
+Future kept/pushed to `veteran_only` (genuinely dense, unfamiliar-
+premise reads where the formula's baseline undersold the real
+difficulty), The Sirens of Titan adjusted down to `accessible` (very
+widely taught, breezy Vonnegut prose despite deep ideas).
+
+**Vocabulary gap noted, not acted on**: no existing `content_warnings`
+value cleanly covers "climate/natural-disaster mass casualty" (as
+opposed to war or pandemic) -- Ministry for the Future's opening
+heat-wave mass-death event was tagged under `war_trauma` at `moderate`
+as the closest existing fit, but it's an imperfect match. Not proposing
+a new value off one book per this project's own bar ("does this change
+the recommendation," not "is it a real category") -- flagging in case
+a second book surfaces the same gap.
+
+**Density self-check (fresh query, run after the batch was live)**:
+catalog average 5.80 tropes/book, 1.73 content-warnings/book (828
+already-tagged books at query time); this batch's own average 4.89
+tropes/book (84% of catalog average -- within the ~20% floor, several
+thin books deliberately re-reviewed and enriched with additional
+real, defensible tropes before finalizing, rather than left thin) and
+2.11 content-warnings/book (122% of catalog average, no action
+needed). Post-insert catalog average recomputed: 5.80/1.73 unchanged
+at 4 significant figures (846 books now tagged total).
+
+**Two books explicitly investigated and NOT tagged, flagged for the
+repo owner's scope call rather than force-tagged or silently
+deleted**: **Shōgun** (James Clavell) -- historical fiction, not
+sci-fi/fantasy, very likely a broad-genre-search false positive per
+CLAUDE.md's "catalog scope" section. **The Screwtape Letters** (C. S.
+Lewis) -- theological satire (a senior demon's letters to a junior
+tempter), not genre fantasy/sci-fi as this catalog scopes those terms.
+Both left untagged, `books` rows untouched, per the "flag, don't
+force-tag or delete" policy -- a repo-owner decision needed on whether
+either belongs in the catalog at all.
+
+**Untagged count**: 873 total books, 27 untagged as of this session's
+end (down from 45 as of 2026-09-07 -- other tagging work landed in the
+interim too, not just this batch's 18). See `docs/TODO.md`'s updated
+"Catalog tagging completion" bullet for the current standing list of
+known-permanent-skip titles (omnibus duplicates, unpublished books,
+graphic novels), which this batch did not touch, plus the two new
+Shōgun/Screwtape Letters scope flags above.

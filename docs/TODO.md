@@ -262,11 +262,15 @@ worth deferring to a later session rather than batching in for
   worldbuilding-delivery isn't showing this depletion yet -- single
   searches there are still landing 5-6 clean tags routinely, no process
   change needed for that pool for now.
-- [ ] **Catalog tagging completion** -- 873 books total, 45 untagged as
-  of 2026-09-07. Checked the "finish partially-tagged series" angle
-  first per standing policy: turned out all 6 partially-tagged series
-  (Farseer Trilogy, Foundation, Villains, Monk and Robot, A Song of Ice
-  and Fire, Kingkiller Chronicle) are actually fully tagged at the
+- [ ] **Catalog tagging completion** -- 873 books total, 27 untagged as
+  of 2026-09-09 (down from 45 on 2026-09-07; a same-day batch tagged
+  18 standalones -- see project-log.md's 2026-09-09 "catalog tagging
+  batch" entry -- plus other tagging landed in the interim). Checked
+  the "finish partially-tagged series" angle first per standing
+  policy, both on 2026-09-07 and again before this session's batch was
+  selected: turned out all 6 partially-tagged series (Farseer Trilogy,
+  Foundation, Villains, Monk and Robot, A Song of Ice and Fire,
+  Kingkiller Chronicle) are actually fully tagged at the
   individual-book level already -- the "missing" row in each is either
   an omnibus/compilation duplicate of an already-tagged book (4 of them
   -- see book-dna.md's new "omnibus/compilation editions" future-fields
@@ -275,9 +279,19 @@ worth deferring to a later session rather than batching in for
   all 6, and any future entry matching the same pattern** (a book row
   duplicating an already-tagged book at the same series position, or a
   book with no real publication yet) -- don't force-tag these, and
-  don't count them as real gaps when checking series completion. The
-  other ~39 untagged books are standalones or in series with zero
-  tagged books yet -- still open, not yet re-surveyed this session.
+  don't count them as real gaps when checking series completion.
+  **Two open scope questions for the repo owner, flagged 2026-09-09,
+  not force-tagged or deleted**: **Shōgun** (James Clavell) --
+  historical fiction, very likely a broad-genre-search false positive,
+  not sci-fi/fantasy. **The Screwtape Letters** (C. S. Lewis) --
+  theological satire, not genre fantasy/sci-fi as this catalog scopes
+  those terms. Both need a repo-owner confirm/delete call per
+  CLAUDE.md's "catalog scope" section, same treatment as any other
+  suspected-out-of-scope book. The remaining untagged books are
+  standalones or in series with zero tagged books yet -- still open,
+  not yet fully re-surveyed this session (this batch's 18 were
+  pre-selected/pre-filtered by the requester, not picked via a fresh
+  full-catalog query).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- ~200 of 343 series rows affected, root cause found 2026-09-08.**
   `status` defaults to `'ongoing'` whenever Hardcover's `is_completed`
