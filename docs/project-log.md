@@ -8261,3 +8261,55 @@ migrations total tracked, zero gaps.
 The Murderbot Diaries (10), Throne of Glass (9). Isles of the Emberdark
 and the Riyria/Kate Daniels judgment calls from earlier batches remain
 unresolved, same as before.
+
+## 2026-09-09 (later still): audiobook-editions skill, Step A2 batch 6 -- Throne of Glass (production just starting), Murderbot Diaries mostly complete
+
+Researched Throne of Glass (9 books) and The Murderbot Diaries (10
+books) from batch 5's still-open list. **9 confirmed matches inserted**
+(`20260909020000_audiobook_editions_graphicaudio_batch6.sql`).
+
+**Real finding, not a research gap**: only 1 of Throne of Glass's 9
+books (the series opener, "Throne of Glass" itself) has a confirmed
+GraphicAudio release. GraphicAudio has publicly said it's "starting
+production" on the series, but no individually confirmed release or
+pre-order page exists yet for Crown of Midnight, Heir of Fire, Queen
+of Shadows, Empire of Storms, Tower of Dawn, Kingdom of Ash, The
+Assassin's Blade, or The Assassin and the Healer. Not inserted as
+`announced` (unlike Empire of Silence's 2026-09-08 precedent) because
+there's no book-specific announcement to cite -- only a general
+series-level statement -- so there's nothing concrete enough to record
+even as a future release. Worth a re-check in a later session as that
+production continues; do not assume this pool is exhausted.
+
+**The Murderbot Diaries: 8 of 10 confirmed** -- All Systems Red,
+Artificial Condition, Rogue Protocol, Exit Strategy, Network Effect,
+Fugitive Telemetry, System Collapse, and Platform Decay (the newest,
+2026-05-05 novel, GraphicAudio edition confirmed via its own product
+page). Compulsory and Home: Habitat, Range, Niche, Territory -- both
+very short prequel/companion pieces, not full novellas -- have no
+confirmed GraphicAudio edition; plausible these are simply too short
+to have gotten their own dramatized release. Not guessed at.
+
+**One real ambiguity caught and left NULL rather than resolved by
+guessing**: Network Effect's runtime was reported by a secondary
+source as "8.22 hours" -- genuinely ambiguous whether that's decimal
+hours (8h13m) or an H.MM shorthand (8h22m), two different real answers
+with no way to tell which from the source. Left `runtime_minutes` NULL
+rather than pick one, consistent with this skill's standing "leave
+NULL rather than guess" rule -- this is the first batch where that
+rule applied to a *format* ambiguity rather than missing data.
+
+**Verification**: tested in a rolled-back transaction first (including
+an idempotency re-run check -- row count unchanged on re-run), then
+applied to hosted via `supabase db push --db-url`. `audiobook_editions`
+row count 49 -> 58. `supabase migration list --db-url` confirms 169
+migrations total tracked, zero gaps.
+
+**Still open for a future Step A2 session**: The Dresden Files (14 --
+will need multiple sessions at the 10-15 cap). Throne of Glass (8 of 9
+books, pending GraphicAudio's ongoing production) and Murderbot's 2
+short prequel pieces are open but thin leads, not a full batch's worth
+on their own -- worth folding into a future session alongside Dresden
+Files rather than running alone. Isles of the Emberdark and the
+Riyria/Kate Daniels judgment calls from earlier batches remain
+unresolved, same as before.

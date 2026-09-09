@@ -113,16 +113,33 @@ worth deferring to a later session rather than batching in for
   BOTH parts' runtimes were independently confirmed and genuinely
   summed to a total, distinct from the usual "leave NULL" case where
   only one part is confirmed.
+  **Progress as of 2026-09-09 (later still): Step A2 batch 6 done -- 9
+  more editions inserted (58 total).** Throne of Glass: only 1 of 9
+  books confirmed (the series opener) -- GraphicAudio has said it's
+  "starting production" on the series but no book-specific
+  release/pre-order page exists yet for the other 8; a real, thin
+  finding, not a research gap -- re-check in a later session as that
+  production continues. The Murderbot Diaries: 8 of 10 confirmed (All
+  Systems Red through Platform Decay); Compulsory and Home: Habitat,
+  Range, Niche, Territory (both very short prequel/companion pieces)
+  have no confirmed edition. Full detail in project-log.md's
+  2026-09-09 "Step A2 batch 6" entry, including a runtime-format
+  ambiguity (Network Effect's "8.22 hours" could mean two different
+  things) correctly left NULL rather than guessed.
   **Still-open confirmed matches from Step A1b, not yet researched**:
-  The Dresden Files (14), The Murderbot Diaries (10), Throne of Glass
-  (9). **Flagged, needs a deliberate judgment call rather than a silent
-  match**: GraphicAudio's "Riyria Revelations" only matches our omnibus
-  row ("The Riyria Revelations (Omnibus)") -- decide whether a
-  dramatized-edition record belongs on an omnibus row before inserting;
-  "Riyria Chronicles" and "Kate Daniels: Wilmington Years" (GA) have no
-  matching row in our catalog at all, not a match. Remaining steps, in
-  order:
-  1. Step A2 batch 6+: research + insert the still-open matches above,
+  The Dresden Files (14 -- will need multiple sessions at the 10-15
+  cap). The remaining 8 Throne of Glass books and Murderbot's 2 short
+  prequel pieces are open leads but too thin for their own batch --
+  fold into whichever future session picks up Dresden Files, and
+  re-check Throne of Glass's GraphicAudio production status rather
+  than re-researching from scratch. **Flagged, needs a deliberate
+  judgment call rather than a silent match**: GraphicAudio's "Riyria
+  Revelations" only matches our omnibus row ("The Riyria Revelations
+  (Omnibus)") -- decide whether a dramatized-edition record belongs on
+  an omnibus row before inserting; "Riyria Chronicles" and "Kate
+  Daniels: Wilmington Years" (GA) have no matching row in our catalog
+  at all, not a match. Remaining steps, in order:
+  1. Step A2 batch 7+: research + insert the still-open matches above,
      capped at 10-15 per session (own session, needs a fresh search
      budget) -- Dresden Files (14 books) alone will need to span
      multiple sessions at that cap.
