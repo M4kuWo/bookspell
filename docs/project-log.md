@@ -9400,3 +9400,51 @@ periodic "has anything shipped yet" check on an external producer's
 release calendar doesn't belong at P1. Moved it to its own explicit P2
 entry rather than leaving it implicitly bundled into P1's "next steps"
 list, where it read as more urgent than it actually is.
+
+## 2026-09-09 (later still): wrote the romance_tone/worldbuilding_delivery scalar-field conversion skill for the other Claude session
+
+Repo owner asked whether the conversion instructions were ready to
+hand off (mirroring the audiobook-editions skill's split). They
+weren't -- TODO.md only had a one-paragraph summary, not something a
+fresh session could execute. Also decided, and confirmed with the repo
+owner, that the `recommend.py`/`scoring_tests.py` half of this work
+stays in the main conversation (this project's consistent pattern all
+session: scoring-engine changes happen here, not on the tagging
+machine) -- only the schema+backfill migration gets delegated.
+
+**Real finding while designing this, caught by checking fresh data
+instead of trusting an earlier snapshot**: the "zero overlap" fact
+that justified treating these as clean 2-value spectrums (checked
+2026-09-07) is no longer true -- 5 books now carry BOTH tropes in a
+pair (Sword of Destiny: romance, 0.6/0.6 tie; Mistborn: The Final
+Empire: worldbuilding, 0.2/0.2 tie; A Master of Djinn/Gideon the
+Ninth/Homeland: worldbuilding, 0.6 woven vs. 0.2 exposition_dump each).
+Makes sense in hindsight -- the sweep's easy, clean-evidence candidates
+got tagged first, and disputed/mixed cases are exactly what surfaces
+as the pool of obvious candidates depletes (same shape as the
+romance_tone hit-rate-declining finding from 2026-09-07). This changed
+the actual schema decision: both new fields need a real 3rd `mixed`
+value (for genuine confidence ties), not just the two clean values --
+dropping one side's real evidence to force a binary choice would be
+less accurate than the tagging data actually supports. Confidence
+differences get a resolution rule (higher-confidence side wins);
+genuine ties become `mixed`.
+
+Wrote `.claude/skills/convert-romance-worldbuilding-fields/SKILL.md`
+with the full schema decision, the fresh-overlap-check requirement
+(explicitly told not to trust this session's 5-book snapshot, since
+the sweep is still running), the resolution rule, and 4 bounded steps
+(add columns / backfill+verify / remove old trope data), each stopping
+and reporting, plus an explicit scope boundary keeping recommend.py
+changes out.
+
+**Verified the entire spec end-to-end before handing it off** (per
+CLAUDE.md's "test in a rolled-back transaction before trusting it
+enough to put in a skill" rule) -- ran all 4 steps in one test
+transaction: 160 books got `romance_tone`, 117 got
+`worldbuilding_delivery`, both counts matched the distinct-book counts
+from `book_tropes` exactly, all 5 overlap cases resolved as designed,
+Step 4's cleanup (delete book_tropes rows, delete the 4 trope
+vocabulary entries) ran without error. Rolled back -- this was
+verification only, not a real apply; the other session runs this for
+real via the skill.

@@ -264,18 +264,30 @@ worth deferring to a later session rather than batching in for
     standard-edition narrator data as a contributor role (same source
     already used for author verification) -- possibly near-bulk-
     fetchable, cheaper than the dramatized-edition path.
-- [ ] **(Taxing -- defer) Promote `romance_tone`/`worldbuilding_
-  delivery` from trope pairs to real scalar fields.** Both pairs show
-  ZERO overlap in the actual data (confirmed 2026-09-07) -- genuinely
-  one-axis spectrums, not independent tags. Deliberately built as
-  tropes first as a cheap validation probe before committing to schema
-  -- see book-dna.md's "Romance TONE/execution-quality" entry and
-  scoring-test-protocol.md's 2026-09-05 "Execution-DNA validation
-  probes" entry; the probe already validated (correctly-signed
-  weights, confirmed in production). Converting needs a migration +
-  backfill + `recommend.py` field-handling changes + removing the old
-  trope pair -- real, multi-step engineering work, not urgent. Good
-  candidate for a session with a fresh token budget.
+- [ ] **Promote `romance_tone`/`worldbuilding_delivery` from trope
+  pairs to real scalar fields -- split in two, schema half ready to
+  hand off.** The probe already validated (correctly-signed weights,
+  confirmed in production) -- see book-dna.md's "Romance TONE/
+  execution-quality" entry and scoring-test-protocol.md's 2026-09-05
+  "Execution-DNA validation probes" entry.
+  **Schema + backfill migration**: fully specified and verified end-
+  to-end (not just designed) in
+  `.claude/skills/convert-romance-worldbuilding-fields/SKILL.md`,
+  ready for the other Claude session -- delegate this the same way as
+  `tag-audiobook-editions`. **Real finding while writing it (2026-09-09):
+  the "zero overlap" fact this item used to cite is no longer true** --
+  5 books now carry both tropes in a pair (real evidence found both
+  ways as the sweep's easy candidates depleted). Changed the schema
+  decision: both new fields need a real 3rd `mixed` value for genuine
+  confidence ties, not just 2 clean values. Full resolution rule and a
+  fresh-recheck requirement (don't trust this snapshot, the sweep is
+  still running) are in the skill doc.
+  **`recommend.py`/`scoring_tests.py` changes stay in the main
+  conversation, NOT delegated** -- explicit decision 2026-09-09,
+  matching this project's consistent pattern (every scoring-engine
+  change so far has happened in the primary session, not on the
+  tagging machine). Do this once the schema migration is confirmed
+  done and reported back.
 
 ## P2 (ongoing/routine, not new decisions)
 
