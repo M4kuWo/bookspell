@@ -126,23 +126,33 @@ worth deferring to a later session rather than batching in for
   2026-09-09 "Step A2 batch 6" entry, including a runtime-format
   ambiguity (Network Effect's "8.22 hours" could mean two different
   things) correctly left NULL rather than guessed.
+  **Progress as of 2026-09-09 (later still): Step A2 batch 7 done -- 5
+  more editions inserted (63 total). Dresden Files: only 5 of 14 books
+  confirmed** (Storm Front, Fool Moon, Grave Peril, Summer Knight,
+  Death Masks) -- GraphicAudio only started this series in August 2025
+  and is still releasing it sequentially; book 6 (Blood Rites) onward
+  has no confirmed release yet. Real finding, not a research gap --
+  same shape as Throne of Glass in batch 6. Full detail in
+  project-log.md's 2026-09-09 "Step A2 batch 7" entry, including a
+  real author-field contamination fix caught along the way: "White
+  Night"'s author field had the series' cover illustrator (Chris
+  McGrath) appended -- fixed via a scoped migration, confirmed
+  isolated to that one row (checked all 14 Dresden Files books).
   **Still-open confirmed matches from Step A1b, not yet researched**:
-  The Dresden Files (14 -- will need multiple sessions at the 10-15
-  cap). The remaining 8 Throne of Glass books and Murderbot's 2 short
-  prequel pieces are open leads but too thin for their own batch --
-  fold into whichever future session picks up Dresden Files, and
-  re-check Throne of Glass's GraphicAudio production status rather
-  than re-researching from scratch. **Flagged, needs a deliberate
-  judgment call rather than a silent match**: GraphicAudio's "Riyria
-  Revelations" only matches our omnibus row ("The Riyria Revelations
-  (Omnibus)") -- decide whether a dramatized-edition record belongs on
-  an omnibus row before inserting; "Riyria Chronicles" and "Kate
-  Daniels: Wilmington Years" (GA) have no matching row in our catalog
-  at all, not a match. Remaining steps, in order:
-  1. Step A2 batch 7+: research + insert the still-open matches above,
-     capped at 10-15 per session (own session, needs a fresh search
-     budget) -- Dresden Files (14 books) alone will need to span
-     multiple sessions at that cap.
+  Dresden Files books 6-14 (9 books, blocked on GraphicAudio's own
+  release pace -- re-check periodically, don't re-research every
+  session). The remaining 8 Throne of Glass books and Murderbot's 2
+  short prequel pieces are open leads but too thin for their own
+  batch. **Flagged, needs a deliberate judgment call rather than a
+  silent match**: GraphicAudio's "Riyria Revelations" only matches our
+  omnibus row ("The Riyria Revelations (Omnibus)") -- decide whether a
+  dramatized-edition record belongs on an omnibus row before
+  inserting; "Riyria Chronicles" and "Kate Daniels: Wilmington Years"
+  (GA) have no matching row in our catalog at all, not a match.
+  Remaining steps, in order:
+  1. Step A2 batch 8+: re-check GraphicAudio's Dresden Files/Throne of
+     Glass/Murderbot production progress for any newly-released books,
+     capped at 10-15 per session.
   2. Step A1a for BBC Audio (its own session -- not yet started), then
      its own Step A1b.
   3. Sub-task B (Audible Originals, audio-only new entries,

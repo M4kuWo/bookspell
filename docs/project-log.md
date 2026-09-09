@@ -8313,3 +8313,48 @@ on their own -- worth folding into a future session alongside Dresden
 Files rather than running alone. Isles of the Emberdark and the
 Riyria/Kate Daniels judgment calls from earlier batches remain
 unresolved, same as before.
+
+## 2026-09-09 (later still): audiobook-editions skill, Step A2 batch 7 -- Dresden Files 1-5 (production still rolling out), plus a real author-contamination fix
+
+Researched The Dresden Files (14 books). **Real finding, same shape as
+Throne of Glass in batch 6**: GraphicAudio only started this series in
+August 2025 and is still releasing it sequentially -- only 5 of 14
+books (Storm Front, Fool Moon, Grave Peril, Summer Knight, Death
+Masks) have a confirmed release; no product page or announcement
+exists yet for book 6 (Blood Rites) onward. **5 confirmed matches
+inserted**
+(`20260909030000_audiobook_editions_graphicaudio_batch7.sql`) -- a
+genuinely thin batch reflecting the real size of the confirmed pool,
+not padded to hit a target. The remaining 9 books need a future
+session once GraphicAudio's production catches up, not more research
+now.
+
+**Real author-field contamination caught and fixed on discovery**,
+per CLAUDE.md's standing policy on this exact failure mode: "White
+Night"'s `author` field was `"Jim Butcher, Chris McGrath"`. Chris
+(Christian) McGrath is the Dresden Files' cover illustrator across the
+whole series, not a co-author (confirmed via his own bio and a
+Reactor piece specifically on his Dresden Files cover work) -- yet
+only White Night's row had him appended, not any of the other 13
+Dresden Files books, so this wasn't a batch-wide import bug, just one
+contaminated row. Fixed via
+`20260909040000_fix_white_night_author_contamination.sql` (a scoped,
+idempotent `UPDATE ... WHERE title = ... AND author = ...`, not a
+blanket update). Checked all 14 Dresden Files books' author fields
+before concluding this was isolated to White Night -- confirmed it
+was.
+
+**Verification**: tested both migrations together in a rolled-back
+transaction first (including an idempotency re-run check on each),
+then applied to hosted via `supabase db push --db-url`.
+`audiobook_editions` row count 58 -> 63; White Night's author field
+confirmed corrected on hosted. `supabase migration list --db-url`
+confirms 171 migrations total tracked, zero gaps.
+
+**Still open for a future Step A2 session**: Dresden Files books 6-14
+(9 books, blocked on GraphicAudio's own release pace, not on research
+effort -- re-check periodically rather than re-searching every
+session). Throne of Glass's remaining 8 books and Murderbot's 2 short
+prequel pieces remain open thin leads from batch 6. Isles of the
+Emberdark and the Riyria/Kate Daniels judgment calls from earlier
+batches remain unresolved, same as before.
