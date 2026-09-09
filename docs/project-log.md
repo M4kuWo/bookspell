@@ -8565,3 +8565,50 @@ Triffids (1), Bradbury (2), and the 5 classic-SF titles. Will need at
 least 2 more sessions at the 10-15 cap. The Iain Banks follow-up
 (unclear if Culture novels are dramatised) from the A1a/A1b entries is
 still unresolved.
+
+## 2026-09-09 (later still): audiobook-editions skill, Step A2 for BBC Audio, batch 2 -- Hitchhiker's Guide series, Earthsea + Left Hand of Darkness, Foundation Trilogy, Day of the Triffids
+
+**13 confirmed matches inserted**
+(`20260909060000_audiobook_editions_bbc_batch2.sql`): all 5
+Hitchhiker's Guide radio phases (Primary/1978, Secondary, Tertiary/
+2004 with a directly-confirmed 3h10m runtime, Quandary/2005, and
+Quintessential/2005 -- mapped to their corresponding novels, per the
+A1a entry's flagged caution, since the "Phases" genuinely do
+correspond 1:1 to the 5 novels here), all 3 Earthsea books, The Left
+Hand of Darkness (standalone, 5h25m runtime confirmed), all 3
+Foundation books, and The Day of the Triffids (1968, Giles Cooper
+adaptation, 6 episodes).
+
+**Two real bundled-release judgment calls this batch, same pattern as
+the Mistborn Secret History/Eleventh Metal case**: Earthsea is ONE
+combined BBC Radio 4 dramatisation (~3h30m total) covering all three
+Earthsea books, and Asimov's Foundation Trilogy is ONE continuous
+8-episode 1973 serial (8h total) covering all three Foundation books
+-- neither has a confirmed per-book episode/runtime breakdown. **Went
+further than the Mistborn precedent on cast attribution**: for
+Mistborn, at least the Eleventh Metal portion had its own specifically
+confirmed cast. Here, both bundles have DIFFERENT ACTORS playing the
+same character at different points in the story (different Ged/Tenar
+actors across the three Earthsea books as the characters age; Foundation's
+generation-spanning cast means Hari Seldon/Salvor Hardin/Hober Mallow
+are each book-specific characters) -- attributing the whole combined
+cast list to every book in the bundle would have risked naming actors
+who never actually appear in a given book, exactly the kind of
+checkable, confidently-wrong mistake CLAUDE.md's tagging-failure
+section warns about. Left `narrators` AND `runtime_minutes` NULL for
+all 6 of these rows (3 Earthsea + 3 Foundation) rather than guess
+either dimension -- existence and the shared `source_url` are the only
+points recorded with confidence.
+
+**Verification**: tested in a rolled-back transaction first (including
+an idempotency re-run check -- row count unchanged on re-run), then
+applied to hosted via `supabase db push --db-url`. `audiobook_editions`
+row count 74 -> 87. `supabase migration list --db-url` confirms 173
+migrations total tracked, zero gaps.
+
+**Still open for a future Step A2 (BBC Audio) session**: 7 of the 31
+confirmed matches remain -- Bradbury (Fahrenheit 451, The Martian
+Chronicles) and the 5 classic-SF titles (Frankenstein, The Time
+Machine, The War of the Worlds, Journey to the Center of the Earth,
+Solaris). Fits within one more session's 10-15 cap -- this pool should
+be clearable next time. The Iain Banks follow-up remains unresolved.

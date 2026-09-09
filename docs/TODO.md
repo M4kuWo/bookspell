@@ -176,14 +176,23 @@ worth deferring to a later session rather than batching in for
      Eric), Good Omens, Neverwhere, and all 3 His Dark Materials books.
      Full detail in project-log.md's 2026-09-09 "Step A2 for BBC
      Audio, batch 1" entry.
-     **Still open**: 20 of the 31 confirmed matches remain -- the
-     Hitchhiker's Guide radio series (5), Le Guin (4), Asimov's
-     Foundation Trilogy (3), Wyndham's The Day of the Triffids (1),
-     Bradbury (2), and 5 classic-SF titles (Frankenstein, The Time
-     Machine, The War of the Worlds, Journey to the Center of the
-     Earth, Solaris). Will need at least 2 more sessions at the 10-15
-     cap. The Iain Banks follow-up (unclear if Culture novels are
-     dramatised) remains unresolved.
+     **Batch 2 done 2026-09-09** -- 13 more editions inserted (87
+     total): all 5 Hitchhiker's Guide radio phases, all 3 Earthsea
+     books + The Left Hand of Darkness, all 3 Foundation books, and
+     The Day of the Triffids. Two bundled-release judgment calls
+     (Earthsea, Foundation Trilogy -- each ONE combined dramatisation
+     covering multiple catalog books with different actors per book as
+     characters age/generations pass) -- narrators AND runtime left
+     NULL for those 6 rows rather than misattribute a book-specific
+     actor to the wrong book. Full detail in project-log.md's
+     2026-09-09 "Step A2 for BBC Audio, batch 2" entry.
+     **Still open**: 7 of the 31 confirmed matches remain -- Bradbury
+     (Fahrenheit 451, The Martian Chronicles) and 5 classic-SF titles
+     (Frankenstein, The Time Machine, The War of the Worlds, Journey
+     to the Center of the Earth, Solaris). Fits in one more session
+     (batch 3) -- should clear the rest of this pool. The Iain Banks
+     follow-up (unclear if Culture novels are dramatised) remains
+     unresolved.
   3. Sub-task B (Audible Originals, audio-only new entries,
      `work_type = 'audio_original'`): candidate discovery as its own
      session, then ingestion+tagging in normal 15-20/session batches.
