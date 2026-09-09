@@ -8785,3 +8785,35 @@ has been all session (same pattern as GraphicAudio's Throne of Glass/
 Dresden Files thin-batch findings). Ingestion, if it happens, should
 wait for the repo owner's call on the two flagged scope questions
 rather than defaulting to including or excluding either title.
+
+## 2026-09-09 (later still): Zero G and The Left Right Game both confirmed IN; fixed a misplaced doc note; logged the GraphicAudio cast-mapping idea
+
+Repo owner resolved both open Sub-task B scope questions from earlier
+today: **Zero G** is in (`age_category: middle_grade` at tagging time
+-- v1 scope is genre-only, no age floor). **The Left Right Game** is
+in -- its real sci-fi core clears the genre bar the same way Horns/
+NOS4A2's dark-fantasy/horror content already established precedent
+for, and its Reddit short-story predecessor doesn't count as a
+disqualifying prior print edition (unlike Steal the Stars' real Tor
+novelization) since the audio drama is a substantially expanded,
+different work. All 3 Sub-task B candidates found today (The
+Salvation, Zero G, The Left Right Game) are now confirmed IN, ready
+for ingestion+tagging. Recorded in TODO.md.
+
+**Also fixed while reviewing**: an earlier 2026-09-07 update note
+about the audiobook-editions skill handoff had gotten attached to the
+WRONG book-dna.md backlog entry (the omnibus/compilation-editions one,
+not the audiobook_editions one it's actually about) -- a real edit
+placement mistake from that session, caught and moved to the correct
+spot.
+
+**New backlog idea logged**: repo owner raised a real future idea
+prompted by GraphicAudio's site not publishing which actor voices
+which character -- a movie-credits-style cast-to-character mapping,
+explicitly placed further back in the roadmap than the current
+per-book sourcing effort. Logged in book-dna.md's audiobook_editions
+backlog entry, not scoped further.
+
+Also confirmed the catalog review tool's Supabase query already
+covers every `audiobook_editions` column actually being populated
+(verified against the live schema and 94 real rows) -- no gap there.

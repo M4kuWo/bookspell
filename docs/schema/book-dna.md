@@ -769,6 +769,31 @@ Deliberately deferred, not in v0.1:
   data-sourcing problem as before (Hardcover's API likely doesn't carry
   GraphicAudio editions; needs per-book research).
 
+  **UPDATE (2026-09-07): real-scale population handed off** as
+  `.claude/skills/tag-audiobook-editions/SKILL.md` -- covers GraphicAudio
+  AND BBC Audio/Radio drama (a second confirmed real producer, not just
+  GraphicAudio) for existing catalog books, plus Audible Originals
+  (audio-only, no print counterpart -- see `books.work_type`'s new
+  `'audio_original'` value, migration `20260907140000_work_type_audio_
+  original.sql`) as brand-new catalog entries.
+
+  **UPDATE (2026-09-09): real progress, 94 rows populated** across
+  GraphicAudio and BBC Audio (see project-log.md's many 2026-09-08/09
+  "audiobook-editions skill" entries for the full batch-by-batch
+  history) -- `narrators` stores a flat array of names only, no
+  character-role mapping. Repo owner raised a real future idea: a
+  movie-credits-style "who plays whom" cast list, prompted by
+  GraphicAudio's own site not publishing this (their product pages
+  list a cast but not which actor voices which character). Genuinely
+  future work, explicitly placed further back in the roadmap than the
+  current per-book/per-producer sourcing effort -- would need either a
+  richer `narrators` shape (array of `{name, character}` objects
+  instead of plain strings) or a new join table, plus a real data
+  source for the character-level mapping (GraphicAudio doesn't publish
+  it, so this would need liner notes, credits read directly from the
+  audio, or another source entirely). Not scoped further than that;
+  revisit once the current sourcing effort is further along.
+
 - **A real way to model omnibus/compilation editions**, distinct from
   the individual volumes they collect. Surfaced 2026-09-07 while
   checking partially-tagged series for the catalog-completion TODO:
@@ -803,13 +828,6 @@ Deliberately deferred, not in v0.1:
   `publication_year = 2030` placeholder for the latter) — nothing to
   read or tag. Skip these too; re-check once actually published.
 
-  **UPDATE (2026-09-07)**: real-scale population handed off as
-  `.claude/skills/tag-audiobook-editions/SKILL.md` -- covers GraphicAudio
-  AND BBC Audio/Radio drama (a second confirmed real producer, not just
-  GraphicAudio) for existing catalog books, plus Audible Originals
-  (audio-only, no print counterpart -- see `books.work_type`'s new
-  `'audio_original'` value, migration `20260907140000_work_type_audio_
-  original.sql`) as brand-new catalog entries. Not yet run.
 - **`solarpunk`** (setting_worldbuilding) — flagged during trope research
   as real but weaker/niche; not added.
 - **Retroactive tagging of `elves`/`dwarves`/`fae_or_fairies`/`orcs`/

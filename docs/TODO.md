@@ -222,13 +222,22 @@ worth deferring to a later session rather than batching in for
      project-log.md's two 2026-09-09 "Sub-task B candidate discovery"
      entries for full detail on each -- a future session should NOT
      re-research any of the 8 disqualified names.
-     **Next**: either more candidate discovery (this pool is still
-     thin -- 3 candidates won't fill a real ingestion batch), or take
-     the 3 flagged scope questions (Zero G's MG rating, The Left Right
-     Game's genre fit + print-origin ambiguity) to the repo owner
-     before ingesting anything. Ingestion+tagging, once candidates are
-     confirmed, follows `tag-catalog-batch`'s Step 3 conventions in
-     normal 15-20/session batches.
+     **Repo owner resolved both flagged scope questions 2026-09-09:
+     Zero G is IN** (`age_category: middle_grade` at tagging time --
+     v1 scope is genre-only, no age floor, and this catalog can hold
+     an MG title fine) **and The Left Right Game is IN** (real sci-fi
+     core clears the genre bar, same precedent as Horns/NOS4A2's dark-
+     fantasy/horror inclusion; a Reddit short story predecessor doesn't
+     count as a disqualifying "print edition" -- the audio drama is a
+     substantially expanded, different work, unlike Steal the Stars'
+     real Tor novelization). **The Salvation was already clean.** All
+     3 candidates are now confirmed IN, ready for ingestion+tagging --
+     no more open scope questions blocking this pool.
+     **Next**: either more candidate discovery (3 confirmed candidates
+     still won't fill a real ingestion batch on their own), or ingest+
+     tag the 3 confirmed ones now, following `tag-catalog-batch`'s
+     Step 3 conventions (normal 15-20/session batches, though this
+     pool is smaller than that).
   - Open sub-question, not yet checked: whether Hardcover's API exposes
     standard-edition narrator data as a contributor role (same source
     already used for author verification) -- possibly near-bulk-
