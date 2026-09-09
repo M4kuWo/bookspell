@@ -9272,3 +9272,53 @@ backlog entry, not scoped further.
 Also confirmed the catalog review tool's Supabase query already
 covers every `audiobook_editions` column actually being populated
 (verified against the live schema and 94 real rows) -- no gap there.
+
+## 2026-09-09 (later still): tagged the final 3 real untagged standalones -- catalog tagging fully complete
+
+Tagged the last 3 genuinely-untagged books directly (small, well-defined
+batch -- done in this session rather than handed to `tag-catalog-batch`):
+**A Wizard's Guide to Defensive Baking** (T. Kingfisher), **Emily
+Wilde's Map of the Otherlands** (Heather Fawcett), **The Handmaid's
+Tale** (Margaret Atwood). Researched each via web search for the
+checkable/HIGH_RISK_FIELDS facts rather than relying on memory alone,
+per CLAUDE.md's standing policy -- confirmed Wizard's Guide is a
+genuine standalone (no sequel), Emily Wilde's Map of the Otherlands is
+book 2 of a confirmed 3-book series (`narrative_closure:
+requires_series`, `form: epistolary` -- the series is written as
+Emily's field journal, footnotes and all), and The Handmaid's Tale's
+narrator_reliability is `unreliable` (Offred explicitly frames her own
+account as a reconstruction at several points) with a deliberately
+withheld/ambiguous ending (`ends_on_cliffhanger: cliffhanger`, flagged
+at 0.5 confidence since `narrative_closure` is separately
+`self_contained` -- the book was written and published as a complete
+standalone, The Testaments came 34 years later as a distinct work).
+
+Flagged several genuine judgment calls via `book_field_confidence`
+rather than asserting them at full confidence: Wizard's Guide's
+`humor_level`/`overall_pace` (real tonal blend of comedy and genuine
+danger), Emily Wilde's `drive` (balanced between the academic/quest
+plot and the central romance, not cleanly one or the other), Handmaid's
+Tale's `stakes_scope` (personal/intimate narrative focus vs. the
+national-scope dystopian backdrop) and `ends_on_cliffhanger` as above.
+
+Content warnings for The Handmaid's Tale (sexual_assault, dubious_
+consent, sexism_or_misogyny_depicted, religious_trauma_or_cults at
+`central_theme` severity -- these aren't incidental, they're what the
+book is about; kidnapping_or_captivity at `moderate`) -- deliberately
+did NOT add racism_depicted despite a real minor subplot touching it,
+less confident that element is central/explicit enough to assert.
+
+Verified author fields clean for all 3 (no contamination) before
+tagging, per standing ingestion policy. Migration
+`20260909120000_tag_final_3_untagged_standalones.sql` -- tested in a
+rolled-back transaction first (including an idempotency re-run check),
+applied to both local and hosted via `supabase db push`, verified live
+on hosted via REST.
+
+**Catalog is now 861 of 871 books tagged (98.9%) -- the remaining 10
+are all confirmed permanent exceptions** (4 graphic novels out of v1
+scope, 4 omnibus/compilation duplicates awaiting a schema fix, 2
+unpublished sequels), not a real backlog. This closes the
+catalog-tagging-completion TODO item for real, not just "no big gaps
+left" -- there are now zero real untagged standalone books in the
+catalog.

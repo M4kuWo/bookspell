@@ -15,9 +15,9 @@ for the full, dated history of every decision, bug, and fix.
 
 | | |
 |---|---|
-| Books in catalog | 873 |
-| Fully tagged | 825 |
-| Series tracked | 343 |
+| Books in catalog | 871 |
+| Fully tagged | 861 (98.9% — the rest are graphic novels/omnibus duplicates/unpublished, not a real backlog) |
+| Series tracked | 341 |
 | Tropes in vocabulary | 133 |
 | Content warning types | 37 |
 | Shared universes | 2 (Cosmere, Middle-earth) |
@@ -168,18 +168,19 @@ The full design writeup with worked examples is in
 
 Near-term, roughly in order:
 
-1. **Grow the tagged catalog.** 825 of 873 books are tagged; ~48 remain.
-   Priority for what IS in-scope: finish partially-tagged series before
-   tagging new standalones (Series DNA needs 2+ tagged books per series
-   to compute anything). Two ongoing execution-DNA trope sweeps
+1. **Catalog tagging is done** — 861 of 871 books tagged (98.9%); the
+   remaining 10 are all confirmed permanent exceptions (graphic novels
+   out of v1 scope, omnibus/compilation duplicates, unpublished
+   sequels), not a real backlog. Two ongoing execution-DNA trope sweeps
    (`romance_tone`, `worldbuilding_delivery` — real presentation-style
    signals, validated against production scoring, run as `book_tropes`
-   pairs rather than new scalar fields for now) are ~10 batches into a
-   ~20-batch plan. A new audiobook-edition data project
-   (`.claude/skills/tag-audiobook-editions/SKILL.md`) is queued but not
-   yet started — dramatized full-cast editions (GraphicAudio, BBC Audio)
-   and audio-only Audible Originals (`books.work_type = 'audio_original'`).
-   See [`docs/TODO.md`](docs/TODO.md) for the full prioritized backlog
+   pairs rather than new scalar fields for now) are well past their
+   original ~20-batch estimate and still finding real candidates.
+   Audiobook edition data (`.claude/skills/tag-audiobook-editions/
+   SKILL.md`) is well underway — 94+ `audiobook_editions` rows across
+   GraphicAudio and BBC Audio, plus 3 confirmed Audible Originals
+   candidates ready for ingestion. See [`docs/TODO.md`](docs/TODO.md)
+   for the full prioritized backlog
    across all of this, not just tagging.
 2. **Recruit more real readers.** Grew from 1 to 4 real raters this
    session (Osnat, Dandan, and Gabriel joined Mathias's original list) —

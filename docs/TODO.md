@@ -291,12 +291,16 @@ worth deferring to a later session rather than batching in for
   heavily-reviewed candidate pool is depleting, single searches are
   increasingly landing nothing usable or (once, caught) misattributing
   a quote to the wrong romance pairing in a book with more than one.
-- [x] **Catalog tagging completion -- DONE as of 2026-09-09.** 871
-  books total (2 down from 873 -- see next paragraph), only 10
-  untagged -- see project-log.md's 2026-09-09 "catalog tagging batch
-  2" entry (15 standalones: Turton, Erlick, Nayler, Ende, Poston,
+- [x] **Catalog tagging completion -- FULLY DONE as of 2026-09-09.** 871
+  books total (2 down from 873 -- see next paragraph), **861 tagged,
+  10 untagged and all 10 are confirmed permanent exceptions** -- no
+  real gap remains. See project-log.md's 2026-09-09 "catalog tagging
+  batch 2" entry (15 standalones: Turton, Erlick, Nayler, Ende, Poston,
   Hendrix, Jimenez, Cutter, Young, Mandanna, Chambers, Klune, Crouch,
-  Hart, McAllister). **All 10 remaining untagged rows are documented
+  Hart, McAllister) and the later "tag final 3 untagged standalones"
+  entry (A Wizard's Guide to Defensive Baking, Emily Wilde's Map of the
+  Otherlands, The Handmaid's Tale -- the last 3 real gaps, closed the
+  same day). **All 10 remaining untagged rows are documented
   permanent-skip cases, not a real backlog**: 4 omnibus/compilation
   duplicates (Farseer Trilogy, Foundation, Villains, Monk and Robot --
   see book-dna.md's "omnibus/compilation editions" future-fields
