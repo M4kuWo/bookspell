@@ -9053,3 +9053,55 @@ session. This is a real completion milestone: there is no longer a
 working backlog of untagged, in-scope, standalone SFF books to pick up
 in a future ordinary tagging batch.
 
+## 2026-09-09 (later still): Shogun and The Screwtape Letters deleted -- confirmed out of scope; a real migration-tracking gap caught and repaired
+
+The repo owner confirmed both flagged books are genuinely out of v1
+scope (Shogun -- historical fiction, no SFF content; The Screwtape
+Letters -- theological satire, not genre fantasy) and asked for both
+to be deleted, per CLAUDE.md's standing "flag, then delete once
+confirmed" policy. Checked all dependent tables first (`book_dna`,
+`book_tropes`, `book_content_warnings`, `book_field_confidence`,
+`audiobook_editions`) -- zero rows in any for either book, so no
+cleanup beyond the `books` rows themselves was needed. Shogun was also
+the only book in the "Asian Saga: Chronological Order" series row --
+deleted that too rather than leave it orphaned with zero books, same
+cleanup reasoning as the 2026-09-08 Cosmere duplicate-series fix.
+Tested in a rolled-back transaction (with an idempotency re-run check)
+before applying
+(`20260909100000_remove_out_of_scope_shogun_screwtape.sql`). `books`
+873 -> 871, `series` 367 -> 366, untagged count 12 -> 10 (the two
+scope flags are now resolved; the remaining 10 are the omnibus/
+unpublished/graphic-novel permanent-skip cases).
+
+**Real migration-tracking gap caught before this push, exactly the
+pattern CLAUDE.md documents and asks to check for routinely**: a
+`supabase db push --dry-run` ahead of this deletion showed BOTH of
+today's earlier catalog-tagging-batch migrations
+(`20260909080000`/`20260909090000`, applied by background agents
+earlier this session) as untracked on hosted -- i.e. applied via a raw
+direct Postgres connection rather than `supabase db push`, the exact
+anti-pattern CLAUDE.md warns about. Confirmed both migrations are
+internally idempotent (`on conflict do nothing` throughout every
+insert -- 149 and 119 occurrences respectively), so re-running them
+via `db push` would NOT have corrupted data, but the correct fix per
+CLAUDE.md is still `supabase migration repair`, not letting `db push`
+silently re-execute an already-applied migration. Verified the data
+already matched hosted (the `book_dna` row counts from both agents'
+own reports, 846 and 861, were already independently confirmed via
+direct query right after each agent finished) before running
+`supabase migration repair --status applied 20260909080000
+20260909090000` -- repair only records a version as applied, it
+doesn't re-run anything, so this check-first step matters. Re-ran
+`supabase migration list --db-url` afterward and confirmed zero gaps
+before pushing the actual new deletion migration. **Flag for whoever
+reviews background-agent work in this project going forward**: two
+agents in a row this session applied their migrations by committing
+directly through their own psycopg2 connection instead of running
+`supabase db push` themselves at the end -- worth adding an explicit
+instruction to prefer `db push` (or at minimum, checking `migration
+list --db-url` for gaps) as a closing step in any future prompt that
+asks an agent to apply a hosted migration, rather than relying on
+"tested in a rolled-back transaction, then applied to hosted" to
+imply the tracking table gets updated too -- it doesn't, those are two
+separate things.
+

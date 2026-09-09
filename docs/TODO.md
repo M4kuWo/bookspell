@@ -262,30 +262,39 @@ worth deferring to a later session rather than batching in for
   worldbuilding-delivery isn't showing this depletion yet -- single
   searches there are still landing 5-6 clean tags routinely, no process
   change needed for that pool for now.
-- [x] **Catalog tagging completion -- effectively DONE as of 2026-09-09
-  (later batch).** 873 books total, only 12 untagged (down from 27
-  earlier the same day, 45 on 2026-09-07) -- see project-log.md's
-  2026-09-09 "catalog tagging batch 2" entry (15 standalones: Turton,
-  Erlick, Nayler, Ende, Poston, Hendrix, Jimenez, Cutter, Young,
-  Mandanna, Chambers, Klune, Crouch, Hart, McAllister). **All 12
-  remaining untagged rows are documented permanent-skip cases, not a
-  real backlog**: 4 omnibus/compilation duplicates (Farseer Trilogy,
-  Foundation, Villains, Monk and Robot -- see book-dna.md's
-  "omnibus/compilation editions" future-fields entry, a real schema gap
-  not yet built), 2 unpublished sequels (Winds of Winter, Doors of
-  Stone -- nothing to tag yet), 4 graphic novels (Nimona, Saga Vol. 1-2,
-  The Sandman Vol. 1 -- out of v1 scope per CLAUDE.md), and 2
-  scope-flagged books awaiting a repo-owner confirm/delete call:
-  **Shōgun** (James Clavell) -- historical fiction, very likely a
-  broad-genre-search false positive, not sci-fi/fantasy; **The
-  Screwtape Letters** (C. S. Lewis) -- theological satire, not genre
-  fantasy/sci-fi as this catalog scopes those terms. **Don't pick this
-  item back up as an ordinary tagging task** -- there is no untagged,
-  in-scope, standalone SFF book left to select. Future tagging work
-  should instead watch for (a) newly-ingested books entering the
-  untagged queue, (b) the repo owner's Shōgun/Screwtape Letters
-  confirm-or-delete call, and (c) the vocabulary-growth sweeps already
-  tracked elsewhere in this file (romance_tone, worldbuilding delivery).
+- [x] **Catalog tagging completion -- DONE as of 2026-09-09.** 871
+  books total (2 down from 873 -- see next paragraph), only 10
+  untagged -- see project-log.md's 2026-09-09 "catalog tagging batch
+  2" entry (15 standalones: Turton, Erlick, Nayler, Ende, Poston,
+  Hendrix, Jimenez, Cutter, Young, Mandanna, Chambers, Klune, Crouch,
+  Hart, McAllister). **All 10 remaining untagged rows are documented
+  permanent-skip cases, not a real backlog**: 4 omnibus/compilation
+  duplicates (Farseer Trilogy, Foundation, Villains, Monk and Robot --
+  see book-dna.md's "omnibus/compilation editions" future-fields
+  entry, a real schema gap not yet built), 2 unpublished sequels
+  (Winds of Winter, Doors of Stone -- nothing to tag yet), and 4
+  graphic novels (Nimona, Saga Vol. 1-2, The Sandman Vol. 1 -- out of
+  v1 scope per CLAUDE.md).
+  **Shōgun and The Screwtape Letters deleted 2026-09-09** -- the repo
+  owner confirmed both are genuinely out of scope (historical fiction;
+  theological satire, neither sci-fi/fantasy) and asked for deletion.
+  Checked all dependent tables first (zero rows in book_dna/
+  book_tropes/book_content_warnings/book_field_confidence/
+  audiobook_editions for either), also deleted Shōgun's now-empty
+  "Asian Saga: Chronological Order" series row. `books` 873 -> 871,
+  `series` 367 -> 366. See project-log.md's 2026-09-09 "Shogun and The
+  Screwtape Letters deleted" entry, which also documents a real
+  migration-tracking gap caught and repaired during this (two
+  background agents' migrations were applied via raw psycopg2 instead
+  of `supabase db push`, same anti-pattern CLAUDE.md already
+  documents -- fixed via `supabase migration repair`, verified data
+  matched first).
+  **Don't pick this item back up as an ordinary tagging task** --
+  there is no untagged, in-scope, standalone SFF book left to select.
+  Future tagging work should instead watch for (a) newly-ingested
+  books entering the untagged queue, and (b) the vocabulary-growth
+  sweeps already tracked elsewhere in this file (romance_tone,
+  worldbuilding delivery).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- ~200 of 343 series rows affected, root cause found 2026-09-08.**
   `status` defaults to `'ongoing'` whenever Hardcover's `is_completed`
