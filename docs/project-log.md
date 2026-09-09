@@ -8786,6 +8786,461 @@ Dresden Files thin-batch findings). Ingestion, if it happens, should
 wait for the repo owner's call on the two flagged scope questions
 rather than defaulting to including or excluding either title.
 
+## 2026-09-09 (later still): catalog tagging batch -- 18 untagged standalones tagged
+
+Ran `.claude/skills/tag-catalog-batch/SKILL.md` on a pre-selected,
+pre-filtered batch of 18 currently-untagged, in-scope, standalone
+books (no partially-tagged series existed among the untagged pool
+this session, confirmed already run) -- migration
+`20260909080000_catalog_tagging_batch.sql`, applied directly to
+hosted, tested in a rolled-back transaction first (including an
+idempotency re-run check) per CLAUDE.md's convention. `book_dna` row
+count 828 -> 846.
+
+**Books tagged**: The Moon Is a Harsh Mistress (Heinlein), Ubik (Philip
+K. Dick), We (Zamyatin), The Sirens of Titan (Vonnegut), The Stars My
+Destination (Bester), The Island of Doctor Moreau (H. G. Wells),
+Tigana (Guy Gavriel Kay), The Starless Sea (Morgenstern), The Ten
+Thousand Doors of January (Harrow), The Once and Future Witches
+(Harrow), The Illustrated Man (Bradbury), The Paper Menagerie and
+Other Stories (Ken Liu), Timeline (Crichton), Under the Dome (Stephen
+King), The Running Man (Richard Bachman/Stephen King), The Mist
+(Stephen King), The Power (Naomi Alderman), The Ministry for the
+Future (Kim Stanley Robinson). Every book confirmed standalone
+(`series_id` null) before tagging, per the batch's own pre-selection.
+
+**HIGH_RISK_FIELDS checks done via web search rather than recall
+alone**: Ubik's actual POV structure (confirmed third-limited,
+centered on Joe Chip with Runciter and a few later characters getting
+POV time -- `pov_count: few`, not `single` as initially assumed);
+Tigana's POV character count (confirmed 5 named POV characters --
+Devin, Catriana, Dianora, Baerd, and antagonist Alberico, with Alessan
+deliberately never used as POV -- `pov_count: several`) and pacing
+(confirmed genuinely slow/deliberate, not medium); The Island of
+Doctor Moreau's narrator reliability (confirmed the frame narrative's
+introduction explicitly casts doubt on Prendick's account without
+resolving it -- correctly `ambiguous`, not the initially-assumed
+`reliable`). This last one is exactly the kind of correction the
+HIGH_RISK check exists to catch -- initial instinct was "obviously a
+straightforward first-person account," and the check found a real,
+textually-supported reason to change it.
+
+**Genuinely uncertain calls flagged via `book_field_confidence`/
+`book_tropes.confidence`, not silently guessed**: We's `drive`
+(character_driven vs. a more plot/message-driven read, 0.6) and
+`humor_level` (0.5, genuinely unclear how much of its dry irony reads
+as "humor" per se); Under the Dome's `overall_pace` (0.5 -- a
+1000+-page book that reads fast scene-to-scene but has real
+subplot-heavy stretches); Sirens of Titan's `stakes_scope` (0.6,
+`cosmic` chosen over `global` since the book's real "stakes" are more
+a cosmic-scale narrative revelation than a civilization under direct
+threat). Trope-level low-confidence tags (0.5-0.6): Ubik's
+`mind_uploading_or_digital_immortality` and `cosmic_horror` (both real
+but interpretive fits for half-life/entropy themes that predate the
+genre's later, more literal versions of these tropes); Doctor Moreau's
+`uplift` (a loose historical-era fit -- vivisection instead of genetic
+engineering, but thematically the same "species elevated by human
+intervention" idea); Starless Sea's `twist_ending` and
+`hidden_identity_romance`; Ten Thousand Doors' `retrospective_memoir_
+narration`; Once and Future Witches' `revenge`; Illustrated Man's
+`satirical_or_comedic_scifi` and `dying_earth` (anthology-wide tags
+where the fit is real but not uniform across every story); Under the
+Dome's `first_contact` (a late, minor-but-real plot beat -- checked
+against CLAUDE.md's explicit caution about pattern-matching this
+specific trope from "aliens are present" alone, per the Empire of
+Silence precedent) and `black_and_white_morality`; The Mist's
+`black_and_white_morality`; Ministry for the Future's
+`sudden_apocalypse_event` (the opening heat-wave disaster is regional,
+not full-civilizational collapse, but functions as the book's
+inciting apocalyptic event).
+
+**Author field**: only The Running Man has a multi-name author field
+(`Richard Bachman, Stephen King`) -- checked and confirmed NOT
+contamination (Bachman is King's own pseudonym for this book, both
+names are the genuine author under two identities, not an
+illustrator/translator/narrator credit). No other book in this batch
+had a multi-name author field.
+
+**genre_accessibility**: computed via the documented formula
+(prose_complexity/overall_pace/worldbuilding_density/pov_count/
+intellectual_weight average, bucketed), then adjusted for premise
+familiarity per book -- e.g. Timeline and The Running Man adjusted
+down to `gateway` (mainstream commercial thrillers with very familiar
+premises despite moderate craft-field demand), We and Ministry for the
+Future kept/pushed to `veteran_only` (genuinely dense, unfamiliar-
+premise reads where the formula's baseline undersold the real
+difficulty), The Sirens of Titan adjusted down to `accessible` (very
+widely taught, breezy Vonnegut prose despite deep ideas).
+
+**Vocabulary gap noted, not acted on**: no existing `content_warnings`
+value cleanly covers "climate/natural-disaster mass casualty" (as
+opposed to war or pandemic) -- Ministry for the Future's opening
+heat-wave mass-death event was tagged under `war_trauma` at `moderate`
+as the closest existing fit, but it's an imperfect match. Not proposing
+a new value off one book per this project's own bar ("does this change
+the recommendation," not "is it a real category") -- flagging in case
+a second book surfaces the same gap.
+
+**Density self-check (fresh query, run after the batch was live)**:
+catalog average 5.80 tropes/book, 1.73 content-warnings/book (828
+already-tagged books at query time); this batch's own average 4.89
+tropes/book (84% of catalog average -- within the ~20% floor, several
+thin books deliberately re-reviewed and enriched with additional
+real, defensible tropes before finalizing, rather than left thin) and
+2.11 content-warnings/book (122% of catalog average, no action
+needed). Post-insert catalog average recomputed: 5.80/1.73 unchanged
+at 4 significant figures (846 books now tagged total).
+
+**Two books explicitly investigated and NOT tagged, flagged for the
+repo owner's scope call rather than force-tagged or silently
+deleted**: **Shōgun** (James Clavell) -- historical fiction, not
+sci-fi/fantasy, very likely a broad-genre-search false positive per
+CLAUDE.md's "catalog scope" section. **The Screwtape Letters** (C. S.
+Lewis) -- theological satire (a senior demon's letters to a junior
+tempter), not genre fantasy/sci-fi as this catalog scopes those terms.
+Both left untagged, `books` rows untouched, per the "flag, don't
+force-tag or delete" policy -- a repo-owner decision needed on whether
+either belongs in the catalog at all.
+
+**Untagged count**: 873 total books, 27 untagged as of this session's
+end (down from 45 as of 2026-09-07 -- other tagging work landed in the
+interim too, not just this batch's 18). See `docs/TODO.md`'s updated
+"Catalog tagging completion" bullet for the current standing list of
+known-permanent-skip titles (omnibus duplicates, unpublished books,
+graphic novels), which this batch did not touch, plus the two new
+Shōgun/Screwtape Letters scope flags above.
+
+## 2026-09-09 (later still): catalog tagging batch 2 -- 15 untagged standalones tagged, real completion milestone
+
+Ran `.claude/skills/tag-catalog-batch/SKILL.md` on a pre-selected batch of
+15 untagged, in-scope, standalone books (repo owner already confirmed
+none belong to a partially-tagged series) -- migration
+`20260909090000_catalog_tagging_batch2.sql`, tested in a rolled-back
+transaction first (including an idempotency re-run check), then applied
+directly to hosted. `book_dna` row count 846 -> 861. **This clears
+essentially the entire remaining real standalone backlog**: untagged
+count drops from 27 to 12, and every one of those 12 remaining rows is
+already a documented, permanent-skip case (see `docs/TODO.md`'s
+"Catalog tagging completion" bullet) -- the 4 omnibus/compilation
+duplicates, 2 unpublished sequels, 4 graphic novels, and the 2
+Shōgun/Screwtape Letters scope-flagged books, none of which this or any
+future ordinary tagging batch should touch. There is no longer a real
+backlog of untagged, in-scope, standalone SFF books in this catalog.
+
+**Books tagged**: The Last Murder at the End of the World (Stuart
+Turton), The Measure (Nikki Erlick), The Mountain in the Sea (Ray
+Nayler), The Neverending Story (Michael Ende), The Seven Year Slip
+(Ashley Poston), The Southern Book Club's Guide to Slaying Vampires
+(Grady Hendrix), The Spear Cuts Through Water (Simon Jimenez), The Troop
+(Nick Cutter), The Unmaking of June Farrow (Adrienne Young), The Very
+Secret Society of Irregular Witches (Sangu Mandanna), To Be Taught, If
+Fortunate (Becky Chambers), Under the Whispering Door (TJ Klune),
+Upgrade (Blake Crouch), Weyward (Emilia Hart), Wrong Place Wrong Time
+(Gillian McAllister).
+
+**Two author-field contamination fixes made during the mandatory
+pre-insert verification check**, same scoped-UPDATE pattern as
+`20260909040000_fix_white_night_author_contamination.sql`: **The
+Measure**'s author field was "Nikki Erlick, Julia Whelan" -- Julia
+Whelan is the audiobook's narrator (confirmed via Audible/Amazon
+listings, an AudioFile Earphones Award winner for this title), not a
+co-author; fixed to "Nikki Erlick". **The Neverending Story**'s author
+field was "Michael Ende, Ralph Manheim, Roswitha Quadflieg" -- Manheim
+is the English translator, and Quadflieg is the original German
+edition's calligrapher/illustrator (she gave the book its iconic
+two-color red/green typesetting and chapter-opening artwork, per
+michaelende.de's own bio page for her) -- neither is an author of the
+work; fixed to "Michael Ende". This is now the second real instance of
+the standing author-field-contamination issue surfacing on freshly-
+tagged books (see White Night, and the earlier 65/606-book audit) --
+caught here specifically because the mandatory pre-insert check was
+followed, not skipped.
+
+**HIGH_RISK_FIELDS checks done via web research rather than recall
+alone**, several of which changed the initial assumption: The Last
+Murder at the End of the World's `person`/`narrator_reliability` --
+confirmed the entire novel is narrated in first person by Abi, an
+AI/"Abbess" figure, explicitly semi-omniscient and unreliable (not a
+human third-person mystery narrator, the initial instinct); The Spear
+Cuts Through Water's `person` -- confirmed genuinely `mixed` (the
+Inverted Theater frame is second person, with first- and third-person
+sections for the embedded legend), not a default third-person epic
+fantasy assumption; Weyward's `person` -- confirmed genuinely `mixed`
+(Altha's sections are first person, Violet's and Kate's are third
+person), the kind of split that's easy to flatten to a single value
+without checking; The Troop's `person`/`form` -- confirmed third-person
+omniscient with interspersed fictional documents (news clippings, lab
+notes, court-hearing transcripts) functioning as a `framing_device`,
+not plain `standard_prose`; The Unmaking of June Farrow's
+`narrator_reliability` -- set to `ambiguous` rather than `reliable`,
+given the text's deliberate blurring of what June can trust about her
+own perception (a real judgment call, flagged via
+`book_field_confidence` at 0.5); Upgrade's `stakes_scope` -- confirmed
+`global` (the plot centers on a second engineered-pathogen catastrophe
+following a global famine, not just a personal chase thriller).
+
+**Author field**: only The Measure and The Neverending Story (both
+above) had multi-name author fields in this batch; both were
+contamination, not genuine co-authorship. No other book in this batch
+had more than one name in `author`.
+
+**Genuinely uncertain calls flagged via `book_field_confidence`/
+`book_tropes.confidence`**: The Last Murder's `pov_count` (0.5 --
+single narrating voice but touches many characters' actions); The
+Mountain in the Sea's `drive` (0.6, `worldbuilding_driven` chosen over
+`character_driven` given how much the book is structured around
+embedded philosophical text on cetacean/octopus cognition); The
+Neverending Story's `age_category` (0.5, `middle_grade` vs `ya` -- a
+real crossover case); The Spear Cuts Through Water's `stakes_scope`
+(0.5, `global` chosen for its mythic-empire/goddess-level scale over a
+more literal `regional` reading). Trope-level low-confidence tags
+(0.4-0.6) across most books in the batch reflect genuine interpretive
+calls rather than plot-fact certainties -- see the migration file's
+per-book `book_tropes.confidence` values for the full list.
+
+**`genre_accessibility`**: computed via the documented formula, then
+adjusted for premise familiarity -- e.g. The Last Murder, The
+Neverending Story, Weyward, and The Southern Book Club's Guide all
+adjusted down one tier from their computed baseline (mainstream
+commercial/literary-crossover premises reading more welcoming than
+their craft fields alone suggest); The Mountain in the Sea and The
+Spear Cuts Through Water kept at the demanding end (`veteran_only`) as
+computed, since both are genuinely dense, unfamiliar-premise reads
+where the formula's baseline was accurate rather than pessimistic.
+
+**Vocabulary gap noted, not acted on**: no existing trope cleanly
+captures Ray Nayler's central conceit in The Mountain in the Sea --
+first contact with a non-human, non-alien intelligence (octopuses)
+arising through natural evolution rather than genetic uplift or actual
+extraterrestrial contact. Tagged as the closest real fits
+(`first_contact` at 0.6, `uplift` at 0.5) rather than proposing a new
+value off one book, per this project's "does this change the
+recommendation" bar -- flagging in case a second book (Alien Clay,
+Blindsight, etc.) surfaces the same gap.
+
+**Density self-check (fresh query, run after the batch was live)**:
+catalog average 5.78 tropes/book, 1.74 content-warnings/book (861
+tagged books at query time); this batch's own average 4.73 tropes/book
+(82% of catalog average) and 1.80 content-warnings/book (104% of
+catalog average). Tropes/book came in below the ~20% floor by a narrow
+margin (18% under, not over) after one deliberate enrichment pass
+during tagging (56 -> 71 tropes total across the batch, +27%, before
+finalizing); a second pass was considered but declined -- the
+remaining thin books (The Measure, To Be Taught If Fortunate, The Very
+Secret Society of Irregular Witches, Wrong Place Wrong Time) are
+contemporary spec-fic, a hopepunk novella, a cozy witch romance, and a
+psychological thriller respectively, genres that structurally carry
+fewer applicable entries in an SFF-trope-heavy vocabulary than epic
+fantasy or space opera -- forcing more tags onto them risked exactly
+the "confidently wrong" pattern-matching CLAUDE.md's tagging section
+warns against (e.g. reaching for `amnesia_driven_narrative` on Wrong
+Place Wrong Time's backward-chronology structure, which is not
+actually amnesia). Content-warning density is healthy (104% of catalog
+average), driven substantially by The Southern Book Club's Guide to
+Slaying Vampires (8 warnings, reflecting real, heavy content) and The
+Troop (4).
+
+**Untagged count: 873 total books, 12 untagged as of this session's
+end** (down from 27 earlier the same day). All 12 are already-
+documented permanent-skip cases -- 4 omnibus/compilation duplicates
+(The Foundation Trilogy, The Farseer Trilogy, Villains Duology, Monk
+and Robot), 2 unpublished sequels (The Winds of Winter, The Doors of
+Stone), 4 graphic novels (Nimona, Saga Vol. 1-2, The Sandman Vol. 1),
+and 2 scope-flagged books awaiting a repo-owner confirm/delete call
+(Shōgun, The Screwtape Letters) -- see `docs/TODO.md`'s updated
+"Catalog tagging completion" bullet. No new exclusions surfaced this
+session. This is a real completion milestone: there is no longer a
+working backlog of untagged, in-scope, standalone SFF books to pick up
+in a future ordinary tagging batch.
+
+## 2026-09-09 (later still): Shogun and The Screwtape Letters deleted -- confirmed out of scope; a real migration-tracking gap caught and repaired
+
+The repo owner confirmed both flagged books are genuinely out of v1
+scope (Shogun -- historical fiction, no SFF content; The Screwtape
+Letters -- theological satire, not genre fantasy) and asked for both
+to be deleted, per CLAUDE.md's standing "flag, then delete once
+confirmed" policy. Checked all dependent tables first (`book_dna`,
+`book_tropes`, `book_content_warnings`, `book_field_confidence`,
+`audiobook_editions`) -- zero rows in any for either book, so no
+cleanup beyond the `books` rows themselves was needed. Shogun was also
+the only book in the "Asian Saga: Chronological Order" series row --
+deleted that too rather than leave it orphaned with zero books, same
+cleanup reasoning as the 2026-09-08 Cosmere duplicate-series fix.
+Tested in a rolled-back transaction (with an idempotency re-run check)
+before applying
+(`20260909100000_remove_out_of_scope_shogun_screwtape.sql`). `books`
+873 -> 871, `series` 367 -> 366, untagged count 12 -> 10 (the two
+scope flags are now resolved; the remaining 10 are the omnibus/
+unpublished/graphic-novel permanent-skip cases).
+
+**Real migration-tracking gap caught before this push, exactly the
+pattern CLAUDE.md documents and asks to check for routinely**: a
+`supabase db push --dry-run` ahead of this deletion showed BOTH of
+today's earlier catalog-tagging-batch migrations
+(`20260909080000`/`20260909090000`, applied by background agents
+earlier this session) as untracked on hosted -- i.e. applied via a raw
+direct Postgres connection rather than `supabase db push`, the exact
+anti-pattern CLAUDE.md warns about. Confirmed both migrations are
+internally idempotent (`on conflict do nothing` throughout every
+insert -- 149 and 119 occurrences respectively), so re-running them
+via `db push` would NOT have corrupted data, but the correct fix per
+CLAUDE.md is still `supabase migration repair`, not letting `db push`
+silently re-execute an already-applied migration. Verified the data
+already matched hosted (the `book_dna` row counts from both agents'
+own reports, 846 and 861, were already independently confirmed via
+direct query right after each agent finished) before running
+`supabase migration repair --status applied 20260909080000
+20260909090000` -- repair only records a version as applied, it
+doesn't re-run anything, so this check-first step matters. Re-ran
+`supabase migration list --db-url` afterward and confirmed zero gaps
+before pushing the actual new deletion migration. **Flag for whoever
+reviews background-agent work in this project going forward**: two
+agents in a row this session applied their migrations by committing
+directly through their own psycopg2 connection instead of running
+`supabase db push` themselves at the end -- worth adding an explicit
+instruction to prefer `db push` (or at minimum, checking `migration
+list --db-url` for gaps) as a closing step in any future prompt that
+asks an agent to apply a hosted migration, rather than relying on
+"tested in a rolled-back transaction, then applied to hosted" to
+imply the tracking table gets updated too -- it doesn't, those are two
+separate things.
+
+## 2026-09-09 (later still): worldbuilding_delivery sweep batch 19 -- cut short by this session's web search cap
+
+Ran the `worldbuilding_delivery` half only of `tag-catalog-batch`'s Step 0
+priority batch (romance_tone is being tracked as a separate work item this
+session and was deliberately not touched). Live candidate pool at session
+start: 400 books (`worldbuilding_density = 'dense'` and untagged for either
+`worldbuilding_woven_into_narrative` or `worldbuilding_via_exposition_dump`).
+
+**20 candidates got a real search attempt before this session's web search
+budget ran out** (same documented precedent as romance_tone batch 10 and
+the audiobook-editions skill's Step A2 batch 2 -- a real, expected stopping
+point, not a shortcut): the ASOIAF and Wheel of Time groups (A Clash of
+Kings, A Feast for Crows, A Dance with Dragons, A Crown of Swords,
+Crossroads of Twilight), the Dresden Files group (Blood Rites, Battle
+Ground, Changes, Dead Beat, Death Masks), Chapterhouse: Dune, Children of
+Dune, Caraval, A Drop of Corruption, plus 5 that yielded real tags below.
+Two more (Assassin's Quest, Between Two Fires) were queued but never
+actually searched -- the cap hit mid-batch. This is well short of the
+30-candidate target; reporting honestly rather than padding the count.
+
+**5 tagged, split across both directions and both confidence tiers** (see
+`20260909110000_worldbuilding_delivery_sweep_batch19.sql` for full
+per-book reasoning in the migration comment):
+- **Blood of Elves** (Sapkowski) -> `worldbuilding_woven_into_narrative`,
+  0.6 -- reviews describe a specific in-scene example (Geralt explaining
+  an elf/human war's history to Ciri at a ruin, mid-scene) and contrast
+  this favorably with material other fantasy "throws at the beginning."
+- **Baptism of Fire** (Sapkowski, same series, 2 books later) ->
+  `worldbuilding_via_exposition_dump`, 0.6 -- reviews of this specific
+  later book describe "plodding and info-dumping sections" where "the
+  story came to a standstill as all the politics were divulged" and
+  Ciri's entire bloodline history "is even explained." A real, book-
+  specific split within the same series/author -- not a contradiction,
+  a craft shift between books 1 and 3.
+- **Ancillary Mercy** (Leckie) -> `worldbuilding_woven_into_narrative`,
+  0.6 -- reviews describe the Radch worldbuilding (Radchaai pronoun
+  convention, tea culture) emerging through "narrative perspective,
+  language choices" rather than exposition; somewhat series-general
+  rather than book-3-specific, but real and mechanism-specific.
+- **A Desolation Called Peace** (Martine) ->
+  `worldbuilding_woven_into_narrative`, 0.2 (disputed) -- most reviews
+  describe it as "narration-heavy yet exposition-light," imperial detail
+  left "to be shown but more rarely explained," avoiding "an intense
+  crash course" -- but one reviewer directly disagrees, describing the
+  same book as "talking the plot to death." Genuine split, recorded
+  rather than forced to either full confidence or skipped.
+- **Altered Carbon** (Morgan) -> `worldbuilding_via_exposition_dump`, 0.2
+  (disputed) -- reviews split between "exposition takes over character
+  development" and reads "dry," versus tech/lore "explained through
+  Kovacs' voice" blending into character narration rather than external
+  telling.
+
+**Skipped (evidence too generic, not delivery-mechanism-specific)**: the
+ASOIAF and Wheel of Time books searched (real discourse found, but about
+plot pacing/political-content volume, not HOW the lore is delivered), the
+5 Dresden Files books (discourse describes magic-system internal
+consistency, not delivery mechanism), Chapterhouse: Dune/Children of Dune
+(dialogue-heavy philosophical monologues, but too ambiguous between
+in-scene delivery and lecture-via-mouthpiece to call either way), Caraval
+(no delivery-specific discourse found at all), A Drop of Corruption (real
+worldbuilding praise, nothing about delivery mechanism).
+
+Author fields checked against Hardcover-style contamination for all 5
+tagged books -- all single, genuine authors (Sapkowski x2, Leckie,
+Martine, Morgan), no translator/illustrator contamination.
+
+**Density self-check**: this batch only adds tropes to already-tagged
+books (no new `book_dna` rows), so the normal catalog-wide density gate
+doesn't apply the same way -- instead, per the skill's own guidance for
+this specific sweep, checked direction/confidence balance: 3 tagged
+`worldbuilding_woven_into_narrative` (2 at 0.6, 1 at 0.2) vs. 2 tagged
+`worldbuilding_via_exposition_dump` (1 at 0.6, 1 at 0.2) -- both
+directions represented, and 2 of 5 genuinely disputed at 0.2 rather than
+a suspiciously clean 100% at 0.6.
+
+Counts before -> after: `worldbuilding_woven_into_narrative` 64 -> 67,
+`worldbuilding_via_exposition_dump` 52 -> 54 (116 -> 121 total). **Fresh
+remaining-pool count: 395** (400 at session start minus the 5 now
+tagged).
+
+Tested in a rolled-back transaction first (with an idempotent re-run
+check via `on conflict do nothing`), applied directly to hosted, then
+applied for real via `supabase db push --db-url "$DATABASE_URL" --yes`
+(not just a raw psycopg2 commit -- learning from this same session's
+earlier migration-tracking-gap incident above). Verified with
+`supabase migration list --db-url` (20260909110000 shows both `local`
+and `remote`) and a follow-up `db push --dry-run` reporting "Remote
+database is up to date." Row counts confirmed matching before pushing.
+
+## 2026-09-09 (later still): worldbuilding_delivery sweep batch 20 -- zero researched, session's web search budget was already exhausted before this batch started
+
+Attempted the `worldbuilding_delivery` half of `tag-catalog-batch`'s
+Step 0 priority batch, same as batch 19 (`romance_tone` untouched, a
+separate work item). Prepared a 40-title candidate pool (Clockwork
+Angel through Feet of Clay, alphabetically continuing from batch 19),
+confirmed the live untagged-for-either-trope pool was still 395 at
+session start (matches batch 19's closing count), and checked the two
+flagged author fields per this session's instructions: **Doomsday
+Book**'s stored author is `"Connie Willis, Daniel Dos Santos"` --
+Daniel Dos Santos is a cover illustrator, a genuine case of the
+recurring author-field contamination CLAUDE.md documents, flagged here
+rather than fixed (fixing it is out of scope for this trope-only
+batch). **Fantastic Beasts and Where to Find Them**'s stored author is
+`"Newt Scamander, J.K. Rowling"` -- expected, not contamination (the
+in-universe pseudonym credit, per the task's own note). Also found two
+titles stored with non-obvious exact strings that a naive title match
+would miss: `Dawn ` (Octavia Butler) has a trailing space, and Heather
+Fawcett's second Emily Wilde book is stored with a curly apostrophe
+(`Emily Wilde’s Map of the Otherlands`, U+2019) rather than a
+straight one.
+
+**Before researching a single candidate, every `WebSearch` call
+(including a bare connectivity-check query) returned "this session has
+used its web search budget (200 of 200 WebSearch calls)"** -- the
+budget was already fully consumed session-wide before this batch's own
+research began (presumably by other work earlier in this same shared
+session), not exhausted partway through this batch's own searching the
+way batch 19's cap was. This is the same class of genuine, expected
+stopping point already documented twice this project (batch 19's own
+entry above, romance_tone batch 10, and the audiobook-editions skill's
+Step A2 batch 2) -- confirmed with a second bare test query rather than
+assumed transient. Per this batch's own evidence standard ("ground
+every tag in REAL, FINDABLE web-search evidence... generic
+complexity/density praise is NOT evidence"), tagging any of these 40
+from memory alone without a real search is exactly the over-pattern-
+matching failure mode CLAUDE.md warns about (Dungeon Crawler Carl and
+Empire of Silence are the two standing examples) -- so **zero
+candidates were researched or tagged this session**, and none of the
+40 titles should be treated as "checked and found nothing" the way
+batch 19's skip list can be; they're simply un-attempted. **Fresh
+remaining-pool count: unchanged at 395** -- no data changed, so no
+migration file this batch. The 40-title candidate list from this
+session's task prompt (Clockwork Angel ... Feet of Clay) is the
+starting point for whoever runs batch 20 for real next.
+
+
 ## 2026-09-09 (later still): Zero G and The Left Right Game both confirmed IN; fixed a misplaced doc note; logged the GraphicAudio cast-mapping idea
 
 Repo owner resolved both open Sub-task B scope questions from earlier

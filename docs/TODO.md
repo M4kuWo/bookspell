@@ -260,33 +260,70 @@ worth deferring to a later session rather than batching in for
 - [ ] **Continue the romance_tone/worldbuilding_delivery tagging
   sweep** -- as of 2026-09-07 end-of-session: romance_tone batch 19,
   worldbuilding-delivery batch 16 done (~136 romance_tone candidates
-  and ~399 worldbuilding candidates remain). Remember the mandatory
-  density self-check (CLAUDE.md) before ending any batch session.
+  and ~399 worldbuilding candidates remain). **Worldbuilding-delivery
+  update, 2026-09-09: batch 19 done, 395 worldbuilding candidates
+  remain** (see project-log.md's 2026-09-09 "worldbuilding_delivery
+  sweep batch 19" entry) -- cut short by that session's web search cap
+  after only 20 of a planned 30+ candidates got a real search attempt
+  (5 tagged: 3 `worldbuilding_woven_into_narrative`, 2
+  `worldbuilding_via_exposition_dump`); a lower hit rate than recent
+  batches (5/20 vs. the usual ~5-6/6-8), though likely explained by
+  this batch's series-heavy candidate mix (ASOIAF, Wheel of Time,
+  Dresden Files all yielded real-but-too-generic discourse, not clean
+  delivery-mechanism-specific evidence) rather than confirmed pool
+  depletion -- worth watching over the next batch or two, not yet a
+  process change. Remember the mandatory density self-check (CLAUDE.md)
+  before ending any batch session.
+  **Batch 20 attempted 2026-09-09, zero progress: the session's web
+  search budget was already fully exhausted (200 of 200 used) before a
+  single candidate could be researched** -- see project-log.md's
+  2026-09-09 "worldbuilding_delivery sweep batch 20" entry. No tags
+  applied, no migration, pool still 395. The prepared 40-title candidate
+  list (Clockwork Angel through Feet of Clay) is ready for the next
+  session to actually search against; two author-contamination/exact-
+  title-string notes were logged for whoever picks it up (Doomsday
+  Book's stored author includes cover illustrator Daniel Dos Santos;
+  "Dawn " has a trailing space and Emily Wilde's Map of the Otherlands
+  uses a curly apostrophe in its stored title).
   **For romance_tone specifically, default to a broad search + targeted
   follow-up per candidate (not a single search)** -- see
   project-log.md's 2026-09-07 session-wrap-up entry: the easy,
   heavily-reviewed candidate pool is depleting, single searches are
   increasingly landing nothing usable or (once, caught) misattributing
   a quote to the wrong romance pairing in a book with more than one.
-  worldbuilding-delivery isn't showing this depletion yet -- single
-  searches there are still landing 5-6 clean tags routinely, no process
-  change needed for that pool for now.
-- [ ] **Catalog tagging completion** -- 873 books total, 45 untagged as
-  of 2026-09-07. Checked the "finish partially-tagged series" angle
-  first per standing policy: turned out all 6 partially-tagged series
-  (Farseer Trilogy, Foundation, Villains, Monk and Robot, A Song of Ice
-  and Fire, Kingkiller Chronicle) are actually fully tagged at the
-  individual-book level already -- the "missing" row in each is either
-  an omnibus/compilation duplicate of an already-tagged book (4 of them
-  -- see book-dna.md's new "omnibus/compilation editions" future-fields
-  entry, a real schema gap, not yet built) or a currently-unpublished
-  book (Winds of Winter, Doors of Stone -- nothing to tag yet). **Skip
-  all 6, and any future entry matching the same pattern** (a book row
-  duplicating an already-tagged book at the same series position, or a
-  book with no real publication yet) -- don't force-tag these, and
-  don't count them as real gaps when checking series completion. The
-  other ~39 untagged books are standalones or in series with zero
-  tagged books yet -- still open, not yet re-surveyed this session.
+- [x] **Catalog tagging completion -- DONE as of 2026-09-09.** 871
+  books total (2 down from 873 -- see next paragraph), only 10
+  untagged -- see project-log.md's 2026-09-09 "catalog tagging batch
+  2" entry (15 standalones: Turton, Erlick, Nayler, Ende, Poston,
+  Hendrix, Jimenez, Cutter, Young, Mandanna, Chambers, Klune, Crouch,
+  Hart, McAllister). **All 10 remaining untagged rows are documented
+  permanent-skip cases, not a real backlog**: 4 omnibus/compilation
+  duplicates (Farseer Trilogy, Foundation, Villains, Monk and Robot --
+  see book-dna.md's "omnibus/compilation editions" future-fields
+  entry, a real schema gap not yet built), 2 unpublished sequels
+  (Winds of Winter, Doors of Stone -- nothing to tag yet), and 4
+  graphic novels (Nimona, Saga Vol. 1-2, The Sandman Vol. 1 -- out of
+  v1 scope per CLAUDE.md).
+  **Shōgun and The Screwtape Letters deleted 2026-09-09** -- the repo
+  owner confirmed both are genuinely out of scope (historical fiction;
+  theological satire, neither sci-fi/fantasy) and asked for deletion.
+  Checked all dependent tables first (zero rows in book_dna/
+  book_tropes/book_content_warnings/book_field_confidence/
+  audiobook_editions for either), also deleted Shōgun's now-empty
+  "Asian Saga: Chronological Order" series row. `books` 873 -> 871,
+  `series` 367 -> 366. See project-log.md's 2026-09-09 "Shogun and The
+  Screwtape Letters deleted" entry, which also documents a real
+  migration-tracking gap caught and repaired during this (two
+  background agents' migrations were applied via raw psycopg2 instead
+  of `supabase db push`, same anti-pattern CLAUDE.md already
+  documents -- fixed via `supabase migration repair`, verified data
+  matched first).
+  **Don't pick this item back up as an ordinary tagging task** --
+  there is no untagged, in-scope, standalone SFF book left to select.
+  Future tagging work should instead watch for (a) newly-ingested
+  books entering the untagged queue, and (b) the vocabulary-growth
+  sweeps already tracked elsewhere in this file (romance_tone,
+  worldbuilding delivery).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- ~200 of 343 series rows affected, root cause found 2026-09-08.**
   `status` defaults to `'ongoing'` whenever Hardcover's `is_completed`
