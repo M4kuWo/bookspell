@@ -153,8 +153,19 @@ worth deferring to a later session rather than batching in for
   1. Step A2 batch 8+: re-check GraphicAudio's Dresden Files/Throne of
      Glass/Murderbot production progress for any newly-released books,
      capped at 10-15 per session.
-  2. Step A1a for BBC Audio (its own session -- not yet started), then
-     its own Step A1b.
+  2. **Step A1a for BBC Audio done 2026-09-09** -- 39 confirmed titles
+     pulled (Pratchett/Discworld, Neil Gaiman, Pullman's His Dark
+     Materials, Douglas Adams's Hitchhiker's Guide radio series, Le
+     Guin, Asimov's Foundation Trilogy, Wyndham, Susan Cooper, Ray
+     Bradbury, plus 8 classic/public-domain SF titles flagged low-
+     likelihood). Full list in project-log.md's 2026-09-09 "Step A1a
+     for BBC Audio" entry. Two claims (Perdido Street Station,
+     Assassin's Apprentice) were checked and found unconfirmed --
+     excluded, not carried forward. Iain Banks flagged as needing a
+     follow-up (unclear if the Culture novels specifically are
+     dramatised). **Next: Step A1b for BBC Audio** -- cross-reference
+     this list against `books` (title+author match), report the
+     intersection, before any A2 research on BBC matches.
   3. Sub-task B (Audible Originals, audio-only new entries,
      `work_type = 'audio_original'`): candidate discovery as its own
      session, then ingestion+tagging in normal 15-20/session batches.

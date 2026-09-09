@@ -8358,3 +8358,97 @@ session). Throne of Glass's remaining 8 books and Murderbot's 2 short
 prequel pieces remain open thin leads from batch 6. Isles of the
 Emberdark and the Riyria/Kate Daniels judgment calls from earlier
 batches remain unresolved, same as before.
+
+## 2026-09-09 (later still): audiobook-editions skill, Step A1a for BBC Audio -- catalog pulled, NOT yet cross-referenced
+
+First BBC Audio work on this skill -- GraphicAudio's Step A2 work is
+thinning out (batches 6-7 both hit real "production hasn't caught up
+yet" walls on Throne of Glass and Dresden Files), so moved to the
+still-untouched second producer per the skill's own Session
+2/Step A1a instructions. Per the skill's bounded-step discipline, did
+ONLY Step A1a this session -- no cross-referencing against our
+catalog yet (that's Step A1b, a separate future session).
+
+**Pulled BBC Radio 4 / BBC Audio's SFF full-cast dramatisation
+catalog** via web search (BBC Audio's own site wasn't directly
+fetchable the way GraphicAudio's was in the 2026-09-08 A1a session --
+relied on search results, retailer listings, and one authoritative fan
+wiki page, `wiki.lspace.org/Radio_Adaptations`, for the Pratchett/
+Discworld sub-list specifically). 39 confirmed titles found, grouped
+by author/property:
+
+**Terry Pratchett/Discworld** (9): Guards! Guards! (1992), Wyrd Sisters
+(1995), Only You Can Save Mankind (1996, Johnny Maxwell trilogy, not
+Discworld), The Amazing Maurice and His Educated Rodents (2003), Mort
+(2004), Small Gods (2006), Night Watch (2008), Eric (2013), Good Omens
+(2014, with Neil Gaiman). Note: Unseen Academicals has an audio
+dramatisation too, but via Amazon Audible, not BBC -- excluded.
+
+**Neil Gaiman** (1): Neverwhere (2013, Dirk Maggs adaptation).
+
+**Philip Pullman -- His Dark Materials** (3): Northern Lights, The
+Subtle Knife, The Amber Spyglass.
+
+**Douglas Adams -- The Hitchhiker's Guide to the Galaxy radio series**
+(5, mapped to novel installments -- verify this mapping in A1b rather
+than assuming it, the radio "Phases" predate/parallel the books and
+don't necessarily line up 1:1): Primary Phase (novel 1), Secondary
+Phase/The Restaurant at the End of the Universe (novel 2), Tertiary
+Phase/Life, the Universe and Everything (novel 3), Quandary Phase/So
+Long and Thanks for All the Fish (novel 4), Quintessential Phase/
+Mostly Harmless + And Another Thing... (novels 5-6).
+
+**Ursula K. Le Guin** (2): Earthsea (covers the first 3 Earthsea books
+as one combined dramatisation -- check in A1b whether that maps to
+one or three rows in our catalog), The Left Hand of Darkness.
+
+**Isaac Asimov -- The Foundation Trilogy** (3, BBC Radio 4 1973):
+Foundation, Foundation and Empire, Second Foundation.
+
+**John Wyndham** (5, from "A BBC Radio Drama Collection"): The Day of
+the Triffids, The Chrysalids, The Kraken Wakes, The Midwich Cuckoos,
+Chocky.
+
+**Susan Cooper** (1): The Dark Is Rising (2022, BBC World Service,
+12-part, full cast confirmed).
+
+**Ray Bradbury** (2): Fahrenheit 451 (1982), The Martian Chronicles
+(2014).
+
+**Classic/public-domain-era SF** (8, two overlapping BBC collections --
+flagged LOW likelihood of matching our contemporary-SFF catalog, but
+included per the skill's "pull the whole listing" instruction rather
+than pre-filtering): Frankenstein, The Time Machine, The War of the
+Worlds, Journey to the Centre of the Earth, Erewhon, The Lost World,
+R.U.R., Solaris.
+
+**One real near-miss caught and explicitly excluded rather than
+listed at low confidence**: a single ambiguous search result claimed
+BBC dramatisations exist of China Mieville's "Perdido Street Station"
+and Robin Hobb's "Assassin's Apprentice" -- in the same paragraph
+where its own disclaimer said no matching information was found for
+either. Directly verified both with dedicated follow-up searches:
+no evidence either exists. Excluded entirely rather than carried
+forward as unconfirmed leads. Worth remembering as a standing caution
+for future BBC Audio (and any) research sessions: a search summary's
+affirmative claim that contradicts its own stated disclaimer is not
+evidence, verify directly before recording.
+
+**Also flagged, not counted in the 39**: "Iain Banks: A BBC Radio
+Collection" exists as a real compilation, but whether it dramatises
+any of the Culture novels (as Iain M. Banks) specifically, versus only
+his literary fiction (as Iain Banks), wasn't confirmed -- needs a
+direct follow-up before treating as a real candidate.
+
+**Full list saved** to this entry (above) rather than a separate
+file, matching the 2026-09-08 GraphicAudio Step A1a precedent -- the
+raw pull belongs in the durable project history, not a session-local
+scratchpad, so a future Step A1b session can work from it directly.
+
+**Not done, by design**: no cross-referencing against `books` yet
+(that's Step A1b), no research into individual editions (that's Step
+A2, and only after A1b confirms real matches exist). GraphicAudio's
+own still-open Step A2 items (Dresden Files 6-14, Throne of Glass's
+remaining 8, Murderbot's 2 prequels) are untouched this session --
+this was BBC Audio's dedicated session, per the skill's own
+one-producer-per-session discipline.
