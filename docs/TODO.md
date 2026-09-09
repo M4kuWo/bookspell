@@ -288,6 +288,18 @@ worth deferring to a later session rather than batching in for
   change so far has happened in the primary session, not on the
   tagging machine). Do this once the schema migration is confirmed
   done and reported back.
+  **Step 1 done 2026-09-09** -- `romance_tone`/`worldbuilding_delivery`
+  columns added to `book_dna` (nullable, 3-value check constraints incl.
+  `mixed`), applied and verified on hosted. Local not synced -- this
+  sandbox's local Supabase stack has never bootstrapped at all (a real,
+  separate, structural gap: ~840 non-pilot catalog books were never
+  captured in any tracked migration or seed file, so a from-scratch
+  local bootstrap fails regardless of this migration -- see
+  project-log.md's two 2026-09-09 entries on this). Accepted as a known
+  gap for this migration; not blocking. **Next**: Steps 2-4 (fresh
+  overlap re-check, backfill, delete old trope data) -- not yet started,
+  still needs its own delegated session per the skill's bounded-step
+  discipline (don't chain steps in one sitting).
 
 ## P2 (ongoing/routine, not new decisions)
 

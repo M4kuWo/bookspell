@@ -9448,3 +9448,92 @@ Step 4's cleanup (delete book_tropes rows, delete the 4 trope
 vocabulary entries) ran without error. Rolled back -- this was
 verification only, not a real apply; the other session runs this for
 real via the skill.
+
+## 2026-09-09 (later still): ran Step 1 only of the romance_tone/worldbuilding_delivery skill -- columns added, stopped before backfill
+
+Executed exactly Step 1 of
+`.claude/skills/convert-romance-worldbuilding-fields/SKILL.md` per the
+repo owner's request (bounded-step discipline: add the columns,
+verify, stop -- Steps 2-4, which re-run the overlap query, backfill
+data, and delete the old trope rows/vocabulary, were explicitly out of
+scope for this task and were not touched).
+
+Tested both `alter table` statements in a rolled-back transaction
+against hosted first, then saved them as
+`supabase/migrations/20260909140000_add_romance_worldbuilding_fields.sql`
+(purely additive: two new nullable `book_dna` columns, `romance_tone`
+and `worldbuilding_delivery`, each with a closed-vocabulary check
+constraint including the `mixed` value the skill's schema decision
+calls for). Applied to hosted via `supabase db push --db-url`
+(percent-encoded the password for the CLI flag; `supabase link`/`-p`
+wasn't set up in this session's environment). Verified on hosted: both
+columns exist, `text`, nullable, all 864 `book_dna` rows currently
+NULL in both, and the check constraint correctly rejects an
+out-of-vocabulary value (tested and rolled back). `supabase migration
+list --db-url` confirms hosted's tracking table now has this version
+in both `local` and `remote` columns -- no repair needed, no
+mismatched/duplicate timestamps found.
+
+**Local apply did not complete -- pre-existing, unrelated environment
+bug, not caused by this migration.** This sandbox had no local
+Supabase stack running or previously initialized (`docker ps -a`
+showed no `supabase_db_bookspell` container at all before this
+session touched it, and the local connection was refused). Starting
+one fresh (`supabase start`) replays every migration from an empty
+database, and that replay fails partway through on the
+pre-existing `20260830030000_confidence_source_layer.sql`: it inserts
+`book_field_confidence` rows via `(select id from books where title =
+'A Game of Thrones')`-style subselects, but those books were never
+inserted by a tracked migration, so a truly fresh database doesn't
+have them yet (`book_id` comes back NULL, which then violates the
+`book_field_confidence.book_id` NOT NULL constraint). Root cause looks
+like `supabase/config.toml`'s `[db.seed] sql_paths = ["./seed.sql"]`
+pointing at a filename that doesn't exist (the actual file is
+`supabase/seed_pilot_corpus.sql`), so seeding never runs during a
+fresh bootstrap/reset -- and even if the filename were fixed, seeding
+runs *after* migrations per that same config file's own comment, so
+this specific migration would still need to run before the books it
+references exist, unless the seed step or migration order also
+changed. This is a latent bug that any prior session's persistent
+local Docker volume (built up incrementally, migration-by-migration,
+alongside real data insertion) would never have triggered -- it only
+surfaces on a truly from-scratch local bootstrap, which is what this
+sandboxed session's environment forced. Did not attempt to fix it
+(touching `config.toml`, the seed file, or the historical
+`20260830030000` migration is well outside this task's Step-1-only
+scope, and doing it hastily risks exactly the kind of unauthorized
+scope creep CLAUDE.md warns against). Left `docker ps -a` clean
+afterward (the failed `supabase start` tore its own containers back
+down; no stray containers left running). Flagging this local-bootstrap
+gap for the repo owner/next session to investigate separately -- it
+likely affects any fresh local environment, not just this one.
+
+## 2026-09-09 (later still): confirmed the local-bootstrap gap is structural, not a typo -- proceeding hosted-only for Step 1
+
+Followed up on the subagent's flagged local-bootstrap failure above.
+Fixed the one real, narrow bug (`supabase/config.toml`'s `sql_paths`
+now correctly points at `seed_pilot_corpus.sql` instead of the
+nonexistent `seed.sql`) since it's a genuine typo worth having fixed
+regardless. But confirmed this alone does NOT unblock a fresh local
+bootstrap: checked `seed_pilot_corpus.sql` directly and "A Game of
+Thrones" -- the book whose missing row broke migration
+`20260830030000_confidence_source_layer.sql` -- isn't in it at all
+(only 30 pilot-corpus books are). Combined with seeding running *after*
+migrations (per the config file's own comment), this means the ~840
+non-pilot books in the catalog were inserted via untracked, ad-hoc
+ingestion scripts run directly against live databases at various points
+in this project's history, never captured as a migration or seed file
+-- so a from-scratch local bootstrap in ANY environment is currently
+unreproducible from what's in this repo, not just misconfigured. Real
+fix would mean either a full-catalog seed dump or reordering/patching
+historical migrations -- both real, separate efforts, explicitly out of
+scope for today's Step 1 task and not attempted.
+
+Repo owner confirmed: proceed hosted-only rather than force a local fix
+here. Hosted has the migration applied and verified (see above); local
+sync for this specific migration is a known, accepted gap until the
+broader bootstrap problem gets its own dedicated pass. Not re-litigating
+this choice on future migrations by default -- CLAUDE.md's "apply to
+both, verify they match" rule still holds for any environment where
+local actually works; this is specific to this sandbox never having had
+a working local stack in the first place.
