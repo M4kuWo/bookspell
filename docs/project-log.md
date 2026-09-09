@@ -8650,3 +8650,83 @@ re-running Step A1a/A1b as BBC Audio's catalog grows, or from
 GraphicAudio's own still-open items (Dresden Files 6-14, Throne of
 Glass's remaining 8, Murderbot's 2 prequels -- all blocked on those
 producers' own release pace, not on research effort).
+
+## 2026-09-09 (later still): audiobook-editions skill, Sub-task B candidate discovery -- 2 real candidates found, several real disqualifications
+
+First work on Sub-task B (Audible Originals -- audio-only new catalog
+entries, distinct from Sub-task A's dramatized-edition-of-an-existing-
+book work). Per the skill's own discipline, this session did ONLY
+candidate discovery -- no ingestion or tagging, that's a separate
+future session's work, and only for whichever candidates survive
+scrutiny.
+
+**This turned out to be a genuinely hard search, not a padding
+exercise** -- most plausible-looking leads turned out to be
+disqualified on closer check, the same "real gaps are thin, don't
+force it" pattern this session already hit with Throne of Glass and
+Dresden Files on the GraphicAudio side. Checked roughly a dozen
+candidate names; most either weren't real Audible Originals, weren't
+SFF, or (the recurring real finding) turned out to have a print or
+graphic-novel counterpart after all.
+
+**2 real candidates, confirmed genuinely audio-only and in-scope
+SFF**:
+- **The Salvation** (2023, Justin Lockey, Audible Original, 8-part
+  audio drama) -- time-travel sci-fi thriller, full cast including
+  Rose Leslie, Toby Jones, Ariyon Bakare. No print or ebook edition
+  found anywhere across multiple retailer/press searches.
+- **Zero G** (2018, Dan Wells, Audible Originals LLC) -- sci-fi, full
+  cast with sound effects. No print edition found. **Real flag, not
+  silently decided**: this is explicitly marketed as a "middle-grade
+  caper" -- CLAUDE.md's v1 scope section doesn't set an age-category
+  bar (only genre: sci-fi/fantasy), and the existing catalog skews
+  adult/YA-adult, so whether an MG title belongs here is a real
+  judgment call for the repo owner, not something to decide unilaterally
+  by proceeding or by silently dropping it.
+
+**3 real disqualifications, checked and confirmed NOT audio-only**
+(worth recording so a future session doesn't re-research these from
+scratch):
+- **Steal the Stars** (Mac Rogers, originally a 2017 podcast/Audible
+  audio release) -- Nat Cassidy wrote a full print novelization,
+  published by Tor Books. Has a real print counterpart -- if this
+  catalog ever wants it, it goes through normal `tag-catalog-batch`
+  ingestion as a regular novel, not this path.
+- **Alien: River of Pain** (Christopher Golden, 2017 Audible Original
+  drama) -- has a real 2014 print edition (it's a real novel that
+  ALSO got an audio-drama treatment, not audio-first). Also a licensed
+  franchise tie-in, which raises a separate scope question this
+  catalog hasn't addressed either way -- moot here since the print
+  disqualification already rules it out of this path.
+- **Impact Winter** (Travis Beacham, Audible Original series) --
+  confirmed to have a real graphic novel companion published via Image
+  Comics/Simon & Schuster (not just a vague "companion" claim --
+  verified specific ISBN-backed listings). Doubly out of scope: has a
+  print/visual counterpart AND graphic novels are already excluded
+  from v1 scope per CLAUDE.md's 2026-09-04 decision.
+
+**2 checked and excluded for a different reason (not real Audible
+Originals, so Sub-task B doesn't apply)**:
+- **Worlds Beyond Number** -- a real, popular fantasy actual-play
+  audio drama available as a free Audible Original Podcast, but it's
+  an improvised tabletop-RPG actual-play recording, not a scripted
+  novel-shaped drama -- a structurally different kind of content this
+  skill's Sub-task B wasn't written with in mind. Also has a graphic
+  novel adaptation in the works (Skybound/Kickstarter). Flagged as a
+  genuine edge case rather than force-fit into either "yes, ingest" or
+  "no, ignore" -- worth a deliberate policy call if it comes up again,
+  not a default answer.
+- **Midst** -- checked because it sounded plausible (a "space
+  western" blending sci-fi/fantasy), but confirmed via Wikipedia it
+  was never an Audible Original at all (started as an independent
+  podcast, later acquired by Critical Role Productions) -- excluded on
+  that basis alone, print status not even relevant.
+
+**Not done, by design**: no ingestion, no Book DNA tagging, no
+`books` row created for Zero G or The Salvation even though they
+passed the audio-only+SFF check -- per the skill, that's ingestion+
+tagging work for a separate future session, bounded at 15-20 titles
+like `tag-catalog-batch`'s Step 3 (though with a pool this small, that
+won't remotely fill a batch on its own -- more candidate discovery in
+a future session would be needed first if this catalog wants to build
+out Sub-task B further).

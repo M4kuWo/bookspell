@@ -200,9 +200,27 @@ worth deferring to a later session rather than batching in for
      candidate. Otherwise BBC Audio is caught up with its own A1b
      pool -- next growth here comes from re-running A1a/A1b later as
      BBC's catalog grows, not from more research on the current list.
-  3. Sub-task B (Audible Originals, audio-only new entries,
-     `work_type = 'audio_original'`): candidate discovery as its own
-     session, then ingestion+tagging in normal 15-20/session batches.
+  3. **Sub-task B candidate discovery done 2026-09-09** -- 2 real
+     candidates confirmed genuinely audio-only + in-scope SFF: **The
+     Salvation** (2023, Justin Lockey, 8-part time-travel sci-fi audio
+     drama) and **Zero G** (2018, Dan Wells, sci-fi -- flagged as
+     explicitly middle-grade, a real scope judgment call for the repo
+     owner since CLAUDE.md's v1 scope is genre-only, not age-category).
+     Checked ~12 candidates total; most were disqualified on a real
+     print/graphic-novel counterpart (Steal the Stars, Alien: River of
+     Pain, Impact Winter -- see project-log.md's 2026-09-09 "Sub-task B
+     candidate discovery" entry for why each was excluded, so a future
+     session doesn't re-research them) or turned out not to be real
+     Audible Originals at all (Midst) or to be a structurally different
+     format this skill wasn't written for (Worlds Beyond Number, an
+     actual-play podcast, not a scripted drama -- flagged as a genuine
+     edge case needing a policy call, not decided either way here).
+     **Next**: ingestion+tagging for Zero G and/or The Salvation (once
+     the MG scope question is resolved for Zero G), in normal
+     15-20/session batches per `tag-catalog-batch`'s Step 3 conventions
+     -- though with only 2 candidates, this won't fill a real batch on
+     its own; more candidate discovery would help before a full
+     ingestion session.
   - Open sub-question, not yet checked: whether Hardcover's API exposes
     standard-edition narrator data as a contributor role (same source
     already used for author verification) -- possibly near-bulk-
