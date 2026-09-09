@@ -150,9 +150,22 @@ worth deferring to a later session rather than batching in for
   inserting; "Riyria Chronicles" and "Kate Daniels: Wilmington Years"
   (GA) have no matching row in our catalog at all, not a match.
   Remaining steps, in order:
-  1. Step A2 batch 8+: re-check GraphicAudio's Dresden Files/Throne of
-     Glass/Murderbot production progress for any newly-released books,
-     capped at 10-15 per session.
+  1. **Demoted to P2, not active P1 work (clarified 2026-09-09)**:
+     periodically re-check GraphicAudio's Dresden Files 6-14/Throne of
+     Glass 2-9/Murderbot prequel production progress for newly-released
+     books. This is a low-effort, infrequent "has anything shipped"
+     check on an external producer's own release calendar, not
+     ongoing research effort -- see the P2 entry below for the real
+     priority-level version of this. Of the three, only **Throne of
+     Glass has a real series-level "in production" announcement**
+     (GraphicAudio's own public statement) -- Dresden Files 6-14 is
+     just an inference from release cadence, not an actual
+     announcement, and Murderbot's 2 prequels have neither. None of the
+     three currently have anything book-specific enough to record via
+     `audiobook_editions.release_status: 'announced'` (that field
+     already exists and is already used correctly for Empire of
+     Silence's real pre-order case -- not a schema gap, just nothing
+     concrete enough yet for these three to attach a row to).
   2. **Step A1a + A1b for BBC Audio done 2026-09-09.** A1a pulled 39
      candidate titles (Pratchett/Discworld, Neil Gaiman, Pullman's His
      Dark Materials, Douglas Adams's Hitchhiker's Guide radio series,
@@ -266,6 +279,16 @@ worth deferring to a later session rather than batching in for
 
 ## P2 (ongoing/routine, not new decisions)
 
+- [ ] **Periodically re-check GraphicAudio's in-progress productions**
+  (added 2026-09-09, demoted from where it was implicitly sitting
+  under P1) -- Throne of Glass books 2-9 (a real series-level "starting
+  production" announcement exists, no book-specific dates yet),
+  Dresden Files 6-14 (no announcement, just an inference from release
+  cadence), Murderbot's 2 short prequels (no announcement at all,
+  plausibly never getting one). Low-effort, infrequent check on an
+  external producer's own release calendar -- fold into whenever
+  Step A2 work happens to touch these series anyway, not a reason to
+  open a dedicated session on its own.
 - [ ] **Continue the romance_tone/worldbuilding_delivery tagging
   sweep** -- as of 2026-09-07 end-of-session: romance_tone batch 19,
   worldbuilding-delivery batch 16 done (~136 romance_tone candidates

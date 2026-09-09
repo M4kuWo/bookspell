@@ -9378,3 +9378,25 @@ edition_type all correct). Migration
 
 Sub-task B now has real content in the catalog for the first time,
 not just confirmed candidates waiting on a decision.
+
+## 2026-09-09 (later still): clarified the "blocked on producer" audiobook items and demoted the recheck task from P1 to P2
+
+Repo owner asked for precision on what "blocked on GraphicAudio's own
+pace" actually meant for Dresden Files 6-14/Throne of Glass 2-9/
+Murderbot's 2 prequels, and proposed a `release_status`-style field for
+"announced but not released" content. Checked the actual batch entries
+rather than answering from memory: only Throne of Glass has a real
+series-level "starting production" announcement from GraphicAudio;
+Dresden Files 6-14 is just an inference from release cadence, not an
+actual announcement; Murderbot's 2 prequels have neither. Confirmed
+the field the repo owner proposed already exists
+(`audiobook_editions.release_status: 'announced'`, already used
+correctly for Empire of Silence's real pre-order) -- not a schema gap,
+just nothing book-specific enough for these three to attach a row to
+yet.
+
+Also agreed with and acted on the repo owner's second point: a
+periodic "has anything shipped yet" check on an external producer's
+release calendar doesn't belong at P1. Moved it to its own explicit P2
+entry rather than leaving it implicitly bundled into P1's "next steps"
+list, where it read as more urgent than it actually is.
