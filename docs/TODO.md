@@ -186,13 +186,20 @@ worth deferring to a later session rather than batching in for
      NULL for those 6 rows rather than misattribute a book-specific
      actor to the wrong book. Full detail in project-log.md's
      2026-09-09 "Step A2 for BBC Audio, batch 2" entry.
-     **Still open**: 7 of the 31 confirmed matches remain -- Bradbury
-     (Fahrenheit 451, The Martian Chronicles) and 5 classic-SF titles
-     (Frankenstein, The Time Machine, The War of the Worlds, Journey
-     to the Center of the Earth, Solaris). Fits in one more session
-     (batch 3) -- should clear the rest of this pool. The Iain Banks
-     follow-up (unclear if Culture novels are dramatised) remains
-     unresolved.
+     **Batch 3 done 2026-09-09 -- clears the full 31-match pool.** 7
+     more editions inserted (94 total): Fahrenheit 451, The Martian
+     Chronicles, Frankenstein, The Time Machine (correctly recorded as
+     BBC Radio 3, not Radio 4), The War of the Worlds, Journey to the
+     Center of the Earth, Solaris. Every confirmed BBC Audio match
+     from this session's A1b cross-reference now has an
+     `audiobook_editions` row. Full detail in project-log.md's
+     2026-09-09 "Step A2 for BBC Audio, batch 3" entry.
+     **Still open**: only the Iain Banks "BBC Radio Collection"
+     follow-up (unclear if any Culture novels are specifically
+     dramatised) -- needs a direct check before counting as a real
+     candidate. Otherwise BBC Audio is caught up with its own A1b
+     pool -- next growth here comes from re-running A1a/A1b later as
+     BBC's catalog grows, not from more research on the current list.
   3. Sub-task B (Audible Originals, audio-only new entries,
      `work_type = 'audio_original'`): candidate discovery as its own
      session, then ingestion+tagging in normal 15-20/session batches.

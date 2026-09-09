@@ -8612,3 +8612,41 @@ Chronicles) and the 5 classic-SF titles (Frankenstein, The Time
 Machine, The War of the Worlds, Journey to the Center of the Earth,
 Solaris). Fits within one more session's 10-15 cap -- this pool should
 be clearable next time. The Iain Banks follow-up remains unresolved.
+
+## 2026-09-09 (later still): audiobook-editions skill, Step A2 for BBC Audio, batch 3 -- Bradbury + classic SF, clears the full 31-match pool
+
+Final batch of this session's BBC Audio work. Researched and inserted
+Ray Bradbury (2) and the 5 classic-SF titles -- **7 confirmed matches
+inserted**
+(`20260909070000_audiobook_editions_bbc_batch3.sql`): Fahrenheit 451
+(1982, Gregory Evans adaptation), The Martian Chronicles (2014, 70min
+confirmed), Frankenstein (1994, Nick Stafford's 2-part adaptation),
+The Time Machine (2009 -- BBC Radio 3, NOT Radio 4, launched that
+year's Science Fiction season; recorded with the correct
+`production_company` rather than defaulting to Radio 4 out of habit),
+The War of the Worlds (120min confirmed), Journey to the Center of
+the Earth (90min confirmed -- BBC's own title uses British "Centre",
+our catalog stores American "Center", same book), and Solaris (2007
+"Classic Serial", 2 one-hour episodes, 120min confirmed).
+
+**This clears all 31 confirmed matches from this session's Step A1b
+cross-reference** -- every real BBC Audio match found so far now has
+an `audiobook_editions` row. `audiobook_editions` total across
+GraphicAudio + BBC Radio 4/3 combined: 94.
+
+**Verification**: tested in a rolled-back transaction first (including
+an idempotency re-run check -- row count unchanged on re-run), then
+applied to hosted via `supabase db push --db-url`. `audiobook_editions`
+row count 87 -> 94. `supabase migration list --db-url` confirms 174
+migrations total tracked, zero gaps.
+
+**Still open, not part of this session's cleared pool**: the Iain
+Banks "BBC Radio Collection" follow-up (unclear if any Culture novels
+are specifically dramatised in it) from the A1a entry -- needs a
+direct check before it can be counted as a real candidate either way.
+Otherwise, BBC Audio's Step A2 work is caught up with its own A1b
+cross-reference; the next real growth in this pool comes from either
+re-running Step A1a/A1b as BBC Audio's catalog grows, or from
+GraphicAudio's own still-open items (Dresden Files 6-14, Throne of
+Glass's remaining 8, Murderbot's 2 prequels -- all blocked on those
+producers' own release pace, not on research effort).
