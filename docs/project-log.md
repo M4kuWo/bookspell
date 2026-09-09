@@ -8452,3 +8452,67 @@ own still-open Step A2 items (Dresden Files 6-14, Throne of Glass's
 remaining 8, Murderbot's 2 prequels) are untouched this session --
 this was BBC Audio's dedicated session, per the skill's own
 one-producer-per-session discipline.
+
+## 2026-09-09 (later still): audiobook-editions skill, Step A1b for BBC Audio -- 31 confirmed matches, one real false-positive caught
+
+Cross-referenced the 39-title BBC Audio catalog pull from this
+session's earlier Step A1a entry against `books` (title+author match,
+with looser `ILIKE '%...%'` follow-up checks on anything that missed
+an exact match, per the skill's "fuzzy match is fine" guidance). Per
+the skill's discipline, stopped here -- no A2 research this session.
+
+**31 confirmed matches** (title as stored in our catalog -> author):
+
+- **Terry Pratchett/Discworld** (6): Guards! Guards!, Wyrd Sisters,
+  Mort, Small Gods, Night Watch, Eric
+- **Neil Gaiman & Terry Pratchett** (1): Good Omens: The Nice and
+  Accurate Prophecies of Agnes Nutter, Witch -- matched via a looser
+  `%good omens%` pattern; our catalog stores the full subtitle, the
+  BBC catalog list only had the short title
+- **Neil Gaiman** (1): Neverwhere
+- **Philip Pullman** (3): The Golden Compass (BBC's "Northern Lights"
+  is this same book's UK title -- our catalog uses the US title),
+  The Subtle Knife, The Amber Spyglass
+- **Douglas Adams** (5): The Hitchhiker's Guide to the Galaxy, The
+  Restaurant at the End of the Universe, Life, the Universe and
+  Everything, So Long, and Thanks for All the Fish, Mostly Harmless
+- **Ursula K. Le Guin** (4): A Wizard of Earthsea, The Tombs of Atuan,
+  The Farthest Shore, The Left Hand of Darkness
+- **Isaac Asimov** (3): Foundation, Foundation and Empire, Second
+  Foundation
+- **John Wyndham** (1): The Day of the Triffids
+- **Ray Bradbury** (2): Fahrenheit 451, The Martian Chronicles
+- **Classic SF** (5): Frankenstein (Mary Shelley), The Time Machine
+  (H.G. Wells), The War of the Worlds (H. G. Wells -- note our own
+  catalog spaces "H. G. Wells" here but not on The Time Machine's row,
+  a pre-existing minor author-formatting inconsistency, not a matching
+  problem, not fixed here since it's out of this task's scope), Journey
+  to the Center of the Earth (Jules Verne -- matched via the American
+  spelling "Center", the BBC listing used British "Centre"), Solaris
+  (Stanislaw Lem)
+
+**Real false positive caught, NOT a match**: "The Lost World" exists
+in our catalog, but as Michael Crichton's book, not Arthur Conan
+Doyle's -- the BBC dramatisation is of Conan Doyle's 1912 novel, a
+completely different book that happens to share a title. Excluded
+explicitly rather than silently treated as a hit; flagging this
+pattern for future title-matching sessions generally, not just this
+one title.
+
+**Confirmed NOT in our catalog** (10, real gaps not overlooked):
+Only You Can Save Mankind, The Amazing Maurice and His Educated
+Rodents, And Another Thing..., The Chrysalids, The Kraken Wakes, The
+Midwich Cuckoos, Chocky, The Dark Is Rising, Erewhon, R.U.R.
+
+**Not yet resolved**: the Iain Banks "BBC Radio Collection" follow-up
+flagged in the A1a entry (unclear if it dramatises Culture novels
+specifically) -- still needs that direct check before it can be
+counted as a candidate either way.
+
+**A real number, not a small one**: 31 confirmed matches is
+meaningfully larger than GraphicAudio's Step A1b intersections have
+typically been -- consistent with the skill's own expectation ("tens
+not hundreds"), but the largest single-producer intersection found so
+far. A future Step A2 session should NOT try to clear all 31 in one
+sitting -- same 10-15 cap and bounded-session discipline as every
+GraphicAudio A2 batch, split across at least 3 sessions.
