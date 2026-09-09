@@ -8516,3 +8516,52 @@ not hundreds"), but the largest single-producer intersection found so
 far. A future Step A2 session should NOT try to clear all 31 in one
 sitting -- same 10-15 cap and bounded-session discipline as every
 GraphicAudio A2 batch, split across at least 3 sessions.
+
+## 2026-09-09 (later still): audiobook-editions skill, Step A2 for BBC Audio, batch 1 -- Discworld + Good Omens + Neverwhere + His Dark Materials
+
+First BBC Audio insert batch, following this session's own A1a/A1b
+work. Researched and inserted the Pratchett/Discworld group plus Good
+Omens, Neverwhere, and the His Dark Materials trilogy -- **11 confirmed
+matches inserted**
+(`20260909050000_audiobook_editions_bbc_batch1.sql`): Guards! Guards!,
+Wyrd Sisters, Mort, Small Gods, Night Watch, Eric (all BBC Radio 4
+Pratchett dramatisations, cast confirmed per-title via British Comedy
+Guide's cast/crew pages, not just the collection-wide names), Good
+Omens (6 episodes, ~2h30m total confirmed from its own episode
+breakdown), Neverwhere (2013 Dirk Maggs adaptation, 3h48m confirmed
+including bonus material), and all three His Dark Materials books
+(The Golden Compass/Northern Lights, The Subtle Knife, The Amber
+Spyglass -- same recurring cast across all three).
+
+**Real title-variant note, not a new finding but confirmed in
+practice**: our catalog stores Pullman's first book under its US
+title "The Golden Compass"; the BBC's own branding uses the UK title
+"Northern Lights" throughout. Both are the same book -- inserted
+against our catalog's stored title, as always.
+
+**One real ambiguity left alone rather than guessed**: a secondary
+source described The Amber Spyglass's audiobook as "divided into two
+parts," but didn't say whether that reflects the drama's actual
+broadcast structure (like Guards! Guards!'s real 6 episodes) or just a
+CD/download packaging split unrelated to content structure. Left
+`parts_released`/`parts_total` NULL rather than record an unverified
+structural claim as fact.
+
+`edition_type` used the same `'dramatized_full_cast'` value as every
+GraphicAudio row -- these are genuinely the same category of thing (a
+full-cast dramatized adaptation), just from a different producer, so
+no new vocabulary value was needed.
+
+**Verification**: tested in a rolled-back transaction first (including
+an idempotency re-run check -- row count unchanged on re-run), then
+applied to hosted via `supabase db push --db-url`. `audiobook_editions`
+row count 63 -> 74. `supabase migration list --db-url` confirms 172
+migrations total tracked, zero gaps.
+
+**Still open for a future Step A2 (BBC Audio) session**: 20 of the 31
+confirmed matches remain -- the Hitchhiker's Guide radio series (5),
+Le Guin (4), Asimov's Foundation Trilogy (3), Wyndham's The Day of the
+Triffids (1), Bradbury (2), and the 5 classic-SF titles. Will need at
+least 2 more sessions at the 10-15 cap. The Iain Banks follow-up
+(unclear if Culture novels are dramatised) from the A1a/A1b entries is
+still unresolved.

@@ -170,12 +170,20 @@ worth deferring to a later session rather than batching in for
      collision only. 10 titles confirmed genuinely not in our catalog.
      Iain Banks follow-up (unclear if Culture novels are dramatised)
      still unresolved.
-  3. **Next: Step A2 for BBC Audio** -- research + insert the 31
-     confirmed matches, same 10-15-per-session cap as every
-     GraphicAudio A2 batch (will need at least 3 sessions). Start
-     wherever's convenient -- no partial-series-completion priority
-     here since these are mostly standalones/trilogies already fully
-     matched, unlike GraphicAudio's build-up.
+  3. **Step A2 for BBC Audio, batch 1 done 2026-09-09** -- 11 more
+     editions inserted (74 total): the Pratchett/Discworld group
+     (Guards! Guards!, Wyrd Sisters, Mort, Small Gods, Night Watch,
+     Eric), Good Omens, Neverwhere, and all 3 His Dark Materials books.
+     Full detail in project-log.md's 2026-09-09 "Step A2 for BBC
+     Audio, batch 1" entry.
+     **Still open**: 20 of the 31 confirmed matches remain -- the
+     Hitchhiker's Guide radio series (5), Le Guin (4), Asimov's
+     Foundation Trilogy (3), Wyndham's The Day of the Triffids (1),
+     Bradbury (2), and 5 classic-SF titles (Frankenstein, The Time
+     Machine, The War of the Worlds, Journey to the Center of the
+     Earth, Solaris). Will need at least 2 more sessions at the 10-15
+     cap. The Iain Banks follow-up (unclear if Culture novels are
+     dramatised) remains unresolved.
   3. Sub-task B (Audible Originals, audio-only new entries,
      `work_type = 'audio_original'`): candidate discovery as its own
      session, then ingestion+tagging in normal 15-20/session batches.
