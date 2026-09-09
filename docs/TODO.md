@@ -200,27 +200,35 @@ worth deferring to a later session rather than batching in for
      candidate. Otherwise BBC Audio is caught up with its own A1b
      pool -- next growth here comes from re-running A1a/A1b later as
      BBC's catalog grows, not from more research on the current list.
-  3. **Sub-task B candidate discovery done 2026-09-09** -- 2 real
-     candidates confirmed genuinely audio-only + in-scope SFF: **The
-     Salvation** (2023, Justin Lockey, 8-part time-travel sci-fi audio
-     drama) and **Zero G** (2018, Dan Wells, sci-fi -- flagged as
-     explicitly middle-grade, a real scope judgment call for the repo
-     owner since CLAUDE.md's v1 scope is genre-only, not age-category).
-     Checked ~12 candidates total; most were disqualified on a real
-     print/graphic-novel counterpart (Steal the Stars, Alien: River of
-     Pain, Impact Winter -- see project-log.md's 2026-09-09 "Sub-task B
-     candidate discovery" entry for why each was excluded, so a future
-     session doesn't re-research them) or turned out not to be real
-     Audible Originals at all (Midst) or to be a structurally different
-     format this skill wasn't written for (Worlds Beyond Number, an
-     actual-play podcast, not a scripted drama -- flagged as a genuine
-     edge case needing a policy call, not decided either way here).
-     **Next**: ingestion+tagging for Zero G and/or The Salvation (once
-     the MG scope question is resolved for Zero G), in normal
-     15-20/session batches per `tag-catalog-batch`'s Step 3 conventions
-     -- though with only 2 candidates, this won't fill a real batch on
-     its own; more candidate discovery would help before a full
-     ingestion session.
+  3. **Sub-task B candidate discovery done 2026-09-09 (two passes)** --
+     3 real candidates found, each with an open scope question rather
+     than a clean pass: **The Salvation** (2023, Justin Lockey, 8-part
+     time-travel sci-fi audio drama -- no flags, cleanest of the
+     three), **Zero G** (2018, Dan Wells, sci-fi -- explicitly
+     middle-grade, a real age-category judgment call since CLAUDE.md's
+     v1 scope is genre-only), and **The Left Right Game** (2020,
+     QCode/Legion M -- billed as "sci-fi horror" so genre fit is a
+     judgment call, AND it originated as a published Reddit
+     r/NoSleep short story before being expanded into the audio drama,
+     a gray area on "no print edition exists anywhere"). Checked ~20
+     candidates total across both passes; 8 disqualified with specific
+     recorded reasons (has a real print/ebook/comic counterpart:
+     Steal the Stars, Alien: River of Pain, Impact Winter, The Vela,
+     The Bright Sessions, Voyage to the Stars; not a real Audible
+     Original: Midst; wrong genre despite fantasy trappings: Heads
+     Will Roll; wrong age-category/format: I'm From the Sun) plus
+     Worlds Beyond Number flagged as a structurally different format
+     (actual-play, not scripted drama) needing its own policy call. See
+     project-log.md's two 2026-09-09 "Sub-task B candidate discovery"
+     entries for full detail on each -- a future session should NOT
+     re-research any of the 8 disqualified names.
+     **Next**: either more candidate discovery (this pool is still
+     thin -- 3 candidates won't fill a real ingestion batch), or take
+     the 3 flagged scope questions (Zero G's MG rating, The Left Right
+     Game's genre fit + print-origin ambiguity) to the repo owner
+     before ingesting anything. Ingestion+tagging, once candidates are
+     confirmed, follows `tag-catalog-batch`'s Step 3 conventions in
+     normal 15-20/session batches.
   - Open sub-question, not yet checked: whether Hardcover's API exposes
     standard-edition narrator data as a contributor role (same source
     already used for author verification) -- possibly near-bulk-

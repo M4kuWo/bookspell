@@ -8730,3 +8730,58 @@ like `tag-catalog-batch`'s Step 3 (though with a pool this small, that
 won't remotely fill a batch on its own -- more candidate discovery in
 a future session would be needed first if this catalog wants to build
 out Sub-task B further).
+
+## 2026-09-09 (later still): audiobook-editions skill, Sub-task B candidate discovery, continued -- 1 more real candidate (flagged), 5 more disqualifications
+
+Continued the same session's candidate discovery rather than moving to
+ingestion, since the pool was still thin. Checked ~8 more names.
+
+**1 more real candidate, but with a genuine scope ambiguity flagged
+rather than resolved**:
+- **The Left Right Game** (2020, QCode/Legion M, created by Jack
+  Anderson, produced by Tessa Thompson) -- no confirmed print
+  novelization found. Two real complications, not a clean pass:
+  (1) **Genre** is billed as "science fiction horror," and its plot
+  (paranormal investigators, cryptic entities) reads closer to horror
+  than this catalog's sci-fi/fantasy scope -- a judgment call, not an
+  automatic yes. (2) **Origin**: it started as Anderson's own short
+  story on Reddit's r/NoSleep before being expanded into a 10-episode
+  audio drama -- a real gray area on "no print/ebook edition exists
+  anywhere," since text of the original DID exist publicly first, even
+  though the audio drama is a substantially longer, different work.
+  Flagged both points rather than silently including or excluding.
+
+**5 more disqualifications, checked and confirmed NOT viable
+candidates** (again recorded so a future session doesn't re-research
+them):
+- **The Vela** (Yoon Ha Lee/Becky Chambers/S.L. Huang/Rivers Solomon)
+  -- has a real Kindle ebook edition on Amazon. Originally a Realm/
+  Serial Box production, not an Audible-commissioned Original either.
+- **The Bright Sessions** (Lauren Shippen) -- has a real 3-book print
+  series (The Infinite Noise, A Neon Darkness, Some Faraway Place)
+  published by Tor Teen. Started as an independent podcast, not an
+  Audible Original.
+- **Voyage to the Stars** (Ryan Copple) -- a Madison Wells Media/
+  Earwolf production, not an Audible Original, AND has a 4-issue IDW
+  comic adaptation.
+- **Heads Will Roll** (Kate McKinnon/Emily Lynne) -- a real Audible
+  Original with no print edition, but genre check failed: Audible
+  itself categorizes it as "Audio Scripted Comedy," not fantasy --
+  it's a royal-family satire that borrows fantasy trappings rather
+  than a genuine SFF narrative. Excluded on scope, not format.
+- **I'm From the Sun** (Morgan Taylor) -- a real Audible Original
+  musical audiobook, "Audible's #1 Kids audiobook of 2018," for ages
+  7+. Excluded on scope: children's musical content, not a
+  novel-shaped SFF narrative this catalog's adult/YA-adult scope fits.
+
+**Running total after two discovery passes this session**: 3 real
+candidates (The Salvation, Zero G, The Left Right Game), each with its
+own flagged open question (Zero G's MG age category, The Left Right
+Game's horror-vs-SFF genre fit and creepypasta-origin print
+ambiguity) rather than a clean yes. 8 disqualifications recorded with
+specific reasons so they aren't re-researched. This pool is genuinely
+small -- consistent with how hard real, unpadded candidate discovery
+has been all session (same pattern as GraphicAudio's Throne of Glass/
+Dresden Files thin-batch findings). Ingestion, if it happens, should
+wait for the repo owner's call on the two flagged scope questions
+rather than defaulting to including or excluding either title.
