@@ -9105,3 +9105,92 @@ asks an agent to apply a hosted migration, rather than relying on
 imply the tracking table gets updated too -- it doesn't, those are two
 separate things.
 
+## 2026-09-09 (later still): worldbuilding_delivery sweep batch 19 -- cut short by this session's web search cap
+
+Ran the `worldbuilding_delivery` half only of `tag-catalog-batch`'s Step 0
+priority batch (romance_tone is being tracked as a separate work item this
+session and was deliberately not touched). Live candidate pool at session
+start: 400 books (`worldbuilding_density = 'dense'` and untagged for either
+`worldbuilding_woven_into_narrative` or `worldbuilding_via_exposition_dump`).
+
+**20 candidates got a real search attempt before this session's web search
+budget ran out** (same documented precedent as romance_tone batch 10 and
+the audiobook-editions skill's Step A2 batch 2 -- a real, expected stopping
+point, not a shortcut): the ASOIAF and Wheel of Time groups (A Clash of
+Kings, A Feast for Crows, A Dance with Dragons, A Crown of Swords,
+Crossroads of Twilight), the Dresden Files group (Blood Rites, Battle
+Ground, Changes, Dead Beat, Death Masks), Chapterhouse: Dune, Children of
+Dune, Caraval, A Drop of Corruption, plus 5 that yielded real tags below.
+Two more (Assassin's Quest, Between Two Fires) were queued but never
+actually searched -- the cap hit mid-batch. This is well short of the
+30-candidate target; reporting honestly rather than padding the count.
+
+**5 tagged, split across both directions and both confidence tiers** (see
+`20260909110000_worldbuilding_delivery_sweep_batch19.sql` for full
+per-book reasoning in the migration comment):
+- **Blood of Elves** (Sapkowski) -> `worldbuilding_woven_into_narrative`,
+  0.6 -- reviews describe a specific in-scene example (Geralt explaining
+  an elf/human war's history to Ciri at a ruin, mid-scene) and contrast
+  this favorably with material other fantasy "throws at the beginning."
+- **Baptism of Fire** (Sapkowski, same series, 2 books later) ->
+  `worldbuilding_via_exposition_dump`, 0.6 -- reviews of this specific
+  later book describe "plodding and info-dumping sections" where "the
+  story came to a standstill as all the politics were divulged" and
+  Ciri's entire bloodline history "is even explained." A real, book-
+  specific split within the same series/author -- not a contradiction,
+  a craft shift between books 1 and 3.
+- **Ancillary Mercy** (Leckie) -> `worldbuilding_woven_into_narrative`,
+  0.6 -- reviews describe the Radch worldbuilding (Radchaai pronoun
+  convention, tea culture) emerging through "narrative perspective,
+  language choices" rather than exposition; somewhat series-general
+  rather than book-3-specific, but real and mechanism-specific.
+- **A Desolation Called Peace** (Martine) ->
+  `worldbuilding_woven_into_narrative`, 0.2 (disputed) -- most reviews
+  describe it as "narration-heavy yet exposition-light," imperial detail
+  left "to be shown but more rarely explained," avoiding "an intense
+  crash course" -- but one reviewer directly disagrees, describing the
+  same book as "talking the plot to death." Genuine split, recorded
+  rather than forced to either full confidence or skipped.
+- **Altered Carbon** (Morgan) -> `worldbuilding_via_exposition_dump`, 0.2
+  (disputed) -- reviews split between "exposition takes over character
+  development" and reads "dry," versus tech/lore "explained through
+  Kovacs' voice" blending into character narration rather than external
+  telling.
+
+**Skipped (evidence too generic, not delivery-mechanism-specific)**: the
+ASOIAF and Wheel of Time books searched (real discourse found, but about
+plot pacing/political-content volume, not HOW the lore is delivered), the
+5 Dresden Files books (discourse describes magic-system internal
+consistency, not delivery mechanism), Chapterhouse: Dune/Children of Dune
+(dialogue-heavy philosophical monologues, but too ambiguous between
+in-scene delivery and lecture-via-mouthpiece to call either way), Caraval
+(no delivery-specific discourse found at all), A Drop of Corruption (real
+worldbuilding praise, nothing about delivery mechanism).
+
+Author fields checked against Hardcover-style contamination for all 5
+tagged books -- all single, genuine authors (Sapkowski x2, Leckie,
+Martine, Morgan), no translator/illustrator contamination.
+
+**Density self-check**: this batch only adds tropes to already-tagged
+books (no new `book_dna` rows), so the normal catalog-wide density gate
+doesn't apply the same way -- instead, per the skill's own guidance for
+this specific sweep, checked direction/confidence balance: 3 tagged
+`worldbuilding_woven_into_narrative` (2 at 0.6, 1 at 0.2) vs. 2 tagged
+`worldbuilding_via_exposition_dump` (1 at 0.6, 1 at 0.2) -- both
+directions represented, and 2 of 5 genuinely disputed at 0.2 rather than
+a suspiciously clean 100% at 0.6.
+
+Counts before -> after: `worldbuilding_woven_into_narrative` 64 -> 67,
+`worldbuilding_via_exposition_dump` 52 -> 54 (116 -> 121 total). **Fresh
+remaining-pool count: 395** (400 at session start minus the 5 now
+tagged).
+
+Tested in a rolled-back transaction first (with an idempotent re-run
+check via `on conflict do nothing`), applied directly to hosted, then
+applied for real via `supabase db push --db-url "$DATABASE_URL" --yes`
+(not just a raw psycopg2 commit -- learning from this same session's
+earlier migration-tracking-gap incident above). Verified with
+`supabase migration list --db-url` (20260909110000 shows both `local`
+and `remote`) and a follow-up `db push --dry-run` reporting "Remote
+database is up to date." Row counts confirmed matching before pushing.
+

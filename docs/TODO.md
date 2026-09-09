@@ -251,17 +251,26 @@ worth deferring to a later session rather than batching in for
 - [ ] **Continue the romance_tone/worldbuilding_delivery tagging
   sweep** -- as of 2026-09-07 end-of-session: romance_tone batch 19,
   worldbuilding-delivery batch 16 done (~136 romance_tone candidates
-  and ~399 worldbuilding candidates remain). Remember the mandatory
-  density self-check (CLAUDE.md) before ending any batch session.
+  and ~399 worldbuilding candidates remain). **Worldbuilding-delivery
+  update, 2026-09-09: batch 19 done, 395 worldbuilding candidates
+  remain** (see project-log.md's 2026-09-09 "worldbuilding_delivery
+  sweep batch 19" entry) -- cut short by that session's web search cap
+  after only 20 of a planned 30+ candidates got a real search attempt
+  (5 tagged: 3 `worldbuilding_woven_into_narrative`, 2
+  `worldbuilding_via_exposition_dump`); a lower hit rate than recent
+  batches (5/20 vs. the usual ~5-6/6-8), though likely explained by
+  this batch's series-heavy candidate mix (ASOIAF, Wheel of Time,
+  Dresden Files all yielded real-but-too-generic discourse, not clean
+  delivery-mechanism-specific evidence) rather than confirmed pool
+  depletion -- worth watching over the next batch or two, not yet a
+  process change. Remember the mandatory density self-check (CLAUDE.md)
+  before ending any batch session.
   **For romance_tone specifically, default to a broad search + targeted
   follow-up per candidate (not a single search)** -- see
   project-log.md's 2026-09-07 session-wrap-up entry: the easy,
   heavily-reviewed candidate pool is depleting, single searches are
   increasingly landing nothing usable or (once, caught) misattributing
   a quote to the wrong romance pairing in a book with more than one.
-  worldbuilding-delivery isn't showing this depletion yet -- single
-  searches there are still landing 5-6 clean tags routinely, no process
-  change needed for that pool for now.
 - [x] **Catalog tagging completion -- DONE as of 2026-09-09.** 871
   books total (2 down from 873 -- see next paragraph), only 10
   untagged -- see project-log.md's 2026-09-09 "catalog tagging batch
