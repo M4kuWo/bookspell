@@ -233,11 +233,20 @@ worth deferring to a later session rather than batching in for
      real Tor novelization). **The Salvation was already clean.** All
      3 candidates are now confirmed IN, ready for ingestion+tagging --
      no more open scope questions blocking this pool.
-     **Next**: either more candidate discovery (3 confirmed candidates
-     still won't fill a real ingestion batch on their own), or ingest+
-     tag the 3 confirmed ones now, following `tag-catalog-batch`'s
-     Step 3 conventions (normal 15-20/session batches, though this
-     pool is smaller than that).
+     **All 3 ingested and tagged 2026-09-09** -- The Salvation, Zero G,
+     and The Left Right Game are now real catalog entries with full
+     Book DNA, tropes, content warnings, and their own
+     `audiobook_editions` row (`edition_type: dramatized_full_cast` --
+     the skill doc's suggested `'audio_original'` value turned out not
+     to be in the actual check constraint, caught by testing before
+     applying). Real correction found during research: Zero G has 2
+     sequels (Dragon Planet, Stargazer) not surfaced during discovery,
+     so it's `narrative_closure: requires_series`. `books` 871 -> 874,
+     `book_dna` 861 -> 864, `audiobook_editions` 94 -> 97. Full detail
+     in project-log.md's "ingested the 3 confirmed Audible Originals"
+     entry. **Next**: more Sub-task B candidate discovery (this pool is
+     exhausted for now) whenever there's appetite to grow it further --
+     not urgent.
   - Open sub-question, not yet checked: whether Hardcover's API exposes
     standard-edition narrator data as a contributor role (same source
     already used for author verification) -- possibly near-bulk-

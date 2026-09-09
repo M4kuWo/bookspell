@@ -9322,3 +9322,59 @@ unpublished sequels), not a real backlog. This closes the
 catalog-tagging-completion TODO item for real, not just "no big gaps
 left" -- there are now zero real untagged standalone books in the
 catalog.
+
+## 2026-09-09 (later still): ingested the 3 confirmed Audible Originals -- Sub-task B's first real content
+
+Ingested and fully tagged the 3 confirmed Sub-task B candidates from
+earlier today (both open scope questions already resolved by the repo
+owner): **The Salvation** (Justin Lockey, 2023, 8-part time-travel
+sci-fi thriller), **Zero G** (Dan Wells, 2018, middle-grade sci-fi
+caper, The Zero Chronicles #1 of 3), **The Left Right Game** (Jack
+Anderson/QCode/Legion M, 2020, sci-fi horror -- alternate-reality/
+interdimensional mechanism confirmed as the real sci-fi core, not just
+horror trappings).
+
+Researched cast, runtime, plot, and series status for each via web
+search rather than relying on the earlier discovery-phase summaries
+alone. **One real correction found during this deeper pass**: Zero G
+DOES have sequels (Dragon Planet, 2021; Stargazer, 2022) -- the
+discovery phase hadn't surfaced this, so `narrative_closure` is
+`requires_series`, not self-contained as might have been assumed.
+
+**A real schema-value catch before applying anything**: the skill's
+own docs suggested `audiobook_editions.edition_type = 'audio_original'`
+as a possible value, but the ACTUAL check constraint doesn't include
+it -- only `standard`/`dramatized_full_cast`/`abridged`/`other`. Used
+`dramatized_full_cast` instead (the correct existing value for a
+full-cast audio drama); `books.work_type = 'audio_original'` is the
+right field for the audio-only-no-print fact, a different column
+entirely. Caught by actually testing the migration in a transaction
+first rather than trusting the skill doc's suggestion at face value.
+
+**Also caught and fixed before applying**: the `insert into books`
+statements had no idempotency guard (no unique constraint on
+title+author to `on conflict` against) -- added a `where not exists`
+guard to each, verified genuinely idempotent by running the full
+migration twice in the same test transaction and confirming the books
+count didn't change the second time.
+
+Given how much real ambiguity these original, less-documented audio
+dramas carry (no print reviews to cross-check against, unlike a
+regular novel), flagged considerably more fields via
+`book_field_confidence` than a typical tagging pass -- this is
+expected for this content type, not a shortcut.
+
+`form: script_or_stage_play` used for all three (full-cast dramatized
+scripts, not literary prose) -- `prose_density`/`prose_complexity`
+left NULL as inapplicable for the same reason, consistent with the
+skill's own guidance.
+
+Verified: tested in a rolled-back transaction first (including the
+idempotency re-run check), applied to both local and hosted via
+`supabase db push`, confirmed live on hosted via REST (genre, cast,
+edition_type all correct). Migration
+`20260909130000_ingest_audible_originals.sql`. `books` 871 -> 874,
+`book_dna` 861 -> 864, `audiobook_editions` 94 -> 97.
+
+Sub-task B now has real content in the catalog for the first time,
+not just confirmed candidates waiting on a decision.
