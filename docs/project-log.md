@@ -9194,3 +9194,49 @@ earlier migration-tracking-gap incident above). Verified with
 and `remote`) and a follow-up `db push --dry-run` reporting "Remote
 database is up to date." Row counts confirmed matching before pushing.
 
+## 2026-09-09 (later still): worldbuilding_delivery sweep batch 20 -- zero researched, session's web search budget was already exhausted before this batch started
+
+Attempted the `worldbuilding_delivery` half of `tag-catalog-batch`'s
+Step 0 priority batch, same as batch 19 (`romance_tone` untouched, a
+separate work item). Prepared a 40-title candidate pool (Clockwork
+Angel through Feet of Clay, alphabetically continuing from batch 19),
+confirmed the live untagged-for-either-trope pool was still 395 at
+session start (matches batch 19's closing count), and checked the two
+flagged author fields per this session's instructions: **Doomsday
+Book**'s stored author is `"Connie Willis, Daniel Dos Santos"` --
+Daniel Dos Santos is a cover illustrator, a genuine case of the
+recurring author-field contamination CLAUDE.md documents, flagged here
+rather than fixed (fixing it is out of scope for this trope-only
+batch). **Fantastic Beasts and Where to Find Them**'s stored author is
+`"Newt Scamander, J.K. Rowling"` -- expected, not contamination (the
+in-universe pseudonym credit, per the task's own note). Also found two
+titles stored with non-obvious exact strings that a naive title match
+would miss: `Dawn ` (Octavia Butler) has a trailing space, and Heather
+Fawcett's second Emily Wilde book is stored with a curly apostrophe
+(`Emily Wilde’s Map of the Otherlands`, U+2019) rather than a
+straight one.
+
+**Before researching a single candidate, every `WebSearch` call
+(including a bare connectivity-check query) returned "this session has
+used its web search budget (200 of 200 WebSearch calls)"** -- the
+budget was already fully consumed session-wide before this batch's own
+research began (presumably by other work earlier in this same shared
+session), not exhausted partway through this batch's own searching the
+way batch 19's cap was. This is the same class of genuine, expected
+stopping point already documented twice this project (batch 19's own
+entry above, romance_tone batch 10, and the audiobook-editions skill's
+Step A2 batch 2) -- confirmed with a second bare test query rather than
+assumed transient. Per this batch's own evidence standard ("ground
+every tag in REAL, FINDABLE web-search evidence... generic
+complexity/density praise is NOT evidence"), tagging any of these 40
+from memory alone without a real search is exactly the over-pattern-
+matching failure mode CLAUDE.md warns about (Dungeon Crawler Carl and
+Empire of Silence are the two standing examples) -- so **zero
+candidates were researched or tagged this session**, and none of the
+40 titles should be treated as "checked and found nothing" the way
+batch 19's skip list can be; they're simply un-attempted. **Fresh
+remaining-pool count: unchanged at 395** -- no data changed, so no
+migration file this batch. The 40-title candidate list from this
+session's task prompt (Clockwork Angel ... Feet of Clay) is the
+starting point for whoever runs batch 20 for real next.
+

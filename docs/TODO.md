@@ -265,6 +265,17 @@ worth deferring to a later session rather than batching in for
   depletion -- worth watching over the next batch or two, not yet a
   process change. Remember the mandatory density self-check (CLAUDE.md)
   before ending any batch session.
+  **Batch 20 attempted 2026-09-09, zero progress: the session's web
+  search budget was already fully exhausted (200 of 200 used) before a
+  single candidate could be researched** -- see project-log.md's
+  2026-09-09 "worldbuilding_delivery sweep batch 20" entry. No tags
+  applied, no migration, pool still 395. The prepared 40-title candidate
+  list (Clockwork Angel through Feet of Clay) is ready for the next
+  session to actually search against; two author-contamination/exact-
+  title-string notes were logged for whoever picks it up (Doomsday
+  Book's stored author includes cover illustrator Daniel Dos Santos;
+  "Dawn " has a trailing space and Emily Wilde's Map of the Otherlands
+  uses a curly apostrophe in its stored title).
   **For romance_tone specifically, default to a broad search + targeted
   follow-up per candidate (not a single search)** -- see
   project-log.md's 2026-09-07 session-wrap-up entry: the easy,
