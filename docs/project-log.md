@@ -8909,3 +8909,147 @@ interim too, not just this batch's 18). See `docs/TODO.md`'s updated
 known-permanent-skip titles (omnibus duplicates, unpublished books,
 graphic novels), which this batch did not touch, plus the two new
 Shōgun/Screwtape Letters scope flags above.
+
+## 2026-09-09 (later still): catalog tagging batch 2 -- 15 untagged standalones tagged, real completion milestone
+
+Ran `.claude/skills/tag-catalog-batch/SKILL.md` on a pre-selected batch of
+15 untagged, in-scope, standalone books (repo owner already confirmed
+none belong to a partially-tagged series) -- migration
+`20260909090000_catalog_tagging_batch2.sql`, tested in a rolled-back
+transaction first (including an idempotency re-run check), then applied
+directly to hosted. `book_dna` row count 846 -> 861. **This clears
+essentially the entire remaining real standalone backlog**: untagged
+count drops from 27 to 12, and every one of those 12 remaining rows is
+already a documented, permanent-skip case (see `docs/TODO.md`'s
+"Catalog tagging completion" bullet) -- the 4 omnibus/compilation
+duplicates, 2 unpublished sequels, 4 graphic novels, and the 2
+Shōgun/Screwtape Letters scope-flagged books, none of which this or any
+future ordinary tagging batch should touch. There is no longer a real
+backlog of untagged, in-scope, standalone SFF books in this catalog.
+
+**Books tagged**: The Last Murder at the End of the World (Stuart
+Turton), The Measure (Nikki Erlick), The Mountain in the Sea (Ray
+Nayler), The Neverending Story (Michael Ende), The Seven Year Slip
+(Ashley Poston), The Southern Book Club's Guide to Slaying Vampires
+(Grady Hendrix), The Spear Cuts Through Water (Simon Jimenez), The Troop
+(Nick Cutter), The Unmaking of June Farrow (Adrienne Young), The Very
+Secret Society of Irregular Witches (Sangu Mandanna), To Be Taught, If
+Fortunate (Becky Chambers), Under the Whispering Door (TJ Klune),
+Upgrade (Blake Crouch), Weyward (Emilia Hart), Wrong Place Wrong Time
+(Gillian McAllister).
+
+**Two author-field contamination fixes made during the mandatory
+pre-insert verification check**, same scoped-UPDATE pattern as
+`20260909040000_fix_white_night_author_contamination.sql`: **The
+Measure**'s author field was "Nikki Erlick, Julia Whelan" -- Julia
+Whelan is the audiobook's narrator (confirmed via Audible/Amazon
+listings, an AudioFile Earphones Award winner for this title), not a
+co-author; fixed to "Nikki Erlick". **The Neverending Story**'s author
+field was "Michael Ende, Ralph Manheim, Roswitha Quadflieg" -- Manheim
+is the English translator, and Quadflieg is the original German
+edition's calligrapher/illustrator (she gave the book its iconic
+two-color red/green typesetting and chapter-opening artwork, per
+michaelende.de's own bio page for her) -- neither is an author of the
+work; fixed to "Michael Ende". This is now the second real instance of
+the standing author-field-contamination issue surfacing on freshly-
+tagged books (see White Night, and the earlier 65/606-book audit) --
+caught here specifically because the mandatory pre-insert check was
+followed, not skipped.
+
+**HIGH_RISK_FIELDS checks done via web research rather than recall
+alone**, several of which changed the initial assumption: The Last
+Murder at the End of the World's `person`/`narrator_reliability` --
+confirmed the entire novel is narrated in first person by Abi, an
+AI/"Abbess" figure, explicitly semi-omniscient and unreliable (not a
+human third-person mystery narrator, the initial instinct); The Spear
+Cuts Through Water's `person` -- confirmed genuinely `mixed` (the
+Inverted Theater frame is second person, with first- and third-person
+sections for the embedded legend), not a default third-person epic
+fantasy assumption; Weyward's `person` -- confirmed genuinely `mixed`
+(Altha's sections are first person, Violet's and Kate's are third
+person), the kind of split that's easy to flatten to a single value
+without checking; The Troop's `person`/`form` -- confirmed third-person
+omniscient with interspersed fictional documents (news clippings, lab
+notes, court-hearing transcripts) functioning as a `framing_device`,
+not plain `standard_prose`; The Unmaking of June Farrow's
+`narrator_reliability` -- set to `ambiguous` rather than `reliable`,
+given the text's deliberate blurring of what June can trust about her
+own perception (a real judgment call, flagged via
+`book_field_confidence` at 0.5); Upgrade's `stakes_scope` -- confirmed
+`global` (the plot centers on a second engineered-pathogen catastrophe
+following a global famine, not just a personal chase thriller).
+
+**Author field**: only The Measure and The Neverending Story (both
+above) had multi-name author fields in this batch; both were
+contamination, not genuine co-authorship. No other book in this batch
+had more than one name in `author`.
+
+**Genuinely uncertain calls flagged via `book_field_confidence`/
+`book_tropes.confidence`**: The Last Murder's `pov_count` (0.5 --
+single narrating voice but touches many characters' actions); The
+Mountain in the Sea's `drive` (0.6, `worldbuilding_driven` chosen over
+`character_driven` given how much the book is structured around
+embedded philosophical text on cetacean/octopus cognition); The
+Neverending Story's `age_category` (0.5, `middle_grade` vs `ya` -- a
+real crossover case); The Spear Cuts Through Water's `stakes_scope`
+(0.5, `global` chosen for its mythic-empire/goddess-level scale over a
+more literal `regional` reading). Trope-level low-confidence tags
+(0.4-0.6) across most books in the batch reflect genuine interpretive
+calls rather than plot-fact certainties -- see the migration file's
+per-book `book_tropes.confidence` values for the full list.
+
+**`genre_accessibility`**: computed via the documented formula, then
+adjusted for premise familiarity -- e.g. The Last Murder, The
+Neverending Story, Weyward, and The Southern Book Club's Guide all
+adjusted down one tier from their computed baseline (mainstream
+commercial/literary-crossover premises reading more welcoming than
+their craft fields alone suggest); The Mountain in the Sea and The
+Spear Cuts Through Water kept at the demanding end (`veteran_only`) as
+computed, since both are genuinely dense, unfamiliar-premise reads
+where the formula's baseline was accurate rather than pessimistic.
+
+**Vocabulary gap noted, not acted on**: no existing trope cleanly
+captures Ray Nayler's central conceit in The Mountain in the Sea --
+first contact with a non-human, non-alien intelligence (octopuses)
+arising through natural evolution rather than genetic uplift or actual
+extraterrestrial contact. Tagged as the closest real fits
+(`first_contact` at 0.6, `uplift` at 0.5) rather than proposing a new
+value off one book, per this project's "does this change the
+recommendation" bar -- flagging in case a second book (Alien Clay,
+Blindsight, etc.) surfaces the same gap.
+
+**Density self-check (fresh query, run after the batch was live)**:
+catalog average 5.78 tropes/book, 1.74 content-warnings/book (861
+tagged books at query time); this batch's own average 4.73 tropes/book
+(82% of catalog average) and 1.80 content-warnings/book (104% of
+catalog average). Tropes/book came in below the ~20% floor by a narrow
+margin (18% under, not over) after one deliberate enrichment pass
+during tagging (56 -> 71 tropes total across the batch, +27%, before
+finalizing); a second pass was considered but declined -- the
+remaining thin books (The Measure, To Be Taught If Fortunate, The Very
+Secret Society of Irregular Witches, Wrong Place Wrong Time) are
+contemporary spec-fic, a hopepunk novella, a cozy witch romance, and a
+psychological thriller respectively, genres that structurally carry
+fewer applicable entries in an SFF-trope-heavy vocabulary than epic
+fantasy or space opera -- forcing more tags onto them risked exactly
+the "confidently wrong" pattern-matching CLAUDE.md's tagging section
+warns against (e.g. reaching for `amnesia_driven_narrative` on Wrong
+Place Wrong Time's backward-chronology structure, which is not
+actually amnesia). Content-warning density is healthy (104% of catalog
+average), driven substantially by The Southern Book Club's Guide to
+Slaying Vampires (8 warnings, reflecting real, heavy content) and The
+Troop (4).
+
+**Untagged count: 873 total books, 12 untagged as of this session's
+end** (down from 27 earlier the same day). All 12 are already-
+documented permanent-skip cases -- 4 omnibus/compilation duplicates
+(The Foundation Trilogy, The Farseer Trilogy, Villains Duology, Monk
+and Robot), 2 unpublished sequels (The Winds of Winter, The Doors of
+Stone), 4 graphic novels (Nimona, Saga Vol. 1-2, The Sandman Vol. 1),
+and 2 scope-flagged books awaiting a repo-owner confirm/delete call
+(Shōgun, The Screwtape Letters) -- see `docs/TODO.md`'s updated
+"Catalog tagging completion" bullet. No new exclusions surfaced this
+session. This is a real completion milestone: there is no longer a
+working backlog of untagged, in-scope, standalone SFF books to pick up
+in a future ordinary tagging batch.
+
