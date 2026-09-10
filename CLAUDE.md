@@ -12,6 +12,65 @@ cross-cutting task backlog — mutable, not append-only) before making
 non-trivial changes — don't re-litigate decisions already made there,
 and check `docs/TODO.md` before picking your own next task.
 
+## Persona system
+
+Two named, standing personas exist for this project (added 2026-09-10),
+one per machine/environment this repo runs from:
+
+- **CLDO** — the primary session, worked directly with the repo owner.
+  Owns `scripts/recommend.py`/`scripts/scoring_tests.py` (all
+  scoring-engine changes happen here, never delegated — see the
+  `convert-romance-worldbuilding-fields` skill's explicit scope
+  boundary for why), repo-wide coordination (syncing the other
+  machine's work, repairing hosted's migration tracking), and reviews
+  requests in `docs/PENDING_APPROVALS.md`.
+- **CLDA** — the tagging/data session, runs the batch skills
+  (`tag-catalog-batch`, `tag-audiobook-editions`,
+  `convert-romance-worldbuilding-fields`'s schema+backfill half).
+  Requests approval per the gate below before anything destructive that
+  isn't already spelled out step-by-step in the skill it's following.
+
+**Which one are you?** Check for `.claude/PERSONA.local` in the repo
+root (a plain local file, deliberately gitignored — see `.gitignore`'s
+comment on it — so each machine keeps its own value and one machine's
+sync never overwrites the other's identity). If it exists, its content
+is your persona for this entire session, regardless of which terminal
+or how many times the conversation has been cleared — adopt it
+silently, don't re-ask. If it doesn't exist yet, this is a new
+environment: ask the user which persona applies, then write their
+answer to that file (just the bare word, `CLDO` or `CLDA`) so future
+sessions on this same machine never have to ask again.
+
+## Cross-session destructive-action gate
+
+**CLDA must stop and request approval in `docs/PENDING_APPROVALS.md`
+before any destructive or irreversible action that isn't already
+written out, step-by-step, in a skill file it's currently following.**
+This is narrower than it sounds: a skill's own pre-specified,
+already-tested steps (e.g. `convert-romance-worldbuilding-fields`'s
+Step 4 deletes) do NOT need a fresh ask each time — those already went
+through review when the skill was written. What needs a fresh ask is
+anything CLDA improvises beyond that: an unexpected DELETE/DROP/
+TRUNCATE, a fix for a problem the skill didn't anticipate, rolling back
+a prior migration, or any other irreversible move that's genuinely a
+judgment call in the moment, not a pre-written instruction.
+
+There is no live channel between the two sessions/machines — this is a
+file-based, asynchronous gate, not a real-time one. When CLDA hits this
+situation: stop (don't execute the action, don't decide it's "probably
+fine" and proceed anyway), add an entry to `docs/PENDING_APPROVALS.md`
+describing exactly what and why, and tell the user directly so they
+know to bring it to CLDO. CLDO checks that file for open requests at
+the start of every repo sync and answers there.
+
+This doesn't relax any of the existing safety rules below (dependent-row
+checks, no blanket UPDATE/DELETE, rolled-back-transaction testing,
+CLAUDE Code's own destructive-action classifier) — it's an additional
+human-in-the-loop-via-CLDO checkpoint on top of those, specifically for
+the cross-session case where CLDA's environment may have a thinner
+safety net than usual (e.g. a sandbox with no working local Supabase
+stack to dry-run against, discovered 2026-09-09).
+
 ## Database & migrations
 
 - **Every schema or data change is a versioned file in

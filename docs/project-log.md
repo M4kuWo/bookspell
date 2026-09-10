@@ -9537,3 +9537,49 @@ this choice on future migrations by default -- CLAUDE.md's "apply to
 both, verify they match" rule still holds for any environment where
 local actually works; this is specific to this sandbox never having had
 a working local stack in the first place.
+
+## 2026-09-10: cross-session personas (CLDO/CLDA) + a destructive-action approval gate
+
+Repo owner asked for two things after checking in on the other
+session's progress: clear, unambiguous aliases for the two Claude
+sessions to make cross-session communication (commit messages,
+project-log entries) legible about who did what, and an explicit
+requirement that the tagging/data session ask the primary session for
+permission before anything destructive, rather than deciding alone.
+
+Context for why this landed now, not earlier: the other session's
+sandbox turned out to have no working local Supabase stack at all (see
+the 2026-09-09 "local-bootstrap gap" entries) -- it handled that
+correctly (stopped, flagged it, got explicit sign-off before proceeding
+hosted-only rather than forcing a fix), but it's a real example of that
+session sometimes operating with a thinner safety net than the primary
+one, which is exactly the situation this gate is for.
+
+**Personas**: CLDO (primary session, owns recommend.py/scoring_tests.py
+and repo-wide coordination) and CLDA (tagging/data session, runs the
+batch skills). Considered the repo owner's original "clod0/clod4"
+proposal -- differ by one character (0 vs 4), which risks exactly the
+kind of misread this is meant to prevent -- proposed alternatives, repo
+owner picked CLDO/CLDA (the -O/-A ending distinction mirrors the actual
+Claudio/Claudia phonetic difference directly, much harder to
+misread than a digit swap).
+
+**Persistent identity across cleared terminals/new sessions**: solved
+via a gitignored per-machine marker file, `.claude/PERSONA.local` --
+NOT synced (syncing it would let one machine's pull silently overwrite
+the other's identity). CLAUDE.md's new "Persona system" section
+instructs checking for this file at the start of every session; if
+present, adopt it silently; if absent (a new environment), ask the
+user and write the answer there so future sessions on that machine
+never have to ask again. Created this machine's copy (`CLDO`).
+
+**Destructive-action gate**: CLDA must stop and request approval in
+the new `docs/PENDING_APPROVALS.md` before any destructive/irreversible
+action that isn't already spelled out step-by-step in a skill file it's
+following -- deliberately narrower than "ask before every delete," so
+already-reviewed skill steps (e.g. the romance/worldbuilding
+conversion's own Step 4) don't need a redundant re-ask each time. No
+live channel exists between the two sessions, so this is file-based and
+asynchronous: CLDA writes the request and stops, tells the user
+directly so they know to bring it to CLDO, and CLDO checks the file at
+the start of every repo sync.

@@ -15,3 +15,9 @@ tools/dogfood/.venv/
 
 # Claude Code runtime state (not project content)
 .claude/scheduled_tasks.lock
+
+# Per-machine persona marker (see CLAUDE.md's "Persona system") --
+# deliberately NOT synced: each machine/session environment sets its
+# own value locally, syncing it would make one machine overwrite the
+# other's identity on every pull.
+.claude/PERSONA.local
