@@ -314,27 +314,36 @@ worth deferring to a later session rather than batching in for
   sweeps already tracked elsewhere in this file (romance_tone,
   worldbuilding delivery).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
-  -- ~200 of 343 series rows affected, root cause found 2026-09-08.**
-  `status` defaults to `'ongoing'` whenever Hardcover's `is_completed`
-  flag isn't explicitly `true` (including simply missing data);
-  `book_count` is Hardcover's raw per-series edition/omnibus/box-set
-  count, not a curated mainline-installment number. Doesn't affect
-  scoring at all (neither field is read by `scripts/recommend.py`) --
-  purely a `tools/catalog-review/` display bug, so no urgency pressure,
-  but real and visible to anyone browsing the tool. 5 specifically-
-  flagged series already fixed (see project-log.md's 2026-09-08 entry)
-  -- the other ~195+ would need real per-series verification (publication
-  status, a curated book count), which doesn't scale to a single
-  session. **Approach decided 2026-09-11**: option (a) from the
-  original three -- manually verify+fix the most-viewed/highest-profile
-  series first (same standard as the first 5: check real publication
-  status via search, don't just clear the display bug with a guess),
-  rather than (b) hunting for a better Hardcover endpoint (not
-  confirmed one exists) or (c) hiding the fields (loses real
-  information for the series that ARE already correct). Work in
-  bounded batches, same discipline as every other batch skill in this
-  project -- pick a reasonable batch size and stop-and-report, don't
-  try to clear all ~195 in one sitting.
+  -- root cause found 2026-09-08, batch 1 done 2026-09-11 (19 of ~200
+  series fixed so far).** `status` defaults to `'ongoing'` whenever
+  Hardcover's `is_completed` flag isn't explicitly `true` (including
+  simply missing data); `book_count` is Hardcover's raw per-series
+  edition/omnibus/box-set count, not a curated mainline-installment
+  number. Doesn't affect scoring at all (neither field is read by
+  `scripts/recommend.py`) -- purely a `tools/catalog-review/` display
+  bug, so no urgency pressure, but real and visible to anyone browsing
+  the tool. **Approach**: manually verify+fix the most-viewed/
+  highest-profile series first (real publication status via search,
+  never a guess), in bounded batches, stop-and-report each time.
+  **Batch 1 (2026-09-11)**: ranked candidates by our own catalog's
+  book-count-per-series (the available proxy for "highest-profile,"
+  since no direct popularity metric exists on `series` or via
+  Hardcover) -- top 15 by that ranking, all 15 verified via live search
+  before any value was written. 14 needed a real fix (6 completed
+  series wrongly marked ongoing: The Demon Cycle, Powder Mage, The
+  Lunar Chronicles, The Licanius Trilogy, The Red Queen's War, Arc of a
+  Scythe, Ender's Saga; 7 wrong `book_count` on genuinely-ongoing
+  series: Bobiverse, Red Rising Saga, The Murderbot Diaries, A Song of
+  Ice and Fire, The Kingkiller Chronicle, Crescent City, Dungeon
+  Crawler Carl). 1 (A Court of Thorns and Roses) was already correct.
+  Migration `20260911190000_fix_series_status_book_count_batch1.sql`.
+  Full detail, including one real search-reliability catch (an initial
+  Ender's Saga search returned internally contradictory/unreliable
+  results, re-verified with a cleaner query before trusting it), in
+  project-log.md's 2026-09-11 "series.status/book_count fix, batch 1"
+  entry. **Next**: re-rank remaining ~181 series by catalog book count
+  (excluding all 19 now-fixed) for batch 2 -- don't reuse this
+  session's candidate list, it's now stale.
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also
@@ -347,63 +356,127 @@ worth deferring to a later session rather than batching in for
   First Law/Mark Lawrence below) because the universe already existed
   with an official name -- no naming-policy decision needed.
 - [ ] **Catalog-wide shared-universe linking audit -- not urgent, but
-  needs to be done properly rather than one series at a time.** Only 2
-  `universe` rows exist (Cosmere, Middle-earth), but the First Law case
-  below is confirmed NOT to be the only gap (Cosmere itself had the
-  same gap, just fixed above, see checked item) -- the repo owner also
-  flagged (2026-09-08) that Mark Lawrence's books share one continuity
-  across FOUR of his series in this catalog: `The Broken Empire`
-  (Prince/King/Emperor of Thorns), `The Red Queen's War` (Prince of
-  Fools and sequels), `Book of the Ancestor` (Red Sister and sequels),
-  and `The Library Trilogy` (only book 1, *The Book That Wouldn't
-  Burn*, is in our catalog so far). Confirmed via direct query: none of
-  these 10 books have `universe_id` set. Unlike Cosmere/Middle-earth,
-  **there's no single official name for this shared world** (Lawrence
-  hasn't branded it the way Sanderson branded Cosmere) -- that's a real
-  wrinkle this audit needs a policy for, not just a data-entry task:
-  either find/confirm an informal name the author or fandom actually
-  uses, or accept a repo-chosen descriptive name (e.g. "The Broken
-  Empire World") and document that it's an internal label, not an
-  official one. Also surfaced in passing: at least one connected book
-  (*The Girl and the Stars*, Library Trilogy book 2) isn't in our
-  catalog yet at all -- same "real-world connection outruns our
-  ingestion" pattern as Sharp Ends below.
+  needs to be done properly rather than one series at a time -- First
+  Law and Mark Lawrence's two universes both DONE 2026-09-11, and the
+  audit's own first step found the real scope is 51 authors, not 2.**
 
-  **This needs a real audit, not a one-off fix**: group the catalog by
-  author (or by known cross-author shared settings, if any exist) and
-  check each author with 2+ series for whether they're actually
-  connected continuities vs. genuinely separate settings -- don't
-  assume connection just because it's the same author. Two known
-  starting cases below; there are very likely more not yet found.
-  Nothing here affects scoring (Series DNA/aggregation already works
-  off each book's own `series_id` directly, confirmed for First Law) --
-  this is a real-world-accuracy/display gap, hence not urgent, but a
-  genuine one worth doing right rather than patching individual
-  examples as they get noticed.
+  **First Law -- DONE.** Built "The First Law World" as a real
+  `universe` row (docs/schema/book-dna.md's own design doc example,
+  never actually implemented until now): `The First Law` and `The Age
+  of Madness` both link via `series.universe_id`; the 3 in-catalog
+  standalones (Best Served Cold, The Heroes, Red Country) link directly
+  (`series_id = null`) instead of living in the old ad-hoc pseudo-
+  series, which was deleted. **Sharp Ends ingested** (bibliographic
+  data only -- tagging is a separate follow-up, not done yet).
+  Migrations `20260911200000_first_law_universe.sql` and
+  `20260911210000_ingest_sharp_ends.sql`.
 
-  - **First Law**: a `universe` ("The First Law World") should contain
-    `The First Law` (real series) plus `The Age of Madness` (real
-    series) plus the 3-in-catalog-of-4-real standalones (Best Served
-    Cold, The Heroes, Red Country, and Sharp Ends -- a short story
-    collection not yet in our catalog) linking to the universe directly
-    with no series. Matches book-dna.md's own "universe/series/book"
-    design doc exactly -- just never implemented. Doesn't cross-
-    contaminate The First Law/Age of Madness's own correct series_ids.
-    **Sharp Ends should be ingested normally** (resolved 2026-09-08,
-    was flagged as a possible scope question) -- confirmed Arcanum
-    Unbounded and The Last Wish/Sword of Destiny (the same kind of
-    continuity-forward short-story collection) are already in our
-    catalog, already fully tagged as regular novels. This project has
-    already been treating this category as in-scope; add it via
-    normal ingestion, same as any other book.
-  - **Mark Lawrence**: see above -- 4 series (10 in-catalog books),
-    no official shared-world name, one known missing book (*The Girl
-    and the Stars*).
+  **Mark Lawrence -- DONE, but as TWO separate universes, not one --
+  a real correction the repo owner caught in this session's own
+  premise.** The original 2026-09-08 note (and this session's initial
+  assumption) wrongly grouped all 4 Lawrence series into one shared
+  world. Corrected: **The Broken Empire + The Red Queen's War** are
+  genuinely the same world (concurrent, same planet, confirmed via
+  search) -- linked as "The Broken Empire World" (the real press/
+  fandom name, "the Broken Empire," would collide with the existing
+  series name of the same name, so used the "World"-suffixed fallback
+  instead). **Book of the Ancestor's real connection is to Book of the
+  Ice** (a different, separate series, NOT to The Broken Empire or The
+  Library Trilogy) -- both set on the planet Abeth, no official branded
+  name beyond that (confirmed via search), so the universe is named
+  "Abeth" directly. Book of the Ice (3 books) wasn't in the catalog at
+  all -- **ingested AND fully tagged** (Book DNA, tropes, content
+  warnings, per tag-catalog-batch/SKILL.md's process; a HIGH_RISK_FIELD
+  catch along the way -- an initial search wrongly claimed book 1 was
+  first-person, a targeted follow-up search corrected it to third-
+  limited). Also corrected a second error: *The Girl and the Stars* is
+  Book of the Ice book 1, not Library Trilogy book 2 as the original
+  note assumed -- the Library Trilogy's real book 2 remains
+  unidentified. Migrations `20260911220000_broken_empire_universe.sql`,
+  `20260911230000_ingest_book_of_the_ice_and_abeth_universe.sql`,
+  `20260911240000_tag_book_of_the_ice.sql`. Full detail across two
+  2026-09-11 project-log.md entries.
 
-  Real fix for both: create the `universe` row(s), set `universe_id` on
-  every book in the continuity (standalones get `universe_id` with no
-  `series_id`, per the design doc), matching the Cosmere/Middle-earth
-  pattern already in use. Not done here -- flagged, not attempted.
+  **The audit's own first step (done 2026-09-11) found the real
+  scope**: grouped the whole catalog by author and checked every
+  author with 2+ series not yet linked to a universe -- **51 authors**
+  qualified originally, not just the 2 known starting cases.
+
+  **Batch 2 (2026-09-11, same day)**: repo owner asked to continue,
+  applying the Book of the Ancestor lesson explicitly -- verify with
+  specific, well-corroborated evidence, not a vague "shares a
+  universe" summary. Researched 6 candidates individually. Result: the
+  caution was warranted again -- **3 of them looked like obvious same-
+  author connections and were confirmed NOT connected** (Brandon
+  Sanderson's Skyward/The Reckoners -- explicitly separate from the
+  Cosmere per Sanderson's own FAQ; all 3 of N.K. Jemisin's major series
+  -- Broken Earth/Inheritance Trilogy/Great Cities, confirmed
+  independent; Ursula K. Le Guin's Earthsea/Hainish Cycle -- confirmed
+  via Le Guin's own words). **1 confirmed connected but judged too thin
+  to model**: Neil Gaiman's American Gods/Neverwhere -- real but
+  informal per Gaiman's own admission ("share a car park"), same tier
+  as Stephen King's Man in Black motif recurring across his catalog
+  without those books being "the same universe" as The Dark Tower (the
+  repo owner's own analogy, confirmed correct). **This is now a
+  standing policy for the rest of this audit: a cameo/thematic
+  reference isn't enough, it needs an actual structural connection**
+  (explicit merged continuity, or a recurring protagonist/plot across
+  books). **1 confirmed connected with strong evidence, built**: Isaac
+  Asimov's Foundation + Robot (explicitly merged by Asimov himself via
+  R. Daneel Olivaw, referenced directly in Foundation's Edge) --
+  "Foundation universe" (the real encyclopedic term). Also fixed a real
+  leftover gap: the `Elantris` series row itself never got
+  `universe_id` set despite its books already being correctly
+  Cosmere-tagged individually (confirmed safe -- unlike "Secret
+  Projects," which is genuinely mixed and correctly has no series-level
+  universe_id). Migrations `20260911250000_elantris_series_cosmere_
+  link.sql` and `20260911260000_foundation_universe.sql`. Full detail
+  in project-log.md's 2026-09-11 "shared-universe audit, batch 2"
+  entry.
+
+  **Stephen King checked 2026-09-11, confirmed NOT connected -- no
+  action.** Holly Gibney's continuity (Mr. Mercedes -> The Outsider ->
+  If It Bleeds -> Holly) is real but explicitly a SEPARATE, smaller
+  branch of King's mythology from the Dark Tower; The Green Mile's Dark
+  Tower connection is confirmed purely thematic/symbolic, no shared
+  characters; and Holly Gibney's own connected books (The Outsider, Mr.
+  Mercedes) aren't in our catalog at all regardless.
+
+  **George R.R. Martin checked 2026-09-11, confirmed connected --
+  built as "Westeros."** A Song of Ice and Fire, A Targaryen History
+  (Fire & Blood), and The Tales of Dunk and Egg (A Knight of the Seven
+  Kingdoms) are all officially the same Westeros continuity -- the
+  clearest, most explicit case checked in this whole audit. Named
+  after the in-world place itself (matching Middle-earth/Abeth), not a
+  flagship series title. Migration `20260911270000_westeros_universe.sql`.
+
+  **Robert Jackson Bennett checked 2026-09-11, confirmed NOT
+  connected.** Divine Cities and Founders Trilogy are explicitly
+  "entirely separate worlds and narratives"; Ana and Din Mysteries is
+  "a wholly original fantasy world" with no connection to either.
+
+  **Tracking note**: the raw "authors with 2+ series, universe_id
+  null" query does NOT shrink cleanly as authors get checked --
+  confirmed-negative authors correctly keep `universe_id: null`
+  forever, so they keep reappearing in that query. **Don't use a
+  single "N remain" count as a progress tracker -- use this explicit
+  list instead**:
+  - **Confirmed connected (built)**: Mark Lawrence (Broken Empire
+    World, Abeth), Isaac Asimov (Foundation universe), George R.R.
+    Martin (Westeros).
+  - **Confirmed NOT connected (don't re-research)**: Brandon Sanderson,
+    N.K. Jemisin, Ursula K. Le Guin, Neil Gaiman, Stephen King, Robert
+    Jackson Bennett.
+  - **A new, separate open question surfaced by this audit, not yet
+    checked**: Mark Lawrence's `Impossible Times` and `The Library
+    Trilogy` -- connected to EACH OTHER (a different question from the
+    already-resolved Broken Empire/Abeth work)?
+  - **Everyone else from the original 51-author list**: not yet
+    checked. Full detail across four 2026-09-11 project-log.md audit
+    entries. This audit's real hit rate so far: 3 of 10 checked
+    candidates confirmed genuinely connected, 7 confirmed NOT connected
+    -- treat every remaining candidate as more likely a false positive
+    than not until checked.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 

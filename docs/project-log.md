@@ -10128,3 +10128,382 @@ unstable. Zero effect on Osnat/Dandan/Gabriel. Repo owner reviewed the
 exact size and landed it anyway -- expected to self-correct as
 `romance_tone`/`worldbuilding_delivery` coverage grows, not a code
 problem. Full detail: scoring-test-protocol.md's 2026-09-11 entry.
+
+## 2026-09-11 (later still): series.status/book_count fix, batch 1 -- 14 series corrected
+
+Repo owner (via CLDO) left a direct handoff note pointing this session
+at the two ready P2 tasks; picked the `series.status`/`book_count` fix
+first since it had a settled approach and no open policy question
+(unlike the shared-universe audit's naming wrinkle).
+
+Selected the batch by ranking every `status='ongoing'` series (minus
+the 5 already fixed 2026-09-08) by how many books each has in our own
+catalog -- a cheap, available proxy for "highest-profile" since neither
+our schema nor Hardcover exposes a direct series-level popularity
+metric. Took the top 15 by that ranking.
+
+**Verified every single one via live search against real-world
+publication status before writing anything** -- no guessing, matching
+the 2026-09-08 standard exactly. 14 of 15 needed a real fix; A Court of
+Thorns and Roses was already correct (5 published, book 6 not out
+until Oct 2026) and needed no change, so isn't in the migration.
+
+**Real fixes landed**:
+- **Completed series wrongly marked `ongoing`** (6): The Demon Cycle
+  (5 books, done 2017), Powder Mage (3-book trilogy, done 2015 --
+  distinct from McClellan's separate "Gods of Blood and Powder" sequel
+  trilogy), The Lunar Chronicles (4 books), The Licanius Trilogy (3
+  books), The Red Queen's War (3 books), Arc of a Scythe (3-book
+  trilogy, "Gleanings" companion not counted), Ender's Saga (the
+  original 4-book "Ender Quartet," distinct from the later 5-book
+  "Ender Quintet" which adds a different book, Ender in Exile, not in
+  this catalog series).
+- **`book_count` wrong on genuinely still-ongoing series** (7): Bobiverse
+  (5->6, a 6th book published literally the day before this check,
+  2026-09-10, not yet in our catalog but real), Red Rising Saga (7->6,
+  the unpublished 7th book "Red God" confirmed still unfinished as of
+  March 2026), The Murderbot Diaries (7->8, matching our own catalog's
+  current 8 main-position rows through Platform Decay), A Song of Ice
+  and Fire (7->5, not counting the unpublished Winds of Winter), The
+  Kingkiller Chronicle (3->2, not counting the unpublished Doors of
+  Stone or the Slow Regard of Silent Things novella), Crescent City
+  (20->3, the raw count was clearly a Hardcover edition/format
+  artifact), Dungeon Crawler Carl (12->8, matching our catalog's
+  current 8 rows through A Parade of Horribles).
+
+One real ambiguity hit and resolved carefully rather than trusted at
+face value: an initial search on Ender's Saga returned internally
+contradictory results (conflating the 4-book Quartet with the 5-book
+Quintet, and citing a title -- "The Last Shadow" -- that doesn't match
+any real Card bibliography). Re-searched with a more targeted query
+before trusting it; confirmed the Quartet is a real, complete,
+self-contained 4-book set distinct from the Quintet addition.
+
+Migration `20260911190000_fix_series_status_book_count_batch1.sql` --
+every `update` scoped by series `name` (verified unique first, never a
+raw UUID), tested in a rolled-back transaction, applied via `supabase
+db push`, verified live on hosted, zero migration-tracking mismatches.
+
+**~180 series remain** (of the original ~195+ estimate, now closer to
+~181 after this batch). Next batch should re-rank by catalog book count
+again (excluding all 19 now-fixed series) rather than reusing this
+session's candidate list.
+
+## 2026-09-11 (later still): shared-universe linking audit -- First Law built, Sharp Ends ingested, and the audit surface is much bigger than the 2 known starting cases
+
+Started the second task from CLDO's handoff note. Ran the audit's own
+prescribed first step (group the catalog by author, check every author
+with 2+ series for connected-continuity vs. genuinely-separate
+settings) before touching anything -- found **51 authors with 2+ series
+not yet linked to any `universe`**, not just the 2 already-flagged
+cases (First Law, Mark Lawrence). Resolving all 51 requires real
+literary verification per author (which of these are genuinely one
+continuity vs. just the same author writing unrelated things) --
+clearly more than one sitting's worth of work, and not something safe
+to guess at scale. Logged the full list in docs/TODO.md rather than
+resolving or ignoring it silently.
+
+**Built "The First Law World" as a real `universe` row** -- the
+design doc's own example (docs/schema/book-dna.md's "Series &
+universe" section) that was flagged 2026-09-08 as never actually
+implemented. Confirmed no other foreign key references `series.id`
+besides `books.series_id` and `series.parent_series_id` before
+touching anything (checked directly, not assumed), and confirmed no
+other series row's `parent_series_id` pointed at the ad-hoc "First Law
+World" series before deleting it.
+
+- `The First Law` and `The Age of Madness` (the two real series) both
+  now link via `series.universe_id` -- their own `series_id`
+  membership is untouched, no cross-contamination.
+- The 3 in-catalog standalones (Best Served Cold, The Heroes, Red
+  Country) now link to the universe DIRECTLY (`series_id = null`,
+  `position_in_series = null`) -- they were never really "book 4/5/6"
+  of anything, that was the old ad-hoc series's own workaround.
+- The now-empty ad-hoc "First Law World" series row was deleted
+  (confirmed zero dependent books first).
+
+Migration `20260911200000_first_law_universe.sql`, tested in a
+rolled-back transaction, applied via `supabase db push`, verified live
+on hosted, zero migration-tracking mismatches.
+
+**Ingested Sharp Ends** (Joe Abercrombie, 2014) -- the one confirmed
+missing book in this continuity, resolved as in-scope 2026-09-08 (same
+category as Arcanum Unbounded/The Last Wish). Verified the author
+field clean against Hardcover's `cached_contributors` before inserting
+(Joe Abercrombie only, no contamination), per the mandatory ingestion
+policy. Bibliographic data only, per this project's standard
+ingest-then-tag split -- Book DNA tagging is a separate follow-up, not
+done here. Links directly to the new universe, no series_id, matching
+the 3 standalones. Migration `20260911210000_ingest_sharp_ends.sql`,
+same testing discipline, applied and verified. `books` 874 -> 875.
+
+**Mark Lawrence's naming question surfaced to the repo owner directly,
+not decided here** -- per the explicit instruction in CLDO's handoff
+note ("surface it, don't invent a name unilaterally"). Not resolved in
+this session; see the next log entry once an answer comes back.
+
+**Not started**: triaging the other 49 authors on the audit list, and
+Sharp Ends' own Book DNA tagging pass. Both logged as real, separate
+follow-ups in docs/TODO.md, not silently dropped.
+
+## 2026-09-11 (later still): Mark Lawrence's shared universes resolved -- a real correction to this audit's own premise, plus Book of the Ice ingested and tagged
+
+Repo owner answered the surfaced naming question directly, and in doing
+so corrected a real error in this audit's own research: the original
+2026-09-08 TODO note (and this session's own initial assumption) had
+Book of the Ancestor sharing a universe with The Broken Empire/The Red
+Queen's War. **Wrong** -- The Broken Empire and The Red Queen's War are
+genuinely the same world (concurrent timelines, same planet, different
+locations, confirmed via search as officially "the Broken Empire," with
+overlapping characters), but Book of the Ancestor's real connection is
+to a separate series, Book of the Ice, set on a different planet
+(Abeth) -- confirmed directly by the repo owner, who has read the
+books. Exactly the kind of "confidently wrong on a specific checkable
+detail" failure this project's own standing policy warns about, caught
+here by asking before executing rather than after.
+
+**Universe 1 -- The Broken Empire World (6 books, both real series)**:
+linked The Broken Empire and The Red Queen's War via series.universe_id.
+Naming: "the Broken Empire" is the real press/fandom name for this
+world, but using that exact string would collide with the existing
+"The Broken Empire" series name already in this catalog -- used "The
+Broken Empire World" instead (repo owner's own fallback), same "World"
+suffix pattern as First Law. Migration
+`20260911220000_broken_empire_universe.sql`.
+
+**Universe 2 -- Abeth (Book of the Ancestor + Book of the Ice)**: no
+official branded name exists for this shared setting beyond the
+planet's own name (confirmed via search -- informally "the Abeth
+universe"), so named it "Abeth" directly per the repo owner's own
+suggestion. Book of the Ice (3 books: The Girl and the Stars/The Girl
+and the Mountain/The Girl and the Moon) wasn't in the catalog at all --
+repo owner asked for it to be added AND tagged specifically so this
+connection could be made properly, rather than leaving Book of the
+Ancestor unlinked with no real partner series in-catalog.
+
+**Also corrected a second real error found during this**: the original
+audit note claimed *The Girl and the Stars* was Library Trilogy book 2.
+Verified via search: it's actually Book of the Ice book 1 -- a
+different book entirely. The Library Trilogy's real book 2 remains
+unidentified.
+
+**Ingested all 3 Book of the Ice books** (bibliographic data, author
+field verified clean first) and **fully tagged them** per
+tag-catalog-batch/SKILL.md's process. Research grounding on the
+HIGH_RISK_FIELDS, not pattern-matched: an initial general search on
+book 1's POV claimed first-person; a more targeted follow-up search
+(checking pronoun usage specifically) corrected this to third-person
+limited, single POV -- caught exactly the failure CLAUDE.md's
+HIGH_RISK_FIELDS policy exists for, on the very book this policy was
+being actively applied to. Confirmed via search that books 2-3 expand
+to multiple POV (Yaz plus at least Thurin and a third character named
+inconsistently across sources as "Quell"/"Quina") -- `pov_count: few`
+for both, with real residual naming uncertainty flagged via
+`book_field_confidence` rather than asserted as fully certain. Also
+confirmed via search: "bleak and vicious" tone escalating across the
+trilogy, no explicit sexual content across any of Lawrence's series,
+found-family/self-discovery themes, and (for book 3 specifically) a
+"self_contained," genuinely satisfying trilogy conclusion rather than
+requires_series.
+
+Fields without direct research evidence were reasoned from the
+well-evidenced fields and flagged via `book_field_confidence` at 0.5
+where genuinely uncertain, not asserted as equally solid -- per this
+project's confidence-layer convention. Density self-check passed: 5.0
+tropes/book and 2.67 content-warnings/book for this batch vs. the
+catalog's live average of 5.45/1.73.
+
+**A real idempotency bug caught before applying anything**: the
+`book_dna`/`book_tropes`/`book_content_warnings` inserts initially had
+no `on conflict` guard (tag-catalog-batch's own example migration
+doesn't need one, since it's normally run once per book, never
+re-run) -- but this migration's own rolled-back-transaction test
+re-run (CLAUDE.md's standing testing convention) surfaced a real
+`UniqueViolation` on the second pass. Added `on conflict (book_id) do
+nothing` / `on conflict (book_id, trope_id) do nothing` / `on conflict
+(book_id, warning_id) do nothing` to all three, re-tested clean.
+Migration `20260911240000_tag_book_of_the_ice.sql`.
+
+Also opportunistically fixed Book of the Ancestor's own
+`series.status`/`book_count` (was `ongoing`/7, should be `completed`/3,
+confirmed via search) while already touching that row for the universe
+link -- same display bug as docs/TODO.md's separate catalog-wide fix
+item, no reason to leave it wrong for that item's own future batch to
+rediscover.
+
+`books` 875 -> 878, `book_dna` 864 -> 867, `universe` 3 -> 5 (First Law
+World, The Broken Empire World, Abeth all real now, alongside Cosmere/
+Middle-earth). All 4 migrations from this entry tested in rolled-back
+transactions (with genuine idempotency re-runs, not just a single
+pass), applied via `supabase db push`, verified live on hosted, zero
+migration-tracking mismatches throughout.
+
+**Still open**: the other 49 authors on the shared-universe audit list,
+untouched by this session -- a real, separate, multi-session effort.
+
+## 2026-09-11 (later still): shared-universe audit, batch 2 -- Foundation universe confirmed, 4 real false positives caught before acting
+
+Repo owner asked to continue the audit, explicitly applying the lesson
+from the Book of the Ancestor mistake: verify with specific,
+well-corroborated evidence before proposing a link, not a vague
+"shares a universe" summary. Picked 6 candidates from the 51-author
+list and researched each individually rather than batch-assuming
+connection from author-grouping alone.
+
+**Confirmed NOT connected, despite superficially looking like the same
+"single author, multiple series" pattern -- no action taken, logged so
+these aren't re-investigated later**:
+- Brandon Sanderson's Skyward and The Reckoners -- confirmed via
+  Sanderson's own FAQ as explicitly separate from the Cosmere and from
+  each other (Spensa was originally conceived as a Cosmere character
+  but ported to a different universe once incompatible tech was
+  needed).
+- All 3 of N.K. Jemisin's major series (Broken Earth, Inheritance
+  Trilogy, Great Cities) -- confirmed independent, unrelated settings.
+- Ursula K. Le Guin's Earthsea and Hainish Cycle -- confirmed via
+  Le Guin's own words ("Earthsea definitely does not exist in the same
+  universe as the Hainish").
+
+**Confirmed connected but judged too thin to model -- a real,
+repo-owner judgment call, not a data question**: Neil Gaiman's American
+Gods/Neverwhere. Real, author-acknowledged connection, but by Gaiman's
+own admission an informal, non-committal one ("I think so, yes. Or at
+least they all share a car park"). Repo owner drew a direct, correct
+analogy to Stephen King's Man in Black/Crimson King motif recurring
+across his wider catalog (e.g. the cameo in From a Buick 8) without
+those books being "the same universe" as The Dark Tower -- the same
+distinction. **This is now a real, reusable policy for the rest of
+this audit: a cameo/thematic reference isn't enough on its own, it
+needs an actual structural connection** (an explicit merged
+continuity, or a recurring protagonist/plot across books) -- directly
+relevant to Stephen King's own entry on the 51-author list (Holly
+Gibney recurs as an actual protagonist across several King novels, a
+much stronger case than the Dark Tower's cameo-tier connections),
+which this session didn't get to.
+
+**Confirmed connected with strong, specific, author-confirmed
+evidence -- built as "Foundation universe"**: Isaac Asimov's Foundation
+(8 books) and Robot (3 books) series. Not a loose reference -- Asimov
+explicitly merged these starting with Foundation's Edge, retconning
+R. Daneel Olivaw (the Robot series' central character) as the secret
+founder of the Galactic Empire and the hidden guiding hand behind Hari
+Seldon's psychohistory. "Foundation universe" is the real, encyclopedic
+term for this continuity (matches the Wikipedia article title), not an
+invented label. Migration `20260911260000_foundation_universe.sql`.
+
+**Also fixed a real leftover gap from the 2026-09-08 Cosmere
+fix**: the `Elantris` series row itself never got `universe_id` set,
+even though both its books (The Emperor's Soul, The Hope of Elantris)
+were already correctly Cosmere-tagged at the book level. Confirmed safe
+to fix at the series level (unlike "Secret Projects," which is
+genuinely mixed -- The Frugal Wizard's Handbook is deliberately
+excluded from Cosmere -- so that series correctly stays without a
+series-level universe_id, not a bug). Migration
+`20260911250000_elantris_series_cosmere_link.sql`.
+
+`universe` now has 5 real rows (Cosmere, Middle-earth, First Law World,
+Broken Empire World, Abeth) plus Foundation universe = 6. All 2
+migrations from this batch tested in rolled-back transactions with
+genuine idempotency re-runs, applied via `supabase db push`, verified
+live on hosted, zero migration-tracking mismatches.
+
+**Still open**: 47 authors remain on the audit list (51 minus this
+batch's 4 resolved: Sanderson, Jemisin, Le Guin as confirmed-negative,
+Asimov as confirmed-positive; Gaiman and Elantris were bonus findings
+outside the original 6-candidate batch). Stephen King specifically
+flagged as a strong next candidate given today's new cameo-vs-
+structural-connection distinction.
+
+## 2026-09-11 (later still): shared-universe audit, Stephen King checked -- confirmed NOT connected, no action
+
+Repo owner asked to continue with Stephen King specifically, the
+strongest-flagged next candidate from batch 2 (Holly Gibney recurs as
+an actual protagonist across several King novels, a real structural
+pattern distinct from Dark Tower's cameo-tier connections to his wider
+catalog). Checked our actual catalog scope first: `Holly Gibney`
+(only "If It Bleeds" -- position 2, no book 1), `The Dark Tower` (all
+8 core books), `The Green Mile` (1 book, itself).
+
+Verified all three pairings via search rather than trusting the
+"Holly Gibney is a real recurring protagonist" fact alone to imply a
+connection to the OTHER two candidates specifically:
+
+- **Holly Gibney's continuity is real (Mr. Mercedes -> The Outsider ->
+  If It Bleeds -> Holly) but explicitly separate from the Dark Tower**
+  -- described directly as its own, smaller branch of King's wider
+  mythology: grounded, crime-focused, "few supernatural elements,"
+  contrasted specifically against Dark Tower's scale. Confirmed NOT
+  merged the way Asimov's Foundation/Robot are.
+- **The Green Mile's Dark Tower connection is confirmed purely
+  thematic/symbolic** (a "white vs. black force" parallel drawn by
+  fans/scholars) -- explicitly "no direct link... as there is with,
+  say, Salem's Lot," and no shared characters. Exactly the cameo tier
+  already ruled out for Gaiman.
+- **If It Bleeds' own real connection (to The Outsider/Mr. Mercedes) is
+  moot for this catalog** -- neither of those books exists here at
+  all, so there's nothing in our current catalog to link Holly Gibney
+  to, real continuity or not.
+
+**No universe built. All three stay as separate, unlinked series** --
+a confirmed-negative result, logged so King isn't re-investigated on
+this same basis later. No migration this entry.
+
+**46 authors remain** on the original 51-author audit list.
+
+## 2026-09-11 (later still): shared-universe audit -- Westeros confirmed, Robert Jackson Bennett confirmed NOT connected
+
+Repo owner asked to continue. Checked George R.R. Martin's A Song of
+Ice and Fire/A Targaryen History/The Tales of Dunk and Egg and Robert
+Jackson Bennett's Divine Cities/Founders Trilogy/Ana and Din Mysteries.
+
+**Confirmed connected -- the clearest, most explicit case checked in
+this whole audit**: A Song of Ice and Fire (6 books), A Targaryen
+History (Fire & Blood), and The Tales of Dunk and Egg (A Knight of the
+Seven Kingdoms) are all officially the same Westeros continuity -- Fire
+& Blood is an in-universe Targaryen history covering centuries before
+A Game of Thrones, Dunk and Egg is a direct prequel ~90 years before
+the main series (a young Aegon V Targaryen), both explicitly part of
+the same book-continuity canon, not a loose reference. Named the
+universe "Westeros" (the actual in-world place name), matching the
+existing Middle-earth/Abeth naming pattern rather than reusing a
+flagship series title (avoids the same collision problem The Broken
+Empire World's naming had to work around). Migration
+`20260911270000_westeros_universe.sql`.
+
+**Confirmed NOT connected**: Robert Jackson Bennett's Divine Cities and
+Founders Trilogy are explicitly described via search as "entirely
+separate worlds and narratives"; Ana and Din Mysteries (The Tainted
+Cup) is introduced as "a wholly original fantasy world" (a biopunk
+setting built on harvested titan-blood magic) with no connection
+mentioned to either of the other two. All 3 stay separate -- no
+action taken, logged so Bennett isn't re-investigated later.
+
+`universe` now has 7 real rows. Migration tested in a rolled-back
+transaction with a genuine idempotency re-run, applied via `supabase
+db push`, verified live on hosted, zero migration-tracking mismatches.
+
+**A tracking correction, caught while updating the count**: re-running
+the audit's own candidate query live shows 49 authors, not a cleanly
+decreasing number from 51. This is expected, not a bug -- confirmed-
+NOT-connected authors (Sanderson, Jemisin, Le Guin, Gaiman, King,
+Bennett) legitimately keep `universe_id: null` on their series, so they
+correctly keep reappearing in a query that just checks for that. A
+single "N remain" count is therefore not a reliable "how much work is
+left" tracker once negative findings accumulate -- **the real record
+of progress is the explicit checked-authors list below, not the raw
+query count**. Mark Lawrence also still appears in the live query,
+correctly -- his Library Trilogy + Impossible Times pairing was never
+actually checked against EACH OTHER (only against Broken Empire/Abeth),
+a genuinely new, not-yet-resolved question.
+
+**Authors checked so far, confirmed connected (built)**: Mark Lawrence
+(Broken Empire World, Abeth), Isaac Asimov (Foundation universe),
+George R.R. Martin (Westeros).
+**Authors checked so far, confirmed NOT connected (no action, don't
+re-research)**: Brandon Sanderson (Skyward/Reckoners vs. Cosmere), N.K.
+Jemisin (all 3 major series), Ursula K. Le Guin (Earthsea vs. Hainish),
+Neil Gaiman (American Gods/Neverwhere -- real but too thin to model),
+Stephen King (Holly Gibney/Dark Tower/Green Mile), Robert Jackson
+Bennett (all 3 series).
+**Not yet checked**: everyone else from the original 51, plus the new
+Mark Lawrence Library Trilogy/Impossible Times question.
