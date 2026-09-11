@@ -344,8 +344,11 @@ worth deferring to a later session rather than batching in for
   anything with no real SFF content for the repo owner rather than
   silently tagging or silently skipping it.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
-  -- root cause found 2026-09-08, batch 1 done 2026-09-11, batch 2 done
-  2026-09-12 (33 of ~200 series fixed so far).** `status` defaults to
+  -- root cause found 2026-09-08, batch 1 done 2026-09-11, batch 2 and
+  batch 3 done 2026-09-12 (50 of ~484 series fixed so far -- the
+  denominator grew a lot from the 2026-09-12 378-book/118-series
+  ingestion round, this isn't the catalog shrinking work).** `status`
+  defaults to
   `'ongoing'` whenever Hardcover's `is_completed` flag isn't explicitly
   `true` (including simply missing data); `book_count` is Hardcover's
   raw per-series edition/omnibus/box-set count, not a curated
@@ -400,10 +403,47 @@ worth deferring to a later session rather than batching in for
   a conditional "might write one" -- see project-log.md's 2026-09-12
   entry for the full reasoning and sourcing on all 14, plus a
   passing-flag note about the out-of-scope "Saga" series row (graphic
-  novel, left untouched). **Next**: re-rank remaining ~167 series by
-  catalog book count (excluding all 33 now-fixed across both batches,
-  plus batch 2's already-correct list above) for batch 3 -- don't reuse
-  either session's candidate list, both are now stale.
+  novel, left untouched).
+
+  **Batch 3 (2026-09-12)**: re-ran the ranking query excluding all 50
+  names checked across batches 1-2. The catalog's growth since batch 2
+  (the 378-book/118-series ingestion round, same day) meant almost
+  every top candidate by this ranking now only has 3-4 books currently
+  linked in our own catalog -- a much flatter tie than batches 1-2 saw,
+  worked in the order the query returned them. 17 needed a real fix (10
+  status fixes -- wrongly 'ongoing', confirmed completed with no
+  evidence of more coming: Takeshi Kovacs, The Selection, Red Queen,
+  The Scholomance, Themis Files, The Interdependency, The Infernal
+  Devices, Fitz and the Fool, Star Wars: The Thrawn Trilogy, The
+  Magicians; 7 book_count-only fixes, status already correct: Wayward
+  Pines, The Old Kingdom, Cradle, All Souls, The Liveship Traders,
+  Villains, A Series of Unfortunate Events). Zero already-correct
+  candidates found this round. Migration
+  `20260912400000_fix_series_status_book_count_batch3.sql` -- applied
+  to hosted directly by the agent (tested in a rolled-back transaction
+  first) but **not yet pushed via `supabase db push` and the branch not
+  yet merged to main**, same handoff-to-CLDO pattern as batch 2. Three
+  judgment calls flagged for visibility: Villains and All Souls both
+  correctly kept 'ongoing' on a confirmed-announced-but-not-yet-
+  published next book (Victorious, 2026-10-06; "The Falcon and the
+  Rose", no date yet) rather than counting an unpublished book or
+  wrongly flipping to 'completed'; The Old Kingdom kept 'ongoing' on
+  *absence* of a completion statement plus Nix's history of returning
+  to the series after multi-year gaps, not a positive "more confirmed"
+  signal like the other two. See project-log.md's 2026-09-12 "batch 3"
+  entry for full reasoning and sourcing on all 17, plus the candidates
+  seen but deliberately left unresearched for batch 4 (including two --
+  Hogwarts Library, The Roald Dahl Classic Collection -- flagged as
+  possibly not real "series" in the status/book_count sense at all,
+  worth a policy look before batch 4 touches them).
+
+  **Next**: re-rank remaining series by catalog book count, excluding
+  all 50 now-checked names across batches 1-3 (the full list is in
+  batches 1-2's writeup above plus batch 3's 17 fixed names just
+  listed) for batch 4 -- don't reuse any prior batch's candidate list,
+  all are now stale. Also worth a first look in batch 4: the Hogwarts
+  Library / Roald Dahl Classic Collection policy question flagged
+  above, before deciding whether to fix or skip those two.
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also

@@ -10877,3 +10877,97 @@ from batch 3 stands as-is, now confirmed rather than provisional.
 Both items closed. Continuing the two ongoing P2 batches next
 (shared-universe audit batch 4, series.status/book_count batch 3) per
 the repo owner's go-ahead.
+
+## 2026-09-12 (later still): series.status/book_count fix, batch 3 (17 series)
+
+Continuing the P2 catalog-wide `series.status`/`book_count` fix (root
+cause: `status` defaults to `'ongoing'` whenever Hardcover's
+`is_completed` isn't explicitly true; `book_count` is Hardcover's raw
+per-series edition/omnibus count, not a curated real-mainline-
+installments count -- neither field is read by `scripts/recommend.py`,
+display-only bug in `tools/catalog-review/`). Batches 1-2 fixed 33
+series and confirmed 17 more already correct (50 total checked).
+
+Re-ran the ranking query excluding all 50 previously-checked names.
+The catalog grew substantially since batch 2 (the 378-book/118-series
+2026-09-12 ingestion round), so almost every top candidate by this
+ranking now only has 3-4 books currently linked in our own catalog --
+a much flatter tie than batches 1-2 saw, not a meaningful ranking
+signal at that level. Worked the tied candidates in the order the
+query returned them, verifying every single one via live web search
+before writing anything, same standard as batches 1-2. 17 needed a
+real fix -- more than the ~15 target, kept all 17 since every one
+checked was clean and clearly verified rather than stopping partway
+through an already-open research thread:
+
+- **Status fixes (wrongly 'ongoing', should be 'completed', confirmed
+  finished trilogies/series with no evidence of more coming)**:
+  Takeshi Kovacs, The Selection, Red Queen, The Scholomance, Themis
+  Files, The Interdependency, The Infernal Devices, Fitz and the Fool,
+  Star Wars: The Thrawn Trilogy, The Magicians.
+- **book_count-only fixes (status already correct)**: Wayward Pines,
+  The Old Kingdom, Cradle, All Souls, The Liveship Traders, Villains,
+  A Series of Unfortunate Events.
+
+Two judgment calls worth flagging (not decisions that need
+re-litigating, just worth knowing):
+- **Villains (V.E. Schwab)** -- book_count fixed to 2 (Vicious,
+  Vengeful), status correctly left 'ongoing': the third and final book,
+  Victorious, has a confirmed cover reveal and a 2026-10-06 release
+  date -- still in the future as of this migration, so not counted yet
+  per the not-yet-published convention, but real enough that 'ongoing'
+  (not 'completed') is the right status today.
+- **All Souls (Deborah Harkness)** -- book_count fixed to 5, status
+  correctly left 'ongoing': a 6th book, "The Falcon and the Rose," is
+  confirmed announced (title revealed, no publication date yet) --
+  same shape as Villains, real evidence of more coming without a
+  published book to count yet.
+- **The Old Kingdom (Garth Nix)** -- book_count fixed to 6 (Sabriel
+  through Terciel and Elinor), status deliberately left 'ongoing' on
+  the *absence* of evidence rather than a positive confirmation: no
+  explicit "series complete" statement was found, and Nix has
+  historically returned to this world after multi-year gaps (Terciel
+  and Elinor itself came 5 years after Goldenhand), so nothing supports
+  flipping to 'completed' either.
+- **Star Wars: The Thrawn Trilogy** -- fixed as its own, definitively
+  completed (1991-1993) Legends-continuity trilogy, independent of the
+  separate "Star Wars: Thrawn" Canon-continuity series (a different
+  catalog series row) and the already-flagged, unrelated
+  universe-linking question between the two (see the shared-universe
+  audit's "Confirmed NOT connected" list in `docs/TODO.md`) -- not
+  touched or reopened here.
+
+Candidates seen in the ranked list but deliberately NOT researched this
+batch, left for batch 4 with no assumption made either way: The First
+Law, His Dark Materials, Book of the Ancestor, The Broken Empire,
+Divergent, The Folk of the Air, The Green Bone Saga, Skyward Flight,
+The Shadow and Bone Trilogy, The Poppy War, Silo, Monk and Robot, Time
+Master, Children of Time, The Locked Tomb, MaddAddam, Southern Reach,
+The Hunger Games, The Inheritance Games, He Who Fights with Monsters
+(book_count currently NULL). Two flagged as needing a policy look
+before treating like an ordinary series, rather than a plain
+status/count miscount: Hogwarts Library and The Roald Dahl Classic
+Collection (both are companion-book groupings, not a numbered
+continuing story -- "status"/"book_count" may not mean the same thing
+for them). The Riyria Revelations (Omnibus) also seen but skipped --
+already-flagged separate design question (whether an omnibus row
+should carry its own book_count at all), not a plain miscount. 'Saga'
+(the out-of-scope graphic novel series, ongoing/33) also appeared in
+the ranked list, deliberately left untouched per existing policy, same
+as batch 2.
+
+Migration `20260912400000_fix_series_status_book_count_batch3.sql`,
+tested in a rolled-back transaction first (confirmed all 17 names exist
+exactly once, no missing/duplicate matches, post-update values matched
+intent), then applied for real to hosted via a normal autocommit
+psycopg2 connection, verified by re-selecting all 17 rows afterward.
+**Not yet pushed via `supabase db push` and the branch not yet merged
+to main** -- both left for CLDO to do serially, same handoff pattern as
+batch 2, to avoid two sessions' `db push`/git operations racing on the
+same day.
+
+Running total: 50 series fixed across batches 1-3 (33 from batches 1-2
++ 17 this batch), 17 confirmed already correct (all from batches 1-2 --
+batch 3 found zero already-correct candidates this round, every top
+candidate needed at least a book_count fix), 67 series checked overall.
+`docs/TODO.md` updated with the new exclude list and a batch-4 pointer.
