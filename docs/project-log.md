@@ -10340,3 +10340,76 @@ migration-tracking mismatches throughout.
 
 **Still open**: the other 49 authors on the shared-universe audit list,
 untouched by this session -- a real, separate, multi-session effort.
+
+## 2026-09-11 (later still): shared-universe audit, batch 2 -- Foundation universe confirmed, 4 real false positives caught before acting
+
+Repo owner asked to continue the audit, explicitly applying the lesson
+from the Book of the Ancestor mistake: verify with specific,
+well-corroborated evidence before proposing a link, not a vague
+"shares a universe" summary. Picked 6 candidates from the 51-author
+list and researched each individually rather than batch-assuming
+connection from author-grouping alone.
+
+**Confirmed NOT connected, despite superficially looking like the same
+"single author, multiple series" pattern -- no action taken, logged so
+these aren't re-investigated later**:
+- Brandon Sanderson's Skyward and The Reckoners -- confirmed via
+  Sanderson's own FAQ as explicitly separate from the Cosmere and from
+  each other (Spensa was originally conceived as a Cosmere character
+  but ported to a different universe once incompatible tech was
+  needed).
+- All 3 of N.K. Jemisin's major series (Broken Earth, Inheritance
+  Trilogy, Great Cities) -- confirmed independent, unrelated settings.
+- Ursula K. Le Guin's Earthsea and Hainish Cycle -- confirmed via
+  Le Guin's own words ("Earthsea definitely does not exist in the same
+  universe as the Hainish").
+
+**Confirmed connected but judged too thin to model -- a real,
+repo-owner judgment call, not a data question**: Neil Gaiman's American
+Gods/Neverwhere. Real, author-acknowledged connection, but by Gaiman's
+own admission an informal, non-committal one ("I think so, yes. Or at
+least they all share a car park"). Repo owner drew a direct, correct
+analogy to Stephen King's Man in Black/Crimson King motif recurring
+across his wider catalog (e.g. the cameo in From a Buick 8) without
+those books being "the same universe" as The Dark Tower -- the same
+distinction. **This is now a real, reusable policy for the rest of
+this audit: a cameo/thematic reference isn't enough on its own, it
+needs an actual structural connection** (an explicit merged
+continuity, or a recurring protagonist/plot across books) -- directly
+relevant to Stephen King's own entry on the 51-author list (Holly
+Gibney recurs as an actual protagonist across several King novels, a
+much stronger case than the Dark Tower's cameo-tier connections),
+which this session didn't get to.
+
+**Confirmed connected with strong, specific, author-confirmed
+evidence -- built as "Foundation universe"**: Isaac Asimov's Foundation
+(8 books) and Robot (3 books) series. Not a loose reference -- Asimov
+explicitly merged these starting with Foundation's Edge, retconning
+R. Daneel Olivaw (the Robot series' central character) as the secret
+founder of the Galactic Empire and the hidden guiding hand behind Hari
+Seldon's psychohistory. "Foundation universe" is the real, encyclopedic
+term for this continuity (matches the Wikipedia article title), not an
+invented label. Migration `20260911260000_foundation_universe.sql`.
+
+**Also fixed a real leftover gap from the 2026-09-08 Cosmere
+fix**: the `Elantris` series row itself never got `universe_id` set,
+even though both its books (The Emperor's Soul, The Hope of Elantris)
+were already correctly Cosmere-tagged at the book level. Confirmed safe
+to fix at the series level (unlike "Secret Projects," which is
+genuinely mixed -- The Frugal Wizard's Handbook is deliberately
+excluded from Cosmere -- so that series correctly stays without a
+series-level universe_id, not a bug). Migration
+`20260911250000_elantris_series_cosmere_link.sql`.
+
+`universe` now has 5 real rows (Cosmere, Middle-earth, First Law World,
+Broken Empire World, Abeth) plus Foundation universe = 6. All 2
+migrations from this batch tested in rolled-back transactions with
+genuine idempotency re-runs, applied via `supabase db push`, verified
+live on hosted, zero migration-tracking mismatches.
+
+**Still open**: 47 authors remain on the audit list (51 minus this
+batch's 4 resolved: Sanderson, Jemisin, Le Guin as confirmed-negative,
+Asimov as confirmed-positive; Gaiman and Elantris were bonus findings
+outside the original 6-candidate batch). Stephen King specifically
+flagged as a strong next candidate given today's new cameo-vs-
+structural-connection distinction.

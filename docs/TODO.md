@@ -377,20 +377,54 @@ worth deferring to a later session rather than batching in for
   **The audit's own first step (done 2026-09-11) found the real
   scope**: grouped the whole catalog by author and checked every
   author with 2+ series not yet linked to a universe -- **51 authors**
-  qualify, not just the 2 known starting cases (full list in
-  project-log.md's 2026-09-11 entry). Resolving all 51 needs real
-  per-author literary verification (genuinely connected continuity vs.
-  just the same author writing unrelated things) -- clearly a
-  multi-session effort, not something to guess at scale or silently
-  drop. **Next**: pick a small batch from the 51 (start with the most
-  clear-cut, well-documented real crossovers -- e.g. Brandon
-  Sanderson's remaining Cosmere-adjacent series, George R.R. Martin's
-  Song of Ice and Fire/Dunk-and-Egg/Targaryen History, N.K. Jemisin's
-  Broken Earth-adjacent titles are plausible early candidates, none
-  verified yet -- **this session's own two corrections are a direct
-  warning against assuming any of these without checking first**,
-  Mark Lawrence looked just as obviously "one shared world" at first
-  glance too).
+  qualified originally, not just the 2 known starting cases.
+
+  **Batch 2 (2026-09-11, same day)**: repo owner asked to continue,
+  applying the Book of the Ancestor lesson explicitly -- verify with
+  specific, well-corroborated evidence, not a vague "shares a
+  universe" summary. Researched 6 candidates individually. Result: the
+  caution was warranted again -- **3 of them looked like obvious same-
+  author connections and were confirmed NOT connected** (Brandon
+  Sanderson's Skyward/The Reckoners -- explicitly separate from the
+  Cosmere per Sanderson's own FAQ; all 3 of N.K. Jemisin's major series
+  -- Broken Earth/Inheritance Trilogy/Great Cities, confirmed
+  independent; Ursula K. Le Guin's Earthsea/Hainish Cycle -- confirmed
+  via Le Guin's own words). **1 confirmed connected but judged too thin
+  to model**: Neil Gaiman's American Gods/Neverwhere -- real but
+  informal per Gaiman's own admission ("share a car park"), same tier
+  as Stephen King's Man in Black motif recurring across his catalog
+  without those books being "the same universe" as The Dark Tower (the
+  repo owner's own analogy, confirmed correct). **This is now a
+  standing policy for the rest of this audit: a cameo/thematic
+  reference isn't enough, it needs an actual structural connection**
+  (explicit merged continuity, or a recurring protagonist/plot across
+  books). **1 confirmed connected with strong evidence, built**: Isaac
+  Asimov's Foundation + Robot (explicitly merged by Asimov himself via
+  R. Daneel Olivaw, referenced directly in Foundation's Edge) --
+  "Foundation universe" (the real encyclopedic term). Also fixed a real
+  leftover gap: the `Elantris` series row itself never got
+  `universe_id` set despite its books already being correctly
+  Cosmere-tagged individually (confirmed safe -- unlike "Secret
+  Projects," which is genuinely mixed and correctly has no series-level
+  universe_id). Migrations `20260911250000_elantris_series_cosmere_
+  link.sql` and `20260911260000_foundation_universe.sql`. Full detail
+  in project-log.md's 2026-09-11 "shared-universe audit, batch 2"
+  entry.
+
+  **47 authors remain** (51 minus Sanderson/Jemisin/Le Guin/Asimov this
+  batch resolved -- Gaiman and the Elantris fix were bonus findings
+  outside the original 6-candidate research set). **Next**: **Stephen
+  King is the strongest flagged candidate** -- Holly Gibney recurs as
+  an actual protagonist across several of his novels (Mr. Mercedes
+  trilogy, The Outsider, If It Bleeds, Holly), a real structural case
+  distinct from the Dark Tower's cameo-tier connections to his wider
+  catalog -- not yet verified, check specifics (does Holly Gibney
+  actually appear/matter in the specific books our catalog has: Holly
+  Gibney, The Dark Tower, The Green Mile?) before linking anything.
+  Same caution applies to every remaining candidate -- George R.R.
+  Martin's Song of Ice and Fire/Dunk-and-Egg/Targaryen History and
+  Robert Jackson Bennett's Divine Cities/Founders Trilogy/Ana and Din
+  Mysteries are other plausible next picks, none verified yet.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 
