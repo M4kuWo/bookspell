@@ -10508,6 +10508,169 @@ Bennett (all 3 series).
 **Not yet checked**: everyone else from the original 51, plus the new
 Mark Lawrence Library Trilogy/Impossible Times question.
 
+## 2026-09-12: shared-universe audit -- Mark Lawrence's Impossible Times/Library Trilogy question resolved, batch 3 (Robin Hobb, Bardugo, Card built; Butcher, Corey, Zahn confirmed negative; Maas confirmed positive but blocked on naming)
+
+Continuing the audit as CLDA, running from an isolated worktree per the
+repo owner's active handoff note. Re-ran the candidate query fresh: 66
+authors with 2+ unlinked series (up from 51/49 as the catalog has grown
+and prior batches' negatives keep legitimately reappearing, as already
+documented -- this confirms the "explicit checked list, not a raw
+count" tracking approach from the last two batches remains the right
+one).
+
+**Step 0 -- the standing open question, resolved: Mark Lawrence's
+Impossible Times and Library Trilogy are NOT connected to each other.**
+Checked directly rather than assuming either way. Lawrence's own "A
+Guide to Lawrence" blog post explicitly enumerates only two connected
+pairs (Broken Empire/Red Queen's War, and Book of the Ancestor/Book of
+the Ice) and says "my other books are not required reading" --
+Impossible Times and Library Trilogy are conspicuously absent from his
+own connected-pairs list. A Grimdark Magazine interview describes The
+Book That Wouldn't Burn (Library Trilogy #1) as "a wholly original tale
+set in a new world with a brand-new cast of characters... there's no
+connection between this trilogy and his other work" -- the Library's
+premise (an infinite library that conceptually "contains" every book,
+including hypothetically his own other work) is a thematic/conceptual
+device, not a real structural link, matching the same category already
+ruled out for Gaiman's American Gods/Neverwhere and King's Man in Black
+motif. A secondary source also independently confirmed the Impossible
+Times trilogy itself was described as the last entry in its OWN prior
+"shared universe" (unrelated to Library Trilogy) before Lawrence
+deliberately started fresh with an unconnected new world for the
+Library books. No migration action for this pairing -- resolved
+negative, don't re-check.
+
+**Confirmed connected, built:**
+
+- **Robin Hobb -- "Realm of the Elderlings."** The Farseer Trilogy, The
+  Liveship Traders, The Tawny Man, The Rain Wild Chronicles, and Fitz
+  and the Fool are one continuous shared world and cast across
+  generations (the Rain Wild Chronicles explicitly ties Liveship's
+  elderling plot threads forward into Fitz and the Fool) -- not 5
+  independent trilogies that merely share a planet. "Realm of the
+  Elderlings" is the real, consistently-used umbrella term across
+  publisher marketing and every reading-order guide, first appearing in
+  print around the Legends II "Homecoming" era -- not invented, and no
+  collision with any of the 5 series' own names.
+- **Leigh Bardugo -- "Grishaverse"** (King of Scars, Six of Crows, The
+  Shadow and Bone Trilogy only). Official reading order runs Shadow and
+  Bone Trilogy -> Six of Crows -> King of Scars; the King of Scars
+  duology explicitly continues Nikolai Lantsov's arc with returning
+  characters from both earlier series. "Grishaverse" is Bardugo's own
+  coined, publisher-used term. **Ninth House (Alex Stern) checked and
+  confirmed NOT connected** -- explicitly a separate, unrelated
+  universe (Yale-set adult contemporary fantasy, no shared characters or
+  continuity with the Grisha world) -- don't re-research.
+- **Orson Scott Card -- "Enderverse"** (Ender's Saga, The Shadow Series,
+  Enderverse:  Publication Order). The Shadow Saga is an explicit
+  parallel timeline to Ender's Saga -- Ender's Shadow retells Ender's
+  Game's own events from Bean's POV, and the two lines converge and are
+  jointly resolved in The Last Shadow (not in our catalog). "Enderverse"
+  is Card's own used term (e.g. his own collection "First Meetings:
+  Three Stories from the Enderverse"). **Real data problem found and
+  flagged, not fixed**: the Shadow Saga's 4 novels are currently split
+  across TWO separate series rows in this catalog -- "The Shadow
+  Series" (Shadow of the Hegemon, Shadow Puppets) and "Enderverse:
+  Publication Order" (Ender's Shadow, Shadow of the Giant) -- which
+  looks like one real series mistakenly represented as two rows, not a
+  universe-linking question. Out of this audit's scope to restructure
+  existing series rows unilaterally (per the task's own "don't
+  improvise past verify-connection-and-link" boundary), so left as-is;
+  both rows are linked to the new Enderverse universe so the
+  book-level connection is captured either way. **Flagging this for the
+  repo owner as a separate series-grouping cleanup item**, distinct
+  from the universe-linking work itself.
+
+`universe` now has 10 rows (was 7): Cosmere, Middle-earth, The First Law
+World, The Broken Empire World, Abeth, Foundation universe, Westeros,
+plus this batch's Realm of the Elderlings, Grishaverse, Enderverse.
+Migration `20260912200000_realm_of_the_elderlings_grishaverse_
+enderverse.sql`, tested in a rolled-back transaction with a genuine
+idempotency re-run first, then applied via a normal autocommit
+connection (NOT `supabase db push` -- this worktree was explicitly
+instructed to stop short of hosted migration-tracking registration and
+leave that to the primary session), verified live on hosted afterward
+(universe row list and all 11 series->universe links spot-checked).
+
+**Confirmed CONNECTED but NOT built -- a real naming-policy question for
+the repo owner, same shape as the Mark Lawrence question that prompted
+this exact caution originally**:
+
+- **Sarah J. Maas** -- A Court of Thorns and Roses, Throne of Glass, and
+  Crescent City. This is a strong, real, author-confirmed connection,
+  not a thin one: actual character travel and interaction across the
+  three book-worlds (Aelin passes through Crescent City's world at the
+  end of Kingdom of Ash; Bryce travels into Prythian at the end of House
+  of Sky and Breath; Azriel appears as a real, interacting character in
+  Crescent City's House of Flame and Shadow). Maas herself, on record:
+  "I had planted seeds in all my series about the possibility of it
+  being a multiverse. The worlds exist, but they're planets and
+  light-years away." But there's no official branded name -- "Maasverse"
+  is fan-coined only, never used by Maas or her publisher. Unlike Abeth/
+  Westeros/Middle-earth, there's also no single unifying in-world place
+  to fall back to: ACOTAR is set in Prythian, Throne of Glass in Erilea,
+  Crescent City on yet another, separate planet -- three genuinely
+  different worlds linked by portal travel, not one place with one name.
+  Neither of this audit's two established naming fallbacks (a real
+  unambiguous place name, or an "X World"-suffixed name working around a
+  collision) actually applies here, because there's no natural name to
+  begin with, not just a collision to route around. Per the standing
+  instruction from the last handoff, not inventing one -- skipped the
+  migration piece for this one, surfacing it for the repo owner to
+  decide (same open-question shape as Mark Lawrence's naming gap, now a
+  second real instance of it).
+
+**Confirmed NOT connected, no action (don't re-research)**:
+
+- **Jim Butcher** -- Codex Alera, The Cinder Spires, The Dresden Files.
+  Three distinct, unconnected worlds (Roman-flavored elemental fantasy;
+  steampunk airship war; contemporary Chicago urban fantasy) confirmed
+  via multiple sources including Butcher's own Reddit AMA; fan interest
+  in a crossover exists but no official connection.
+- **James S. A. Corey** -- The Captive's War and The Expanse. Explicitly
+  NOT the same universe per the authors' own statements (Captive's War
+  is "the other side of space opera from The Expanse," different
+  influences, far-future setting with no shared history); the only real
+  connection is a shared TV production company/team, not shared
+  fiction.
+- **Timothy Zahn** -- Star Wars: The Thrawn Trilogy vs. Star Wars:
+  Thrawn. A genuinely different case shape than every other pairing
+  checked in this audit so far, worth flagging explicitly: both feature
+  Grand Admiral Thrawn as protagonist (a recurring-protagonist signal
+  that would normally clear this audit's bar), but the two trilogies are
+  OFFICIALLY split, mutually incompatible continuities -- the original
+  1991-93 trilogy is Star Wars Legends, retired from canon by Disney's
+  2014 continuity reset, while the newer Thrawn books are new-canon
+  prequels with a different backstory for the same character. Treated
+  as NOT connected: linking them via `universe_id` would misrepresent
+  two contradictory tellings of the same character as one continuous
+  story, unlike every other confirmed-connected case in this audit,
+  which are all additive/non-contradictory. Judgment call, not an
+  improvised destructive action, so proceeding under this audit's normal
+  discretion rather than routing through the pending-approvals gate --
+  but flagging the reasoning clearly in case the repo owner disagrees
+  with the call.
+
+**Authors checked so far this audit, confirmed connected (built)**: Mark
+Lawrence (Broken Empire World, Abeth), Isaac Asimov (Foundation
+universe), George R.R. Martin (Westeros), Robin Hobb (Realm of the
+Elderlings), Leigh Bardugo (Grishaverse -- Ninth House excluded), Orson
+Scott Card (Enderverse).
+**Confirmed connected but not built pending a naming decision**: Sarah
+J. Maas (ACOTAR/Throne of Glass/Crescent City).
+**Confirmed NOT connected (don't re-research)**: Brandon Sanderson, N.K.
+Jemisin, Ursula K. Le Guin, Neil Gaiman, Stephen King, Robert Jackson
+Bennett, Jim Butcher, James S. A. Corey, Timothy Zahn (split
+Legends/Canon continuities, not a true merge).
+**Resolved, no universe**: Mark Lawrence's Impossible Times/Library
+Trilogy pairing (checked against each other specifically, not
+connected).
+**Not yet checked**: everyone else from the original/refreshed
+candidate list (58 authors remain in the live query once this batch's
+9 resolved names and all prior-batch negatives are excluded, per the
+usual caveat that this raw count isn't a reliable progress tracker on
+its own).
+
 ## 2026-09-12 — Rechecked `validated_dealbreaker_fields()` for all 4 raters, still empty
 
 Cheap follow-up on the graduated dealbreaker veto (`_apply_dealbreaker_
@@ -10655,3 +10818,361 @@ No data changed, no migration needed -- this was purely bringing
 documentation in line with what already shipped 2026-09-11. Current
 counts, queried fresh rather than trusted from memory: 867 tagged
 `book_dna` rows, 160 with `romance_tone`, 117 with `worldbuilding_delivery`.
+
+## 2026-09-12: series.status/book_count fix, batch 2 -- 14 more series fixed
+
+Continuation of docs/TODO.md's P2 item (root cause documented
+2026-09-08, batch 1 landed 2026-09-11 fixing 19 series). Ran as a
+background agent (CLDA persona) working from an isolated worktree.
+
+Re-ran batch 1's ranking query (our own catalog's book-count-per-
+series, the only available profile proxy -- no direct popularity
+metric exists on `series` or via Hardcover), excluding the 20 names
+batch 1 already checked. Worked down the resulting ~181-series pool,
+verifying each candidate against real-world publication data via live
+search before writing anything -- no guessing, same standard as
+batch 1.
+
+**14 series fixed** (Malazan Book of the Fallen, The Culture,
+Lightbringer, The Heroes of Olympus, Skyward, The Reckoners, Mars
+Trilogy, The Sun Eater, Imperial Radch (publication order), Percy
+Jackson and the Olympians, Shatter Me, The Witcher, Old Man's War, The
+Twilight Saga). Migration
+`20260912100000_fix_series_status_book_count_batch2.sql`, same
+individually-commented-per-series style as batch 1.
+
+**16 candidates checked and found already correct, not touched**:
+Discworld, The Expanse, The Wheel of Time, Throne of Glass, Foundation,
+Harry Potter, The Chronicles of Narnia (Publication Order), The Dark
+Tower, Dune, The Mortal Instruments, Stormlight Archive Era One, Robot,
+Mistborn Era One, The Maze Runner, Hainish Cycle, The Hitchhiker's
+Guide to the Galaxy. Several of these were genuinely close calls worth
+recording so they aren't re-researched: The Dark Tower's count of 8
+already correctly includes The Wind Through the Keyhole (officially
+numbered book 4.5, not a companion novella by this project's usual
+convention); The Hitchhiker's Guide to the Galaxy's count of 5
+deliberately excludes Eoin Colfer's *And Another Thing...* (2009), a
+different author's authorized-but-not-canonical continuation --
+matching the same precedent as not counting Brian Herbert's Dune
+continuation novels.
+
+**Two real judgment calls surfaced, worth flagging explicitly:**
+- **The Witcher** and **Percy Jackson and the Olympians** both moved
+  from 'completed' to 'ongoing' on the strength of an on-the-record
+  author commitment to more books (Sapkowski, 2025-06 interview:
+  "unlike George R.R. Martin, when I say I'll write something, I
+  will"; Riordan has publicly committed to finishing the Senior Year
+  Adventures trilogy). **Old Man's War's book_count was fixed (6->7)
+  but its status was deliberately left 'completed'** despite The
+  Shattering Peace (2025) leaving plot threads open, because the only
+  evidence found for a book 8 was Scalzi's own conditional "I might
+  write another if people like this one" -- not a firm commitment like
+  the two cases above. This is a real distinction this batch is making
+  (confirmed-planned vs. merely-possible), flagged here in case a
+  future session finds firmer evidence either way.
+- **Shatter Me: The New Republic** (Watch Me/Release Me/Escape Me,
+  2025-2026) is a confirmed spin-off with new protagonists, not a
+  continuation of the 'Shatter Me' series row -- left that series row
+  at its own correct 6-book count, did not fold the spin-off in.
+
+Tested in a rolled-back psycopg2 transaction against hosted first,
+then applied for real via a separate autocommit connection (per
+CLAUDE.md's standard pattern) -- **not yet pushed via `supabase db
+push`, and this worktree branch is not yet merged to main**; both are
+left for the primary (CLDO) session to do serially, per this task's
+own instructions, to avoid two sessions' `supabase db push`/git
+operations racing on the same day.
+
+**Next (batch 3)**: re-rank the remaining ~167 series (excluding all
+34 now-fixed across both batches, plus the candidates confirmed
+already-correct above) for the next bounded batch.
+
+**Not this task, just noticed in passing, flagging for whoever
+coordinates it**: the graphic-novel series row "Saga" (out of v1
+scope per CLAUDE.md's catalog-scope section) still has a 'series'
+status/book_count value (ongoing/33) that doesn't really make sense
+to fix under this task's book/novel-count convention -- volumes of a
+comic aren't "mainline installments" the same way. Left untouched,
+not counted in either the fixed or already-correct lists above.
+
+## 2026-09-12 (later): resolved both naming-policy flags from batch 3 -- Maasverse built, Enderverse naming confirmed correct
+
+Repo owner (has not read either author's books, asked for a real web
+check before naming anything) resolved both open naming questions from
+the shared-universe audit's batch 3 report.
+
+**Sarah J. Maas -- built as "Maasverse".** Instructed: check for a real
+common fan term first, invent one only if none exists, revisit later on
+user feedback if it turns out to read wrong. Search confirmed
+"Maasverse" is a genuine, widely-used fan term (fan wikis, reading-order
+guides, book blogs -- not one source's one-off coinage), same
+fan-originated-not-author-coined shape as "Enderverse" itself (see
+below), which this schema already treats as a real name. Migration
+`20260912300000_maasverse_universe.sql` links all 3 series (A Court of
+Thorns and Roses, Throne of Glass, Crescent City) -- same evidence
+already gathered in batch 3, just resolving the name. Tested in a
+rolled-back transaction with a genuine idempotency re-run, applied to
+hosted, registered via `supabase db push`, verified.
+
+**Orson Scott Card -- "Enderverse" confirmed correct, no change
+needed.** Repo owner (has read Ender's Game and the first Shadow book)
+asked to verify: (1) whether "Enderverse" is really the right umbrella
+name or just one series' name, and (2) their own recollection that
+Ender's Saga follows Ender while The Shadow Series follows Bean, both
+in the same universe, plus a suspicion there might be a third series
+following one of Ender's siblings. Checked via search:
+- **"Enderverse" is confirmed as the real umbrella term** for Card's
+  entire Ender-universe body of work (Ender's Game Wiki's own top-level
+  "Enderverse" page covers all of it) -- not specific to Ender's own
+  line. Card himself didn't coin it ("someone simply put the word on a
+  book jacket... I hate that word") but it's the term consistently used
+  regardless, including on Card's own later book packaging -- this
+  audit's existing choice was already right, just unverified until now.
+- **The repo owner's recollection is correct**: Ender's Saga follows
+  Ender Wiggin; The Shadow Series follows Bean (told largely in
+  parallel/overlapping timeframes to Ender's own books, converging in
+  The Last Shadow, which isn't in our catalog).
+- **No separate series specifically following a Wiggin sibling
+  (Valentine or Peter) exists** -- checked directly. Peter's own arc
+  (his rise to Hegemon) is told as part of The Shadow Series (Shadow of
+  the Hegemon), not a standalone series of his own. The wider Enderverse
+  does have other sub-series not centered on Ender/Bean/a sibling at all
+  (Formic Wars prequel trilogies, Children of the Fleet) -- none of
+  these are in our catalog currently (checked live: only the 3 already-
+  linked series exist under Card's author field), so nothing further to
+  link right now.
+No migration needed for Card -- existing `universe`/`series` linkage
+from batch 3 stands as-is, now confirmed rather than provisional.
+
+Both items closed. Continuing the two ongoing P2 batches next
+(shared-universe audit batch 4, series.status/book_count batch 3) per
+the repo owner's go-ahead.
+
+## 2026-09-12 (later still): series.status/book_count fix, batch 3 (17 series)
+
+Continuing the P2 catalog-wide `series.status`/`book_count` fix (root
+cause: `status` defaults to `'ongoing'` whenever Hardcover's
+`is_completed` isn't explicitly true; `book_count` is Hardcover's raw
+per-series edition/omnibus count, not a curated real-mainline-
+installments count -- neither field is read by `scripts/recommend.py`,
+display-only bug in `tools/catalog-review/`). Batches 1-2 fixed 33
+series and confirmed 17 more already correct (50 total checked).
+
+Re-ran the ranking query excluding all 50 previously-checked names.
+The catalog grew substantially since batch 2 (the 378-book/118-series
+2026-09-12 ingestion round), so almost every top candidate by this
+ranking now only has 3-4 books currently linked in our own catalog --
+a much flatter tie than batches 1-2 saw, not a meaningful ranking
+signal at that level. Worked the tied candidates in the order the
+query returned them, verifying every single one via live web search
+before writing anything, same standard as batches 1-2. 17 needed a
+real fix -- more than the ~15 target, kept all 17 since every one
+checked was clean and clearly verified rather than stopping partway
+through an already-open research thread:
+
+- **Status fixes (wrongly 'ongoing', should be 'completed', confirmed
+  finished trilogies/series with no evidence of more coming)**:
+  Takeshi Kovacs, The Selection, Red Queen, The Scholomance, Themis
+  Files, The Interdependency, The Infernal Devices, Fitz and the Fool,
+  Star Wars: The Thrawn Trilogy, The Magicians.
+- **book_count-only fixes (status already correct)**: Wayward Pines,
+  The Old Kingdom, Cradle, All Souls, The Liveship Traders, Villains,
+  A Series of Unfortunate Events.
+
+Two judgment calls worth flagging (not decisions that need
+re-litigating, just worth knowing):
+- **Villains (V.E. Schwab)** -- book_count fixed to 2 (Vicious,
+  Vengeful), status correctly left 'ongoing': the third and final book,
+  Victorious, has a confirmed cover reveal and a 2026-10-06 release
+  date -- still in the future as of this migration, so not counted yet
+  per the not-yet-published convention, but real enough that 'ongoing'
+  (not 'completed') is the right status today.
+- **All Souls (Deborah Harkness)** -- book_count fixed to 5, status
+  correctly left 'ongoing': a 6th book, "The Falcon and the Rose," is
+  confirmed announced (title revealed, no publication date yet) --
+  same shape as Villains, real evidence of more coming without a
+  published book to count yet.
+- **The Old Kingdom (Garth Nix)** -- book_count fixed to 6 (Sabriel
+  through Terciel and Elinor), status deliberately left 'ongoing' on
+  the *absence* of evidence rather than a positive confirmation: no
+  explicit "series complete" statement was found, and Nix has
+  historically returned to this world after multi-year gaps (Terciel
+  and Elinor itself came 5 years after Goldenhand), so nothing supports
+  flipping to 'completed' either.
+- **Star Wars: The Thrawn Trilogy** -- fixed as its own, definitively
+  completed (1991-1993) Legends-continuity trilogy, independent of the
+  separate "Star Wars: Thrawn" Canon-continuity series (a different
+  catalog series row) and the already-flagged, unrelated
+  universe-linking question between the two (see the shared-universe
+  audit's "Confirmed NOT connected" list in `docs/TODO.md`) -- not
+  touched or reopened here.
+
+Candidates seen in the ranked list but deliberately NOT researched this
+batch, left for batch 4 with no assumption made either way: The First
+Law, His Dark Materials, Book of the Ancestor, The Broken Empire,
+Divergent, The Folk of the Air, The Green Bone Saga, Skyward Flight,
+The Shadow and Bone Trilogy, The Poppy War, Silo, Monk and Robot, Time
+Master, Children of Time, The Locked Tomb, MaddAddam, Southern Reach,
+The Hunger Games, The Inheritance Games, He Who Fights with Monsters
+(book_count currently NULL). Two flagged as needing a policy look
+before treating like an ordinary series, rather than a plain
+status/count miscount: Hogwarts Library and The Roald Dahl Classic
+Collection (both are companion-book groupings, not a numbered
+continuing story -- "status"/"book_count" may not mean the same thing
+for them). The Riyria Revelations (Omnibus) also seen but skipped --
+already-flagged separate design question (whether an omnibus row
+should carry its own book_count at all), not a plain miscount. 'Saga'
+(the out-of-scope graphic novel series, ongoing/33) also appeared in
+the ranked list, deliberately left untouched per existing policy, same
+as batch 2.
+
+Migration `20260912400000_fix_series_status_book_count_batch3.sql`,
+tested in a rolled-back transaction first (confirmed all 17 names exist
+exactly once, no missing/duplicate matches, post-update values matched
+intent), then applied for real to hosted via a normal autocommit
+psycopg2 connection, verified by re-selecting all 17 rows afterward.
+**Not yet pushed via `supabase db push` and the branch not yet merged
+to main** -- both left for CLDO to do serially, same handoff pattern as
+batch 2, to avoid two sessions' `db push`/git operations racing on the
+same day.
+
+Running total: 50 series fixed across batches 1-3 (33 from batches 1-2
++ 17 this batch), 17 confirmed already correct (all from batches 1-2 --
+batch 3 found zero already-correct candidates this round, every top
+candidate needed at least a book_count fix), 67 series checked overall.
+`docs/TODO.md` updated with the new exclude list and a batch-4 pointer.
+
+## 2026-09-12: shared-universe audit batch 4 -- Riordanverse and The Four Londons built, Cosmere series-level gap fixed, 5 new negatives
+
+Continuing docs/TODO.md's P2 shared-universe linking audit as CLDA,
+running from an isolated worktree per the repo owner's ongoing
+go-ahead. Re-ran the candidate query fresh: 62 authors with 2+
+unlinked series (down slightly from 66 at the end of batch 3, since
+Maas/Card no longer qualify now that their series are linked -- the
+raw count still isn't a reliable progress tracker on its own, per the
+usual caveat, since confirmed-negative authors keep legitimately
+reappearing). Checked 8 authors this batch, same evidence-first
+standard as every prior batch -- individual verification, no assumed
+transitivity.
+
+**Confirmed connected, built:**
+
+- **Rick Riordan -- "Riordanverse."** Percy Jackson and the Olympians,
+  The Heroes of Olympus, The Kane Chronicles, Magnus Chase and the Gods
+  of Asgard, and The Trials of Apollo. This clears the audit's
+  structural-connection bar cleanly, not just thematically: three
+  official published crossover novellas (The Son of Sobek, The Staff of
+  Serapis, The Crown of Ptolemy -- collected in the Demigods &
+  Magicians anthology) put Percy/Annabeth and Carter/Sadie Kane in the
+  same scenes together; Magnus Chase is explicitly Annabeth Chase's
+  cousin, with Percy appearing directly as a character in the Magnus
+  Chase books; The Trials of Apollo is a direct continuation set at
+  Camp Half-Blood with the same demigod cast returning. No official
+  publisher/author-coined umbrella name exists for the whole thing, so
+  per the now-settled naming policy (search for a real, widely-used fan
+  term before inventing one): "Riordanverse" confirmed genuine and
+  widely used -- TV Tropes' own "Riordanverse (Franchise)" page, and
+  multiple independent fan reading-order guides/wikis, not a single
+  source's coinage. Used directly.
+
+- **V.E. Schwab -- "The Four Londons"** (Shades of Magic + Threads of
+  Power only). Threads of Power is explicitly the direct sequel trilogy
+  to Shades of Magic, set seven years after A Conjuring of Light, with
+  the same protagonists (Kell, Lila, Alucard) returning in the same
+  Four-Londons setting. Named after the real in-world/fandom term for
+  the setting itself (the four parallel-world Londons -- Red, White,
+  Grey, Black, connected by Antari-opened doors) -- matches the
+  established place-name pattern already used for Westeros/Abeth/
+  Middle-earth, so unlike Maas or Card, this one hit no naming-policy
+  question at all; a genuine unambiguous place name existed. **Checked
+  and confirmed NOT part of this universe or connected to each other**:
+  Schwab's Monsters of Verity duology and Villains trilogy. No
+  structural connection to the Four Londons or between each other was
+  found in any source checked -- distinct settings (a monster-plagued
+  city; a contemporary EO/superpower world; the Four Londons), distinct
+  casts, no crossovers or shared characters identified anywhere.
+
+- **Brandon Sanderson -- Cosmere series-level gap fix, same shape as
+  batch 2's Elantris fix, explicitly NOT a new connection judgment.**
+  The candidate query re-surfaced Sanderson (expected -- Skyward/
+  Reckoners correctly stay unlinked to the Cosmere) but also exposed
+  two series rows that never got `series.universe_id` set despite their
+  book(s) already being individually Cosmere-tagged at the book level:
+  "Hoid's Travails" (Yumi and the Nightmare Painter -- a mainline
+  Cosmere Secret Project starring Hoid) and "The Mistborn Saga"
+  (Allomancer Jak and the Pits of Eltania -- confirmed genuine Cosmere/
+  Mistborn Era Two content via Coppermind, 17th Shard, and Sanderson's
+  own official Cosmere-collections page; collected in Arcanum
+  Unbounded, The Cosmere Collection). Both now linked to the existing
+  Cosmere universe row. **Deliberately left unlinked**: "Legion"
+  (standalone thriller, correctly has no Cosmere connection) and
+  "Secret Projects" (genuinely mixed -- 2 of its 3 books are Cosmere,
+  1 (The Frugal Wizard's Handbook for Surviving Medieval England) is
+  not -- correctly left without a series-level universe_id, matching
+  the existing batch-2 note on this exact series).
+
+**Confirmed NOT connected, no action (don't re-research):**
+
+- **Joe Abercrombie -- Shattered Sea vs. The Devils.** A new pairing,
+  distinct from the already-built First Law World (which was checked
+  against 3 different Abercrombie series in an earlier batch). The
+  Devils is explicitly introduced as its own new, separate world ("a
+  magic-riddled Europe... elves"), with no connection to Shattered Sea
+  or the First Law mentioned anywhere.
+- **N.K. Jemisin -- Dreamblood vs. Forward Collection.** A new pairing,
+  distinct from the already-checked Broken Earth/Inheritance Trilogy/
+  Great Cities trio (batch 2). The Dreamblood duology (The Killing
+  Moon/The Shadowed Sun) is self-contained in its own Gujaareh setting.
+  "Forward Collection" turns out not to even be a single-author
+  Jemisin series -- it's a multi-author sci-fi novella anthology;
+  Jemisin's own contribution to it ("Emergency Skin") has no connection
+  to Gujaareh or her other work.
+- **Peter F. Hamilton -- Night's Dawn, Commonwealth Saga, Salvation
+  Sequence.** Confirmed as three explicitly separate fictional
+  universes across multiple sources, each with its own distinct
+  setting and timeline (27th-century Adamist/Edenist conflict; the
+  Void-Trilogy-adjacent Commonwealth; a war-biomodified-humans future).
+- **Adrian Tchaikovsky -- Children of Time, Elder Race, Service Model,
+  The Final Architecture, The Tyrant Philosophers.** Each confirmed a
+  distinct, separate continuity by Tchaikovsky's own bibliography and
+  multiple reading-order sources; no shared setting or characters found
+  across any pairing among these five.
+
+**Re-surfaced but resolved without new research:**
+
+- **Neil Gaiman.** The refreshed candidate query lists his series as
+  "American Gods" + "London Below" + "The Sandman TPBs" -- looked new
+  at first glance, but "London Below" is just this catalog's series
+  name for Neverwhere, i.e. the exact same American Gods/Neverwhere
+  pairing already resolved in batch 2 (real but too thin to model, per
+  Gaiman's own "share a car park" framing) -- no new action. "The
+  Sandman TPBs" is a graphic novel/comic (TPB = trade paperback) --
+  out of v1 scope per CLAUDE.md's catalog-scope policy, same as the
+  Saga/Sandman precedent from 2026-09-04 -- skipped and flagged, not
+  treated as a universe-linking candidate at all.
+
+`universe` now has 13 rows (was 11): the prior 11 plus this batch's
+Riordanverse and The Four Londons. Migration
+`20260912500000_riordanverse_four_londons_cosmere_gaps.sql`, tested in
+a rolled-back transaction with a genuine idempotency re-run first
+(re-executed the whole file a second time inside the same open
+transaction -- zero errors, zero duplicate rows), then applied for
+real via a normal autocommit connection (NOT `supabase db push` --
+per this task's standard instruction, hosted migration-tracking
+registration and the branch merge are left for the primary session).
+Verified live on hosted afterward: `universe` row count (13) and all 9
+newly-linked series -> universe pairs spot-checked directly.
+
+**Batch total so far across all 4 batches**: 9 confirmed-connected
+author groupings built/gap-fixed (Mark Lawrence x2, Isaac Asimov,
+George R.R. Martin, Robin Hobb, Leigh Bardugo, Orson Scott Card, Sarah
+J. Maas, Rick Riordan, V.E. Schwab, plus the Elantris and Cosmere
+series-level gap fixes), 14 confirmed-NOT-connected groupings. Nothing
+in this batch required routing through `docs/PENDING_APPROVALS.md` --
+every finding was either build-a-universe-and-link or leave-unlinked,
+matching this audit's normal, already-approved pattern; no
+restructuring or deletion of any existing series/book row was needed.
+
+Next (batch 5): re-run the candidate query again (starting point ~54
+authors once this batch's 8 negatives/positives are excluded) and
+continue in the same ~6-8-author bounded batches.
