@@ -186,9 +186,9 @@ categories:
         # the direct fantasy-genre analog of contemporary romance's own
         # "central love story" convention. Does NOT capture execution
         # quality/tone (juvenile vs. mature, formulaic vs. earned) -- see
-        # book-dna.md's backlog for that harder, more subjective axis,
-        # deliberately not added yet pending a validation probe, the same
-        # treatment as the message_themes idea.
+        # `romance_tone` below (content_shape category) for that harder,
+        # more subjective axis, added 2026-09-11 after its own validation
+        # probe.
         spoiler: false
       darkness:
         type: enum
@@ -240,6 +240,28 @@ categories:
       romance_heat_intensity:
         type: enum
         values: [na, closed_door, low, moderate, explicit]
+        spoiler: false
+      romance_tone:
+        type: enum
+        values: [understated, melodramatic, mixed]
+        # Added 2026-09-11 (schema+backfill: 20260911140000/20260911100000;
+        # landed in scoring: commit 7646a1d) -- the execution-QUALITY/tone
+        # axis `drive: romance_driven` deliberately doesn't capture (see
+        # that field's own comment) -- restrained/grounded emotional
+        # PRESENTATION vs. soap-opera-style melodrama, independent of how
+        # much romance there is (`drive`), how fast it develops (pacing),
+        # whether it's toxic (content_warnings), or its heat level
+        # (romance_heat_*). Nullable and left null when a book has too
+        # little romantic content to judge -- this is NOT a "none" value
+        # on the enum, it's the absence of the field entirely. `mixed` is a
+        # real, evidence-backed third value (a genuine tie between both
+        # readings, or a short-story collection with both tones across
+        # different stories -- e.g. Sword of Destiny), not a default/unsure
+        # bucket. See .claude/skills/tag-catalog-batch/SKILL.md's evidence
+        # standard for this field before tagging it -- it has a real,
+        # already-caught track record of confident-but-wrong tags from
+        # pattern-matching genre reputation instead of checking actual
+        # scene-level presentation.
         spoiler: false
       violence_frequency:
         type: enum
@@ -337,6 +359,28 @@ categories:
       worldbuilding_density:
         type: enum
         values: [light, moderate, dense]
+        spoiler: false
+      worldbuilding_delivery:
+        type: enum
+        values: [woven, exposition_dump, mixed]
+        # Added 2026-09-11 (same migrations/commit as romance_tone above)
+        # -- HOW lore is delivered (in-scene discovery/dialogue vs.
+        # narrator/footnote exposition), distinct from worldbuilding_density
+        # (how MUCH lore exists). A book can be density: dense and still be
+        # woven -- Book of the Ancestor is dense on all 3 books and the
+        # cleanest example of woven delivery. Nullable, left null when a
+        # book has too little worldbuilding/exposition either way to judge
+        # (a light-worldbuilding book has nothing to judge the delivery
+        # of) -- not a "none" value on the enum. `mixed` is a real,
+        # evidence-backed tie (e.g. Mistborn: The Final Empire, both
+        # readings equally weakly attested), not a default/unsure bucket.
+        # A book that's confusing because NOTHING is explained (Gideon the
+        # Ninth, Gardens of the Moon) is `woven` (or null if genuinely
+        # untagged), not `exposition_dump` -- the two failure modes read
+        # similarly in reader complaints ("I was lost") but come from
+        # opposite delivery mechanisms; read the actual complaint before
+        # assuming which axis it's about. See
+        # .claude/skills/tag-catalog-batch/SKILL.md's evidence standard.
         spoiler: false
       stakes_scope:
         type: enum

@@ -10585,3 +10585,73 @@ here.
 Confirmed (as with every prior round) new books stay automatically
 excluded from `recommend.py` scoring until tagged, no separate
 mechanism needed -- `load_catalog()`'s inner join on `book_dna`.
+
+## 2026-09-12 — Fixed stale docs: schema files never caught up to the 2026-09-11 romance_tone/worldbuilding_delivery conversion
+
+Repo owner asked for `tag-catalog-batch/SKILL.md` to be updated to
+reflect the fields added since it was last touched (romance_tone,
+worldbuilding_delivery, and the audiobook standard-narrator data).
+Checking the skill surfaced a bigger gap than expected: **the actual
+schema source-of-truth files were never updated when these two fields
+landed as real columns on 2026-09-11** -- `docs/schema/book-dna.schema.yaml`
+had no entry for either field at all (despite both being live,
+constrained `book_dna` columns backing real scoring), `docs/schema/
+book-dna.md`'s field table was missing them too, and its own backlog
+entry still read "Candidate values, not yet built... Not started" for
+romance_tone even though it had been built, validated, and landed in
+scoring for a full day. `drive`'s own schema.yaml comment also still
+pointed at that same stale backlog entry as the place to find the
+"not added yet" execution-quality axis.
+
+Fixed all of it:
+- `book-dna.schema.yaml`: added `romance_tone` (content_shape, after
+  `romance_heat_intensity`) and `worldbuilding_delivery` (content_shape,
+  after `worldbuilding_density`) with full inline documentation
+  (values, nullability rule, distinction from neighboring fields,
+  pointer to the tagging skill's evidence standard). Fixed `drive`'s
+  stale comment to point at the real field instead of the old backlog
+  entry.
+- `book-dna.md`: added both fields to section 3's field table, wrote a
+  real prose entry for both (mirroring the style of every other
+  documented field), and rewrote the old "Romance TONE/execution-quality"
+  backlog entry to say BUILT up front rather than reading as still-open
+  (kept the original gap-analysis reasoning as history, since that's
+  genuinely useful, but no longer contradicts what's actually shipped).
+- `tag-catalog-batch/SKILL.md`'s Step 0 (the section literally titled
+  "execution-DNA trope sweep") was the most out of date -- it still
+  described these as 4 TROPES to insert into `book_tropes`
+  (`understated_romance`/`melodramatic_romance_subplot`/
+  `worldbuilding_woven_into_narrative`/`worldbuilding_via_exposition_dump`),
+  which would fail outright now (those trope IDs were permanently
+  deleted 2026-09-11, see that date's "Step 4" entry) -- anyone
+  following the old text literally would have hit a foreign-key error
+  on the very first insert. Rewrote it end to end: scalar-column
+  mechanics (UPDATE with an `is null` idempotency guard, not `on
+  conflict do nothing` -- that's an INSERT pattern and doesn't apply to
+  updating an existing row), `book_field_confidence` instead of
+  `book_tropes.confidence`/`.source`, reframed as a backfill sweep for
+  the ~700 pre-2026-09-11 tagged books (query now filters `is null` on
+  the real column instead of trope non-membership) since every NEW book
+  gets these two fields for free via Step 3's normal per-book tagging
+  now. Confirmed via a live query that all of the section's calibration-
+  anchor books (Warbreaker, A Court of Thorns and Roses, Red Sister,
+  Foundation, etc.) already carry their real `book_dna.romance_tone`/
+  `worldbuilding_delivery` value from the 2026-09-11 backfill migration
+  -- updated the anchor list to say so explicitly rather than leaving it
+  reading as still-pending trope work. Also fixed Step 3's mandatory
+  book_dna column list and example INSERT (both were missing the two
+  new columns entirely -- following the old example literally would
+  have produced a book_dna row silently missing them, the exact
+  silent-partial-insert failure mode this same skill warns about for
+  every other column) and added a note distinguishing `audiobook_editions`
+  (real narrator-identity data, populated separately via
+  `scripts/backfill-standard-narrators.js`, nothing to do here per-book)
+  from the still-genuinely-deferred Tier B audiobook_native fields
+  (narrator PERFORMANCE quality, which narrator identity alone can't
+  answer) -- these were previously conflated under one "we don't have
+  this data" line that was no longer fully true.
+
+No data changed, no migration needed -- this was purely bringing
+documentation in line with what already shipped 2026-09-11. Current
+counts, queried fresh rather than trusted from memory: 867 tagged
+`book_dna` rows, 160 with `romance_tone`, 117 with `worldbuilding_delivery`.

@@ -109,10 +109,12 @@ loudly without inviting deeper reflection).
 |---|---|---|
 | `romance_heat_frequency` | none, rare, occasional, frequent | no |
 | `romance_heat_intensity` | na, closed_door, low, moderate, explicit | no |
+| `romance_tone` | understated, melodramatic, mixed (nullable) | no |
 | `violence_frequency` | none, rare, occasional, frequent | no |
 | `violence_intensity` | na, mild, moderate, graphic, brutal | no |
 | `content_warnings` | multi-select, see schema file | no |
 | `worldbuilding_density` | light, moderate, dense | no |
+| `worldbuilding_delivery` | woven, exposition_dump, mixed (nullable) | no |
 | `stakes_scope` | intimate, regional, global, cosmic | no |
 | `personal_stakes` | low, moderate, high, life_threatening | no |
 | `narrative_closure` | self_contained, requires_series | no |
@@ -219,6 +221,42 @@ leaving the external plot on a cliffhanger, and `ends_on_cliffhanger` is
 also distinct from `narrative_closure` (a series-level "does this book
 need future books" fact vs. an ending-craft "do the final pages withhold
 resolution" fact — correlated, not identical).
+
+**`romance_tone` (`understated` / `melodramatic` / `mixed`, nullable)**
+and **`worldbuilding_delivery` (`woven` / `exposition_dump` / `mixed`,
+nullable)** — added 2026-09-11, closing the gap this section used to
+carry as an unbuilt backlog idea (see "Resolved during review"/git
+history for that entry; kept for its own reasoning trail, not repeated
+here). Both landed as real scalar `book_dna` columns after a validated
+probe (see `docs/scoring-test-protocol.md`'s 2026-09-05 "Execution-DNA
+validation probes" entry) and are wired into `scripts/recommend.py`'s
+scoring as content-scoped nominal fields (commit `7646a1d`).
+
+`romance_tone` captures emotional PRESENTATION specifically — how
+characters express feeling on the page when a romantic scene happens
+(restrained/grounded vs. soap-opera declarations, storming off, repeated
+identical arguments) — deliberately distinct from `drive: romance_driven`
+(narrative centrality), pacing (how fast the relationship develops),
+`content_warnings` (whether it's toxic), and `romance_heat_*`
+(explicitness). None of those are valid evidence for this field either
+way. `worldbuilding_delivery` captures HOW lore is delivered (in-scene
+discovery/dialogue vs. narrator/footnote exposition), distinct from
+`worldbuilding_density` (how much lore exists) — a book can be `density:
+dense` and still be `woven` (Book of the Ancestor, all 3 books).
+
+Both are nullable and stay null when a book has too little
+romantic content / worldbuilding-exposition to judge either axis at all
+— this is NOT the same as `mixed`, which is a real, evidence-backed tie
+(equal-confidence evidence on both sides, or a short-story collection
+genuinely showing both tones across different stories). See
+`.claude/skills/tag-catalog-batch/SKILL.md`'s evidence standard before
+tagging either field — both have a real, already-caught track record of
+confident-but-wrong tags from pattern-matching genre reputation instead
+of checking the actual text (From Blood and Ash/Fourth Wing assumed
+melodramatic from reputation alone, reversed on real research; The Bear
+and the Nightingale conflated a slow courtship BUILD-UP with a restrained
+emotional PRESENTATION and got the culminating scene's actual tone
+backwards).
 
 ### 4. Audiobook-native — core, the strategic wedge
 | Field | Values |
@@ -1273,31 +1311,21 @@ Deliberately deferred, not in v0.1:
   than inventing a separate mechanism). Not started -- awaiting the
   repo owner's go-ahead on scope given the tagging-cost implications.
 - **Romance TONE/execution-quality, distinct from `drive: romance_driven`**
-  (added 2026-09-04) — repo owner's own gap analysis: he doesn't dislike
-  romance generally (loved examples: Wax/Steris, Siri/God King in
-  Warbreaker, Inej/Kaz in Six of Crows), he dislikes specifically
-  "juvenile/CW-style relationship drama... telenovela-style melodrama...
-  contrived romantic conflict... excessive misunderstandings." The new
-  `romance_driven` value (see `drive` above) captures NARRATIVE
-  CENTRALITY (is romance the main engine) but deliberately not TONE/
-  EXECUTION QUALITY (is it handled with restraint or melodrama) — a
-  different, harder axis. Same treatment as `message_themes` above and
-  for the same reason: genuinely useful if real, but more subjective to
-  tag consistently than a plot-event trope, and the current rating
-  history has zero real negative examples to validate against (he
-  explicitly flagged "I have not actually read enough romantasy to
-  provide strong direct negative training evidence" — this is a case
-  where the DNA gap is real but the EVIDENCE gap is separate and also
-  real; adding the field alone can't fix the second problem). Candidate
-  values, not yet built: something like `romance_tone`:
-  [understated, grounded, dramatic, melodramatic], or a trope-group
-  approach mirroring `message_themes`' design. **Recommended path**: the
-  same validation-probe approach as `message_themes` — tag a small,
-  deliberately contrastive set (his 3 loved examples above, plus a
-  handful of well-known "juvenile/melodramatic" romantasy touchstones he
-  hasn't read but that have clear reader consensus, e.g. via StoryGraph
-  tag data) before any catalog-wide rollout, specifically BECAUSE his
-  own history can't yet validate this one on its own. Not started.
+  — **BUILT, 2026-09-11 (kept here only as the original gap-analysis
+  reasoning trail — see section 3 above, "Content & shape," for the real
+  field documentation; don't treat anything below as still open).**
+  Original gap analysis (2026-09-04): repo owner doesn't dislike romance
+  generally (loved examples: Wax/Steris, Siri/God King in Warbreaker,
+  Inej/Kaz in Six of Crows), he dislikes specifically "juvenile/CW-style
+  relationship drama... telenovela-style melodrama... contrived romantic
+  conflict... excessive misunderstandings." `romance_driven` (see `drive`
+  above) captures NARRATIVE CENTRALITY but deliberately not TONE/
+  EXECUTION QUALITY — that gap is what `romance_tone` now fills. Landed
+  as a real scalar field (`understated`/`melodramatic`/`mixed`, not the
+  4-value enum first sketched here) after the validation-probe approach
+  recommended below actually ran — see
+  `docs/scoring-test-protocol.md`'s 2026-09-05 "Execution-DNA validation
+  probes" entry for that probe and its result.
 - **Protagonist gender as a possible field** — raised 2026-09-03: repo
   owner loved The Grey Bastards but hated its sequel, hypothesizing
   protagonist gender/POV-character change as the reason. A single

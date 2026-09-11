@@ -68,7 +68,7 @@ a value not listed there. If you think a real gap exists in the
 vocabulary (a trope or value that should exist but doesn't), don't
 silently work around it -- note it in your final report instead.
 
-## Step 0: PRIORITY BATCH -- execution-DNA trope sweep (2026-09-06, NEW -- do this first)
+## Step 0: PRIORITY BATCH -- romance_tone/worldbuilding_delivery backfill sweep (updated 2026-09-12 -- now scalar book_dna columns, not tropes)
 
 **This takes priority over everything below, including the romance_driven
 audit reference section right after it (that one is fully DONE now --
@@ -77,36 +77,65 @@ methodology, which this new batch reuses).**
 
 ### What this is
 
-Three new tropes were added and validated on a small, real-evidence-backed
-set of books tonight (2026-09-05/06) -- see `docs/project-log.md`'s
-"romance_tone probe" and "worldbuilding delivery" entries for the full
-story. They now need a real catalog-wide sweep, the same way the 5
-gap-sweep tropes (`sapphic_romance`, `alternate_history`, etc.) already
-got one earlier the same night. This is genuinely harder tagging work
-than most of this skill's normal fields -- these are SUBJECTIVE
-EXECUTION/CRAFT judgments (how something is written), not plot-event
-facts (whether something happened), and this project already caught
-itself guessing wrong twice tonight on exactly this kind of call (see
-"The evidence standard" below for why that matters and what to do
-about it).
+**These are no longer tropes.** Originally added as 4 tropes
+(`understated_romance`/`melodramatic_romance_subplot`/
+`worldbuilding_woven_into_narrative`/`worldbuilding_via_exposition_dump`,
+2026-09-05/06) and validated on a small real-evidence-backed set, they
+were converted 2026-09-11 into two real `book_dna` scalar columns --
+`romance_tone` (`understated`/`melodramatic`/`mixed`) and
+`worldbuilding_delivery` (`woven`/`exposition_dump`/`mixed`) -- and the
+old trope IDs were permanently deleted from the vocabulary the same day
+(see `docs/project-log.md`'s 2026-09-11 "Step 4" entry and
+`docs/schema/book-dna.md` section 3 for the real field docs). **Do not
+insert into `book_tropes` for any of the 4 old trope IDs -- they no
+longer exist and the insert will fail a foreign-key check.** Every book
+you tag from now on (in the normal Step 3 flow, not just this section)
+gets `romance_tone`/`worldbuilding_delivery` filled in as part of its
+regular `book_dna` INSERT -- see Step 3's mandatory-column note on this.
 
-`romance_tone`, as two tropes:
-- `understated_romance` -- the romantic relationship is written with
-  restraint: grounded, low on contrived misunderstandings/toxic
-  push-pull, quiet in how affection is actually shown on the page.
-- `melodramatic_romance_subplot` -- repetitive "will they/won't they"
-  tension, soap-opera-style romantic drama, heightened declarations and
+This section exists because ~700 books were already tagged BEFORE
+2026-09-11 and only got these two fields via a mechanical backfill from
+their old trope tags (if they had one) -- most didn't, since the
+original trope sweep never finished. As of 2026-09-11: 160/867 tagged
+books have a real `romance_tone`, 117/867 have `worldbuilding_delivery`
+(query fresh, don't trust this snapshot -- it drifts as new batches land
+both through this section and through ordinary Step 3 tagging). This is
+genuinely harder tagging work than most of this skill's normal fields --
+these are SUBJECTIVE EXECUTION/CRAFT judgments (how something is
+written), not plot-event facts (whether something happened), and this
+project already caught itself guessing wrong twice on exactly this kind
+of call (see "The evidence standard" below for why that matters and what
+to do about it).
+
+`romance_tone` values:
+- `understated` -- the romantic relationship is written with restraint:
+  grounded, low on contrived misunderstandings/toxic push-pull, quiet in
+  how affection is actually shown on the page.
+- `melodramatic` -- repetitive "will they/won't they" tension,
+  soap-opera-style romantic drama, heightened declarations and
   confrontations, played for extended emotional intensity rather than
   restraint.
+- `mixed` -- a genuine tie (equal-confidence evidence on both sides), or
+  a short-story collection/anthology that genuinely shows both tones
+  across different stories (e.g. Sword of Destiny). Not a default/unsure
+  bucket -- see "Confidence conventions" below for the real distinction
+  between a genuine tie and low-confidence uncertainty.
 
-`worldbuilding delivery`, as one trope so far (see "A real gap in this
-trope" below):
-- `worldbuilding_woven_into_narrative` -- lore/rules delivered through
-  character discovery and dialogue rather than narrator exposition.
-  Distinct from `worldbuilding_density` (how MUCH lore exists, not how
-  it's delivered) -- a book can be `worldbuilding_density: dense` and
-  still earn this trope (Book of the Ancestor is tagged dense on all 3
-  books and still the cleanest example of this trope existing).
+`worldbuilding_delivery` values:
+- `woven` -- lore/rules delivered through character discovery and
+  dialogue rather than narrator exposition. Distinct from
+  `worldbuilding_density` (how MUCH lore exists, not how it's delivered)
+  -- a book can be `worldbuilding_density: dense` and still be `woven`
+  (Book of the Ancestor is tagged dense on all 3 books and still the
+  cleanest example of woven delivery).
+- `exposition_dump` -- lore delivered primarily through narrator
+  exposition, footnotes, or in-text lecture rather than in-scene
+  discovery.
+- `mixed` -- same genuine-tie standard as `romance_tone` above.
+
+Leave the column NULL (not a value at all) when the book has too little
+romantic content / worldbuilding-exposition to judge either axis -- see
+Step 3's note on this above.
 
 ### The evidence standard -- read this before tagging a single book
 
@@ -155,6 +184,11 @@ from skipping this step.
 
 ### Confidence conventions
 
+Recorded via `book_field_confidence` (`field_name = 'romance_tone'` or
+`'worldbuilding_delivery'`), the same mechanism as any other uncertain
+scalar field -- NOT `book_tropes.confidence` (that column doesn't apply
+here anymore, these aren't tropes).
+
 - Real, clear, presentation-specific evidence found -> tag at
   confidence 0.6 (`ai_inferred`).
 - Genuinely disputed in real discourse, or you can only find
@@ -169,81 +203,88 @@ from skipping this step.
 - If the repo owner (or another rater) has personally read the book
   and confirms the tag directly -> confidence 1.0, `source:
   manual_review`.
+- A genuine tie between both values (see "What this is" above) -> the
+  value itself is `mixed`; confidence reflects how solid the evidence
+  for BOTH sides was (0.6 if both sides are well-attested, 0.2 if both
+  are weak/disputed), not a special "tie confidence."
 
-### Calibration anchors -- already validated tonight, do NOT re-review these
+### Calibration anchors -- already applied, do NOT re-tag these
 
-`melodramatic_romance_subplot` (confidence 0.6): A Court of Thorns and
-Roses, Twilight, Shatter Me, Throne of Glass, The Wise Man's Fear, The
-Well of Ascension.
-`melodramatic_romance_subplot` (confidence 0.2, disputed -- feel free
-to re-research and raise if you find clearer evidence): Caraval, From
-Blood and Ash, Fourth Wing.
-`understated_romance` (confidence 0.6): Warbreaker, Six of Crows,
-Shadows of Self, The Bands of Mourning, The Lost Metal, The Goblin
-Emperor, The Traitor Baru Cormorant, The Priory of the Orange Tree,
-Spinning Silver.
-`understated_romance` (confidence 0.2, disputed): The Bear and the
-Nightingale.
-`worldbuilding_woven_into_narrative` (confidence 0.6): Red Sister, Grey
-Sister, Holy Sister -- all 3 Book of the Ancestor books, from one
-direct quote about the whole trilogy.
+**These already carry their `book_dna.romance_tone`/
+`worldbuilding_delivery` value from the 2026-09-11 backfill migration --
+confirmed live in the database, not just planned.** Listed here for the
+judgment-call reasoning only, in case a similar book comes up during your
+own research.
 
-### The negative-counterpart gap -- CLOSED (2026-09-06), reference only
+`romance_tone = 'melodramatic'`: A Court of Thorns and Roses, Twilight,
+Shatter Me, Throne of Glass, The Wise Man's Fear, The Well of Ascension,
+From Blood and Ash (confidence 0.2, was disputed).
+`romance_tone = 'understated'`: Warbreaker, Six of Crows, Shadows of
+Self, The Bands of Mourning, The Lost Metal, The Goblin Emperor, The
+Traitor Baru Cormorant, The Priory of the Orange Tree, Spinning Silver,
+The Bear and the Nightingale (confidence 0.2, was disputed).
+`worldbuilding_delivery = 'woven'`: Red Sister, Grey Sister, Holy Sister
+(all 3 Book of the Ancestor books, from one direct quote about the whole
+trilogy), The Goblin Emperor, The Priory of the Orange Tree.
+`worldbuilding_delivery = 'exposition_dump'`: Foundation, The Fellowship
+of the Ring, The Lies of Locke Lamora, The Traitor Baru Cormorant.
 
-**DONE, not something to redo.** `worldbuilding_woven_into_narrative`
-used to have zero negative counterpart. `worldbuilding_via_exposition_dump`
-(same group, `setting_worldbuilding`) now exists -- see
-`docs/project-log.md`'s "worldbuilding_woven_into_narrative batch 1"
-entry for the 4 books it launched on (Foundation and Babel at 0.6,
-The Lies of Locke Lamora at 0.6, The Fellowship of the Ring at 0.2)
-and the full evidence behind each. Tag NEW candidates against this
-value the same way as the positive one -- real, specific discourse
-about narrator/footnote-based telling rather than in-scene discovery,
-never just "this book has a lot of lore." One pattern worth carrying
-forward: a book that's confusing because NOTHING is explained (Gideon
-the Ninth, Gardens of the Moon) is a `worldbuilding_woven_into_narrative`
-candidate, not an exposition-dump one -- the two failure modes look
-similar in reader complaints ("I was lost") but come from opposite
-delivery mechanisms, so read the actual complaint before assuming
-which axis it's about.
+A book that's confusing because NOTHING is explained (Gideon the Ninth,
+Gardens of the Moon) is a `woven` candidate (or left null if genuinely
+untagged), not `exposition_dump` -- the two failure modes look similar
+in reader complaints ("I was lost") but come from opposite delivery
+mechanisms, so read the actual complaint before assuming which axis it's
+about.
 
 ### Candidate pool -- don't scan the whole catalog blindly
 
+Both queries below are scoped to `book_dna` rows that ALREADY EXIST but
+are missing the field (the backfill this section covers) -- a brand new
+untagged book gets `romance_tone`/`worldbuilding_delivery` filled in
+during its normal Step 3 tagging instead, not through this query.
+
 ```sql
--- romance_tone candidates: anything with existing romance signal
+-- romance_tone backfill candidates: already-tagged books with existing
+-- romance signal but no romance_tone value yet
 select distinct b.title, b.author, d.drive, d.romance_heat_frequency
 from books b join book_dna d on d.book_id = b.id
 left join book_tropes t on t.book_id = b.id
-where d.drive = 'romance_driven'
-   or d.romance_heat_frequency in ('occasional', 'frequent')
-   or t.trope_id in (
-     'enemies_to_lovers','friends_to_lovers','forbidden_love','love_triangle',
-     'fated_mates','soulmate_bond','arranged_marriage','marriage_of_convenience',
-     'fake_dating','forced_proximity','only_one_bed','age_gap_romance',
-     'second_chance_romance','grumpy_sunshine','slow_burn_romance',
-     'monster_or_fae_romance','insta_love','hidden_identity_romance',
-     'reverse_harem_or_why_choose','sapphic_romance','mlm_romance'
-   )
+where d.romance_tone is null
+  and (
+    d.drive = 'romance_driven'
+    or d.romance_heat_frequency in ('occasional', 'frequent')
+    or t.trope_id in (
+      'enemies_to_lovers','friends_to_lovers','forbidden_love','love_triangle',
+      'fated_mates','soulmate_bond','arranged_marriage','marriage_of_convenience',
+      'fake_dating','forced_proximity','only_one_bed','age_gap_romance',
+      'second_chance_romance','grumpy_sunshine','slow_burn_romance',
+      'monster_or_fae_romance','insta_love','hidden_identity_romance',
+      'reverse_harem_or_why_choose','sapphic_romance','mlm_romance'
+    )
+  )
 order by b.title;
 
--- worldbuilding delivery candidates: dense worldbuilding is where this
--- axis actually matters (a light-worldbuilding book has little
--- exposition either way to judge the delivery of)
+-- worldbuilding_delivery backfill candidates: already-tagged, dense
+-- worldbuilding (where this axis actually matters -- a light-
+-- worldbuilding book has little exposition either way to judge the
+-- delivery of), no worldbuilding_delivery value yet
 select b.title, b.author
 from books b join book_dna d on d.book_id = b.id
 where d.worldbuilding_density = 'dense'
+  and d.worldbuilding_delivery is null
 order by b.title;
 ```
 
-Both pools are large (likely 150-300+ books combined) -- work through
-them in reasonably-sized batches like any other pass this skill
-describes, prioritizing well-known books with real, findable discourse
-first (an obscure book with no reviews to check against isn't tractable
-for this kind of tagging yet). Don't force a tag on a book where you
-can't find real presentation-specific evidence either way -- leaving a
-book untagged for these two tropes is the correct, honest outcome when
-the evidence isn't there, exactly like this skill's existing "don't
-force-tag" policy for every other field.
+Both pools are large (likely 150-300+ books combined, and will keep
+shrinking as ordinary Step 3 tagging of new books also fills these
+fields in going forward) -- work through them in reasonably-sized
+batches like any other pass this skill describes, prioritizing
+well-known books with real, findable discourse first (an obscure book
+with no reviews to check against isn't tractable for this kind of
+tagging yet). Don't force a tag on a book where you can't find real
+presentation-specific evidence either way -- leaving the column null is
+the correct, honest outcome when the evidence isn't there, exactly like
+this skill's existing "don't force-tag" policy for every other field.
 
 ### Before you finish this batch
 
@@ -259,19 +300,33 @@ honest about which.
 
 ### Migration conventions for this batch
 
-Same conventions as everywhere else in this project (see CLAUDE.md):
-idempotent SQL (`on conflict do nothing`), title+author-scoped (never a
-raw UUID), tested in a rolled-back transaction first. **Reserve
-timestamps starting at `20260906100000`** and increment from there --
-this project has hit real same-day migration-timestamp collisions
-before (see CLAUDE.md's own documented incidents); run
-`ls supabase/migrations/ | sort | uniq -d` before you push to confirm
-nothing collides with whatever else has landed since this was written.
-Since you're working directly against hosted (see "Setup" above), you
-don't need a separate local-apply step -- just test-in-transaction,
-apply to hosted, then commit the migration file so it's part of the
-tracked history (the repo owner's own local Postgres will pick it up
-next time he re-syncs).
+**You're writing UPDATEs on existing `book_dna` rows here, not INSERTs**
+-- `on conflict do nothing` doesn't apply to an UPDATE. Idempotency
+instead comes from guarding the WHERE clause with `is null`, so a re-run
+of the same migration file is a safe no-op rather than clobbering a
+value someone else already set in the meantime:
+
+```sql
+update book_dna set romance_tone = 'understated'
+where book_id = (select id from books where title = 'Example Title')
+  and romance_tone is null;
+
+-- only when genuinely uncertain (see "Confidence conventions" above):
+insert into book_field_confidence (book_id, field_name, confidence, source)
+select id, 'romance_tone', 0.6, 'ai_inferred' from books where title = 'Example Title'
+on conflict (book_id, field_name) do nothing;
+```
+
+Same other conventions as everywhere else in this project (see
+CLAUDE.md): title+author-scoped (never a raw UUID), tested in a
+rolled-back transaction first. Check for same-day migration-timestamp
+collisions before you push -- this project has hit real ones before (see
+CLAUDE.md's own documented incidents) -- via `ls supabase/migrations/ |
+sort | uniq -d`. Since you're working directly against hosted (see
+"Setup" above), you don't need a separate local-apply step -- just
+test-in-transaction, apply to hosted, then commit the migration file so
+it's part of the tracked history (the repo owner's own local Postgres
+will pick it up next time he re-syncs).
 
 Log what you did to `docs/project-log.md` when you're done, same as
 every other change in this project -- how many books reviewed, how
@@ -548,7 +603,21 @@ book:
   -- skip the `audiobook_native` module's Tier B fields, i.e.
   `narrator_performance`/`narration_pace_vs_prose`/`accent_authenticity`/
   `production_quality` -- those are deliberately deferred, see
-  book-dna.md's backlog, and need external listening data we don't have).
+  book-dna.md's backlog, and need real listening/performance-review
+  evidence we don't have. **Not the same gap as `audiobook_editions`**
+  (a separate table, not `book_dna`) -- that table DOES have real
+  narrator-identity data now for most books with a `hardcover_id`
+  (1026+ standard-edition rows across 786+ books, bulk-populated via
+  `scripts/backfill-standard-narrators.js`, see
+  `docs/project-log.md`'s 2026-09-11 entries). Knowing WHO narrates a
+  book is a different, already-solved question from judging HOW WELL
+  they perform it -- Tier B needs the latter, which narrator identity
+  alone can't answer. Nothing for you to do here per-book either way:
+  `audiobook_editions` is populated by that separate bulk script against
+  Hardcover's API, not by hand during tagging -- if you notice a newly
+  ingested book has no `audiobook_editions` row yet, that's expected
+  until the next bulk run, not something to research and insert
+  yourself).
 - Assign `genre` (`sci_fi`/`fantasy`, can be both).
 - Assign every trope from the controlled vocabulary that's a real,
   meaningful, defining element of the book -- not a passing reference.
@@ -577,16 +646,30 @@ these columns (all nullable, but all real signal -- don't skip any just
 because you can): `age_category, book_length, pov_count, person,
 narrator_reliability, timeline, form, overall_pace, pace_shape, drive,
 darkness, humor_level, emotional_register, message_intensity,
-romance_heat_frequency, romance_heat_intensity, violence_frequency,
-violence_intensity, worldbuilding_density, narrative_closure,
-emotional_resolution, ends_on_cliffhanger, audiobook_length,
-magic_system_hardness, scifi_hardness, prose_density, prose_complexity,
-intellectual_weight, stakes_scope, personal_stakes, genre_accessibility`
--- plus `genre`. (Leave out the 5 Tier B audiobook columns mentioned
-above -- those stay null on purpose.) If a field genuinely doesn't apply
-to a book (e.g. `romance_heat_frequency` on a book with zero romance),
-use its `none` value if the schema defines one for that field -- don't
-just omit the column.
+romance_heat_frequency, romance_heat_intensity, romance_tone,
+violence_frequency, violence_intensity, worldbuilding_density,
+worldbuilding_delivery, narrative_closure, emotional_resolution,
+ends_on_cliffhanger, audiobook_length, magic_system_hardness,
+scifi_hardness, prose_density, prose_complexity, intellectual_weight,
+stakes_scope, personal_stakes, genre_accessibility` -- plus `genre`.
+(Leave out the 5 Tier B audiobook columns mentioned above -- those stay
+null on purpose.) If a field genuinely doesn't apply to a book (e.g.
+`romance_heat_frequency` on a book with zero romance), use its `none`
+value if the schema defines one for that field -- don't just omit the
+column.
+
+**`romance_tone` and `worldbuilding_delivery` are the two genuine
+exceptions to "always fill every column"** -- unlike every other field
+above, they have no `none` value on their enum (`understated`/
+`melodramatic`/`mixed` and `woven`/`exposition_dump`/`mixed`
+respectively) because "not applicable" and "a real tagged value" aren't
+the same thing here. Leave them NULL when the book has too little
+romantic content (`romance_tone`) or too little worldbuilding/exposition
+to judge the delivery of either way (`worldbuilding_delivery`) -- don't
+force a value onto a book where the axis doesn't meaningfully apply. See
+"Tagging romance_tone and worldbuilding_delivery" below for the real
+evidence standard before assigning either one; it's substantially
+stricter than this skill's other fields, for a documented reason.
 
 **`genre_accessibility` (added 2026-09-03) works differently from every
 other field above -- start from a computed baseline, then adjust, don't
@@ -643,8 +726,9 @@ insert into book_dna (
   book_id, genre, age_category, book_length, pov_count, person,
   narrator_reliability, timeline, form, overall_pace, pace_shape, drive,
   darkness, humor_level, emotional_register, message_intensity,
-  romance_heat_frequency, romance_heat_intensity, violence_frequency,
-  violence_intensity, worldbuilding_density, narrative_closure,
+  romance_heat_frequency, romance_heat_intensity, romance_tone,
+  violence_frequency, violence_intensity, worldbuilding_density,
+  worldbuilding_delivery, narrative_closure,
   emotional_resolution, ends_on_cliffhanger, audiobook_length,
   magic_system_hardness, scifi_hardness, prose_density, prose_complexity,
   intellectual_weight, stakes_scope, personal_stakes, genre_accessibility
@@ -653,11 +737,17 @@ select
   id, array['fantasy'], 'adult', 'standard', 'few', 'third_limited',
   'reliable', 'linear', 'standard_prose', 'fast', 'consistent', 'plot_driven',
   'dark', 'light', 'tense', 'moderate',
-  'none', 'closed_door', 'occasional',
-  'graphic', 'moderate', 'requires_series',
+  'none', 'closed_door', null,
+  'occasional', 'graphic', 'moderate',
+  null, 'requires_series',
   'bittersweet', 'cliffhanger', 'standard',
   'soft', 'na', 'moderate', 'moderate',
   'moderate', 'regional', 'high', 'moderate'
+  -- romance_tone/worldbuilding_delivery left null here since this is a
+  -- generic placeholder with no real romance/worldbuilding content to
+  -- judge -- a real book with either axis present would carry a real
+  -- value ('understated'/'melodramatic'/'mixed',
+  -- 'woven'/'exposition_dump'/'mixed'), never guessed from genre alone.
   -- genre_accessibility: prose_complexity=moderate(0.5), overall_pace=fast
   -- (inverted: 0), worldbuilding_density=moderate(0.5), pov_count=few(0.5),
   -- intellectual_weight=moderate(0.5) -> average 0.4 -> 'moderate' tier.
