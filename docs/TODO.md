@@ -49,6 +49,32 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
+- [ ] **Consider bringing in Codex CLI (repo owner's existing ChatGPT
+  subscription) as a third working entity, alongside CLDO/CLDA --
+  raised 2026-09-11, needs real thought before building anything.**
+  Codex CLI is a real, viable tool for this -- it natively reads an
+  `AGENTS.md` file the same way this project relies on `CLAUDE.md`, so
+  the convention-following pattern would transfer reasonably well.
+  **Not a quick add -- two real open questions before any setup work
+  starts**:
+  1. **Concrete division of labor, not just "give it what it's good
+     at."** Needs actual task-type examples, not an abstract split.
+     One plausible shape floated in discussion: mechanical/scriptable
+     work (e.g. something like CLDA's Hardcover-API narrator-backfill
+     script) as a good fit, versus the nuanced literary-judgment
+     tagging work (which leans on a lot of hard-won, very specific
+     discipline -- the `HIGH_RISK_FIELDS` caution, the evidence
+     standards in CLAUDE.md) staying with the persona that already has
+     that context baked in. Not decided, just one candidate framing.
+  2. **A third entity re-opens the exact coordination problem CLAUDE.md
+     itself exists to solve, for a new kind of session.** The persona
+     system and the `PENDING_APPROVALS.md` gate would both need to
+     extend to it (a third name, a third set of "does it actually
+     respect this project's conventions" questions) -- not just point
+     it at CLAUDE.md and assume it onboards as cleanly as a fresh
+     Claude session does.
+  Work through both before building any integration -- this is a
+  bigger decision than it looks, don't rush it in alongside other work.
 - [x] **Bulk-populate `audiobook_editions` standard-edition narrator
   data via Hardcover's API -- DONE 2026-09-11. Final: 1026 `standard`
   rows across 786 of 869 books with a `hardcover_id`.** Confirmed
