@@ -9878,3 +9878,71 @@ before.
 public-domain classic) or Hardcover simply doesn't have the data --
 neither is safe to resolve automatically. Logged as a new TODO item
 rather than silently dropped.
+
+## 2026-09-11 (later still): fixed the narrator-backfill flagging heuristic and ran batch 2 -- 254 more rows, 144 more books
+
+Repo owner asked to review a batch of the 264 flagged books. Manually
+verified 6 of the "weak second group" cases via live web search before
+touching anything (The Name of the Wind/Rupert Degas, The Hitchhiker's
+Guide/Stephen Moore, Assassin's Apprentice/Joe Eyre, Outlander/
+Geraldine James, Best Served Cold/Steven Pacey, Watership Down/Ralph
+Cosham) -- **all 6 turned out to be genuine distinct editions** (a UK
+vs. US market release, an abridged vs. unabridged edition, or an older
+historical release Hardcover's community just hasn't logged much), not
+data noise. This meant the original flagging heuristic (flag any
+second group with users_count <= 2) was actively wrong -- it was
+treating "less popular on Hardcover" as suspicious when that's usually
+just "a real but less-logged edition."
+
+**Found the actual noise signal**: a TYPO variant of the same person's
+name (the one confirmed real noise case, Mistborn: The Final Empire's
+"Michael Krammer" vs "Michael Kramer"), not low popularity. Rewrote
+the script's grouping logic: (1) merge a group whose narrator set is a
+proper SUBSET of another group's set for the same book (a mis-tagged
+duplicate missing a co-narrator credit -- confirmed pattern on A Crown
+of Swords, Allegiant, Annihilation), (2) merge groups whose narrator
+lists pair up as Levenshtein-distance typo variants (catches the
+Krammer/Kramer case), (3) removed the low-count flag entirely -- two
+genuinely different-named groups are now treated as a real second
+edition regardless of popularity. Also normalized internal whitespace
+in narrator names (Hardcover data has real noise here too, e.g.
+"Geraldine  James" with a double space). Re-verified all changes
+against the full 16-book test set (the original Eye of the World/
+Mistborn validation plus the 6 new manually-verified cases) before
+running at scale -- confirmed Eye of the World still correctly keeps
+its two REAL narrations (Kramer/Reading and Rosamund Pike) rather than
+the subset/typo merges over-collapsing genuine multi-edition cases.
+
+**A real infrastructure bug found and fixed along the way**: re-running
+the corrected script against all 291 previously-flagged/no-data books
+produced 76 errors ("Cannot read properties of undefined"). Diagnosed
+via a direct API request rather than guessing -- Hardcover's rate limit
+is 60 req/min with a burst of 10 (confirmed via response headers;
+daily quota was fine, 3560/5000 remaining). The errors happened because
+an interactive test batch was run concurrently with this session's own
+background full-catalog analysis, both hitting the same token at once
+and exceeding the burst allowance -- Hardcover returns a malformed
+response (no `data`, no `errors` field) rather than a clean HTTP 429
+when this happens, which crashed the script's per-book analysis instead
+of failing gracefully. Added retry-with-backoff for that specific
+response shape. Re-ran just the 76 affected books in isolation (nothing
+else hitting the API concurrently) -- all 76 succeeded on retry,
+confirming the diagnosis.
+
+**Batch 2 result**: of the 291 previously-flagged/no-data books, 144
+now resolve cleanly (254 rows, several with 2 genuine narrations,
+same UK/US pattern as Eye of the World). Verified all 144 title/author
+pairs match exactly one `books` row before generating SQL (0
+mismatches). Migration `20260911130000_backfill_standard_narrators_
+batch2.sql` -- tested in a rolled-back transaction (idempotency
+re-run confirmed: 859 rows both times), applied via `supabase db push`
+(learned correctly from the earlier Step 4 mistake, not raw psycopg2
+again). Verified on hosted: 859 `standard` rows across 722 distinct
+books total (605+254, 578+144), zero migration-tracking mismatches.
+
+**Still remaining, not resolved by this batch**: 64 books with 3+
+distinct real narrator groups (mostly public-domain classics with
+genuinely many historical narrations -- picking which to record is an
+actual editorial judgment call, not a data-quality fix), 65 with no
+narrator data, 18 with no audio edition. The 64 are the next real
+candidate for a manual research pass.
