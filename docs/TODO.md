@@ -344,10 +344,11 @@ worth deferring to a later session rather than batching in for
   anything with no real SFF content for the repo owner rather than
   silently tagging or silently skipping it.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
-  -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-4
-  done 2026-09-12 (67 of ~484 series fixed so far -- the denominator
-  grew a lot from the 2026-09-12 378-book/118-series ingestion round,
-  this isn't the catalog shrinking work).** `status` defaults to
+  -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-5
+  done 2026-09-12 (77 of ~484 series fixed so far: 14+14+17+17+15 across
+  batches 1-5 -- the denominator grew a lot from the 2026-09-12
+  378-book/118-series ingestion round, this isn't the catalog shrinking
+  work).** `status` defaults to
   `'ongoing'` whenever Hardcover's `is_completed` flag isn't explicitly
   `true` (including simply missing data); `book_count` is Hardcover's
   raw per-series edition/omnibus/box-set count, not a curated
@@ -470,17 +471,77 @@ worth deferring to a later session rather than batching in for
   project-log.md's 2026-09-12 "batch 4" entry for full reasoning and
   sourcing on all 17 fixes plus the 21 confirmed-correct checks.
 
-  **Next (batch 5)**: re-rank remaining series by catalog book count,
-  excluding all 84 now-checked names across batches 1-4 (67 from
-  batches 1-3 + this batch's 17 fixed names listed just above) plus the
-  5 still-unsettled flagged names (Hogwarts Library, The Roald Dahl
-  Classic Collection, The Riyria Revelations (Omnibus), Robert Langdon,
-  The Inheritance Games -- the last two newly flagged this batch, a
-  scope question rather than a status/book_count one) -- don't reuse
-  any prior batch's candidate list, all are now stale. Batch 4's
-  unresearched tail (available as batch 5's first candidates): King of
-  Scars, Ninth House, The Captive's War, The Kane Chronicles, An Ember
-  in the Ashes, The Rain Wild Chronicles, The Atlas, Earthseed.
+  **Batch 5 (2026-09-12, background agent)**: **found and fixed a real
+  bookkeeping gap first** -- this file's own "next batch" pointer (and
+  project-log.md's batch-4 entry) said to exclude "84 checked names"
+  (67 from batches 1-3 + batch 4's 17 fixes), but never folded in batch
+  4's own 21 additional confirmed-already-correct names, so the running
+  total was undercounting by 21 in both places. Reconstructed the
+  accurate list by name straight from batches 1-4's project-log entries:
+  15 (batch 1) + 30 (batch 2) + 17 (batch 3) + 38 (batch 4) = **100
+  named series**, not 84 -- used that for this batch's exclusion, and
+  the corrected running total is carried below so batch 6 doesn't
+  inherit the same gap. Re-ran the ranking query excluding those 100
+  plus the 5 flagged names. 15 needed a real fix: The Rain Wild
+  Chronicles, Space Odyssey, Dirk Gently, The Book of the New Sun
+  (book_count only), The Final Architecture, An Ember in the Ashes, The
+  Kane Chronicles, Zones of Thought, The Atlas (book_count only), King
+  of Scars, Ninth House (book_count only), Caraval, The Riftwar Saga
+  (book_count only), The Shepherd King (book_count only), Cerulean
+  Chronicles. 3 more checked and found already correct: The Dresden
+  Files, The Vampire Chronicles, The Faithful and the Fallen. Migration
+  `20260912800000_fix_series_status_book_count_batch5.sql` -- applied
+  to hosted directly by the agent (tested in a rolled-back transaction
+  first) but **not yet pushed via `supabase db push` and the branch not
+  yet merged to main**, same handoff-to-CLDO pattern as batches 2-4. See
+  project-log.md's 2026-09-12 "batch 5" entry for full reasoning and
+  sourcing on all 18 checks.
+
+  **New this batch -- 6 more names flagged as a DIFFERENT bug class**
+  (not simple status/book_count errors, need a separate look, not fixed
+  here): **Imperial Radch (publication order)** -- a duplicate series
+  row holding all 5 real books, while the "Imperial Radch" row batch 2
+  already fixed now has zero books linked (a duplicate-series-row
+  problem, the series-level mirror of batch 4's duplicate-`books`-row
+  flag). **Enderverse: Publication Order / The Shadow Series** -- the
+  4-book "Shadow" sub-saga is split across these two series rows
+  (2 books under each), violating the leaf-series convention in this
+  file's "Catalog scope & series hierarchy" section. **Middle Earth** --
+  holds only an omnibus and "The Silmarillion," not a real leaf series,
+  same pattern as the already-flagged Hogwarts Library/Roald Dahl
+  Classic Collection. **American Gods** -- groups a loosely-connected
+  companion novel ("Anansi Boys") as if it were a numbered sequel, a
+  scope/grouping question in the same family as the omnibus flags.
+  **Forward Collection** -- a one-time 2019 anthology of 6 unrelated
+  novellas by 6 different authors, not a normal single-author series;
+  whether "book_count" even applies to a multi-author anthology brand
+  is a policy question. These 6 are now added to the flagged-name list
+  below so future batches' ranking queries stop re-surfacing them.
+  **'Saga'** (the already-known out-of-scope graphic novel) was also
+  seen again in the ranked list -- it had never actually been added to
+  the exclude list despite being noted back in batch 2, so every batch
+  since has re-encountered it for nothing; added now.
+
+  **Next (batch 6)**: re-rank remaining series by catalog book count,
+  excluding all **118** now-checked names across batches 1-5 (100 from
+  batches 1-4 + this batch's 15 fixed + this batch's 3 confirmed-correct
+  -- keep this running total accurate going forward, per the
+  bookkeeping-gap note above) plus the **12** still-unsettled flagged
+  names: Hogwarts Library, The Roald Dahl Classic Collection, The
+  Riyria Revelations (Omnibus), Robert Langdon, The Inheritance Games
+  (pre-existing 5) + Imperial Radch (publication order), Enderverse:
+  Publication Order, The Shadow Series, Middle Earth, American Gods,
+  Forward Collection (this batch's 6 new ones) + Saga (the graphic
+  novel, newly added to this list rather than left to keep resurfacing)
+  -- don't reuse any prior batch's candidate list, all are now stale.
+  Batch 5's unresearched tail (available as batch 6's first
+  candidates): Legend (Marie Lu), Emily Wilde (Heather Fawcett), Legends
+  & Lattes (Travis Baldree), Oxford Time Travel (Connie Willis), Uglies
+  (Scott Westerfeld), Wayward Children (Seanan McGuire), Outlander
+  (Diana Gabaldon), Holly Gibney (Stephen King -- also worth a scope
+  look, most of this sub-series is crime/thriller rather than SFF), The
+  Captive's War (James S. A. Corey), Earthseed (Octavia Butler, seen but
+  not researched).
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also
