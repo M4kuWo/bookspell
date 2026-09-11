@@ -10507,3 +10507,24 @@ Stephen King (Holly Gibney/Dark Tower/Green Mile), Robert Jackson
 Bennett (all 3 series).
 **Not yet checked**: everyone else from the original 51, plus the new
 Mark Lawrence Library Trilogy/Impossible Times question.
+
+## 2026-09-12 — Rechecked `validated_dealbreaker_fields()` for all 4 raters, still empty
+
+Cheap follow-up on the graduated dealbreaker veto (`_apply_dealbreaker_
+veto_graduated()`, built and structurally verified 2026-09-07 but never
+provable against real data because nothing validated for any rater at
+that time -- see TODO.md's "Graduated dealbreaker veto" entry). Enough
+new data has landed since (romance_tone/worldbuilding_delivery
+backfilled 2026-09-11, more books tagged, Mathias's rating count now
+143) that it was worth rerunning rather than assuming the 2026-09-07
+snapshot still holds.
+
+Ran `R.validated_dealbreaker_fields(catalog, id_to_mag)` against each
+rater's FULL rating set (`R._resolve_profile(catalog, ratings)`, not a
+held-out split -- this checks "does anything validate at all right
+now," not predictive accuracy). Result: **still empty for all 4**
+(Mathias: 143 ratings, Osnat: 153, Dandan: 32, Gabriel: 7). No change
+from 2026-09-07/08. Confirms the veto is still genuinely blocked on
+more real per-rater evidence, not on staleness in how it was last
+checked -- nothing further to do here until a future recheck turns up
+a validated field/user pair.

@@ -758,7 +758,9 @@ worth deferring to a later session rather than batching in for
   2026-09-07, but can't be proven against real data because
   `validated_dealbreaker_fields()` is currently EMPTY for all 4 real
   raters. Blocked on more real per-rater rating data, not on more
-  engineering. Revisit once a field/user pair actually validates.
+  engineering. **Rechecked 2026-09-12 (Mathias now at 143 ratings) --
+  still empty for all 4**, see project-log.md's 2026-09-12 entry.
+  Revisit once a field/user pair actually validates.
 - [ ] **Series-aware field-conditional dedup** -- parked 2026-09-06.
   One real lead not yet built: protect the minority subgroup within a
   series split (not just validated-dealbreaker fields, which was tried
