@@ -96,6 +96,7 @@ NOMINAL_FIELDS = [
     "person", "narrator_reliability", "timeline", "form",
     "pace_shape", "drive", "narrative_closure", "emotional_resolution",
     "ends_on_cliffhanger", "magic_system_hardness", "scifi_hardness",
+    "romance_tone", "worldbuilding_delivery",
 ]
 
 # Nominal fields match all-or-nothing by default (see nominal_similarity()
@@ -127,6 +128,15 @@ NOMINAL_FIELDS = [
 # `bittersweet` (linguistically plausible as a happy/tragic blend, but
 # without either empirical evidence or explicit schema backing -- a
 # candidate to revisit, not added speculatively).
+#
+# romance_tone/worldbuilding_delivery (2026-09-11, added alongside their
+# conversion from trope pairs to scalar fields -- see
+# convert-romance-worldbuilding-fields skill): `mixed` clears the same
+# bar drive's `balanced` did -- explicit backing, not a guess. It's
+# defined (see that migration's own comment) as "real evidence found on
+# both sides" during tagging, a genuine midpoint by construction, so it
+# gets partial credit against BOTH poles of its own pair, same shape as
+# balanced/character_driven/plot_driven.
 NOMINAL_PARTIAL_SIMILARITY = {
     "person": {
         frozenset({"third_limited", "third_omniscient"}): 0.5,
@@ -134,6 +144,14 @@ NOMINAL_PARTIAL_SIMILARITY = {
     "drive": {
         frozenset({"character_driven", "balanced"}): 0.5,
         frozenset({"plot_driven", "balanced"}): 0.5,
+    },
+    "romance_tone": {
+        frozenset({"understated", "mixed"}): 0.5,
+        frozenset({"melodramatic", "mixed"}): 0.5,
+    },
+    "worldbuilding_delivery": {
+        frozenset({"woven", "mixed"}): 0.5,
+        frozenset({"exposition_dump", "mixed"}): 0.5,
     },
 }
 
@@ -1039,7 +1057,30 @@ def build_profile(catalog, ratings, full_ratings=None, format_preference=None):
     for field in NOMINAL_FIELDS:
         pool_liked = full_liked if field in STRUCTURAL_NOMINAL_FIELDS else liked
         pool_disliked = full_disliked if field in STRUCTURAL_NOMINAL_FIELDS else disliked
-        liked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_liked if b.get(field)]
+        # FIXED 2026-09-11: a book whose only evidence for this field is
+        # below MIN_CONFIDENCE_TO_COUNT gets scoring_confidence()==0, but
+        # `b.get(field)` is still truthy (it HAS a value, just an
+        # unreliable one) -- so it used to survive into liked_vals/
+        # disliked_vals as a zero-weight entry, making the list
+        # non-empty while its weights summed to zero. Surfaced by
+        # romance_tone/worldbuilding_delivery's confidence-0.2 backfilled
+        # rows (this project's first NOMINAL_FIELD with real confidence-
+        # 0.2 data clustered enough to zero out a whole pool for some
+        # rater/genre split) as a ZeroDivisionError in disliked_share's
+        # division -- but liked_share had the identical latent bug, just
+        # hadn't hit the right data shape yet. Filtering zero-weight
+        # entries out here (not just checking list non-emptiness) treats
+        # "all evidence too unreliable to count" the same as "no
+        # evidence" everywhere scoring_confidence() is used, which is
+        # the correct, already-documented semantics -- this was an
+        # oversight in applying it, not a new policy. The ORDINAL_FIELDS
+        # loop's weighted_mean() already guards the equivalent case
+        # (`if total_w == 0: return None`); this brings NOMINAL_FIELDS
+        # in line with it.
+        liked_vals = [
+            (b.get(field), m * scoring_confidence(b, field)) for b, m in pool_liked if b.get(field)
+        ]
+        liked_vals = [(v, m) for v, m in liked_vals if m > 0]
         if not liked_vals:
             continue
         # magnitude-weighted mode
@@ -1050,7 +1091,10 @@ def build_profile(catalog, ratings, full_ratings=None, format_preference=None):
             total_m += m
         mode_val = max(counts, key=counts.get)
         liked_share = counts[mode_val] / total_m
-        disliked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_disliked if b.get(field)]
+        disliked_vals = [
+            (b.get(field), m * scoring_confidence(b, field)) for b, m in pool_disliked if b.get(field)
+        ]
+        disliked_vals = [(v, m) for v, m in disliked_vals if m > 0]
         if disliked_vals:
             total_dm = sum(m for _, m in disliked_vals)
             disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
@@ -1976,6 +2020,23 @@ def score_book(book, centroid, weights, field_prevalence=None, trope_prevalence=
             book_val = pos[0] / pos[1]
             sim = 1 - abs(book_val - centroid[field])
         else:
+            # FIXED 2026-09-11: a NOMINAL field this book was never
+            # tagged for (book.get(field) is None) used to fall through
+            # to nominal_similarity(), which returns 0.0 -- a FULL
+            # MISMATCH -- for any (None, real_value) pair, since no
+            # partial-credit entry exists for None. That's wrong: no
+            # tag means no evidence either way, the same "skip this
+            # field for this book" treatment ORDINAL_FIELDS already
+            # gets via ordinal_position() returning None above. Never
+            # surfaced before because every existing NOMINAL field had
+            # near-total coverage; romance_tone/worldbuilding_delivery
+            # (this session) are the first with substantial (~85%)
+            # missing data, which is what exposed this -- confirmed via
+            # a real regression across every Mathias scorecard row in
+            # an A/B test before this fix landed (see
+            # docs/scoring-test-protocol.md's 2026-09-11 entry).
+            if book.get(field) is None:
+                continue
             sim = nominal_similarity(field, book.get(field), centroid[field])
         w_eff = _redundancy_adjusted_weight(book, field, w) * scoring_confidence(book, field)
         if field_prevalence is not None:
@@ -2045,6 +2106,11 @@ def explain_book(book, centroid, weights, top_n=5, field_prevalence=None, trope_
                 continue
             sim = 1 - abs(pos[0] / pos[1] - centroid[field])
         else:
+            # See score_book()'s identical fix (2026-09-11) -- a
+            # never-tagged NOMINAL field must be skipped, not scored as
+            # a full mismatch against None.
+            if book.get(field) is None:
+                continue
             sim = nominal_similarity(field, book.get(field), centroid[field])
         w = _redundancy_adjusted_weight(book, field, w) * scoring_confidence(book, field)
         if field_prevalence is not None:

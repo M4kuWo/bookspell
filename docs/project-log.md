@@ -10106,3 +10106,25 @@ data-only dump, restore process not yet tested end-to-end). Documented
 the whole setup in CLAUDE.md's new "Database backups" section so a
 future session doesn't have to rediscover where backups live or why
 they're not in this repo.
+
+## 2026-09-11 (later still): romance_tone/worldbuilding_delivery landed in recommend.py, with a known regression
+
+Wired both new scalar fields into scoring (`NOMINAL_FIELDS`, content-
+scoped, `mixed` gets partial credit against both poles). Found and
+fixed a real, previously-latent bug along the way: untagged nominal
+fields were scoring as a full mismatch instead of being skipped
+(`score_book()`/`explain_book()`), plus a related `ZeroDivisionError`
+in `build_profile()`'s weight learning when a field's evidence was
+entirely confidence-zeroed for one side. Both are general fixes, not
+specific to these two fields.
+
+Full A/B scorecard before landing found a real, exactly-traced
+regression: 2 books (Royal Assassin, Interview with the Vampire, both
+already-familiar cases from the earlier `person` dealbreaker
+investigation) flip from correctly-Poor to incorrectly-Mixed, driven
+by thin per-rater coverage (only 17 of Mathias's own rated books carry
+a `romance_tone` tag) making the held-out test's training-split mode
+unstable. Zero effect on Osnat/Dandan/Gabriel. Repo owner reviewed the
+exact size and landed it anyway -- expected to self-correct as
+`romance_tone`/`worldbuilding_delivery` coverage grows, not a code
+problem. Full detail: scoring-test-protocol.md's 2026-09-11 entry.

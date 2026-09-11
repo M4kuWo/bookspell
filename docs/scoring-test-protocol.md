@@ -2497,3 +2497,62 @@ every row except Mathias-full's pairwise accuracy, which IMPROVED
 correlates with `book_length` (longer books tend to have longer
 audiobooks too), so removing the redundant always-on copy barely moves
 anything, with one small genuine win from removing noise.
+
+## romance_tone/worldbuilding_delivery wired into scoring -- LANDED with a known, traced regression (2026-09-11)
+
+Added both new `book_dna` scalar fields (see
+`convert-romance-worldbuilding-fields` skill for the schema/backfill
+half, done separately by CLDA) to `NOMINAL_FIELDS`, content-scoped
+(genre-dependent, matching how the original tropes were always
+genre-scoped, NOT added to `STRUCTURAL_NOMINAL_FIELDS`). Added
+`mixed`'s partial credit to `NOMINAL_PARTIAL_SIMILARITY` against BOTH
+poles of its own pair -- clears the same bar `drive`'s `balanced` did:
+`mixed` is explicitly defined (see the schema migration's own comment)
+as "real evidence found on both sides," a genuine midpoint by
+construction, not a guess.
+
+**Found and fixed a real, previously-latent bug while testing**:
+`score_book()`/`explain_book()`'s NOMINAL_FIELDS branch scored a
+never-tagged field (`book.get(field) is None`) as a FULL MISMATCH
+(`nominal_similarity()` returns 0.0 for any `(None, real_value)`
+pair) instead of skipping it, unlike `ORDINAL_FIELDS`'s
+`ordinal_position()` returning `None` and correctly `continue`-ing.
+Never surfaced before because every existing nominal field
+(`person`, `drive`, etc.) has near-total coverage; these two
+(~18% tagged) are the first sparse enough to expose it. First caught
+as a `ZeroDivisionError` in `build_profile()`'s NOMINAL loop itself (a
+related but separate bug -- `disliked_vals`/`liked_vals` included
+confidence-zeroed entries as "real" data, making the list non-empty
+while its weights summed to zero; fixed by filtering `m > 0` before
+the emptiness check, bringing NOMINAL_FIELDS in line with
+`ORDINAL_FIELDS`'s existing `weighted_mean()` guard). Both fixes are
+general correctness fixes, not specific to these two fields -- any
+future sparse nominal field would have hit the same issues.
+
+**Checked before landing, full A/B scorecard (fields on vs. off, same
+catalog snapshot)**: a real regression, traced to an exact cause, not
+left as a mystery number. Exactly 2 books flip, both already
+well-documented cases from earlier this session (the `person`
+dealbreaker investigation): **Royal Assassin** (0.515->0.543) and
+**Interview with the Vampire** (0.519/0.526->0.540/0.549), both
+Poor->Mixed, both borderline (delta ~0.02-0.03). Root cause: within
+Mathias's own ratings, only 17 books total carry a `romance_tone` tag
+(13 liked, 4 disliked), and the liked split is close (7 understated
+vs. 5 melodramatic) -- thin enough that the held-out test's training
+split sometimes flips which value is the mode (`understated` on the
+full 143-rating set vs. `melodramatic` on a ~121-rating held-out
+training split), and both flagged books happen to be tagged
+`melodramatic` -- genuinely matching the flipped-mode centroid instead
+of mismatching the full-dataset one. Not a code bug -- the same class
+of small-sample mode instability already documented for `person`'s
+own separation swinging as more data accumulated. Confirmed **zero
+effect on Osnat/Dandan/Gabriel** -- none of their profiles have enough
+`romance_tone`-tagged books to generate a nonzero weight from it at
+all; their full scorecards are byte-identical.
+
+**Verdict: LANDED anyway, repo owner's explicit call** after seeing
+the exact size (2 borderline books, zero effect on 3 of 4 raters) --
+this will self-correct as more books get `romance_tone`/
+`worldbuilding_delivery` tags (the tagging sweep is ongoing), not
+something more code can fix. Revisit if the same instability still
+shows up once coverage is meaningfully larger.
