@@ -10528,3 +10528,60 @@ from 2026-09-07/08. Confirms the veto is still genuinely blocked on
 more real per-rater evidence, not on staleness in how it was last
 checked -- nothing further to do here until a future recheck turns up
 a validated field/user pair.
+
+## 2026-09-12 — Catalog expansion round 4: 378 new books, 118 new series
+
+Fresh popularity-pull ingestion, same pattern as rounds 1-3
+(20260830040000/147 books, 20260831020000/299 books,
+20260902040000/276 books). Bumped `ingest-seed-catalog.js`'s per-genre
+Fantasy/Sci-Fi pull count 620->850 (same-size step as the prior
+420->620 bump) and ran it against local. Result: 378 new books, 118 new
+series, plus 4 existing pilot-style rows (hardcover_id previously null
+-- NOS4A2, Horns, The Left Right Game, Zero G, each added earlier via a
+targeted single-book ingestion that bypassed the Hardcover-matching
+pipeline) got their bibliographic data backfilled by this run's pilot-
+matching step. Catalog now at 1256 books / 484 series (was 878/366).
+
+Generated migration `20260912000000_catalog_expansion_round4_378_books.sql`
+by diffing hardcover_id sets before/after the local run (no existing
+generator script for this -- wrote one ad hoc, not kept, see this
+entry for the method: snapshot hardcover_id sets pre-run, diff post-run,
+distinguish genuine new INSERTs from the 4 pilot UPDATEs by created_at
+age). **Real near-miss caught before finalizing**: my first diff pass
+flagged all 382 hardcover_id changes as new INSERTs, which would have
+duplicated the 4 pilot books as second rows on hosted (same title, a
+second UUID, ON CONFLICT on hardcover_id wouldn't have caught it since
+their hardcover_id was NULL, not a real conflict target) -- caught by
+checking created_at age (the 4 pilot rows pre-date this run; the 378
+genuine inserts all share this run's timestamp), fixed by emitting
+title-scoped UPDATE statements (with a `where hardcover_id is null`
+idempotency guard) for those 4 instead of INSERTs. Tested idempotency
+by re-applying the full migration to local before pushing -- zero count
+change, confirmed safe. Applied to hosted via `supabase db push`,
+verified via `supabase db query --linked`: 1256 books / 484 series / 7
+universe, matching local exactly.
+
+**8 graphic novels flagged among the new inserts, left in place
+untagged (not deleted) per the existing graphic-novel-scope policy**
+(see CLAUDE.md's "Catalog scope & series hierarchy" section, and the
+2026-09-04 Saga/Sandman precedent): *Monstress, Vol. 1: Awakening*,
+*Paper Girls, Vol. 1*, *Saga, Vol. 3*, *Saga, Vol. 4*, *The Walking
+Dead, Vol. 1: Days Gone Bye*, *Watchmen*, *White Sand, Vol. 1* (the
+Dynamite comic-adaptation edition, credited to Rik Hoskin/Julius Gopez
+-- NOT Sanderson's own prose White Sand novels, which are a separate,
+in-scope work if/when they're in the catalog), *Y: The Last Man Vol,
+1 Unmanned*. Flagging now so CLDA doesn't need to rediscover these
+individually during tagging -- per policy, skip and don't tag, don't
+delete unilaterally.
+
+**Scope note, not new**: as with every genre-popularity pull, plenty of
+non-SFF titles leaked in too (literary fiction, thrillers, nonfiction,
+a few Ayn Rand novels) -- expected per CLAUDE.md's documented pattern,
+left untagged for now; the real scope audit happens at tagging time
+(when a title turns out to have no real SFF content, flag and get it
+confirmed-deleted then), not worth a manual pre-audit of 378 titles
+here.
+
+Confirmed (as with every prior round) new books stay automatically
+excluded from `recommend.py` scoring until tagged, no separate
+mechanism needed -- `load_catalog()`'s inner join on `book_dna`.

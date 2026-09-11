@@ -327,6 +327,22 @@ worth deferring to a later session rather than batching in for
   books entering the untagged queue, and (b) the vocabulary-growth
   sweeps already tracked elsewhere in this file (romance_tone,
   worldbuilding delivery).
+- [ ] **Catalog expansion round 4 landed 2026-09-12 -- 378 new untagged
+  books entered the queue, real tagging work again (see (a) above).**
+  Catalog now 1256 books / 484 series (was 878/366) -- see
+  project-log.md's 2026-09-12 entry for the full method and hosted-sync
+  verification. **8 of the 378 are graphic novels, already identified --
+  skip, don't tag, per the existing v1-scope policy** (same treatment as
+  the 4 already-known cases above): *Monstress, Vol. 1: Awakening*,
+  *Paper Girls, Vol. 1*, *Saga, Vol. 3*, *Saga, Vol. 4*, *The Walking
+  Dead, Vol. 1: Days Gone Bye*, *Watchmen*, *White Sand, Vol. 1* (the
+  Dynamite comic adaptation -- not Sanderson's own prose novels), *Y:
+  The Last Man Vol, 1 Unmanned*. The rest were NOT pre-audited for
+  scope (a popularity pull always nets some non-SFF leakage, e.g.
+  literary fiction/thrillers/nonfiction -- expected, per this file's own
+  documented pattern) -- catch those at tagging time as usual, flag
+  anything with no real SFF content for the repo owner rather than
+  silently tagging or silently skipping it.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11 (19 of ~200
   series fixed so far).** `status` defaults to `'ongoing'` whenever
