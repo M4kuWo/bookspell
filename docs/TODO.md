@@ -37,27 +37,55 @@ worth deferring to a later session rather than batching in for
 ## P1
 
 - [ ] **Bulk-populate `audiobook_editions` standard-edition narrator
-  data via Hardcover's API -- new, real, high-value item, 2026-09-11.**
-  Resolves the open sub-question that used to sit at the bottom of the
-  (now-demoted, see P3) dramatized-audio item below: **confirmed
-  directly** that Hardcover's GraphQL API exposes narrator data as a
-  `contribution: "Narrator"` role on `books.default_audio_edition.
-  cached_contributors`, genuinely bulk-fetchable (tested a single query
-  across 10 random catalog book ids at once -- 7/10 returned real
-  narrator names, e.g. Michael Kramer for Mistborn: The Final Empire --
-  zero web-search cost, just API calls). **Scope**: 869 of 874 books
-  have a `hardcover_id`; `audiobook_editions` currently has ZERO
-  `edition_type = 'standard'` rows (all 97 existing rows are
-  `dramatized_full_cast`) -- this is a real, untouched, large backlog,
-  not a maintenance/freshness task, which is why it stays P1 while the
-  dramatized-audio item below (whose known candidate pools are
-  genuinely exhausted) does not. Not started -- next step is a batch
-  script (bulk GraphQL query -> `insert into audiobook_editions
-  (edition_type='standard', narrators, ...)`, same idempotent
-  `on conflict do nothing` pattern as every other insert in this
-  project) rather than the one-by-one web-research pattern the
-  dramatized-edition work used, since this data doesn't need per-book
-  research at all.
+  data via Hardcover's API -- 605 of ~869 done 2026-09-11, 264 flagged
+  for follow-up rather than guessed.** Confirmed Hardcover's API
+  exposes narrator data as a `contribution: "Narrator"` role, genuinely
+  bulk-fetchable. **Repo owner flagged a real risk before this was
+  built**: some books (Wheel of Time named as the example) have
+  MULTIPLE genuinely different narrations (Kramer/Reading's classic
+  narration vs. Rosamund Pike's 2021 re-recording) that must not get
+  conflated into one row. Confirmed the risk was real on the very first
+  test book -- The Eye of the World returned 15 raw Hardcover edition
+  records (the classic narration in ~7 near-duplicate reprints, a
+  genuinely separate Pike solo re-recording, and a Spanish-language
+  edition), and `default_audio_edition` (the field the original API
+  probe used) returns only ONE of these per book. Built
+  `scripts/backfill-standard-narrators.js` to group each book's audio
+  editions by narrator-SET IDENTITY (not publisher/date, which vary
+  across reprints of the same real performance) rather than a naive
+  one-row-per-book insert -- verified it correctly produces two
+  separate rows for The Eye of the World
+  (`['Kate Reading','Michael Kramer']` and `['Rosamund Pike']`), now
+  live on hosted.
+  **Two more real conflation risks caught during testing** (see
+  project-log.md's 2026-09-11 "standard-edition narrator backfill"
+  entry for full detail): a data-entry typo narrator variant
+  ("Michael Krammer" vs "Michael Kramer" on Mistborn: The Final
+  Empire) and a GraphicAudio full-cast edition leaking into the
+  "standard" pool -- both now filtered out by the script rather than
+  silently inserted.
+  **Full-catalog result**: 578 books got exactly one confident
+  narrator group, 27 of those got two genuine groups (multi-narration
+  cases), 605 rows total, migration
+  `20260911120000_backfill_standard_narrators.sql`, tested in a
+  rolled-back transaction (including an idempotency re-run) then
+  applied to hosted via `supabase db push` -- verified 605 `standard`
+  rows across 578 distinct books, zero migration-tracking mismatches.
+  **264 books deliberately NOT auto-inserted, follow-up needed, not a
+  silent gap**: 130 flagged for an ambiguous/weak second narrator
+  group (needs a human check -- is it real, or Hardcover data noise),
+  78 flagged for 3+ distinct groups (mostly public-domain classics
+  with many real historical narrations -- Frankenstein alone has 12 --
+  picking "the" canonical one is a real judgment call, not
+  mechanical), 65 with no narrator-labeled contributor in Hardcover's
+  data at all, 18 with no audio edition listed. **Next**: a manual/
+  research pass through the 130+78=208 flagged books (the 83
+  no-data/no-edition ones have nothing to add -- not actionable
+  without a different data source). Full per-book flagged list is in
+  the script's saved dry-run JSON output from this session, not yet
+  committed anywhere durable -- whoever picks this up should re-run
+  `node scripts/backfill-standard-narrators.js --dry-run` fresh rather
+  than hunting for that file.
 - [ ] **DEMOTED to P3, 2026-09-11 (see P3 below for the current entry
   and the repo owner's reasoning) -- dramatized-audio edition data
   (GraphicAudio/BBC Audio/Sub-task B Audible Originals), see

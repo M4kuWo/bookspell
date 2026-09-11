@@ -9790,3 +9790,91 @@ freshness concern, so this becomes the new P1 audiobook item in
 `docs/TODO.md` (replacing the demoted dramatized-audio item in that
 slot). Not started -- next step is a batch script, not per-book web
 research, since this data doesn't need it.
+
+## 2026-09-11 (later): built and ran the standard-edition narrator backfill -- 605 rows, with real multi-edition conflation risks caught and fixed before running at scale
+
+Repo owner specifically flagged a real risk before authorizing this:
+some books (named example -- The Wheel of Time) have MULTIPLE genuinely
+different audiobook narrations (Kramer/Reading's classic narration vs.
+Rosamund Pike's 2021 re-recording for several books) that must not be
+mixed together into one row. Built `scripts/backfill-standard-
+narrators.js` with this as the central design constraint, not an
+afterthought.
+
+**Confirmed the risk was real on the first test book**: The Eye of the
+World alone returned 15 raw "Listened"-format edition records from
+Hardcover -- the classic Kramer/Reading narration (in ~7 near-duplicate
+reprint records under different publishers/dates), a genuinely separate
+Rosamund Pike solo re-recording (3 records, 2 missing narrator credit),
+and a Spanish-language edition (Francesc Gongora/Lola Sans) that must
+not be conflated with either English narration. `books.default_audio_
+edition` (the field used for the earlier one-book spot-check) returns
+exactly ONE of these per book -- confirming a naive approach would have
+silently picked one narration or blended casts.
+
+**Design**: group a book's audio editions by narrator-set IDENTITY (not
+publisher/date, which vary across reprints of the same performance);
+exclude only editions with an EXPLICIT non-English language (`language:
+null` is kept, not excluded -- the real Pike edition itself has a null
+language field in Hardcover's data, so requiring language==='English'
+would have silently dropped it); exclude likely-dramatized editions
+(>4 narrators, or a GraphicAudio-style publisher) from the 'standard'
+pool, since those are tracked separately by `tag-audiobook-editions`.
+
+**Two more real conflation risks caught during testing, not anticipated
+up front**: (1) Mistborn: The Final Empire initially returned 3 groups
+-- the real Kramer/Reading narration (140 users), a data-entry typo
+variant "Michael Krammer" (1 user, clearly the same person misspelled),
+and a GraphicAudio full-cast edition that had leaked into the "Listened"
+pool despite the narrator-count filter (25-person cast, caught by that
+filter on a later run once the GraphicAudio-publisher-name check was
+added). (2) The Hundred Thousand Kingdoms returned 2 groups with ZERO
+community signal on either side (Casaundra Freeman solo vs. Casaundra
+Freeman + N. K. Jemisin) -- the original flagging rule only caught a
+LOPSIDED weak-vs-strong pair, not a both-weak pair, so it was tightened
+to flag any second group with users_count <= 2 regardless of the first
+group's count, rather than guessing which (if either) is real.
+
+**Full-catalog analysis, 869 books with a hardcover_id**: 578 produced
+exactly one confident narrator group, 27 of those produced two genuine,
+well-attested groups (multi-narration cases like Eye of the World),
+totaling 605 insertable rows. 264 books deliberately NOT auto-inserted:
+130 flagged for an ambiguous/weak second group, 78 flagged for 3+
+distinct groups (mostly public-domain classics with many real
+historical narrations -- Frankenstein alone has 12 -- not an error),
+65 with no narrator-labeled contributor in Hardcover's data, 18 with no
+audio edition listed at all.
+
+**A real encoding scare, checked and ruled out before trusting the
+data**: two titles ("A Wizard's Guide to Defensive Baking", "The
+Liar's Key") appeared to have their curly apostrophe corrupted into a
+replacement character when inspected via a `repr()` print in this
+session's terminal. Verified via hexdump that the actual JSON and
+generated SQL file bytes are correct UTF-8 (`e2 80 99`, the right
+encoding for U+2019) -- the corruption was purely a cp1252 console
+display artifact from printing to this session's terminal, not real
+data corruption. Confirmed with a direct DB check: all 578 "ok" books'
+title/author pairs matched exactly one `books` row (0 mismatches)
+before trusting the generated SQL.
+
+Migration `20260911120000_backfill_standard_narrators.sql` -- tested
+in a rolled-back transaction first (including an idempotency re-run:
+605 rows both times), applied to hosted via `supabase db push` this
+time (not raw psycopg2, learning directly applied from the same
+session's earlier Step 4 mistake). Verified on hosted: 605 `standard`
+rows across 578 distinct books, migration tracking table shows no
+local/remote mismatches, and The Eye of the World specifically now
+carries two separate rows (`['Kate Reading', 'Michael Kramer']` and
+`['Rosamund Pike']`) rather than one conflated or wrong row -- the
+exact case the repo owner asked to get right.
+
+Local sync remains the known, accepted, structural gap from the
+2026-09-09 entries -- unchanged by this migration, hosted-only as
+before.
+
+**Not done, deliberately left as a follow-up rather than guessed**: the
+264 flagged/no-data books. These need either a human judgment call
+(which of 3-12 historical narrations is "the" one to record for a
+public-domain classic) or Hardcover simply doesn't have the data --
+neither is safe to resolve automatically. Logged as a new TODO item
+rather than silently dropped.
