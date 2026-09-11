@@ -10449,3 +10449,61 @@ a confirmed-negative result, logged so King isn't re-investigated on
 this same basis later. No migration this entry.
 
 **46 authors remain** on the original 51-author audit list.
+
+## 2026-09-11 (later still): shared-universe audit -- Westeros confirmed, Robert Jackson Bennett confirmed NOT connected
+
+Repo owner asked to continue. Checked George R.R. Martin's A Song of
+Ice and Fire/A Targaryen History/The Tales of Dunk and Egg and Robert
+Jackson Bennett's Divine Cities/Founders Trilogy/Ana and Din Mysteries.
+
+**Confirmed connected -- the clearest, most explicit case checked in
+this whole audit**: A Song of Ice and Fire (6 books), A Targaryen
+History (Fire & Blood), and The Tales of Dunk and Egg (A Knight of the
+Seven Kingdoms) are all officially the same Westeros continuity -- Fire
+& Blood is an in-universe Targaryen history covering centuries before
+A Game of Thrones, Dunk and Egg is a direct prequel ~90 years before
+the main series (a young Aegon V Targaryen), both explicitly part of
+the same book-continuity canon, not a loose reference. Named the
+universe "Westeros" (the actual in-world place name), matching the
+existing Middle-earth/Abeth naming pattern rather than reusing a
+flagship series title (avoids the same collision problem The Broken
+Empire World's naming had to work around). Migration
+`20260911270000_westeros_universe.sql`.
+
+**Confirmed NOT connected**: Robert Jackson Bennett's Divine Cities and
+Founders Trilogy are explicitly described via search as "entirely
+separate worlds and narratives"; Ana and Din Mysteries (The Tainted
+Cup) is introduced as "a wholly original fantasy world" (a biopunk
+setting built on harvested titan-blood magic) with no connection
+mentioned to either of the other two. All 3 stay separate -- no
+action taken, logged so Bennett isn't re-investigated later.
+
+`universe` now has 7 real rows. Migration tested in a rolled-back
+transaction with a genuine idempotency re-run, applied via `supabase
+db push`, verified live on hosted, zero migration-tracking mismatches.
+
+**A tracking correction, caught while updating the count**: re-running
+the audit's own candidate query live shows 49 authors, not a cleanly
+decreasing number from 51. This is expected, not a bug -- confirmed-
+NOT-connected authors (Sanderson, Jemisin, Le Guin, Gaiman, King,
+Bennett) legitimately keep `universe_id: null` on their series, so they
+correctly keep reappearing in a query that just checks for that. A
+single "N remain" count is therefore not a reliable "how much work is
+left" tracker once negative findings accumulate -- **the real record
+of progress is the explicit checked-authors list below, not the raw
+query count**. Mark Lawrence also still appears in the live query,
+correctly -- his Library Trilogy + Impossible Times pairing was never
+actually checked against EACH OTHER (only against Broken Empire/Abeth),
+a genuinely new, not-yet-resolved question.
+
+**Authors checked so far, confirmed connected (built)**: Mark Lawrence
+(Broken Empire World, Abeth), Isaac Asimov (Foundation universe),
+George R.R. Martin (Westeros).
+**Authors checked so far, confirmed NOT connected (no action, don't
+re-research)**: Brandon Sanderson (Skyward/Reckoners vs. Cosmere), N.K.
+Jemisin (all 3 major series), Ursula K. Le Guin (Earthsea vs. Hainish),
+Neil Gaiman (American Gods/Neverwhere -- real but too thin to model),
+Stephen King (Holly Gibney/Dark Tower/Green Mile), Robert Jackson
+Bennett (all 3 series).
+**Not yet checked**: everyone else from the original 51, plus the new
+Mark Lawrence Library Trilogy/Impossible Times question.

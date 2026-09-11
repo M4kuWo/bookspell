@@ -412,29 +412,48 @@ worth deferring to a later session rather than batching in for
   entry.
 
   **Stephen King checked 2026-09-11, confirmed NOT connected -- no
-  action.** Our catalog only has `Holly Gibney` ("If It Bleeds," no
-  book 1), `The Dark Tower` (all 8 core books), `The Green Mile` (1
-  book). Verified via search: Holly Gibney's continuity (Mr. Mercedes
-  -> The Outsider -> If It Bleeds -> Holly) is real but explicitly a
-  SEPARATE, smaller branch of King's mythology from the Dark Tower
-  (confirmed directly, not the same continuity); The Green Mile's Dark
+  action.** Holly Gibney's continuity (Mr. Mercedes -> The Outsider ->
+  If It Bleeds -> Holly) is real but explicitly a SEPARATE, smaller
+  branch of King's mythology from the Dark Tower; The Green Mile's Dark
   Tower connection is confirmed purely thematic/symbolic, no shared
-  characters, same cameo tier already ruled out for Gaiman; and Holly
-  Gibney's own real connection is to books (The Outsider, Mr. Mercedes)
-  that aren't in our catalog at all, so there's nothing to link her to
-  here regardless. All 3 stay separate, unlinked series. Full detail in
-  project-log.md's 2026-09-11 "Stephen King checked" entry.
+  characters; and Holly Gibney's own connected books (The Outsider, Mr.
+  Mercedes) aren't in our catalog at all regardless.
 
-  **46 authors remain.** Same verify-before-linking caution applies to
-  every one -- George R.R. Martin's Song of Ice and Fire/Dunk-and-Egg/
-  Targaryen History and Robert Jackson Bennett's Divine Cities/
-  Founders Trilogy/Ana and Din Mysteries are plausible next picks,
-  none verified yet. This audit's actual hit rate so far: 2 of 8
-  checked candidates confirmed genuinely connected (Mark Lawrence's
-  Broken Empire+Red Queen's War, Asimov's Foundation+Robot), 6
-  confirmed NOT connected despite surface plausibility -- treat every
-  remaining candidate as more likely a false positive than not until
-  checked.
+  **George R.R. Martin checked 2026-09-11, confirmed connected --
+  built as "Westeros."** A Song of Ice and Fire, A Targaryen History
+  (Fire & Blood), and The Tales of Dunk and Egg (A Knight of the Seven
+  Kingdoms) are all officially the same Westeros continuity -- the
+  clearest, most explicit case checked in this whole audit. Named
+  after the in-world place itself (matching Middle-earth/Abeth), not a
+  flagship series title. Migration `20260911270000_westeros_universe.sql`.
+
+  **Robert Jackson Bennett checked 2026-09-11, confirmed NOT
+  connected.** Divine Cities and Founders Trilogy are explicitly
+  "entirely separate worlds and narratives"; Ana and Din Mysteries is
+  "a wholly original fantasy world" with no connection to either.
+
+  **Tracking note**: the raw "authors with 2+ series, universe_id
+  null" query does NOT shrink cleanly as authors get checked --
+  confirmed-negative authors correctly keep `universe_id: null`
+  forever, so they keep reappearing in that query. **Don't use a
+  single "N remain" count as a progress tracker -- use this explicit
+  list instead**:
+  - **Confirmed connected (built)**: Mark Lawrence (Broken Empire
+    World, Abeth), Isaac Asimov (Foundation universe), George R.R.
+    Martin (Westeros).
+  - **Confirmed NOT connected (don't re-research)**: Brandon Sanderson,
+    N.K. Jemisin, Ursula K. Le Guin, Neil Gaiman, Stephen King, Robert
+    Jackson Bennett.
+  - **A new, separate open question surfaced by this audit, not yet
+    checked**: Mark Lawrence's `Impossible Times` and `The Library
+    Trilogy` -- connected to EACH OTHER (a different question from the
+    already-resolved Broken Empire/Abeth work)?
+  - **Everyone else from the original 51-author list**: not yet
+    checked. Full detail across four 2026-09-11 project-log.md audit
+    entries. This audit's real hit rate so far: 3 of 10 checked
+    candidates confirmed genuinely connected, 7 confirmed NOT connected
+    -- treat every remaining candidate as more likely a false positive
+    than not until checked.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 
