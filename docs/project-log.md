@@ -11106,3 +11106,105 @@ restructuring or deletion of any existing series/book row was needed.
 Next (batch 5): re-run the candidate query again (starting point ~54
 authors once this batch's 8 negatives/positives are excluded) and
 continue in the same ~6-8-author bounded batches.
+
+## 2026-09-12 (later still): series.status/book_count fix, batch 4 -- 17 series fixed, 21 confirmed already correct, 2 flagged as likely out-of-scope
+
+Continuing the P2 catalog-wide `series.status`/`book_count` fix (root
+cause: `status` defaults to 'ongoing' whenever Hardcover's
+`is_completed` isn't explicitly true; `book_count` is Hardcover's raw
+edition/omnibus/box-set count, not a curated mainline-installment
+count -- neither field is read by `scripts/recommend.py`, display-only
+bug in `tools/catalog-review/`). Re-ran the same ranking query as
+batches 1-3, excluding all 67 names checked across those batches plus
+the 3 previously-flagged-but-not-fixed names (Hogwarts Library, The
+Roald Dahl Classic Collection, The Riyria Revelations (Omnibus)). Same
+flat-tie situation as batch 3 -- most candidates sit at 3-4 books
+currently linked in our catalog -- worked down in ranked order.
+
+**17 fixed**: Shades of Magic (ongoing/5 -> completed/3 -- Threads of
+Power is a separate sequel trilogy), Night Angel (ongoing/20 ->
+completed/3 -- Night Angel Nemesis/Kylar Chronicles is a separate
+series in the same world), Gentleman Bastard (book_count 7 -> 3,
+status 'ongoing' already correct -- Scott Lynch gave a real July 2026
+update confirming active work on book 4, still no release date),
+Covenant of Steel (status ongoing -> completed, book_count 3 already
+correct), **The Locked Tomb (completed/4 -> ongoing/3 -- a reversal in
+the opposite direction from the usual bug: "Alecto the Ninth" has NOT
+been published as of this migration, only an unconfirmed retailer date
+of 2026-10-12 which postdates today; Hardcover's data had apparently
+marked the series complete and/or counted the unreleased book)**,
+Southern Reach (status ongoing -> completed, book_count 4 already
+correct -- Absolution (2024) confirmed as the series' final word),
+MaddAddam (ongoing/7 -> completed/3), Artemis Fowl (ongoing/17 ->
+completed/8 -- the original 8-book series only; The Fowl Twins is a
+separate spin-off), Monk and Robot (ongoing/4 -> completed/2 --
+confirmed closed duology), Time Master (ongoing/10 -> completed/3 --
+Chaos Gate/Star Shadow are separate related trilogies, not more Time
+Master books), Ash and Sand (ongoing/2 -> completed/3), Children of
+Time (book_count 3 -> 4 -- Children of Strife published March 2026;
+status 'ongoing' stays, no completion statement exists), The Tawny Man
+(ongoing/4 -> completed/3), He Who Fights with Monsters (book_count
+NULL -> 12 -- 12 published, book 13 confirmed for 2026-10-06 but not
+yet out), Earthsea Cycle (book_count 6 -> 5 -- "Tales from Earthsea" is
+a short-story collection, excluded from the mainline count like every
+other collection-vs-novel case in batches 1-3, even though Le Guin's
+publisher brands it as one of "The Books of Earthsea"), Secret Projects
+(book_count 6 -> 5 -- 5 published Sanderson novels; status 'ongoing'
+stays since there's no statement this Kickstarter-branded set is
+closed at 5, and it already grew once from an original announced 4),
+The Empyrean (book_count 5 -> 3 -- Rebecca Yarros has confirmed a
+planned 5-book series with the ending already plotted, but only 3 are
+published; book 4 was still being written as of March 2026 with no
+release date).
+
+**21 confirmed already correct** (checked via live search, no change):
+Wayfarers, Remembrance of Earth's Past, Sprawl, Mistborn Era Two (Wax
+and Wayne), Hyperion Cantos, The Inheritance Cycle, The Lord of the
+Rings, The Farseer Trilogy, Divergent, The Poppy War, The Broken
+Empire, The Broken Earth, The Shadow and Bone Trilogy, The Folk of the
+Air, Book of the Ice, His Dark Materials, Book of the Ancestor, The
+Green Bone Saga, The First Law, The Hunger Games, Silo (Hugh Howey has
+mentioned a possible future trilogy in interviews, but no confirmed
+title/date exists -- per the Old Kingdom precedent from batch 3,
+absence of a completion statement isn't itself evidence of an upcoming
+book, so 'completed'/3 stands).
+
+**2 flagged as likely out-of-scope, not this task's call**: Robert
+Langdon (Dan Brown) and The Inheritance Games (Jennifer Lynn Barnes)
+both surfaced in the ranking query with real catalog rows and book
+counts, but neither is sci-fi/fantasy -- Langdon is techno-
+thriller/mystery, Inheritance Games contemporary YA mystery. Likely the
+same kind of Hardcover genre-search false positive as the prior
+Shogun/Screwtape removals. Left untouched pending a scope decision from
+the repo owner -- not fixed, not deleted, just surfaced.
+
+**Two data-integrity observations, unrelated bug class, flagged only**:
+"The Lord of the Rings," "The Farseer Trilogy," and "Monk and Robot"
+each have a duplicate `books` row where an omnibus/series-titled
+edition sits alongside the individual volumes at the same
+`position_in_series` (e.g. a book literally titled "The Lord of the
+Rings" next to "The Fellowship of the Ring," both position 1). This is
+a `books`-table duplicate-row question, not a `series.status`/
+`book_count` one -- not touched in this migration, worth a look
+separately.
+
+Migration `20260912600000_fix_series_status_book_count_batch4.sql` --
+tested in a rolled-back transaction first (all 17 updates verified
+clean), then applied for real to hosted via a normal autocommit
+connection. **Not pushed via `supabase db push` and the worktree
+branch not merged to main** -- both left for the primary session,
+same handoff pattern as batches 2-3, to avoid two sessions' `db
+push`/git operations colliding on the same day. Verified afterward:
+`series` table total row count unchanged (484), spot-checked The
+Locked Tomb / Artemis Fowl / Earthsea Cycle directly on hosted.
+
+**Next (batch 5)**: re-rank remaining series excluding all 84 now-
+checked names across batches 1-4 (67 from batches 1-3 + this batch's 17
+fixed names) plus the 5 still-flagged-not-settled names (Hogwarts
+Library, The Roald Dahl Classic Collection, The Riyria Revelations
+(Omnibus), Robert Langdon, The Inheritance Games -- the last two newly
+flagged this batch as a scope question, not a status/book_count one).
+Also unresearched from this batch's ranked list, available as batch 5's
+first candidates: King of Scars, Ninth House, The Captive's War, The
+Kane Chronicles, An Ember in the Ashes, The Rain Wild Chronicles, The
+Atlas, Earthseed.
