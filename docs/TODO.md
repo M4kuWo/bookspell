@@ -526,22 +526,37 @@ worth deferring to a later session rather than batching in for
     World, Abeth), Isaac Asimov (Foundation universe), George R.R.
     Martin (Westeros), Robin Hobb (Realm of the Elderlings), Leigh
     Bardugo (Grishaverse -- Ninth House excluded, see below), Orson
-    Scott Card (Enderverse).
-  - **Confirmed connected, real evidence, but NOT built -- blocked on a
-    naming-policy decision only the repo owner should make**: Sarah J.
-    Maas (A Court of Thorns and Roses/Throne of Glass/Crescent City --
-    a real, author-confirmed, structural connection with actual
-    character crossovers between the three book-worlds, "I had planted
-    seeds in all my series about the possibility of it being a
-    multiverse" per Maas herself -- but no official branded name exists
-    ("Maasverse" is fan-only) AND no single unifying in-world place name
-    to fall back on either, since the three series are set on three
-    genuinely different planets linked by portal travel, not one place.
-    Neither of this audit's two naming fallbacks cleanly applies here.
-    Second real instance of this exact naming gap, after Mark Lawrence's
-    -- may be worth the repo owner settling a general policy for "no
-    official name AND no single place" cases rather than deciding
-    one-off each time this recurs).
+    Scott Card (Enderverse), Sarah J. Maas (Maasverse -- see resolution
+    below).
+  - **Naming-policy gap RESOLVED 2026-09-12 for both cases that hit
+    it.** Repo owner's general policy, now established for future
+    no-official-name cases: check for a real, widely-used common fan
+    term first (via web search, not a single source); if a genuine one
+    exists, use it even if not author/publisher-coined (same standing
+    as "Enderverse" itself, which Card didn't coin either); only invent
+    a name if no real fan term exists at all, and revisit later on user
+    feedback if a chosen name reads wrong once seen in the app.
+    - **Sarah J. Maas -- built as "Maasverse"** (A Court of Thorns and
+      Roses/Throne of Glass/Crescent City). "Maasverse" confirmed as a
+      genuine, widely-used fan term (fan wikis, reading-order guides,
+      book blogs), not a one-off coinage -- used directly rather than
+      inventing something new. Migration `20260912300000_maasverse_
+      universe.sql`.
+    - **Orson Scott Card's "Enderverse" naming independently confirmed
+      correct** (repo owner has read Ender's Game + the first Shadow
+      book, asked for verification rather than a naming decision here):
+      "Enderverse" really is the umbrella term for Card's whole
+      Ender-universe body of work, not just Ender's own line -- Card
+      didn't coin it (originated as book-jacket copy) but it's the
+      real, consistently used term regardless. Confirmed via search:
+      Ender's Saga follows Ender, The Shadow Series follows Bean (the
+      repo owner's own recollection, correct), both same universe. No
+      separate series follows a Wiggin sibling (Valentine or Peter) --
+      Peter's arc is told within The Shadow Series itself, not as its
+      own series; checked live and confirmed no Formic Wars/Children of
+      the Fleet sub-series exist in our catalog under Card's author
+      field currently, so nothing further to link. No migration needed
+      -- existing linkage from batch 3 stands, now confirmed.
   - **Confirmed NOT connected (don't re-research)**: Brandon Sanderson,
     N.K. Jemisin, Ursula K. Le Guin, Neil Gaiman, Stephen King, Robert
     Jackson Bennett, Jim Butcher (Codex Alera/Cinder Spires/Dresden

@@ -10824,3 +10824,56 @@ status/book_count value (ongoing/33) that doesn't really make sense
 to fix under this task's book/novel-count convention -- volumes of a
 comic aren't "mainline installments" the same way. Left untouched,
 not counted in either the fixed or already-correct lists above.
+
+## 2026-09-12 (later): resolved both naming-policy flags from batch 3 -- Maasverse built, Enderverse naming confirmed correct
+
+Repo owner (has not read either author's books, asked for a real web
+check before naming anything) resolved both open naming questions from
+the shared-universe audit's batch 3 report.
+
+**Sarah J. Maas -- built as "Maasverse".** Instructed: check for a real
+common fan term first, invent one only if none exists, revisit later on
+user feedback if it turns out to read wrong. Search confirmed
+"Maasverse" is a genuine, widely-used fan term (fan wikis, reading-order
+guides, book blogs -- not one source's one-off coinage), same
+fan-originated-not-author-coined shape as "Enderverse" itself (see
+below), which this schema already treats as a real name. Migration
+`20260912300000_maasverse_universe.sql` links all 3 series (A Court of
+Thorns and Roses, Throne of Glass, Crescent City) -- same evidence
+already gathered in batch 3, just resolving the name. Tested in a
+rolled-back transaction with a genuine idempotency re-run, applied to
+hosted, registered via `supabase db push`, verified.
+
+**Orson Scott Card -- "Enderverse" confirmed correct, no change
+needed.** Repo owner (has read Ender's Game and the first Shadow book)
+asked to verify: (1) whether "Enderverse" is really the right umbrella
+name or just one series' name, and (2) their own recollection that
+Ender's Saga follows Ender while The Shadow Series follows Bean, both
+in the same universe, plus a suspicion there might be a third series
+following one of Ender's siblings. Checked via search:
+- **"Enderverse" is confirmed as the real umbrella term** for Card's
+  entire Ender-universe body of work (Ender's Game Wiki's own top-level
+  "Enderverse" page covers all of it) -- not specific to Ender's own
+  line. Card himself didn't coin it ("someone simply put the word on a
+  book jacket... I hate that word") but it's the term consistently used
+  regardless, including on Card's own later book packaging -- this
+  audit's existing choice was already right, just unverified until now.
+- **The repo owner's recollection is correct**: Ender's Saga follows
+  Ender Wiggin; The Shadow Series follows Bean (told largely in
+  parallel/overlapping timeframes to Ender's own books, converging in
+  The Last Shadow, which isn't in our catalog).
+- **No separate series specifically following a Wiggin sibling
+  (Valentine or Peter) exists** -- checked directly. Peter's own arc
+  (his rise to Hegemon) is told as part of The Shadow Series (Shadow of
+  the Hegemon), not a standalone series of his own. The wider Enderverse
+  does have other sub-series not centered on Ender/Bean/a sibling at all
+  (Formic Wars prequel trilogies, Children of the Fleet) -- none of
+  these are in our catalog currently (checked live: only the 3 already-
+  linked series exist under Card's author field), so nothing further to
+  link right now.
+No migration needed for Card -- existing `universe`/`series` linkage
+from batch 3 stands as-is, now confirmed rather than provisional.
+
+Both items closed. Continuing the two ongoing P2 batches next
+(shared-universe audit batch 4, series.status/book_count batch 3) per
+the repo owner's go-ahead.
