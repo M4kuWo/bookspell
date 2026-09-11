@@ -302,12 +302,16 @@ worth deferring to a later session rather than batching in for
   flagged series already fixed (see project-log.md's 2026-09-08 entry)
   -- the other ~195+ would need real per-series verification (publication
   status, a curated book count), which doesn't scale to a single
-  session. Options for whoever picks this up: (a) manually verify+fix
-  the most-viewed/highest-profile series first rather than the whole
-  table at once, (b) find a better Hardcover field/endpoint for a
-  curated count if one exists, (c) at minimum, stop displaying
-  `book_count`/`status` in the catalog tool until re-sourced, so wrong
-  data isn't worse than no data. No option chosen yet.
+  session. **Approach decided 2026-09-11**: option (a) from the
+  original three -- manually verify+fix the most-viewed/highest-profile
+  series first (same standard as the first 5: check real publication
+  status via search, don't just clear the display bug with a guess),
+  rather than (b) hunting for a better Hardcover endpoint (not
+  confirmed one exists) or (c) hiding the fields (loses real
+  information for the series that ARE already correct). Work in
+  bounded batches, same discipline as every other batch skill in this
+  project -- pick a reasonable batch size and stop-and-report, don't
+  try to clear all ~195 in one sitting.
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also
