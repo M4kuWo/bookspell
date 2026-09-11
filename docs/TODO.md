@@ -344,11 +344,10 @@ worth deferring to a later session rather than batching in for
   anything with no real SFF content for the repo owner rather than
   silently tagging or silently skipping it.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
-  -- root cause found 2026-09-08, batch 1 done 2026-09-11, batch 2 and
-  batch 3 done 2026-09-12 (50 of ~484 series fixed so far -- the
-  denominator grew a lot from the 2026-09-12 378-book/118-series
-  ingestion round, this isn't the catalog shrinking work).** `status`
-  defaults to
+  -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-4
+  done 2026-09-12 (67 of ~484 series fixed so far -- the denominator
+  grew a lot from the 2026-09-12 378-book/118-series ingestion round,
+  this isn't the catalog shrinking work).** `status` defaults to
   `'ongoing'` whenever Hardcover's `is_completed` flag isn't explicitly
   `true` (including simply missing data); `book_count` is Hardcover's
   raw per-series edition/omnibus/box-set count, not a curated
@@ -437,13 +436,51 @@ worth deferring to a later session rather than batching in for
   possibly not real "series" in the status/book_count sense at all,
   worth a policy look before batch 4 touches them).
 
-  **Next**: re-rank remaining series by catalog book count, excluding
-  all 50 now-checked names across batches 1-3 (the full list is in
-  batches 1-2's writeup above plus batch 3's 17 fixed names just
-  listed) for batch 4 -- don't reuse any prior batch's candidate list,
-  all are now stale. Also worth a first look in batch 4: the Hogwarts
-  Library / Roald Dahl Classic Collection policy question flagged
-  above, before deciding whether to fix or skip those two.
+  **Batch 4 (2026-09-12)**: re-ran the ranking query excluding all 67
+  names checked across batches 1-3 plus the 3 flagged-but-not-fixed
+  names (Hogwarts Library, The Roald Dahl Classic Collection, The
+  Riyria Revelations (Omnibus) -- still not touched, still needing the
+  same policy call, not decided this batch either). Same flat-tie
+  situation as batch 3. 17 needed a real fix: Shades of Magic, Night
+  Angel, Gentleman Bastard (book_count only), Covenant of Steel (status
+  only), The Locked Tomb (a reversal -- wrongly marked 'completed'/4
+  when the 4th book isn't published yet), Southern Reach (status only),
+  MaddAddam, Artemis Fowl, Monk and Robot, Time Master, Ash and Sand,
+  Children of Time (book_count only), The Tawny Man, He Who Fights with
+  Monsters (book_count only, was NULL), Earthsea Cycle (book_count
+  only), Secret Projects (book_count only), The Empyrean (book_count
+  only). 21 more checked and found already correct (full list in the
+  migration header and project-log.md's 2026-09-12 "batch 4" entry).
+  Migration `20260912600000_fix_series_status_book_count_batch4.sql` --
+  applied to hosted directly by the agent (tested in a rolled-back
+  transaction first) but **not yet pushed via `supabase db push` and
+  the branch not yet merged to main**, same handoff-to-CLDO pattern as
+  batches 2-3. New this batch: **2 series (Robert Langdon, The
+  Inheritance Games) turned up in the ranking with real catalog rows
+  but are NOT sci-fi/fantasy** (techno-thriller/mystery and
+  contemporary YA mystery respectively) -- flagged as a likely
+  Hardcover genre-search false positive akin to the prior
+  Shogun/Screwtape removals, left untouched pending a scope call from
+  the repo owner, not decided by this batch. Also flagged in passing (a
+  different bug class, not fixed here): "The Lord of the Rings," "The
+  Farseer Trilogy," and "Monk and Robot" each have a duplicate `books`
+  row (an omnibus/series-titled edition alongside the individual
+  volumes at the same `position_in_series`) -- a `books`-table
+  duplicate-row question, not a `series.status`/`book_count` one. See
+  project-log.md's 2026-09-12 "batch 4" entry for full reasoning and
+  sourcing on all 17 fixes plus the 21 confirmed-correct checks.
+
+  **Next (batch 5)**: re-rank remaining series by catalog book count,
+  excluding all 84 now-checked names across batches 1-4 (67 from
+  batches 1-3 + this batch's 17 fixed names listed just above) plus the
+  5 still-unsettled flagged names (Hogwarts Library, The Roald Dahl
+  Classic Collection, The Riyria Revelations (Omnibus), Robert Langdon,
+  The Inheritance Games -- the last two newly flagged this batch, a
+  scope question rather than a status/book_count one) -- don't reuse
+  any prior batch's candidate list, all are now stale. Batch 4's
+  unresearched tail (available as batch 5's first candidates): King of
+  Scars, Ninth House, The Captive's War, The Kane Chronicles, An Ember
+  in the Ashes, The Rain Wild Chronicles, The Atlas, Earthseed.
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also
@@ -719,15 +756,124 @@ worth deferring to a later session rather than batching in for
     restructure; both rows were linked to the new Enderverse universe so
     the book-level connection isn't lost either way, but the underlying
     series-table duplication is still there.
+  - **Batch 5 (2026-09-12)**: 8 authors checked.
+    - **Michael J. Sullivan -- built as "Elan."** Legends of the First
+      Empire + The Riyria Revelations, same world (Elan) ~3,000 years
+      apart per the author's own site ("The Elan Saga"/"World of
+      Elan"); real structural link, not just shared geography --
+      characters who are only historical/legendary figures in Riyria
+      are met directly, in person, in Legends. Named after the real
+      in-world place itself, no naming question.
+    - **Cassandra Clare -- built as "The Shadowhunter Chronicles."**
+      The Infernal Devices + The Mortal Instruments, explicit prequel/
+      sequel (~130 years apart, same Shadowhunter/Downworlder world),
+      direct named ancestor/descendant links between the casts. Named
+      after the real official franchise umbrella term, not invented.
+    - **T. Kingfisher -- built as "The World of the White Rat."** The
+      Saint of Steel + Swordheart, explicit shared setting (Temple of
+      the White Rat) with recurring characters crossing over. Named
+      after the real in-world institution and matching fandom usage
+      (Goodreads' own series grouping, a dedicated fan wiki). **Checked
+      and confirmed NOT part of this universe**: "Sworn Soldier" (the
+      What Moves the Dead novellas) -- separate cast/setting; the only
+      link is a reused pronoun-by-caste linguistic concept, not a
+      shared world. Left unlinked.
+    - **Philip Pullman -- built as "Lyra's World." NAMING FLAG for the
+      repo owner, unlike the other three built this batch.** His Dark
+      Materials + The Book of Dust are genuinely connected (Pullman's
+      own "equel" framing, same world, same protagonist Lyra Belacqua)
+      -- the connection isn't in question, only the name. No official
+      umbrella name and no single widely-used fan term turned up
+      across multiple independent sources (checked "Dustverse"/
+      "Pullman multiverse" specifically -- neither is actually
+      established). "Lyra's World" is a real in-world term (used
+      within the books to distinguish Lyra's home world from Will's
+      and the multiverse's other worlds) echoed loosely by press/fan
+      writeups, but it's this session's own naming call, not a
+      confirmed brand the way Elan/Shadowhunter Chronicles/
+      Riordanverse/Maasverse are -- please sanity-check, easy to
+      rename later.
+    - **Naomi Novik -- Temeraire vs. The Scholomance, confirmed NOT
+      connected.** Entirely separate worlds, no crossover.
+    - **Arthur C. Clarke -- Rama vs. Space Odyssey, confirmed NOT
+      connected.** Clarke's own Author's Note to 2061 states the
+      Odyssey books aren't "necessarily happening in the same
+      universe" as each other, let alone Rama, which has no crossover
+      identified anywhere.
+    - **William Gibson -- Blue Ant/Jackpot/Sprawl, confirmed NOT
+      connected (3 separate continuities).** No shared characters or
+      setting across any pairing.
+    Migration `20260912700000_shared_universe_audit_batch5.sql`,
+    tested in a rolled-back transaction with a genuine idempotency
+    re-run, applied via a normal autocommit connection (not `supabase
+    db push` -- left for the primary session per this task's standard
+    handoff), verified live on hosted. `universe` now has 17 rows.
+  - **New data-quality issue found and flagged, not fixed (needs a
+    repo-owner judgment call, same shape as the Card Shadow Saga note
+    above)**: R. A. Salvatore's "The Dark Elf Trilogy" (1 book in
+    catalog: Homeland) and "The Legend of Drizzt" (1 book in catalog:
+    Exile) look like the SAME real trilogy fragmented across two
+    series rows, not two genuinely separate series sharing a universe
+    -- Homeland/Exile/Sojourn are canonically all 3 books of the Dark
+    Elf Trilogy, itself explicitly books 1-3 of the "Legend of Drizzt"
+    reading-order umbrella. Both rows also carry obviously-wrong
+    `book_count` values (33 and 180) unrelated to their actual 1-book
+    contents, likely the same stale data the separate
+    `series.status`/`book_count` fix P2 task is already working
+    through. Not linked as a universe (would misrepresent a same-
+    series duplication as a two-series connection); not restructured
+    either -- out of this audit's scope.
+  - **Confirmed NOT connected (don't re-research), batch-5 additions**:
+    Naomi Novik (Temeraire vs. The Scholomance), Arthur C. Clarke (Rama
+    vs. Space Odyssey), William Gibson (Blue Ant/Jackpot/Sprawl, 3
+    separate continuities).
+  - **Batch 6 (2026-09-12)**: 8 authors checked, ALL confirmed NOT
+    connected -- no universe built, no migration this batch (see
+    project-log.md's 2026-09-12 "shared-universe audit batch 6" entry
+    for full evidence per pairing). Checked: **John Scalzi** (Old Man's
+    War/The Interdependency/Lock In/The Dispatcher -- 4 separate
+    universes, all pairings checked; The Dispatcher's similarity to
+    Lock In is thematic/structural-echo only, not a shared setting).
+    **Robert A. Heinlein** (Heinlein's Juveniles vs. Stranger in a
+    Strange Land -- our catalog's "Heinlein's Juveniles" row is just
+    Starship Troopers, not tied to Future History at all; Stranger's
+    only tie to Heinlein's wider "World As Myth" multiverse is a
+    walk-on cameo reference in later, not-in-catalog novels, the same
+    cameo/thematic tier already ruled insufficient for Gaiman/King).
+    **C. S. Lewis** (Chronicles of Narnia vs. The Space Trilogy --
+    confirmed separate worlds by multiple sources). **Douglas Adams**
+    (Dirk Gently vs. The Hitchhiker's Guide to the Galaxy -- real
+    Easter eggs/title reuse exist, but Adams treated them as separate,
+    idea-recyclable series rather than one continuity; no
+    recurring-protagonist or merged-plot link). **Michael Crichton**
+    (Jurassic Park vs. The Andromeda Strain -- separate standalone
+    novels, no universe link found anywhere). **Dan Simmons** (Hyperion
+    Cantos vs. Ilium -- confirmed separate story-worlds). **Martha
+    Wells** (Murderbot Diaries vs. "The Rising World" -- the latter is
+    just Witch King in our catalog, a standalone fantasy unconnected to
+    Murderbot; NOT the Books of the Raksura, which isn't part of this
+    pairing). **Lois McMaster Bujold** (Vorkosigan Saga vs. World of
+    the Five Gods -- confirmed separate SF/fantasy universes).
   - **Everyone else from the refreshed candidate list**: not yet
-    checked. Full detail across six 2026-09-11/2026-09-12
-    project-log.md audit entries. This audit's real hit rate so far: 9
-    of 23 checked candidate-author-groupings confirmed genuinely
-    connected (built or gap-fixed), 14 confirmed NOT connected -- treat
-    every remaining candidate as more likely a false positive than not
-    until checked. Re-running the candidate query after batch 4 (62
-    authors with 2+ unlinked series before this batch ran) is the
-    starting point for batch 5.
+    checked. Full detail across eight 2026-09-11/2026-09-12
+    project-log.md audit entries. This audit's real hit rate so far: 12
+    of 39 checked candidate-author-groupings confirmed genuinely
+    connected (built or gap-fixed), 25 confirmed NOT connected, 2
+    flagged as series-table data-quality issues rather than true
+    universe questions -- treat every remaining candidate as more
+    likely a false positive than not until checked. Re-running the
+    candidate query after batch 6 (57 authors with 2+ unlinked series
+    before this batch ran) is the starting point for batch 7; the
+    untouched leftover pool (non-exhaustive) is now: Amie Kaufman/Jay
+    Kristoff, Anthony Ryan, Becky Chambers, Brent Weeks, Carissa
+    Broadbent, Christopher Paolini, Danielle L. Jensen, Holly Black,
+    Ilona Andrews, J.K. Rowling, James Islington, Jay Kristoff (solo,
+    Empire of the Vampire/The Nevernight Chronicle), Jennifer Lynn
+    Barnes, John Gwynne, Laini Taylor, Margaret Atwood, Marie Lu,
+    Marissa Meyer, Mira Grant, Neal Shusterman, Octavia E. Butler,
+    Rachel Gillig, Rebecca Roanhorse, Rebecca Ross, S. A. Chakraborty,
+    Samantha Shannon, Stephanie Garber, Stephen Graham Jones, Tahereh
+    Mafi, TJ Klune, Veronica Roth.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 

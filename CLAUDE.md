@@ -115,6 +115,19 @@ stack to dry-run against, discovered 2026-09-09).
 - **Write idempotent SQL**: `insert ... on conflict do nothing` for
   inserts, so a migration can be safely reapplied without duplicating
   data if something goes wrong partway through.
+- **Escape an apostrophe in a string literal with a doubled quote
+  (`'Lyra''s World'`), never Postgres's `E'...'` backslash-escape
+  syntax (`E'Lyra\'s World'`).** Real, already-happened example
+  (2026-09-12): an `E''`-escaped name applied fine via a direct
+  psycopg2 connection (which uses the simple query protocol) but broke
+  `supabase db push` outright — its migration runner uses prepared
+  statements and mis-split the file at that escape, erroring
+  "cannot insert multiple commands into a prepared statement." Caught
+  before it caused a tracking-table desync (data was already correct on
+  hosted from the direct-apply test step; only the file needed fixing),
+  but the same order of operations without that direct-apply check
+  first would have looked like `db push` silently failing on a
+  perfectly valid piece of data.
 - **Before pushing, check for duplicate migration timestamps** —
   `ls supabase/migrations/ | sort | uniq -c -w14 | awk '$1>1'` (or just
   eyeball it after a merge). Real, already-happened example: two
