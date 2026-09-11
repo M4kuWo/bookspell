@@ -10077,3 +10077,32 @@ often), store dumps externally (cloud storage) with just a pointer
 committed here, or upgrade the Supabase plan for real automatic
 backups/PITR (removes the manual-process risk entirely). Logged in
 TODO.md rather than decided unilaterally.
+
+## 2026-09-11 (later): backup policy decided -- separate bookspell-backups repo, permanently free
+
+Repo owner didn't want to spend money yet (rules out Supabase's paid
+backup tier) and specifically didn't like S3 as the answer given its
+12-month free-tier limit -- wanted something genuinely future-proof,
+not a plan-to-migrate-later stopgap. Walked through the actual
+numbers: current dump is 3MB; even weekly forever is ~150MB/year of
+git history, daily forever ~1GB/year -- trivial at this project's
+scale for a long time, so "will it get too big" wasn't really the
+real constraint; "will it survive being lost like the 2026-09-05
+backup did" was.
+
+**Decision: a second, dedicated GitHub repo**
+(github.com/M4kuWo/bookspell-backups) instead of either S3 or a
+`db_backups/` folder inside this repo. No time-limited free tier
+(unlike S3), no new account/service needed (already using GitHub for
+everything else here), keeps this repo's own history lean regardless
+of how often dumps get taken.
+
+Set up: cloned it as a sibling directory (`../bookspell-backups`),
+moved the 2026-09-11 snapshot there (`git rm` here, plain `mv` +
+fresh `git add` there -- different repos, no shared history), wrote a
+README covering what's there, how to take a new snapshot, and a real
+restore caveat (the circular-FK warning on `series` from the
+data-only dump, restore process not yet tested end-to-end). Documented
+the whole setup in CLAUDE.md's new "Database backups" section so a
+future session doesn't have to rediscover where backups live or why
+they're not in this repo.

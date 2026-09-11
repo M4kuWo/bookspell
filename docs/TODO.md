@@ -33,19 +33,19 @@ worth deferring to a later session rather than batching in for
 - [x] **Push today's commits** -- confirmed 2026-09-07: `main` is up to
   date with `origin/main`, working tree clean, README refresh
   (e18576a) is the latest commit on both.
-- [ ] **Decide a real ongoing database backup policy.** Checked
-  2026-09-11: no real backup existed (Supabase's own automatic
-  backups are off -- free-tier limitation, `pitr_enabled: false`,
-  empty backup list; the one prior manual backup from 2026-09-05 was
-  never committed and is now gone). Took an immediate one-off backup
-  (`db_backups/full-backup-2026-09-11.sql` + `data-backup-2026-09-11.sql`,
-  committed to git this time). **Not yet decided**: a repeatable
-  cadence. Options: periodic manual dumps committed to git (simple,
-  ~3MB each at current size, grows the repo over time if done often),
-  external storage (cloud drive/S3) with just a pointer committed
-  here, or upgrading the Supabase plan for real automatic backups/
-  PITR (removes the manual-process risk entirely, costs money). Repo
-  owner's call.
+- [x] **Database backup policy -- DECIDED and set up 2026-09-11.**
+  Checked first: no real backup existed (Supabase's automatic backups
+  are a paid-tier feature this project doesn't use; the one prior
+  manual backup from 2026-09-05 was never committed and is now gone).
+  Ruled out S3 (12-month free-tier limit, not the future-proof fit the
+  repo owner wanted) and a `db_backups/` folder in this repo (repo
+  bloat from accumulating dump history over time). **Landed on a
+  separate, permanently-free repo**:
+  [`bookspell-backups`](https://github.com/M4kuWo/bookspell-backups) --
+  see CLAUDE.md's new "Database backups" section for the process. The
+  2026-09-11 snapshot moved there from this repo's now-removed
+  `db_backups/`. No fixed cadence yet -- manual, run when meaningful
+  new data has landed or before anything risky.
 
 ## P1
 
