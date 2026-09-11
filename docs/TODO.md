@@ -49,32 +49,55 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
-- [ ] **Consider bringing in Codex CLI (repo owner's existing ChatGPT
-  subscription) as a third working entity, alongside CLDO/CLDA --
-  raised 2026-09-11, needs real thought before building anything.**
-  Codex CLI is a real, viable tool for this -- it natively reads an
-  `AGENTS.md` file the same way this project relies on `CLAUDE.md`, so
-  the convention-following pattern would transfer reasonably well.
-  **Not a quick add -- two real open questions before any setup work
-  starts**:
-  1. **Concrete division of labor, not just "give it what it's good
-     at."** Needs actual task-type examples, not an abstract split.
-     One plausible shape floated in discussion: mechanical/scriptable
-     work (e.g. something like CLDA's Hardcover-API narrator-backfill
-     script) as a good fit, versus the nuanced literary-judgment
-     tagging work (which leans on a lot of hard-won, very specific
-     discipline -- the `HIGH_RISK_FIELDS` caution, the evidence
-     standards in CLAUDE.md) staying with the persona that already has
-     that context baked in. Not decided, just one candidate framing.
-  2. **A third entity re-opens the exact coordination problem CLAUDE.md
-     itself exists to solve, for a new kind of session.** The persona
-     system and the `PENDING_APPROVALS.md` gate would both need to
-     extend to it (a third name, a third set of "does it actually
-     respect this project's conventions" questions) -- not just point
-     it at CLAUDE.md and assume it onboards as cleanly as a fresh
-     Claude session does.
-  Work through both before building any integration -- this is a
-  bigger decision than it looks, don't rush it in alongside other work.
+- [ ] **CODX (Codex CLI, via the repo owner's ChatGPT Plus
+  subscription) as a third working entity -- approach worked out
+  2026-09-11, deliberately deferred, do later.** Persona name settled:
+  **CODX** (matches CLDO/CLDA's 4-letter format, visually distinct).
+  **Approach**: start it in a review/propose role only, no direct
+  hosted-DB access or unsupervised commits at first -- earn trust the
+  same way CLDA did (by being right repeatedly), not by assumption.
+  The real value of a second model family is an independent
+  perspective with no accumulated bias toward this codebase's history
+  -- worth the most on review-type work, less on generative work that
+  depends on deep project context.
+  **Concrete tasks decided on**:
+  - Code review/refactoring (repo owner's own idea, the strongest
+    fit): periodic independent review of `scripts/recommend.py`/
+    `scripts/scoring_tests.py`/tool scripts, hunting for the class of
+    bug CLDO just found and fixed (untagged-nominal-field mismatch,
+    the `ZeroDivisionError`) -- issues that show up to fresh eyes, not
+    to someone who already knows how the code "should" behave.
+    Auditing the pile of deferred/experimental functions (
+    `build_profile_per_value`, `build_profile_trope_shrinkage`,
+    `build_profile_trope_backoff`, `build_profile_series_field_dedup`)
+    for whether they're still accurate/worth keeping. An independent
+    QA pass on CLDA's own large migrations -- a genuine third opinion,
+    not redundant with CLDO's own verification.
+  - Mechanical/scriptable work: the still-open local-bootstrap gap
+    (seed data can't rebuild the catalog from scratch), future
+    data-source integrations shaped like `backfill-standard-
+    narrators.js`, `tools/catalog-review/`/`tools/dogfood/` UI work.
+  - Deliberately NOT handed over: Book DNA tagging (leans on hard-won
+    evidence discipline -- `HIGH_RISK_FIELDS`, the romance_tone
+    evidence standard) and scoring-algorithm design (re-deriving
+    scoring-test-protocol.md's history of rejected ideas would cost
+    more than it saves).
+  **Token/budget relationship**: a genuinely separate, non-competing
+  pool from Claude usage -- CODX work costs nothing against
+  Claude/CLDO/CLDA's own budget, so this is additive capacity, not
+  divided capacity. Checked directly (not guessed): Codex CLI usage is
+  included in ChatGPT Plus (no separate API billing needed), metered
+  on a rolling 5-hour window plus a separate weekly cap, token-based
+  rather than a fixed message count; Pro tiers ($100/$200 per month)
+  get 5x/20x more than Plus. Could not pin down an exact "X per week"
+  number for Plus specifically from available sources -- check the
+  account's own usage page rather than trust an estimate here.
+  **Setup, when this gets picked up**: write an `AGENTS.md` that
+  points back at `CLAUDE.md` for shared conventions (not a duplicate
+  copy, to avoid drift) plus CODX-specific notes on its review-only
+  starting scope; extend the persona system and
+  `docs/PENDING_APPROVALS.md` gate to include it as a third named
+  entity before giving it any write access.
 - [x] **Bulk-populate `audiobook_editions` standard-edition narrator
   data via Hardcover's API -- DONE 2026-09-11. Final: 1026 `standard`
   rows across 786 of 869 books with a `hardcover_id`.** Confirmed
@@ -144,9 +167,10 @@ worth deferring to a later session rather than batching in for
   `.claude/skills/tag-audiobook-editions/SKILL.md`.** Full history kept
   under P3, not deleted -- this pointer exists so a P1 skim doesn't
   miss that the item moved.
-- [ ] **Promote `romance_tone`/`worldbuilding_delivery` from trope
-  pairs to real scalar fields -- split in two, schema half ready to
-  hand off.** The probe already validated (correctly-signed weights,
+- [x] **Promote `romance_tone`/`worldbuilding_delivery` from trope
+  pairs to real scalar fields -- DONE, both schema and scoring halves
+  complete 2026-09-11.** The probe already validated (correctly-signed
+  weights,
   confirmed in production) -- see book-dna.md's "Romance TONE/
   execution-quality" entry and scoring-test-protocol.md's 2026-09-05
   "Execution-DNA validation probes" entry.
@@ -200,9 +224,22 @@ worth deferring to a later session rather than batching in for
   `supabase migration list`, data confirmed correct first, then fixed
   with `supabase migration repair --status applied`. See
   project-log.md's 2026-09-11 "Step 4" entry for full detail.
-  **Next**: the `recommend.py`/`scoring_tests.py` scoring-engine
-  changes that make these fields actually participate in
-  recommendations -- separate, main-conversation work, not started.
+  **Scoring-engine half done 2026-09-11** (commit `7646a1d`): both
+  fields added as content-scoped `NOMINAL_FIELDS`, `mixed` getting
+  partial credit against both poles (same bar as `drive`'s `balanced`).
+  Found and fixed two real, previously-latent general bugs while
+  testing (not specific to these two fields): `score_book()`/
+  `explain_book()` scored an untagged nominal field as a full mismatch
+  instead of skipping it; `build_profile()` could divide by zero when a
+  field's evidence was entirely confidence-zeroed on one side. Checked
+  via full A/B scorecard before landing: one real, exactly-traced
+  regression (2 books flip -- Royal Assassin, Interview with the
+  Vampire -- driven by thin per-rater coverage causing held-out-split
+  mode instability), zero effect on 3 of 4 raters. Landed anyway per
+  explicit repo-owner review of the exact size; expected to self-correct
+  as tagging coverage grows. See scoring-test-protocol.md's 2026-09-11
+  entry for full detail. **Item fully complete, nothing further queued
+  here.**
 
 ## P2 (ongoing/routine, not new decisions)
 
@@ -290,6 +327,22 @@ worth deferring to a later session rather than batching in for
   books entering the untagged queue, and (b) the vocabulary-growth
   sweeps already tracked elsewhere in this file (romance_tone,
   worldbuilding delivery).
+- [ ] **Catalog expansion round 4 landed 2026-09-12 -- 378 new untagged
+  books entered the queue, real tagging work again (see (a) above).**
+  Catalog now 1256 books / 484 series (was 878/366) -- see
+  project-log.md's 2026-09-12 entry for the full method and hosted-sync
+  verification. **8 of the 378 are graphic novels, already identified --
+  skip, don't tag, per the existing v1-scope policy** (same treatment as
+  the 4 already-known cases above): *Monstress, Vol. 1: Awakening*,
+  *Paper Girls, Vol. 1*, *Saga, Vol. 3*, *Saga, Vol. 4*, *The Walking
+  Dead, Vol. 1: Days Gone Bye*, *Watchmen*, *White Sand, Vol. 1* (the
+  Dynamite comic adaptation -- not Sanderson's own prose novels), *Y:
+  The Last Man Vol, 1 Unmanned*. The rest were NOT pre-audited for
+  scope (a popularity pull always nets some non-SFF leakage, e.g.
+  literary fiction/thrillers/nonfiction -- expected, per this file's own
+  documented pattern) -- catch those at tagging time as usual, flag
+  anything with no real SFF content for the repo owner rather than
+  silently tagging or silently skipping it.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11 (19 of ~200
   series fixed so far).** `status` defaults to `'ongoing'` whenever
@@ -763,7 +816,9 @@ worth deferring to a later session rather than batching in for
   2026-09-07, but can't be proven against real data because
   `validated_dealbreaker_fields()` is currently EMPTY for all 4 real
   raters. Blocked on more real per-rater rating data, not on more
-  engineering. Revisit once a field/user pair actually validates.
+  engineering. **Rechecked 2026-09-12 (Mathias now at 143 ratings) --
+  still empty for all 4**, see project-log.md's 2026-09-12 entry.
+  Revisit once a field/user pair actually validates.
 - [ ] **Series-aware field-conditional dedup** -- parked 2026-09-06.
   One real lead not yet built: protect the minority subgroup within a
   series split (not just validated-dealbreaker fields, which was tried
