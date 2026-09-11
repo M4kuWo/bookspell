@@ -87,10 +87,17 @@ const EDITIONS_QUERY = `
   }
 `;
 
+function normalizeName(name) {
+  // Hardcover's crowd-sourced data has real internal-whitespace noise
+  // (e.g. "Geraldine  James", "Sarah          Jones") -- collapse it so
+  // these don't look like distinct people and don't get stored sloppily.
+  return name.trim().replace(/\s+/g, ' ');
+}
+
 function narratorSet(edition) {
   const names = (edition.cached_contributors || [])
     .filter((c) => c.contribution === 'Narrator')
-    .map((c) => c.author?.name?.trim())
+    .map((c) => c.author?.name && normalizeName(c.author.name))
     .filter(Boolean);
   // dedupe + stable order for grouping key
   return [...new Set(names)].sort();
@@ -124,6 +131,90 @@ function groupEditionsByNarratorSet(editions) {
   return [...groups.values()];
 }
 
+function levenshtein(a, b) {
+  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[a.length][b.length];
+}
+
+// Confirmed 2026-09-11 (6/6 verified via live search: The Name of the
+// Wind/Rupert Degas, Hitchhiker's Guide/Stephen Moore, Assassin's
+// Apprentice/Joe Eyre, Outlander/Geraldine James, Best Served Cold/Steven
+// Pacey, Watership Down/Ralph Cosham) -- a low-users_count second group is
+// almost always a REAL distinct edition (UK vs. US market, abridged vs.
+// unabridged, or an older historical release), not data noise, as long as
+// the names are genuinely different people. The one confirmed real noise
+// case (Mistborn's "Michael Krammer" vs "Michael Kramer") is a TYPO
+// variant of the same name, not a different person -- that's the actual
+// signal to filter on, not raw popularity.
+function isTypoVariant(a, b) {
+  if (a === b) return true;
+  const dist = levenshtein(a, b);
+  return a.length >= 8 && b.length >= 8 && dist <= 2;
+}
+
+// Merge two same-size groups whose narrator lists pair up as typo variants
+// of each other (every name in one has a close match in the other).
+function mergeTypoVariantGroups(groups) {
+  let changed = true;
+  let current = groups;
+  while (changed) {
+    changed = false;
+    outer: for (let i = 0; i < current.length; i++) {
+      for (let j = i + 1; j < current.length; j++) {
+        const a = current[i].narrators;
+        const b = current[j].narrators;
+        if (a.length !== b.length) continue;
+        const allMatch = a.every((na) => b.some((nb) => isTypoVariant(na, nb)));
+        if (allMatch) {
+          // Keep whichever group's editions carry the higher combined
+          // users_count as the canonical narrator spelling.
+          const usersA = current[i].editions.reduce((s, e) => s + (e.users_count || 0), 0);
+          const usersB = current[j].editions.reduce((s, e) => s + (e.users_count || 0), 0);
+          const [keep, drop] = usersA >= usersB ? [i, j] : [j, i];
+          current[keep] = { narrators: current[keep].narrators, editions: [...current[keep].editions, ...current[drop].editions] };
+          current = current.filter((_, idx) => idx !== drop);
+          changed = true;
+          break outer;
+        }
+      }
+    }
+  }
+  return current;
+}
+
+function mergeSubsetGroups(groups) {
+  let changed = true;
+  let current = groups;
+  while (changed) {
+    changed = false;
+    for (let i = 0; i < current.length; i++) {
+      for (let j = 0; j < current.length; j++) {
+        if (i === j) continue;
+        const a = new Set(current[i].narrators);
+        const b = current[j].narrators;
+        const isProperSubset = a.size < b.length && [...a].every((n) => b.includes(n));
+        if (isProperSubset) {
+          // fold i's editions into j (the superset), drop i
+          current[j] = { narrators: current[j].narrators, editions: [...current[j].editions, ...current[i].editions] };
+          current = current.filter((_, idx) => idx !== i);
+          changed = true;
+          break;
+        }
+      }
+      if (changed) break;
+    }
+  }
+  return current;
+}
+
 function pickRepresentative(editions) {
   return [...editions].sort((a, b) => {
     if ((b.users_count || 0) !== (a.users_count || 0)) return (b.users_count || 0) - (a.users_count || 0);
@@ -141,8 +232,19 @@ async function analyzeBook(bookRow) {
   const editions = hcBook.editions || [];
   if (editions.length === 0) return { book: bookRow, status: 'no_audio_editions', groups: [] };
 
-  const groups = groupEditionsByNarratorSet(editions);
+  let groups = groupEditionsByNarratorSet(editions);
   if (groups.length === 0) return { book: bookRow, status: 'no_narrator_data', groups: [] };
+
+  // Merge a group whose narrator set is a PROPER SUBSET of another group's
+  // set into that superset. This is a mechanical, no-guessing rule: it's
+  // far more likely that a solo "Kate Reading" record next to a "Kate
+  // Reading + Michael Kramer" record for the same book (e.g. A Crown of
+  // Swords) is an incomplete/mis-tagged duplicate Hardcover entry for the
+  // SAME real edition (one co-narrator credit went missing) than a
+  // genuinely different single-narrator production -- confirmed as a real,
+  // recurring pattern across the 2026-09-11 full-catalog run.
+  groups = mergeSubsetGroups(groups);
+  groups = mergeTypoVariantGroups(groups);
 
   const resolved = groups.map((g) => {
     const rep = pickRepresentative(g.editions);
@@ -156,22 +258,15 @@ async function analyzeBook(bookRow) {
     };
   });
 
-  // Flag ambiguous multi-group cases rather than silently inserting all of them.
-  let status = 'ok';
-  if (resolved.length > 2) status = 'flag_too_many_groups';
-  else if (resolved.length === 2) {
-    const [a, b] = resolved.sort((x, y) => y.users_count - x.users_count);
-    // A group with weak/near-zero real signal (users_count <= 2, regardless
-    // of the OTHER group's count -- both-zero pairs are just as unreliable
-    // as a lopsided one) is more likely a data-entry variant (misspelled
-    // narrator name, duplicate crowd-sourced entry) than a genuine second
-    // narration -- flag for a human to check rather than auto-inserting a
-    // possibly-spurious second row. A real second narration (e.g. Eye of
-    // the World's Rosamund Pike re-recording, 18 users) clears this bar.
-    if (b.users_count <= 2) {
-      status = 'flag_weak_second_group';
-    }
-  }
+  // Flag only genuinely ambiguous multi-group cases. Two DIFFERENT named
+  // groups (after typo-variant merging above already collapsed same-person
+  // spelling noise) are treated as 'ok' regardless of low users_count --
+  // confirmed 6/6 on manual verification that a low-popularity second
+  // group is almost always a real distinct edition (UK/US market,
+  // abridged/unabridged, older release), not noise. 3+ surviving distinct
+  // groups is a different, harder problem (usually a public-domain classic
+  // with many real historical narrations) that still needs a human pick.
+  const status = resolved.length > 2 ? 'flag_too_many_groups' : 'ok';
 
   return { book: bookRow, status, groups: resolved };
 }
