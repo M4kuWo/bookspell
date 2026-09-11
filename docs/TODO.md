@@ -49,32 +49,55 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
-- [ ] **Consider bringing in Codex CLI (repo owner's existing ChatGPT
-  subscription) as a third working entity, alongside CLDO/CLDA --
-  raised 2026-09-11, needs real thought before building anything.**
-  Codex CLI is a real, viable tool for this -- it natively reads an
-  `AGENTS.md` file the same way this project relies on `CLAUDE.md`, so
-  the convention-following pattern would transfer reasonably well.
-  **Not a quick add -- two real open questions before any setup work
-  starts**:
-  1. **Concrete division of labor, not just "give it what it's good
-     at."** Needs actual task-type examples, not an abstract split.
-     One plausible shape floated in discussion: mechanical/scriptable
-     work (e.g. something like CLDA's Hardcover-API narrator-backfill
-     script) as a good fit, versus the nuanced literary-judgment
-     tagging work (which leans on a lot of hard-won, very specific
-     discipline -- the `HIGH_RISK_FIELDS` caution, the evidence
-     standards in CLAUDE.md) staying with the persona that already has
-     that context baked in. Not decided, just one candidate framing.
-  2. **A third entity re-opens the exact coordination problem CLAUDE.md
-     itself exists to solve, for a new kind of session.** The persona
-     system and the `PENDING_APPROVALS.md` gate would both need to
-     extend to it (a third name, a third set of "does it actually
-     respect this project's conventions" questions) -- not just point
-     it at CLAUDE.md and assume it onboards as cleanly as a fresh
-     Claude session does.
-  Work through both before building any integration -- this is a
-  bigger decision than it looks, don't rush it in alongside other work.
+- [ ] **CODX (Codex CLI, via the repo owner's ChatGPT Plus
+  subscription) as a third working entity -- approach worked out
+  2026-09-11, deliberately deferred, do later.** Persona name settled:
+  **CODX** (matches CLDO/CLDA's 4-letter format, visually distinct).
+  **Approach**: start it in a review/propose role only, no direct
+  hosted-DB access or unsupervised commits at first -- earn trust the
+  same way CLDA did (by being right repeatedly), not by assumption.
+  The real value of a second model family is an independent
+  perspective with no accumulated bias toward this codebase's history
+  -- worth the most on review-type work, less on generative work that
+  depends on deep project context.
+  **Concrete tasks decided on**:
+  - Code review/refactoring (repo owner's own idea, the strongest
+    fit): periodic independent review of `scripts/recommend.py`/
+    `scripts/scoring_tests.py`/tool scripts, hunting for the class of
+    bug CLDO just found and fixed (untagged-nominal-field mismatch,
+    the `ZeroDivisionError`) -- issues that show up to fresh eyes, not
+    to someone who already knows how the code "should" behave.
+    Auditing the pile of deferred/experimental functions (
+    `build_profile_per_value`, `build_profile_trope_shrinkage`,
+    `build_profile_trope_backoff`, `build_profile_series_field_dedup`)
+    for whether they're still accurate/worth keeping. An independent
+    QA pass on CLDA's own large migrations -- a genuine third opinion,
+    not redundant with CLDO's own verification.
+  - Mechanical/scriptable work: the still-open local-bootstrap gap
+    (seed data can't rebuild the catalog from scratch), future
+    data-source integrations shaped like `backfill-standard-
+    narrators.js`, `tools/catalog-review/`/`tools/dogfood/` UI work.
+  - Deliberately NOT handed over: Book DNA tagging (leans on hard-won
+    evidence discipline -- `HIGH_RISK_FIELDS`, the romance_tone
+    evidence standard) and scoring-algorithm design (re-deriving
+    scoring-test-protocol.md's history of rejected ideas would cost
+    more than it saves).
+  **Token/budget relationship**: a genuinely separate, non-competing
+  pool from Claude usage -- CODX work costs nothing against
+  Claude/CLDO/CLDA's own budget, so this is additive capacity, not
+  divided capacity. Checked directly (not guessed): Codex CLI usage is
+  included in ChatGPT Plus (no separate API billing needed), metered
+  on a rolling 5-hour window plus a separate weekly cap, token-based
+  rather than a fixed message count; Pro tiers ($100/$200 per month)
+  get 5x/20x more than Plus. Could not pin down an exact "X per week"
+  number for Plus specifically from available sources -- check the
+  account's own usage page rather than trust an estimate here.
+  **Setup, when this gets picked up**: write an `AGENTS.md` that
+  points back at `CLAUDE.md` for shared conventions (not a duplicate
+  copy, to avoid drift) plus CODX-specific notes on its review-only
+  starting scope; extend the persona system and
+  `docs/PENDING_APPROVALS.md` gate to include it as a third named
+  entity before giving it any write access.
 - [x] **Bulk-populate `audiobook_editions` standard-edition narrator
   data via Hardcover's API -- DONE 2026-09-11. Final: 1026 `standard`
   rows across 786 of 869 books with a `hardcover_id`.** Confirmed
