@@ -9738,3 +9738,55 @@ explicitly NOT this session's job: the `scripts/recommend.py`/
 `scripts/scoring_tests.py` changes to make the new scalar fields
 actually participate in scoring, which stays in the main conversation
 per the standing decision.
+
+## 2026-09-11 (later): reprioritized audiobook-editions work; resolved the Iain Banks/BBC Audio question; discovered a real Hardcover-API narrator opportunity
+
+Repo owner set a general rule: dramatized-audio-edition sourcing
+(GraphicAudio/BBC Audio/Sub-task B) should stay P1 only while there are
+real, currently-known candidates left to add; once that pool is
+genuinely exhausted, tracking future releases is a maintenance/
+freshness concern that doesn't belong at P1 during a research-and-
+building phase -- demote to P3, revisit later either as a P2 routine
+checkup once the product is stable, or via a real alerting mechanism
+(notify on new releases rather than re-researching on a schedule),
+neither built yet.
+
+**Resolved the last open BBC Audio thread**: checked directly whether
+any of our 3 catalog Iain M. Banks Culture novels (Consider Phlebas,
+The Player of Games, Use of Weapons) have a BBC Radio dramatization.
+Negative -- "Iain Banks: A BBC Radio Collection" contains exactly 3
+dramas (The Wasp Factory, The State of the Art, Espedair Street), none
+of which are our 3 catalog books. The State of the Art is a real
+Culture novella but isn't in our catalog at all yet (a normal-ingestion
+question for later, not an Audible-Original case, since it has a real
+print edition). This closes the BBC Audio A1b candidate pool for real.
+
+**Re-confirmed Sub-task B (Audible Originals)** candidate pool is
+exhausted -- no new unadded candidates currently known (last discovery
+pass 2026-09-09, all 3 real finds already ingested).
+
+Both confirm the repo owner's stated condition (no more known
+candidates fitting scope) -- demoted the whole dramatized-audio item
+from P1 to P3 in `docs/TODO.md`, folding in the former separate P2
+"periodically re-check GraphicAudio's in-progress productions" item
+(same "wait for the producer" shape). Full multi-week history kept
+under the P3 entry, not deleted.
+
+**Checked the other open sub-question and found a real, substantial
+opportunity**: whether Hardcover's API exposes standard-edition
+narrator data as a contributor role. Confirmed directly via the live
+GraphQL API (`https://api.hardcover.app/v1/graphql`, same endpoint the
+ingestion scripts already use) -- `books { default_audio_edition {
+cached_contributors } }` returns each contributor's role, and narrators
+are correctly labeled `contribution: "Narrator"`, distinct from the
+author (Mistborn: The Final Empire correctly returned Michael Kramer
+as narrator, Brandon Sanderson as author). Tested bulk-fetchability
+directly: one query across 10 random catalog book ids returned real
+narrator names for 7 of them, zero web-search cost. Checked scope:
+869 of 874 books have a `hardcover_id`; `audiobook_editions` currently
+has ZERO `edition_type = 'standard'` rows (all 97 existing rows are
+`dramatized_full_cast`) -- a real, untouched, large backlog, not a
+freshness concern, so this becomes the new P1 audiobook item in
+`docs/TODO.md` (replacing the demoted dramatized-audio item in that
+slot). Not started -- next step is a batch script, not per-book web
+research, since this data doesn't need it.

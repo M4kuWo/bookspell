@@ -36,234 +36,34 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
-- [ ] **Audiobook edition data, see `.claude/skills/tag-audiobook-
-  editions/SKILL.md`** (written 2026-09-07). Runs on a SEPARATE
-  session's token budget, not this one -- fine to kick off any time
-  regardless of this session's own economizing. Expect this to take
-  many sessions end-to-end; that's by design, not a problem to fix.
-  **Progress as of 2026-09-08: Steps A1a + A1b done for GraphicAudio,
-  Step A2 batches 1-2 done (17 editions inserted, 2 series fully
-  complete).** Full detail in project-log.md's five 2026-09-08
-  "audiobook-editions skill" entries.
-  **Also landed a real schema fix**: `audiobook_editions` had no unique
-  constraint to make `on conflict do nothing` actually idempotent --
-  added `unique (book_id, source_url)` (migration
-  `20260908070000_audiobook_editions_unique_constraint.sql`), verified
-  twice (batch 1 and batch 2 each re-ran their own insert file inside
-  the test transaction and confirmed no duplicate rows).
-  **Batches 1-2 done, 2 series fully complete**: A Court of Thorns and
-  Roses (all 5 books) and Kate Daniels (both books, via Magic Bites/
-  Magic Burns) are now fully covered. Also done: Sweep of the Heart,
-  Age of Myth (completes The Legends of the First Empire, our only
-  tagged book in it), Too Like the Lightning (completes Terra Ignota,
-  same reason), Zodiac Academy: The Awakening, Elantris, The Hope of
-  Elantris, The Emperor's Soul, Warbreaker (16 `fully_released` total),
-  plus Empire of Silence correctly recorded as `announced` (a real
-  pre-order catch -- GraphicAudio's own "Pre-Order Announcement!" post,
-  Part 1 ships 2026-10-30, Part 2 2027-01-07, both still in the
-  future). Howling Dark (Sun Eater #2) checked and skipped -- no
-  confirmed GraphicAudio listing exists yet, consistent with book 1
-  not being out; The Sun Eater series has nothing else insertable right
-  now as a result.
-  **Real gaps flagged for a future Step A2 session, not silently
-  skipped**: Elantris and Warbreaker EACH have a second real
-  GraphicAudio edition (a "Tenth Anniversary" re-recording alongside
-  the original) that wasn't inserted due to incomplete runtime/
-  completion data -- add as a genuine second row per book (the schema
-  now supports this cleanly via the new unique constraint) once that
-  data is confirmed.
-  **Batch 2 was cut short by this session's web search budget cap
-  (200/200)** partway into Crescent City -- same call as the
-  2026-09-07 "romance_tone batch 10" precedent: stopped rather than
-  guessing. **Whoever picks this up next needs a fresh/raised
-  `CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION`** -- that's the repo
-  owner's call.
-  **Progress as of 2026-09-08 (later): Step A2 batch 3 done -- 10 more
-  editions inserted (18 -> 28 total), Crescent City now fully covered
-  and the Mistborn trilogy proper (Final Empire/Well of Ascension/Hero
-  of Ages) plus its Secret History/Eleventh Metal companion bundle now
-  covered.** Also done: The Frugal Wizard's Handbook for Surviving
-  Medieval England, The Sunlit Man. Isles of the Emberdark checked --
-  no confirmed GraphicAudio edition exists yet (published 2025-07-01,
-  plausibly just not produced yet) -- worth a re-check later, not
-  permanently closed. Full detail in project-log.md's 2026-09-08 "Step
-  A2 batch 3" entry, including the Secret History/Eleventh Metal
-  bundled-release judgment call (same shape as the still-open Riyria
-  case below).
-  **Progress as of 2026-09-09: Step A2 batch 4 done -- 10 more editions
-  inserted (28 -> 38 total). Mistborn Era Two/Wax and Wayne now fully
-  covered (The Alloy of Law, Shadows of Self, The Bands of Mourning,
-  The Lost Metal) and Stormlight Archive Era One now fully covered**
-  (The Way of Kings, Words of Radiance, Oathbringer, Rhythm of War,
-  Edgedancer, Dawnshard, plus Wind and Truth which already had an
-  edition from the 2026-09-05 seed row). The Way of Kings and
-  Oathbringer have no cast list recorded (existence + part count only,
-  nothing individually-named reliably found). Full detail in
-  project-log.md's 2026-09-09 "Step A2 batch 4" entry, including a
-  cast-list cross-contamination near-miss that was caught before
-  inserting (a search result mixed in a different GraphicAudio
-  production's credits).
-  **Progress as of 2026-09-09 (later): Step A2 batch 5 done -- 11 more
-  editions inserted (49 total). The Demon Cycle now fully covered**
-  (The Warded Man, The Desert Spear, The Daylight War, The Skull
-  Throne, The Core) **and Red Rising Saga now fully covered** (Red
-  Rising, Golden Son, Morning Star, Iron Gold, Dark Age, Light
-  Bringer). Full detail in project-log.md's 2026-09-09 "Step A2 batch
-  5" entry, including the two books (Red Rising, Golden Son) where
-  BOTH parts' runtimes were independently confirmed and genuinely
-  summed to a total, distinct from the usual "leave NULL" case where
-  only one part is confirmed.
-  **Progress as of 2026-09-09 (later still): Step A2 batch 6 done -- 9
-  more editions inserted (58 total).** Throne of Glass: only 1 of 9
-  books confirmed (the series opener) -- GraphicAudio has said it's
-  "starting production" on the series but no book-specific
-  release/pre-order page exists yet for the other 8; a real, thin
-  finding, not a research gap -- re-check in a later session as that
-  production continues. The Murderbot Diaries: 8 of 10 confirmed (All
-  Systems Red through Platform Decay); Compulsory and Home: Habitat,
-  Range, Niche, Territory (both very short prequel/companion pieces)
-  have no confirmed edition. Full detail in project-log.md's
-  2026-09-09 "Step A2 batch 6" entry, including a runtime-format
-  ambiguity (Network Effect's "8.22 hours" could mean two different
-  things) correctly left NULL rather than guessed.
-  **Progress as of 2026-09-09 (later still): Step A2 batch 7 done -- 5
-  more editions inserted (63 total). Dresden Files: only 5 of 14 books
-  confirmed** (Storm Front, Fool Moon, Grave Peril, Summer Knight,
-  Death Masks) -- GraphicAudio only started this series in August 2025
-  and is still releasing it sequentially; book 6 (Blood Rites) onward
-  has no confirmed release yet. Real finding, not a research gap --
-  same shape as Throne of Glass in batch 6. Full detail in
-  project-log.md's 2026-09-09 "Step A2 batch 7" entry, including a
-  real author-field contamination fix caught along the way: "White
-  Night"'s author field had the series' cover illustrator (Chris
-  McGrath) appended -- fixed via a scoped migration, confirmed
-  isolated to that one row (checked all 14 Dresden Files books).
-  **Still-open confirmed matches from Step A1b, not yet researched**:
-  Dresden Files books 6-14 (9 books, blocked on GraphicAudio's own
-  release pace -- re-check periodically, don't re-research every
-  session). The remaining 8 Throne of Glass books and Murderbot's 2
-  short prequel pieces are open leads but too thin for their own
-  batch. **Flagged, needs a deliberate judgment call rather than a
-  silent match**: GraphicAudio's "Riyria Revelations" only matches our
-  omnibus row ("The Riyria Revelations (Omnibus)") -- decide whether a
-  dramatized-edition record belongs on an omnibus row before
-  inserting; "Riyria Chronicles" and "Kate Daniels: Wilmington Years"
-  (GA) have no matching row in our catalog at all, not a match.
-  Remaining steps, in order:
-  1. **Demoted to P2, not active P1 work (clarified 2026-09-09)**:
-     periodically re-check GraphicAudio's Dresden Files 6-14/Throne of
-     Glass 2-9/Murderbot prequel production progress for newly-released
-     books. This is a low-effort, infrequent "has anything shipped"
-     check on an external producer's own release calendar, not
-     ongoing research effort -- see the P2 entry below for the real
-     priority-level version of this. Of the three, only **Throne of
-     Glass has a real series-level "in production" announcement**
-     (GraphicAudio's own public statement) -- Dresden Files 6-14 is
-     just an inference from release cadence, not an actual
-     announcement, and Murderbot's 2 prequels have neither. None of the
-     three currently have anything book-specific enough to record via
-     `audiobook_editions.release_status: 'announced'` (that field
-     already exists and is already used correctly for Empire of
-     Silence's real pre-order case -- not a schema gap, just nothing
-     concrete enough yet for these three to attach a row to).
-  2. **Step A1a + A1b for BBC Audio done 2026-09-09.** A1a pulled 39
-     candidate titles (Pratchett/Discworld, Neil Gaiman, Pullman's His
-     Dark Materials, Douglas Adams's Hitchhiker's Guide radio series,
-     Le Guin, Asimov's Foundation Trilogy, Wyndham, Susan Cooper, Ray
-     Bradbury, plus 8 classic/public-domain SF titles). A1b
-     cross-referenced against `books`: **31 confirmed real matches**
-     (see project-log.md's 2026-09-09 "Step A1b for BBC Audio" entry
-     for the full list by author) -- Pratchett/Discworld (6), Good
-     Omens (1), Neverwhere (1), His Dark Materials (3, "Northern
-     Lights" = our "The Golden Compass"), Hitchhiker's Guide series
-     (5), Le Guin (4), Asimov's Foundation Trilogy (3), Wyndham's Day
-     of the Triffids (1), Bradbury (2), classic SF (5). **Real false
-     positive caught**: our catalog's "The Lost World" is Michael
-     Crichton's book, NOT Arthur Conan Doyle's -- not a match, title
-     collision only. 10 titles confirmed genuinely not in our catalog.
-     Iain Banks follow-up (unclear if Culture novels are dramatised)
-     still unresolved.
-  3. **Step A2 for BBC Audio, batch 1 done 2026-09-09** -- 11 more
-     editions inserted (74 total): the Pratchett/Discworld group
-     (Guards! Guards!, Wyrd Sisters, Mort, Small Gods, Night Watch,
-     Eric), Good Omens, Neverwhere, and all 3 His Dark Materials books.
-     Full detail in project-log.md's 2026-09-09 "Step A2 for BBC
-     Audio, batch 1" entry.
-     **Batch 2 done 2026-09-09** -- 13 more editions inserted (87
-     total): all 5 Hitchhiker's Guide radio phases, all 3 Earthsea
-     books + The Left Hand of Darkness, all 3 Foundation books, and
-     The Day of the Triffids. Two bundled-release judgment calls
-     (Earthsea, Foundation Trilogy -- each ONE combined dramatisation
-     covering multiple catalog books with different actors per book as
-     characters age/generations pass) -- narrators AND runtime left
-     NULL for those 6 rows rather than misattribute a book-specific
-     actor to the wrong book. Full detail in project-log.md's
-     2026-09-09 "Step A2 for BBC Audio, batch 2" entry.
-     **Batch 3 done 2026-09-09 -- clears the full 31-match pool.** 7
-     more editions inserted (94 total): Fahrenheit 451, The Martian
-     Chronicles, Frankenstein, The Time Machine (correctly recorded as
-     BBC Radio 3, not Radio 4), The War of the Worlds, Journey to the
-     Center of the Earth, Solaris. Every confirmed BBC Audio match
-     from this session's A1b cross-reference now has an
-     `audiobook_editions` row. Full detail in project-log.md's
-     2026-09-09 "Step A2 for BBC Audio, batch 3" entry.
-     **Still open**: only the Iain Banks "BBC Radio Collection"
-     follow-up (unclear if any Culture novels are specifically
-     dramatised) -- needs a direct check before counting as a real
-     candidate. Otherwise BBC Audio is caught up with its own A1b
-     pool -- next growth here comes from re-running A1a/A1b later as
-     BBC's catalog grows, not from more research on the current list.
-  3. **Sub-task B candidate discovery done 2026-09-09 (two passes)** --
-     3 real candidates found, each with an open scope question rather
-     than a clean pass: **The Salvation** (2023, Justin Lockey, 8-part
-     time-travel sci-fi audio drama -- no flags, cleanest of the
-     three), **Zero G** (2018, Dan Wells, sci-fi -- explicitly
-     middle-grade, a real age-category judgment call since CLAUDE.md's
-     v1 scope is genre-only), and **The Left Right Game** (2020,
-     QCode/Legion M -- billed as "sci-fi horror" so genre fit is a
-     judgment call, AND it originated as a published Reddit
-     r/NoSleep short story before being expanded into the audio drama,
-     a gray area on "no print edition exists anywhere"). Checked ~20
-     candidates total across both passes; 8 disqualified with specific
-     recorded reasons (has a real print/ebook/comic counterpart:
-     Steal the Stars, Alien: River of Pain, Impact Winter, The Vela,
-     The Bright Sessions, Voyage to the Stars; not a real Audible
-     Original: Midst; wrong genre despite fantasy trappings: Heads
-     Will Roll; wrong age-category/format: I'm From the Sun) plus
-     Worlds Beyond Number flagged as a structurally different format
-     (actual-play, not scripted drama) needing its own policy call. See
-     project-log.md's two 2026-09-09 "Sub-task B candidate discovery"
-     entries for full detail on each -- a future session should NOT
-     re-research any of the 8 disqualified names.
-     **Repo owner resolved both flagged scope questions 2026-09-09:
-     Zero G is IN** (`age_category: middle_grade` at tagging time --
-     v1 scope is genre-only, no age floor, and this catalog can hold
-     an MG title fine) **and The Left Right Game is IN** (real sci-fi
-     core clears the genre bar, same precedent as Horns/NOS4A2's dark-
-     fantasy/horror inclusion; a Reddit short story predecessor doesn't
-     count as a disqualifying "print edition" -- the audio drama is a
-     substantially expanded, different work, unlike Steal the Stars'
-     real Tor novelization). **The Salvation was already clean.** All
-     3 candidates are now confirmed IN, ready for ingestion+tagging --
-     no more open scope questions blocking this pool.
-     **All 3 ingested and tagged 2026-09-09** -- The Salvation, Zero G,
-     and The Left Right Game are now real catalog entries with full
-     Book DNA, tropes, content warnings, and their own
-     `audiobook_editions` row (`edition_type: dramatized_full_cast` --
-     the skill doc's suggested `'audio_original'` value turned out not
-     to be in the actual check constraint, caught by testing before
-     applying). Real correction found during research: Zero G has 2
-     sequels (Dragon Planet, Stargazer) not surfaced during discovery,
-     so it's `narrative_closure: requires_series`. `books` 871 -> 874,
-     `book_dna` 861 -> 864, `audiobook_editions` 94 -> 97. Full detail
-     in project-log.md's "ingested the 3 confirmed Audible Originals"
-     entry. **Next**: more Sub-task B candidate discovery (this pool is
-     exhausted for now) whenever there's appetite to grow it further --
-     not urgent.
-  - Open sub-question, not yet checked: whether Hardcover's API exposes
-    standard-edition narrator data as a contributor role (same source
-    already used for author verification) -- possibly near-bulk-
-    fetchable, cheaper than the dramatized-edition path.
+- [ ] **Bulk-populate `audiobook_editions` standard-edition narrator
+  data via Hardcover's API -- new, real, high-value item, 2026-09-11.**
+  Resolves the open sub-question that used to sit at the bottom of the
+  (now-demoted, see P3) dramatized-audio item below: **confirmed
+  directly** that Hardcover's GraphQL API exposes narrator data as a
+  `contribution: "Narrator"` role on `books.default_audio_edition.
+  cached_contributors`, genuinely bulk-fetchable (tested a single query
+  across 10 random catalog book ids at once -- 7/10 returned real
+  narrator names, e.g. Michael Kramer for Mistborn: The Final Empire --
+  zero web-search cost, just API calls). **Scope**: 869 of 874 books
+  have a `hardcover_id`; `audiobook_editions` currently has ZERO
+  `edition_type = 'standard'` rows (all 97 existing rows are
+  `dramatized_full_cast`) -- this is a real, untouched, large backlog,
+  not a maintenance/freshness task, which is why it stays P1 while the
+  dramatized-audio item below (whose known candidate pools are
+  genuinely exhausted) does not. Not started -- next step is a batch
+  script (bulk GraphQL query -> `insert into audiobook_editions
+  (edition_type='standard', narrators, ...)`, same idempotent
+  `on conflict do nothing` pattern as every other insert in this
+  project) rather than the one-by-one web-research pattern the
+  dramatized-edition work used, since this data doesn't need per-book
+  research at all.
+- [ ] **DEMOTED to P3, 2026-09-11 (see P3 below for the current entry
+  and the repo owner's reasoning) -- dramatized-audio edition data
+  (GraphicAudio/BBC Audio/Sub-task B Audible Originals), see
+  `.claude/skills/tag-audiobook-editions/SKILL.md`.** Full history kept
+  under P3, not deleted -- this pointer exists so a P1 skim doesn't
+  miss that the item moved.
 - [ ] **Promote `romance_tone`/`worldbuilding_delivery` from trope
   pairs to real scalar fields -- split in two, schema half ready to
   hand off.** The probe already validated (correctly-signed weights,
@@ -326,16 +126,10 @@ worth deferring to a later session rather than batching in for
 
 ## P2 (ongoing/routine, not new decisions)
 
-- [ ] **Periodically re-check GraphicAudio's in-progress productions**
-  (added 2026-09-09, demoted from where it was implicitly sitting
-  under P1) -- Throne of Glass books 2-9 (a real series-level "starting
-  production" announcement exists, no book-specific dates yet),
-  Dresden Files 6-14 (no announcement, just an inference from release
-  cadence), Murderbot's 2 short prequels (no announcement at all,
-  plausibly never getting one). Low-effort, infrequent check on an
-  external producer's own release calendar -- fold into whenever
-  Step A2 work happens to touch these series anyway, not a reason to
-  open a dedicated session on its own.
+- [ ] **MOVED to P3, 2026-09-11** -- folded into the demoted
+  dramatized-audio-edition item there (Throne of Glass 2-9, Dresden
+  Files 6-14, Murderbot's 2 prequels -- same "wait for the producer"
+  shape, no reason to track separately anymore).
 - [ ] **SUPERSEDED 2026-09-11 -- the mechanism this item describes no
   longer exists, read before touching.** This item used to track
   continuing to tag books with the `understated_romance`/
@@ -506,6 +300,265 @@ worth deferring to a later session rather than batching in for
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 
+- [ ] **DEMOTED from P1 to P3, 2026-09-11 -- dramatized-audio edition
+  data (GraphicAudio/BBC Audio/Sub-task B Audible Originals), see
+  `.claude/skills/tag-audiobook-editions/SKILL.md`.** Repo owner's
+  reasoning: every currently-KNOWN candidate pool for this work is
+  genuinely exhausted (not paused, not under-resourced -- actually
+  exhausted, see the history below), so what's left is exclusively
+  "wait for an external producer/creator to release something new,"
+  which is a maintenance/freshness concern, not core product-building
+  work. We're in a research-and-building phase right now, so tracking
+  external release calendars isn't a priority -- revisit either as a
+  P2 routine checkup once the product is stable, or better, build a
+  real alerting mechanism (notify on a new release rather than
+  re-researching on a schedule) -- both are the repo owner's own
+  suggested paths, neither built yet, logged here for whoever picks
+  this back up. **Folds in the former separate P2 "periodically
+  re-check GraphicAudio's in-progress productions" item** (Throne of
+  Glass books 2-9, Dresden Files 6-14, Murderbot's 2 short prequels --
+  same "wait for the producer" shape, no reason to track it separately
+  from this item anymore).
+  **Iain Banks / BBC Audio Culture-novel question, the last open BBC
+  Audio thread, RESOLVED 2026-09-11 -- negative, not a match.**
+  Checked directly: "Iain Banks: A BBC Radio Collection" (Audible/
+  Penguin, 2026) contains exactly 3 dramas -- The Wasp Factory, The
+  State of the Art, and Espedair Street. None of the three are our
+  catalog's 3 Iain M. Banks Culture novels (Consider Phlebas, The
+  Player of Games, Use of Weapons) -- The State of the Art IS a real
+  Culture novella, but it's a different work, not currently in our
+  catalog at all (and if added later, it'd be a normal ingestion +
+  dramatized-audio-edition case, not an Audible-Original/no-print-
+  counterpart case, since it's a published Banks novella). This closes
+  the BBC Audio A1b pool for real -- no open threads remain there.
+  **Sub-task B (Audible Originals) status, re-confirmed 2026-09-11**:
+  candidate pool exhausted, no new unadded-but-known candidates exist
+  right now (last discovery pass was 2026-09-09, 2 passes, ~20
+  candidates checked, all 3 real finds already ingested+tagged -- see
+  history below). This is the concrete basis for the P1->P3 demotion
+  above: there genuinely is nothing left to add today, only future
+  releases to watch for.
+  **Full history kept below, not deleted** (moved here from P1
+  2026-09-11):
+  **Progress as of 2026-09-08: Steps A1a + A1b done for GraphicAudio,
+  Step A2 batches 1-2 done (17 editions inserted, 2 series fully
+  complete).** Full detail in project-log.md's five 2026-09-08
+  "audiobook-editions skill" entries.
+  **Also landed a real schema fix**: `audiobook_editions` had no unique
+  constraint to make `on conflict do nothing` actually idempotent --
+  added `unique (book_id, source_url)` (migration
+  `20260908070000_audiobook_editions_unique_constraint.sql`), verified
+  twice (batch 1 and batch 2 each re-ran their own insert file inside
+  the test transaction and confirmed no duplicate rows).
+  **Batches 1-2 done, 2 series fully complete**: A Court of Thorns and
+  Roses (all 5 books) and Kate Daniels (both books, via Magic Bites/
+  Magic Burns) are now fully covered. Also done: Sweep of the Heart,
+  Age of Myth (completes The Legends of the First Empire, our only
+  tagged book in it), Too Like the Lightning (completes Terra Ignota,
+  same reason), Zodiac Academy: The Awakening, Elantris, The Hope of
+  Elantris, The Emperor's Soul, Warbreaker (16 `fully_released` total),
+  plus Empire of Silence correctly recorded as `announced` (a real
+  pre-order catch -- GraphicAudio's own "Pre-Order Announcement!" post,
+  Part 1 ships 2026-10-30, Part 2 2027-01-07, both still in the
+  future). Howling Dark (Sun Eater #2) checked and skipped -- no
+  confirmed GraphicAudio listing exists yet, consistent with book 1
+  not being out; The Sun Eater series has nothing else insertable right
+  now as a result.
+  **Real gaps flagged for a future Step A2 session, not silently
+  skipped**: Elantris and Warbreaker EACH have a second real
+  GraphicAudio edition (a "Tenth Anniversary" re-recording alongside
+  the original) that wasn't inserted due to incomplete runtime/
+  completion data -- add as a genuine second row per book (the schema
+  now supports this cleanly via the new unique constraint) once that
+  data is confirmed.
+  **Batch 2 was cut short by this session's web search budget cap
+  (200/200)** partway into Crescent City -- same call as the
+  2026-09-07 "romance_tone batch 10" precedent: stopped rather than
+  guessing. **Whoever picks this up next needs a fresh/raised
+  `CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION`** -- that's the repo
+  owner's call.
+  **Progress as of 2026-09-08 (later): Step A2 batch 3 done -- 10 more
+  editions inserted (18 -> 28 total), Crescent City now fully covered
+  and the Mistborn trilogy proper (Final Empire/Well of Ascension/Hero
+  of Ages) plus its Secret History/Eleventh Metal companion bundle now
+  covered.** Also done: The Frugal Wizard's Handbook for Surviving
+  Medieval England, The Sunlit Man. Isles of the Emberdark checked --
+  no confirmed GraphicAudio edition exists yet (published 2025-07-01,
+  plausibly just not produced yet) -- worth a re-check later, not
+  permanently closed. Full detail in project-log.md's 2026-09-08 "Step
+  A2 batch 3" entry, including the Secret History/Eleventh Metal
+  bundled-release judgment call (same shape as the still-open Riyria
+  case below).
+  **Progress as of 2026-09-09: Step A2 batch 4 done -- 10 more editions
+  inserted (28 -> 38 total). Mistborn Era Two/Wax and Wayne now fully
+  covered (The Alloy of Law, Shadows of Self, The Bands of Mourning,
+  The Lost Metal) and Stormlight Archive Era One now fully covered**
+  (The Way of Kings, Words of Radiance, Oathbringer, Rhythm of War,
+  Edgedancer, Dawnshard, plus Wind and Truth which already had an
+  edition from the 2026-09-05 seed row). The Way of Kings and
+  Oathbringer have no cast list recorded (existence + part count only,
+  nothing individually-named reliably found). Full detail in
+  project-log.md's 2026-09-09 "Step A2 batch 4" entry, including a
+  cast-list cross-contamination near-miss that was caught before
+  inserting (a search result mixed in a different GraphicAudio
+  production's credits).
+  **Progress as of 2026-09-09 (later): Step A2 batch 5 done -- 11 more
+  editions inserted (49 total). The Demon Cycle now fully covered**
+  (The Warded Man, The Desert Spear, The Daylight War, The Skull
+  Throne, The Core) **and Red Rising Saga now fully covered** (Red
+  Rising, Golden Son, Morning Star, Iron Gold, Dark Age, Light
+  Bringer). Full detail in project-log.md's 2026-09-09 "Step A2 batch
+  5" entry, including the two books (Red Rising, Golden Son) where
+  BOTH parts' runtimes were independently confirmed and genuinely
+  summed to a total, distinct from the usual "leave NULL" case where
+  only one part is confirmed.
+  **Progress as of 2026-09-09 (later still): Step A2 batch 6 done -- 9
+  more editions inserted (58 total).** Throne of Glass: only 1 of 9
+  books confirmed (the series opener) -- GraphicAudio has said it's
+  "starting production" on the series but no book-specific
+  release/pre-order page exists yet for the other 8; a real, thin
+  finding, not a research gap -- re-check in a later session as that
+  production continues. The Murderbot Diaries: 8 of 10 confirmed (All
+  Systems Red through Platform Decay); Compulsory and Home: Habitat,
+  Range, Niche, Territory (both very short prequel/companion pieces)
+  have no confirmed edition. Full detail in project-log.md's
+  2026-09-09 "Step A2 batch 6" entry, including a runtime-format
+  ambiguity (Network Effect's "8.22 hours" could mean two different
+  things) correctly left NULL rather than guessed.
+  **Progress as of 2026-09-09 (later still): Step A2 batch 7 done -- 5
+  more editions inserted (63 total). Dresden Files: only 5 of 14 books
+  confirmed** (Storm Front, Fool Moon, Grave Peril, Summer Knight,
+  Death Masks) -- GraphicAudio only started this series in August 2025
+  and is still releasing it sequentially; book 6 (Blood Rites) onward
+  has no confirmed release yet. Real finding, not a research gap --
+  same shape as Throne of Glass in batch 6. Full detail in
+  project-log.md's 2026-09-09 "Step A2 batch 7" entry, including a
+  real author-field contamination fix caught along the way: "White
+  Night"'s author field had the series' cover illustrator (Chris
+  McGrath) appended -- fixed via a scoped migration, confirmed
+  isolated to that one row (checked all 14 Dresden Files books).
+  **Still-open confirmed matches from Step A1b, not yet researched**:
+  Dresden Files books 6-14 (9 books, blocked on GraphicAudio's own
+  release pace -- re-check periodically, don't re-research every
+  session). The remaining 8 Throne of Glass books and Murderbot's 2
+  short prequel pieces are open leads but too thin for their own
+  batch. **Flagged, needs a deliberate judgment call rather than a
+  silent match**: GraphicAudio's "Riyria Revelations" only matches our
+  omnibus row ("The Riyria Revelations (Omnibus)") -- decide whether a
+  dramatized-edition record belongs on an omnibus row before
+  inserting; "Riyria Chronicles" and "Kate Daniels: Wilmington Years"
+  (GA) have no matching row in our catalog at all, not a match.
+  Remaining steps, in order:
+  1. **Demoted to P2, not active P1 work (clarified 2026-09-09)**:
+     periodically re-check GraphicAudio's Dresden Files 6-14/Throne of
+     Glass 2-9/Murderbot prequel production progress for newly-released
+     books. This is a low-effort, infrequent "has anything shipped"
+     check on an external producer's own release calendar, not
+     ongoing research effort -- see the P2 entry below for the real
+     priority-level version of this. Of the three, only **Throne of
+     Glass has a real series-level "in production" announcement**
+     (GraphicAudio's own public statement) -- Dresden Files 6-14 is
+     just an inference from release cadence, not an actual
+     announcement, and Murderbot's 2 prequels have neither. None of the
+     three currently have anything book-specific enough to record via
+     `audiobook_editions.release_status: 'announced'` (that field
+     already exists and is already used correctly for Empire of
+     Silence's real pre-order case -- not a schema gap, just nothing
+     concrete enough yet for these three to attach a row to).
+  2. **Step A1a + A1b for BBC Audio done 2026-09-09.** A1a pulled 39
+     candidate titles (Pratchett/Discworld, Neil Gaiman, Pullman's His
+     Dark Materials, Douglas Adams's Hitchhiker's Guide radio series,
+     Le Guin, Asimov's Foundation Trilogy, Wyndham, Susan Cooper, Ray
+     Bradbury, plus 8 classic/public-domain SF titles). A1b
+     cross-referenced against `books`: **31 confirmed real matches**
+     (see project-log.md's 2026-09-09 "Step A1b for BBC Audio" entry
+     for the full list by author) -- Pratchett/Discworld (6), Good
+     Omens (1), Neverwhere (1), His Dark Materials (3, "Northern
+     Lights" = our "The Golden Compass"), Hitchhiker's Guide series
+     (5), Le Guin (4), Asimov's Foundation Trilogy (3), Wyndham's Day
+     of the Triffids (1), Bradbury (2), classic SF (5). **Real false
+     positive caught**: our catalog's "The Lost World" is Michael
+     Crichton's book, NOT Arthur Conan Doyle's -- not a match, title
+     collision only. 10 titles confirmed genuinely not in our catalog.
+     Iain Banks follow-up (unclear if Culture novels are dramatised)
+     still unresolved.
+  3. **Step A2 for BBC Audio, batch 1 done 2026-09-09** -- 11 more
+     editions inserted (74 total): the Pratchett/Discworld group
+     (Guards! Guards!, Wyrd Sisters, Mort, Small Gods, Night Watch,
+     Eric), Good Omens, Neverwhere, and all 3 His Dark Materials books.
+     Full detail in project-log.md's 2026-09-09 "Step A2 for BBC
+     Audio, batch 1" entry.
+     **Batch 2 done 2026-09-09** -- 13 more editions inserted (87
+     total): all 5 Hitchhiker's Guide radio phases, all 3 Earthsea
+     books + The Left Hand of Darkness, all 3 Foundation books, and
+     The Day of the Triffids. Two bundled-release judgment calls
+     (Earthsea, Foundation Trilogy -- each ONE combined dramatisation
+     covering multiple catalog books with different actors per book as
+     characters age/generations pass) -- narrators AND runtime left
+     NULL for those 6 rows rather than misattribute a book-specific
+     actor to the wrong book. Full detail in project-log.md's
+     2026-09-09 "Step A2 for BBC Audio, batch 2" entry.
+     **Batch 3 done 2026-09-09 -- clears the full 31-match pool.** 7
+     more editions inserted (94 total): Fahrenheit 451, The Martian
+     Chronicles, Frankenstein, The Time Machine (correctly recorded as
+     BBC Radio 3, not Radio 4), The War of the Worlds, Journey to the
+     Center of the Earth, Solaris. Every confirmed BBC Audio match
+     from this session's A1b cross-reference now has an
+     `audiobook_editions` row. Full detail in project-log.md's
+     2026-09-09 "Step A2 for BBC Audio, batch 3" entry.
+  3. **Sub-task B candidate discovery done 2026-09-09 (two passes)** --
+     3 real candidates found, each with an open scope question rather
+     than a clean pass: **The Salvation** (2023, Justin Lockey, 8-part
+     time-travel sci-fi audio drama -- no flags, cleanest of the
+     three), **Zero G** (2018, Dan Wells, sci-fi -- explicitly
+     middle-grade, a real age-category judgment call since CLAUDE.md's
+     v1 scope is genre-only), and **The Left Right Game** (2020,
+     QCode/Legion M -- billed as "sci-fi horror" so genre fit is a
+     judgment call, AND it originated as a published Reddit
+     r/NoSleep short story before being expanded into the audio drama,
+     a gray area on "no print edition exists anywhere"). Checked ~20
+     candidates total across both passes; 8 disqualified with specific
+     recorded reasons (has a real print/ebook/comic counterpart:
+     Steal the Stars, Alien: River of Pain, Impact Winter, The Vela,
+     The Bright Sessions, Voyage to the Stars; not a real Audible
+     Original: Midst; wrong genre despite fantasy trappings: Heads
+     Will Roll; wrong age-category/format: I'm From the Sun) plus
+     Worlds Beyond Number flagged as a structurally different format
+     (actual-play, not scripted drama) needing its own policy call. See
+     project-log.md's two 2026-09-09 "Sub-task B candidate discovery"
+     entries for full detail on each -- a future session should NOT
+     re-research any of the 8 disqualified names.
+     **Repo owner resolved both flagged scope questions 2026-09-09:
+     Zero G is IN** (`age_category: middle_grade` at tagging time --
+     v1 scope is genre-only, no age floor, and this catalog can hold
+     an MG title fine) **and The Left Right Game is IN** (real sci-fi
+     core clears the genre bar, same precedent as Horns/NOS4A2's dark-
+     fantasy/horror inclusion; a Reddit short story predecessor doesn't
+     count as a disqualifying "print edition" -- the audio drama is a
+     substantially expanded, different work, unlike Steal the Stars'
+     real Tor novelization). **The Salvation was already clean.** All
+     3 candidates are now confirmed IN, ready for ingestion+tagging --
+     no more open scope questions blocking this pool.
+     **All 3 ingested and tagged 2026-09-09** -- The Salvation, Zero G,
+     and The Left Right Game are now real catalog entries with full
+     Book DNA, tropes, content warnings, and their own
+     `audiobook_editions` row (`edition_type: dramatized_full_cast` --
+     the skill doc's suggested `'audio_original'` value turned out not
+     to be in the actual check constraint, caught by testing before
+     applying). Real correction found during research: Zero G has 2
+     sequels (Dragon Planet, Stargazer) not surfaced during discovery,
+     so it's `narrative_closure: requires_series`. `books` 871 -> 874,
+     `book_dna` 861 -> 864, `audiobook_editions` 94 -> 97. Full detail
+     in project-log.md's "ingested the 3 confirmed Audible Originals"
+     entry.
+  Also flagged, needs a deliberate judgment call rather than a silent
+  match: GraphicAudio's "Riyria Revelations" only matches our omnibus
+  row ("The Riyria Revelations (Omnibus)") -- decide whether a
+  dramatized-edition record belongs on an omnibus row before inserting;
+  "Riyria Chronicles" and "Kate Daniels: Wilmington Years" (GA) have no
+  matching row in our catalog at all, not a match. Still not resolved
+  as of the 2026-09-11 demotion -- low stakes, revisit whenever this
+  item gets picked back up.
 - [ ] **Graduated dealbreaker veto** (`_apply_dealbreaker_veto_
   graduated()` in recommend.py) -- built and structurally verified
   2026-09-07, but can't be proven against real data because
