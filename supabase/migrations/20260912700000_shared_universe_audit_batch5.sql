@@ -81,10 +81,10 @@ where name = 'Swordheart';
 -- established brand the way Riordanverse/Maasverse/Elan/Shadowhunter
 -- Chronicles are. Please sanity-check and rename later if it reads wrong.
 insert into universe (name)
-select E'Lyra\'s World' where not exists (select 1 from universe where name = E'Lyra\'s World');
+select 'Lyra''s World' where not exists (select 1 from universe where name = 'Lyra''s World');
 
-update series set universe_id = (select id from universe where name = E'Lyra\'s World')
+update series set universe_id = (select id from universe where name = 'Lyra''s World')
 where name = 'His Dark Materials';
 
-update series set universe_id = (select id from universe where name = E'Lyra\'s World')
+update series set universe_id = (select id from universe where name = 'Lyra''s World')
 where name = 'The Book of Dust';
