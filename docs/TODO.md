@@ -827,27 +827,53 @@ worth deferring to a later session rather than batching in for
     Naomi Novik (Temeraire vs. The Scholomance), Arthur C. Clarke (Rama
     vs. Space Odyssey), William Gibson (Blue Ant/Jackpot/Sprawl, 3
     separate continuities).
+  - **Batch 6 (2026-09-12)**: 8 authors checked, ALL confirmed NOT
+    connected -- no universe built, no migration this batch (see
+    project-log.md's 2026-09-12 "shared-universe audit batch 6" entry
+    for full evidence per pairing). Checked: **John Scalzi** (Old Man's
+    War/The Interdependency/Lock In/The Dispatcher -- 4 separate
+    universes, all pairings checked; The Dispatcher's similarity to
+    Lock In is thematic/structural-echo only, not a shared setting).
+    **Robert A. Heinlein** (Heinlein's Juveniles vs. Stranger in a
+    Strange Land -- our catalog's "Heinlein's Juveniles" row is just
+    Starship Troopers, not tied to Future History at all; Stranger's
+    only tie to Heinlein's wider "World As Myth" multiverse is a
+    walk-on cameo reference in later, not-in-catalog novels, the same
+    cameo/thematic tier already ruled insufficient for Gaiman/King).
+    **C. S. Lewis** (Chronicles of Narnia vs. The Space Trilogy --
+    confirmed separate worlds by multiple sources). **Douglas Adams**
+    (Dirk Gently vs. The Hitchhiker's Guide to the Galaxy -- real
+    Easter eggs/title reuse exist, but Adams treated them as separate,
+    idea-recyclable series rather than one continuity; no
+    recurring-protagonist or merged-plot link). **Michael Crichton**
+    (Jurassic Park vs. The Andromeda Strain -- separate standalone
+    novels, no universe link found anywhere). **Dan Simmons** (Hyperion
+    Cantos vs. Ilium -- confirmed separate story-worlds). **Martha
+    Wells** (Murderbot Diaries vs. "The Rising World" -- the latter is
+    just Witch King in our catalog, a standalone fantasy unconnected to
+    Murderbot; NOT the Books of the Raksura, which isn't part of this
+    pairing). **Lois McMaster Bujold** (Vorkosigan Saga vs. World of
+    the Five Gods -- confirmed separate SF/fantasy universes).
   - **Everyone else from the refreshed candidate list**: not yet
-    checked. Full detail across seven 2026-09-11/2026-09-12
+    checked. Full detail across eight 2026-09-11/2026-09-12
     project-log.md audit entries. This audit's real hit rate so far: 12
-    of 31 checked candidate-author-groupings confirmed genuinely
-    connected (built or gap-fixed), 17 confirmed NOT connected, 2
+    of 39 checked candidate-author-groupings confirmed genuinely
+    connected (built or gap-fixed), 25 confirmed NOT connected, 2
     flagged as series-table data-quality issues rather than true
     universe questions -- treat every remaining candidate as more
     likely a false positive than not until checked. Re-running the
-    candidate query after batch 5 (61 authors with 2+ unlinked series
-    before this batch ran) is the starting point for batch 6; batch 5's
-    own untouched leftovers include (non-exhaustive) Amie Kaufman/Jay
-    Kristoff, Anthony Ryan, Becky Chambers, Brent Weeks, C. S. Lewis,
-    Carissa Broadbent, Christopher Paolini, Dan Simmons, Danielle L.
-    Jensen, Douglas Adams, Holly Black, Ilona Andrews, J.K. Rowling,
-    James Islington, Jennifer Lynn Barnes, John Gwynne, John Scalzi,
-    Laini Taylor, Lois McMaster Bujold, Margaret Atwood, Marie Lu,
-    Marissa Meyer, Martha Wells, Michael Crichton, Mira Grant, Neal
-    Shusterman, Octavia E. Butler, Rachel Gillig, Rebecca Roanhorse,
-    Rebecca Ross, Robert A. Heinlein, S. A. Chakraborty, Samantha
-    Shannon, Stephanie Garber, Stephen Graham Jones, Tahereh Mafi, TJ
-    Klune, Veronica Roth.
+    candidate query after batch 6 (57 authors with 2+ unlinked series
+    before this batch ran) is the starting point for batch 7; the
+    untouched leftover pool (non-exhaustive) is now: Amie Kaufman/Jay
+    Kristoff, Anthony Ryan, Becky Chambers, Brent Weeks, Carissa
+    Broadbent, Christopher Paolini, Danielle L. Jensen, Holly Black,
+    Ilona Andrews, J.K. Rowling, James Islington, Jay Kristoff (solo,
+    Empire of the Vampire/The Nevernight Chronicle), Jennifer Lynn
+    Barnes, John Gwynne, Laini Taylor, Margaret Atwood, Marie Lu,
+    Marissa Meyer, Mira Grant, Neal Shusterman, Octavia E. Butler,
+    Rachel Gillig, Rebecca Roanhorse, Rebecca Ross, S. A. Chakraborty,
+    Samantha Shannon, Stephanie Garber, Stephen Graham Jones, Tahereh
+    Mafi, TJ Klune, Veronica Roth.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 

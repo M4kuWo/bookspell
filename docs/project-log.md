@@ -11424,3 +11424,113 @@ Also unresearched from this batch's ranked list, available as batch 5's
 first candidates: King of Scars, Ninth House, The Captive's War, The
 Kane Chronicles, An Ember in the Ashes, The Rain Wild Chronicles, The
 Atlas, Earthseed.
+
+## 2026-09-12 (later still): shared-universe audit batch 6 -- 8 authors checked, all 8 confirmed NOT connected, no migration this batch
+
+Continuing docs/TODO.md's P2 shared-universe linking audit (batch 6).
+Re-ran the candidate query: 57 authors qualified (down slightly from
+61 pre-batch-5, expected -- batch 5 built 4 new universes which
+removed those authors' series from the "universe_id is null" pool).
+Filtered out every author already listed in docs/TODO.md as checked
+(confirmed-connected-and-built, or confirmed-NOT-connected across
+batches 1-5), leaving the same "not yet checked" pool batch 5 left
+behind. Picked 8 candidates: John Scalzi, Robert A. Heinlein, C. S.
+Lewis, Douglas Adams, Michael Crichton, Dan Simmons, Martha Wells, and
+Lois McMaster Bujold.
+
+**Result: all 8 confirmed NOT connected. No universe built this
+batch, no migration file.** Consistent with the running trend noted at
+the end of batch 5 ("treat every remaining candidate as more likely a
+false positive than not until checked") -- this batch just happened to
+land on 8 in a row that hit that side. Verified each against real,
+specific evidence, not just "seems separate":
+
+- **John Scalzi -- Old Man's War, The Interdependency, Lock In, and
+  The Dispatcher, confirmed NOT connected (4 separate universes, all
+  pairings checked).** Multiple sources confirm each is its own
+  distinct setting; The Dispatcher in particular invites the
+  comparison (similar "speculative rule that reshapes society" +
+  mystery-investigation structure to Lock In) but is explicitly a
+  separate world, not a shared one -- thematic-echo territory, not
+  structural connection, same distinction this audit has drawn before
+  (Gaiman, King).
+- **Robert A. Heinlein -- Heinlein's Juveniles vs. Stranger in a
+  Strange Land, confirmed NOT connected.** Our catalog's "Heinlein's
+  Juveniles" series row contains only Starship Troopers (not one of
+  the 12 core Scribner juveniles tied to the Future History timeline
+  anyway -- it's a standalone). Went further and checked the more
+  interesting real question this pairing raises: Stranger in a Strange
+  Land does get pulled into Heinlein's later "World As Myth"
+  multiverse (Time Enough for Love, The Number of the Beast, The Cat
+  Who Walks Through Walls, To Sail Beyond the Sunset -- none in our
+  catalog), which explicitly folds in walk-on references to "lawyers
+  from Stranger in a Strange Land." That's exactly the cameo/thematic
+  tier this audit has already ruled insufficient (same shape as
+  Gaiman's American Gods/Neverwhere and King's Green Mile/Dark Tower)
+  -- a walk-on reference in unrelated later books, not a recurring
+  protagonist or merged plot between the two series actually in our
+  catalog. Starship Troopers itself has zero connection to Future
+  History or World As Myth by any account.
+- **C. S. Lewis -- The Chronicles of Narnia vs. The Space Trilogy,
+  confirmed NOT connected.** Multiple sources agree these are
+  different universes (Narnia a separate created world; the Space
+  Trilogy set across our own solar system). Noted in passing but not
+  actionable: fan/critical sources point out That Hideous Strength
+  (Space Trilogy book 3, not in our catalog) has a loose Numenor/
+  Tolkien reference -- irrelevant to the Lewis-internal pairing being
+  checked here.
+- **Douglas Adams -- Dirk Gently vs. The Hitchhiker's Guide to the
+  Galaxy, confirmed NOT connected.** Real subtle Easter eggs exist
+  (Dirk Gently's TV adaptation references the "sofa/Thor" incident
+  from Life, the Universe and Everything; The Long Dark Tea-Time of
+  the Soul's title is lifted from the same book) but Adams himself
+  treated them as separate, cannibalizable idea-pools rather than one
+  continuity -- he considered reworking abandoned Dirk Gently material
+  (The Salmon of Doubt) into a sixth Hitchhiker's book, i.e. recycling
+  material between series, not evidence of shared canon. No
+  recurring-protagonist or merged-plot link identified. Same
+  cameo/reference tier as the other negatives above.
+- **Michael Crichton -- Jurassic Park vs. The Andromeda Strain,
+  confirmed NOT connected.** No source found treating these as
+  anything but separate standalone novels; only connection is shared
+  authorship and a general "science goes wrong" theme.
+- **Dan Simmons -- Hyperion Cantos vs. Ilium, confirmed NOT
+  connected.** Both are literary/intertextual SF by the same author
+  but explicitly separate story-worlds; no shared characters or
+  setting identified.
+- **Martha Wells -- The Murderbot Diaries vs. "The Rising World,"
+  confirmed NOT connected.** Checked what's actually in our catalog's
+  "The Rising World" row first (only Witch King, a 2023 standalone
+  epic fantasy -- NOT the Books of the Raksura, which isn't in this
+  pairing at all). Confirmed via multiple sources Witch King and
+  Murderbot are explicitly separate universes (different genres,
+  different rules/vocabulary); the only crossover claim found anywhere
+  is fan speculation about an unrelated short story ("Obsolescence"),
+  not applicable to this pairing.
+- **Lois McMaster Bujold -- Vorkosigan Saga vs. World of the Five
+  Gods, confirmed NOT connected.** Confirmed via multiple sources as
+  two deliberately separate universes (SF space opera vs. fantasy);
+  Bujold has not extended the Five Gods' theology beyond its own
+  world.
+
+No migration file this batch -- nothing confirmed connected, so
+nothing to build. `universe` table unchanged at 17 rows.
+
+**Batch total so far across all 6 batches**: 12 confirmed-connected
+author groupings built/gap-fixed, 25 confirmed-NOT-connected groupings
+(17 through batch 5 + this batch's 8), 2 flagged data-quality issues
+still open for the repo owner (Card's Shadow Saga duplicate-series
+rows, Salvatore's Dark Elf Trilogy/Legend of Drizzt duplicate-series
+rows -- neither touched this batch either).
+
+Next (batch 7): re-run the candidate query again, continue in ~6-8-
+author bounded batches. Untouched candidates from the refreshed list
+still include (non-exhaustive): Amie Kaufman/Jay Kristoff, Anthony
+Ryan, Becky Chambers, Brent Weeks, Carissa Broadbent, Christopher
+Paolini, Danielle L. Jensen, Holly Black, Ilona Andrews, J.K. Rowling,
+James Islington, Jay Kristoff (solo), Jennifer Lynn Barnes, John
+Gwynne, Laini Taylor, Margaret Atwood, Marie Lu, Marissa Meyer, Mira
+Grant, Neal Shusterman, Octavia E. Butler, Rachel Gillig, Rebecca
+Roanhorse, Rebecca Ross, S. A. Chakraborty, Samantha Shannon,
+Stephanie Garber, Stephen Graham Jones, Tahereh Mafi, TJ Klune,
+Veronica Roth.
