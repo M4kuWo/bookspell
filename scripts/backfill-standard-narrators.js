@@ -122,8 +122,22 @@ function narratorSet(edition) {
 // cast (dramatized work) or an explicit GraphicAudio-style publisher name
 // are both strong, cheap signals; use either to exclude.
 const DRAMATIZED_PUBLISHER_HINTS = ['graphicaudio', 'l.a. theatre works', 'big finish'];
+
+// Recurring cast members of specific known full-cast dramatized productions
+// that slip past the publisher/narrator-count filters because Hardcover only
+// credits a handful of the named leads per edition (not the full ensemble)
+// and the publisher is a generic imprint name ("Penguin Audio") also used
+// for real standalone narrations. Confirmed via direct search 2026-09-11:
+// Penguin Random House's 2022+ re-recording of all 40 Discworld novels
+// (produced by Ladbroke Audio) casts Peter Serafinowicz as the recurring
+// voice of Death and Bill Nighy as the recurring footnotes narrator "
+// throughout the series" -- either name appearing is a reliable signal of
+// this one dramatized production, not a personal solo narration.
+const KNOWN_ENSEMBLE_SIGNATURE_NARRATORS = ['Peter Serafinowicz', 'Bill Nighy'];
+
 function isLikelyDramatized(edition, narrators) {
   if (narrators.length > 4) return true;
+  if (narrators.some((n) => KNOWN_ENSEMBLE_SIGNATURE_NARRATORS.includes(n))) return true;
   const pub = (edition.publisher?.name || '').toLowerCase();
   return DRAMATIZED_PUBLISHER_HINTS.some((hint) => pub.includes(hint));
 }
