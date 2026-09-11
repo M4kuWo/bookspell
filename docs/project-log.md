@@ -10036,3 +10036,44 @@ remaining 83 books (65 no narrator data in Hardcover at all, 18 no
 audio edition listed) have genuinely nothing to add -- not actionable
 without a different data source. This closes out the standard-edition
 narrator backfill item for real; `docs/TODO.md` updated accordingly.
+
+## 2026-09-11 (later): checked whether a real database backup exists -- it didn't, took one
+
+Repo owner asked directly whether the database has any backup, in case
+of a Supabase outage or needing to roll something back. Checked rather
+than assumed:
+
+- **Supabase's own automatic backups: none.** `supabase backups list
+  --project-ref yhvubjqstswxvctdikbc` returned `pitr_enabled: false`
+  and an empty backup list -- almost certainly a free-tier limitation
+  (Pro tier and above include daily backups/PITR).
+- **The one prior manual backup no longer exists.** `db_backups/
+  pre-algo-experiments-2026-09-05.sql` (made before a risky scoring
+  experiment, see that day's entry) is gone from disk -- only its git
+  tag survives, and a tag marks a code commit, not database data. It
+  was never committed, so it didn't survive.
+- **Migrations can't rebuild the catalog from scratch either** -- the
+  2026-09-09 local-bootstrap-gap finding already established this:
+  `seed_pilot_corpus.sql` only covers 30 of 874 books, the rest were
+  inserted via untracked ad-hoc scripts over this project's history.
+- Only narrow, per-operation backups exist (e.g. the romance/
+  worldbuilding trope-deletion manifest) -- good practice, but they
+  only cover what someone thought to protect at that specific moment.
+
+**Took a real full backup as an immediate floor of safety**:
+`supabase db dump --linked` (schema) and `--data-only` (data) into
+`db_backups/full-backup-2026-09-11.sql` (24K) and
+`db_backups/data-backup-2026-09-11.sql` (3.0M, 11 tables' worth of
+COPY data, a real circular-FK warning on `series.parent_series_id`
+noted -- informational for restore method, not a dump failure).
+Committing both to git this time, unlike 2026-09-05's attempt -- that's
+the direct fix for how the last one got lost. 3MB total is a
+non-issue for repo size at this frequency.
+
+**Not decided yet, a real open question for the repo owner**: an
+ongoing backup cadence/policy. Options: commit a fresh dump into git
+periodically (simple, but repo size grows with every dump if done
+often), store dumps externally (cloud storage) with just a pointer
+committed here, or upgrade the Supabase plan for real automatic
+backups/PITR (removes the manual-process risk entirely). Logged in
+TODO.md rather than decided unilaterally.

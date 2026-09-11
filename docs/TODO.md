@@ -33,6 +33,19 @@ worth deferring to a later session rather than batching in for
 - [x] **Push today's commits** -- confirmed 2026-09-07: `main` is up to
   date with `origin/main`, working tree clean, README refresh
   (e18576a) is the latest commit on both.
+- [ ] **Decide a real ongoing database backup policy.** Checked
+  2026-09-11: no real backup existed (Supabase's own automatic
+  backups are off -- free-tier limitation, `pitr_enabled: false`,
+  empty backup list; the one prior manual backup from 2026-09-05 was
+  never committed and is now gone). Took an immediate one-off backup
+  (`db_backups/full-backup-2026-09-11.sql` + `data-backup-2026-09-11.sql`,
+  committed to git this time). **Not yet decided**: a repeatable
+  cadence. Options: periodic manual dumps committed to git (simple,
+  ~3MB each at current size, grows the repo over time if done often),
+  external storage (cloud drive/S3) with just a pointer committed
+  here, or upgrading the Supabase plan for real automatic backups/
+  PITR (removes the manual-process risk entirely, costs money). Repo
+  owner's call.
 
 ## P1
 
