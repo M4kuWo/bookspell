@@ -10971,3 +10971,138 @@ Running total: 50 series fixed across batches 1-3 (33 from batches 1-2
 batch 3 found zero already-correct candidates this round, every top
 candidate needed at least a book_count fix), 67 series checked overall.
 `docs/TODO.md` updated with the new exclude list and a batch-4 pointer.
+
+## 2026-09-12: shared-universe audit batch 4 -- Riordanverse and The Four Londons built, Cosmere series-level gap fixed, 5 new negatives
+
+Continuing docs/TODO.md's P2 shared-universe linking audit as CLDA,
+running from an isolated worktree per the repo owner's ongoing
+go-ahead. Re-ran the candidate query fresh: 62 authors with 2+
+unlinked series (down slightly from 66 at the end of batch 3, since
+Maas/Card no longer qualify now that their series are linked -- the
+raw count still isn't a reliable progress tracker on its own, per the
+usual caveat, since confirmed-negative authors keep legitimately
+reappearing). Checked 8 authors this batch, same evidence-first
+standard as every prior batch -- individual verification, no assumed
+transitivity.
+
+**Confirmed connected, built:**
+
+- **Rick Riordan -- "Riordanverse."** Percy Jackson and the Olympians,
+  The Heroes of Olympus, The Kane Chronicles, Magnus Chase and the Gods
+  of Asgard, and The Trials of Apollo. This clears the audit's
+  structural-connection bar cleanly, not just thematically: three
+  official published crossover novellas (The Son of Sobek, The Staff of
+  Serapis, The Crown of Ptolemy -- collected in the Demigods &
+  Magicians anthology) put Percy/Annabeth and Carter/Sadie Kane in the
+  same scenes together; Magnus Chase is explicitly Annabeth Chase's
+  cousin, with Percy appearing directly as a character in the Magnus
+  Chase books; The Trials of Apollo is a direct continuation set at
+  Camp Half-Blood with the same demigod cast returning. No official
+  publisher/author-coined umbrella name exists for the whole thing, so
+  per the now-settled naming policy (search for a real, widely-used fan
+  term before inventing one): "Riordanverse" confirmed genuine and
+  widely used -- TV Tropes' own "Riordanverse (Franchise)" page, and
+  multiple independent fan reading-order guides/wikis, not a single
+  source's coinage. Used directly.
+
+- **V.E. Schwab -- "The Four Londons"** (Shades of Magic + Threads of
+  Power only). Threads of Power is explicitly the direct sequel trilogy
+  to Shades of Magic, set seven years after A Conjuring of Light, with
+  the same protagonists (Kell, Lila, Alucard) returning in the same
+  Four-Londons setting. Named after the real in-world/fandom term for
+  the setting itself (the four parallel-world Londons -- Red, White,
+  Grey, Black, connected by Antari-opened doors) -- matches the
+  established place-name pattern already used for Westeros/Abeth/
+  Middle-earth, so unlike Maas or Card, this one hit no naming-policy
+  question at all; a genuine unambiguous place name existed. **Checked
+  and confirmed NOT part of this universe or connected to each other**:
+  Schwab's Monsters of Verity duology and Villains trilogy. No
+  structural connection to the Four Londons or between each other was
+  found in any source checked -- distinct settings (a monster-plagued
+  city; a contemporary EO/superpower world; the Four Londons), distinct
+  casts, no crossovers or shared characters identified anywhere.
+
+- **Brandon Sanderson -- Cosmere series-level gap fix, same shape as
+  batch 2's Elantris fix, explicitly NOT a new connection judgment.**
+  The candidate query re-surfaced Sanderson (expected -- Skyward/
+  Reckoners correctly stay unlinked to the Cosmere) but also exposed
+  two series rows that never got `series.universe_id` set despite their
+  book(s) already being individually Cosmere-tagged at the book level:
+  "Hoid's Travails" (Yumi and the Nightmare Painter -- a mainline
+  Cosmere Secret Project starring Hoid) and "The Mistborn Saga"
+  (Allomancer Jak and the Pits of Eltania -- confirmed genuine Cosmere/
+  Mistborn Era Two content via Coppermind, 17th Shard, and Sanderson's
+  own official Cosmere-collections page; collected in Arcanum
+  Unbounded, The Cosmere Collection). Both now linked to the existing
+  Cosmere universe row. **Deliberately left unlinked**: "Legion"
+  (standalone thriller, correctly has no Cosmere connection) and
+  "Secret Projects" (genuinely mixed -- 2 of its 3 books are Cosmere,
+  1 (The Frugal Wizard's Handbook for Surviving Medieval England) is
+  not -- correctly left without a series-level universe_id, matching
+  the existing batch-2 note on this exact series).
+
+**Confirmed NOT connected, no action (don't re-research):**
+
+- **Joe Abercrombie -- Shattered Sea vs. The Devils.** A new pairing,
+  distinct from the already-built First Law World (which was checked
+  against 3 different Abercrombie series in an earlier batch). The
+  Devils is explicitly introduced as its own new, separate world ("a
+  magic-riddled Europe... elves"), with no connection to Shattered Sea
+  or the First Law mentioned anywhere.
+- **N.K. Jemisin -- Dreamblood vs. Forward Collection.** A new pairing,
+  distinct from the already-checked Broken Earth/Inheritance Trilogy/
+  Great Cities trio (batch 2). The Dreamblood duology (The Killing
+  Moon/The Shadowed Sun) is self-contained in its own Gujaareh setting.
+  "Forward Collection" turns out not to even be a single-author
+  Jemisin series -- it's a multi-author sci-fi novella anthology;
+  Jemisin's own contribution to it ("Emergency Skin") has no connection
+  to Gujaareh or her other work.
+- **Peter F. Hamilton -- Night's Dawn, Commonwealth Saga, Salvation
+  Sequence.** Confirmed as three explicitly separate fictional
+  universes across multiple sources, each with its own distinct
+  setting and timeline (27th-century Adamist/Edenist conflict; the
+  Void-Trilogy-adjacent Commonwealth; a war-biomodified-humans future).
+- **Adrian Tchaikovsky -- Children of Time, Elder Race, Service Model,
+  The Final Architecture, The Tyrant Philosophers.** Each confirmed a
+  distinct, separate continuity by Tchaikovsky's own bibliography and
+  multiple reading-order sources; no shared setting or characters found
+  across any pairing among these five.
+
+**Re-surfaced but resolved without new research:**
+
+- **Neil Gaiman.** The refreshed candidate query lists his series as
+  "American Gods" + "London Below" + "The Sandman TPBs" -- looked new
+  at first glance, but "London Below" is just this catalog's series
+  name for Neverwhere, i.e. the exact same American Gods/Neverwhere
+  pairing already resolved in batch 2 (real but too thin to model, per
+  Gaiman's own "share a car park" framing) -- no new action. "The
+  Sandman TPBs" is a graphic novel/comic (TPB = trade paperback) --
+  out of v1 scope per CLAUDE.md's catalog-scope policy, same as the
+  Saga/Sandman precedent from 2026-09-04 -- skipped and flagged, not
+  treated as a universe-linking candidate at all.
+
+`universe` now has 13 rows (was 11): the prior 11 plus this batch's
+Riordanverse and The Four Londons. Migration
+`20260912500000_riordanverse_four_londons_cosmere_gaps.sql`, tested in
+a rolled-back transaction with a genuine idempotency re-run first
+(re-executed the whole file a second time inside the same open
+transaction -- zero errors, zero duplicate rows), then applied for
+real via a normal autocommit connection (NOT `supabase db push` --
+per this task's standard instruction, hosted migration-tracking
+registration and the branch merge are left for the primary session).
+Verified live on hosted afterward: `universe` row count (13) and all 9
+newly-linked series -> universe pairs spot-checked directly.
+
+**Batch total so far across all 4 batches**: 9 confirmed-connected
+author groupings built/gap-fixed (Mark Lawrence x2, Isaac Asimov,
+George R.R. Martin, Robin Hobb, Leigh Bardugo, Orson Scott Card, Sarah
+J. Maas, Rick Riordan, V.E. Schwab, plus the Elantris and Cosmere
+series-level gap fixes), 14 confirmed-NOT-connected groupings. Nothing
+in this batch required routing through `docs/PENDING_APPROVALS.md` --
+every finding was either build-a-universe-and-link or leave-unlinked,
+matching this audit's normal, already-approved pattern; no
+restructuring or deletion of any existing series/book row was needed.
+
+Next (batch 5): re-run the candidate query again (starting point ~54
+authors once this batch's 8 negatives/positives are excluded) and
+continue in the same ~6-8-author bounded batches.
