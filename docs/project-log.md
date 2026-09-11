@@ -10507,3 +10507,79 @@ Stephen King (Holly Gibney/Dark Tower/Green Mile), Robert Jackson
 Bennett (all 3 series).
 **Not yet checked**: everyone else from the original 51, plus the new
 Mark Lawrence Library Trilogy/Impossible Times question.
+
+## 2026-09-12: series.status/book_count fix, batch 2 -- 14 more series fixed
+
+Continuation of docs/TODO.md's P2 item (root cause documented
+2026-09-08, batch 1 landed 2026-09-11 fixing 19 series). Ran as a
+background agent (CLDA persona) working from an isolated worktree.
+
+Re-ran batch 1's ranking query (our own catalog's book-count-per-
+series, the only available profile proxy -- no direct popularity
+metric exists on `series` or via Hardcover), excluding the 20 names
+batch 1 already checked. Worked down the resulting ~181-series pool,
+verifying each candidate against real-world publication data via live
+search before writing anything -- no guessing, same standard as
+batch 1.
+
+**14 series fixed** (Malazan Book of the Fallen, The Culture,
+Lightbringer, The Heroes of Olympus, Skyward, The Reckoners, Mars
+Trilogy, The Sun Eater, Imperial Radch (publication order), Percy
+Jackson and the Olympians, Shatter Me, The Witcher, Old Man's War, The
+Twilight Saga). Migration
+`20260912100000_fix_series_status_book_count_batch2.sql`, same
+individually-commented-per-series style as batch 1.
+
+**16 candidates checked and found already correct, not touched**:
+Discworld, The Expanse, The Wheel of Time, Throne of Glass, Foundation,
+Harry Potter, The Chronicles of Narnia (Publication Order), The Dark
+Tower, Dune, The Mortal Instruments, Stormlight Archive Era One, Robot,
+Mistborn Era One, The Maze Runner, Hainish Cycle, The Hitchhiker's
+Guide to the Galaxy. Several of these were genuinely close calls worth
+recording so they aren't re-researched: The Dark Tower's count of 8
+already correctly includes The Wind Through the Keyhole (officially
+numbered book 4.5, not a companion novella by this project's usual
+convention); The Hitchhiker's Guide to the Galaxy's count of 5
+deliberately excludes Eoin Colfer's *And Another Thing...* (2009), a
+different author's authorized-but-not-canonical continuation --
+matching the same precedent as not counting Brian Herbert's Dune
+continuation novels.
+
+**Two real judgment calls surfaced, worth flagging explicitly:**
+- **The Witcher** and **Percy Jackson and the Olympians** both moved
+  from 'completed' to 'ongoing' on the strength of an on-the-record
+  author commitment to more books (Sapkowski, 2025-06 interview:
+  "unlike George R.R. Martin, when I say I'll write something, I
+  will"; Riordan has publicly committed to finishing the Senior Year
+  Adventures trilogy). **Old Man's War's book_count was fixed (6->7)
+  but its status was deliberately left 'completed'** despite The
+  Shattering Peace (2025) leaving plot threads open, because the only
+  evidence found for a book 8 was Scalzi's own conditional "I might
+  write another if people like this one" -- not a firm commitment like
+  the two cases above. This is a real distinction this batch is making
+  (confirmed-planned vs. merely-possible), flagged here in case a
+  future session finds firmer evidence either way.
+- **Shatter Me: The New Republic** (Watch Me/Release Me/Escape Me,
+  2025-2026) is a confirmed spin-off with new protagonists, not a
+  continuation of the 'Shatter Me' series row -- left that series row
+  at its own correct 6-book count, did not fold the spin-off in.
+
+Tested in a rolled-back psycopg2 transaction against hosted first,
+then applied for real via a separate autocommit connection (per
+CLAUDE.md's standard pattern) -- **not yet pushed via `supabase db
+push`, and this worktree branch is not yet merged to main**; both are
+left for the primary (CLDO) session to do serially, per this task's
+own instructions, to avoid two sessions' `supabase db push`/git
+operations racing on the same day.
+
+**Next (batch 3)**: re-rank the remaining ~167 series (excluding all
+34 now-fixed across both batches, plus the candidates confirmed
+already-correct above) for the next bounded batch.
+
+**Not this task, just noticed in passing, flagging for whoever
+coordinates it**: the graphic-novel series row "Saga" (out of v1
+scope per CLAUDE.md's catalog-scope section) still has a 'series'
+status/book_count value (ongoing/33) that doesn't really make sense
+to fix under this task's book/novel-count convention -- volumes of a
+comic aren't "mainline installments" the same way. Left untouched,
+not counted in either the fixed or already-correct lists above.

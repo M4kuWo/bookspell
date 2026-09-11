@@ -291,17 +291,18 @@ worth deferring to a later session rather than batching in for
   sweeps already tracked elsewhere in this file (romance_tone,
   worldbuilding delivery).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
-  -- root cause found 2026-09-08, batch 1 done 2026-09-11 (19 of ~200
-  series fixed so far).** `status` defaults to `'ongoing'` whenever
-  Hardcover's `is_completed` flag isn't explicitly `true` (including
-  simply missing data); `book_count` is Hardcover's raw per-series
-  edition/omnibus/box-set count, not a curated mainline-installment
-  number. Doesn't affect scoring at all (neither field is read by
-  `scripts/recommend.py`) -- purely a `tools/catalog-review/` display
-  bug, so no urgency pressure, but real and visible to anyone browsing
-  the tool. **Approach**: manually verify+fix the most-viewed/
-  highest-profile series first (real publication status via search,
-  never a guess), in bounded batches, stop-and-report each time.
+  -- root cause found 2026-09-08, batch 1 done 2026-09-11, batch 2 done
+  2026-09-12 (33 of ~200 series fixed so far).** `status` defaults to
+  `'ongoing'` whenever Hardcover's `is_completed` flag isn't explicitly
+  `true` (including simply missing data); `book_count` is Hardcover's
+  raw per-series edition/omnibus/box-set count, not a curated
+  mainline-installment number. Doesn't affect scoring at all (neither
+  field is read by `scripts/recommend.py`) -- purely a
+  `tools/catalog-review/` display bug, so no urgency pressure, but real
+  and visible to anyone browsing the tool. **Approach**: manually
+  verify+fix the most-viewed/highest-profile series first (real
+  publication status via search, never a guess), in bounded batches,
+  stop-and-report each time.
   **Batch 1 (2026-09-11)**: ranked candidates by our own catalog's
   book-count-per-series (the available proxy for "highest-profile,"
   since no direct popularity metric exists on `series` or via
@@ -318,9 +319,38 @@ worth deferring to a later session rather than batching in for
   Ender's Saga search returned internally contradictory/unreliable
   results, re-verified with a cleaner query before trusting it), in
   project-log.md's 2026-09-11 "series.status/book_count fix, batch 1"
-  entry. **Next**: re-rank remaining ~181 series by catalog book count
-  (excluding all 19 now-fixed) for batch 2 -- don't reuse this
-  session's candidate list, it's now stale.
+  entry.
+  **Batch 2 (2026-09-12)**: same re-ranked-query approach, excluding
+  batch 1's 20 checked names. 14 needed a real fix: Malazan Book of the
+  Fallen, The Culture, Lightbringer, The Heroes of Olympus, Skyward,
+  The Reckoners, Mars Trilogy, The Sun Eater, Imperial Radch
+  (publication order), Percy Jackson and the Olympians, Shatter Me, The
+  Witcher, Old Man's War, The Twilight Saga. 16 more checked and found
+  already correct (list in the migration header and project-log entry,
+  worth reading before re-researching them): Discworld, The Expanse,
+  The Wheel of Time, Throne of Glass, Foundation, Harry Potter, The
+  Chronicles of Narnia (Publication Order), The Dark Tower, Dune, The
+  Mortal Instruments, Stormlight Archive Era One, Robot, Mistborn Era
+  One, The Maze Runner, Hainish Cycle, The Hitchhiker's Guide to the
+  Galaxy. Migration
+  `20260912100000_fix_series_status_book_count_batch2.sql` -- applied
+  to hosted directly by the agent (tested in a rolled-back transaction
+  first, per CLAUDE.md's standard pattern) but **not yet pushed via
+  `supabase db push` and the branch not yet merged to main** -- both
+  left for CLDO to do serially, to avoid two sessions' `db push`/git
+  operations racing on the same day. Two judgment calls flagged for
+  visibility (not decisions that need re-litigating, just worth
+  knowing): The Witcher and Percy Jackson and the Olympians moved to
+  'ongoing' on a confirmed on-the-record author commitment to more
+  books, while Old Man's War's book_count was fixed but its status was
+  deliberately left 'completed' since the only evidence for a book 8 is
+  a conditional "might write one" -- see project-log.md's 2026-09-12
+  entry for the full reasoning and sourcing on all 14, plus a
+  passing-flag note about the out-of-scope "Saga" series row (graphic
+  novel, left untouched). **Next**: re-rank remaining ~167 series by
+  catalog book count (excluding all 33 now-fixed across both batches,
+  plus batch 2's already-correct list above) for batch 3 -- don't reuse
+  either session's candidate list, both are now stale.
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also
