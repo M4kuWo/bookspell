@@ -527,7 +527,88 @@ worth deferring to a later session rather than batching in for
     Martin (Westeros), Robin Hobb (Realm of the Elderlings), Leigh
     Bardugo (Grishaverse -- Ninth House excluded, see below), Orson
     Scott Card (Enderverse), Sarah J. Maas (Maasverse -- see resolution
-    below).
+    below), Rick Riordan (Riordanverse -- batch 4), V.E. Schwab (The
+    Four Londons -- batch 4, Shades of Magic + Threads of Power only,
+    see below), Brandon Sanderson (Cosmere series-level gap fix, batch
+    4 -- see below; his Skyward/Reckoners are still separately confirmed
+    NOT connected to the Cosmere, see the negatives list).
+  - **Batch 4 (2026-09-12)**: 8 authors checked.
+    - **Rick Riordan -- built as "Riordanverse."** Percy Jackson and the
+      Olympians, The Heroes of Olympus, The Kane Chronicles, Magnus
+      Chase and the Gods of Asgard, and The Trials of Apollo all link.
+      Not a thematic guess -- real structural crossovers: three official
+      published crossover novellas (The Son of Sobek, The Staff of
+      Serapis, The Crown of Ptolemy, collected in Demigods & Magicians)
+      put Percy/Annabeth and Carter/Sadie Kane in scenes together;
+      Magnus Chase is Annabeth's own cousin with Percy appearing
+      directly in his books; Trials of Apollo is a direct continuation
+      at Camp Half-Blood with the same cast. No official umbrella name
+      exists, so per the naming policy: "Riordanverse" confirmed as a
+      real, widely-used fan term (TV Tropes' own "Riordanverse
+      (Franchise)" page, multiple independent fan reading-order guides
+      and wikis) -- used directly, not invented.
+    - **V.E. Schwab -- built as "The Four Londons"** (Shades of Magic +
+      Threads of Power only). Threads of Power is explicitly the direct
+      sequel trilogy to Shades of Magic -- set 7 years after A Conjuring
+      of Light, same protagonists (Kell, Lila, Alucard) returning, same
+      setting. Named after the real in-world/fandom term for the
+      four parallel-world Londons (Red/White/Grey/Black) -- matches the
+      established place-name pattern (Westeros/Abeth/Middle-earth), no
+      naming-policy question this time. **Checked and confirmed NOT
+      part of this universe or connected to each other**: Schwab's
+      Monsters of Verity duology and Villains trilogy -- no structural
+      connection found to Four Londons or between each other (distinct
+      settings, casts, genres; no crossovers identified in any source
+      checked).
+    - **Brandon Sanderson -- Cosmere series-level gap fix, same shape as
+      batch 2's Elantris fix, not a new connection judgment.** Two
+      series rows never got `series.universe_id` set despite their
+      book(s) already being individually Cosmere-tagged at the book
+      level: "Hoid's Travails" (Yumi and the Nightmare Painter) and "The
+      Mistborn Saga" (Allomancer Jak and the Pits of Eltania, confirmed
+      Cosmere/Mistborn Era Two content via Coppermind/17th Shard/
+      Sanderson's own official Cosmere-collections page). Both now
+      linked to the existing Cosmere universe row. **Not touched**:
+      "Legion" (standalone thriller, correctly unlinked) and "Secret
+      Projects" (genuinely mixed -- 2 of 3 books are Cosmere, 1 isn't --
+      correctly left without a series-level link, per the existing
+      batch-2 note).
+    - **Joe Abercrombie -- Shattered Sea vs. The Devils, confirmed NOT
+      connected** (a new pairing, distinct from the already-built First
+      Law World). The Devils is explicitly a new, separate series/world
+      ("a magic-riddled Europe... elves"), unconnected to either
+      Shattered Sea or the First Law.
+    - **N.K. Jemisin -- Dreamblood vs. Forward Collection, confirmed NOT
+      connected** (a new pairing, distinct from the already-checked
+      Broken Earth/Inheritance Trilogy/Great Cities trio). The
+      Dreamblood duology (The Killing Moon/The Shadowed Sun) is
+      self-contained in its own Gujaareh setting; "Forward Collection"
+      turns out to be a multi-author sci-fi novella anthology (not even
+      a single-author Jemisin series) -- her contribution to it
+      ("Emergency Skin") has no connection to Gujaareh.
+    - **Peter F. Hamilton -- Night's Dawn, Commonwealth Saga, and
+      Salvation Sequence, confirmed NOT connected.** Three explicitly
+      separate fictional universes per multiple sources, each with its
+      own distinct setting/timeline.
+    - **Adrian Tchaikovsky -- Children of Time, Elder Race, Service
+      Model, The Final Architecture, and The Tyrant Philosophers,
+      confirmed NOT connected.** Each is a distinct, separate
+      continuity; no shared setting or characters found across any
+      pairing.
+    - **Neil Gaiman -- re-surfaced by the refreshed candidate query,
+      resolved without new research.** "London Below" is just this
+      catalog's series name for Neverwhere -- same already-resolved
+      American Gods/Neverwhere pairing (real but too thin to model, see
+      above), no new action. "The Sandman TPBs" is a graphic
+      novel/comic -- out of v1 scope per CLAUDE.md's catalog-scope
+      policy, skipped and flagged, not linked (consistent with the
+      existing Saga/Sandman precedent, not treated as a universe
+      candidate at all).
+    Migration `20260912500000_riordanverse_four_londons_cosmere_gaps.sql`,
+    tested in a rolled-back transaction with a genuine idempotency
+    re-run, applied via a normal autocommit connection (not `supabase db
+    push` -- left for the primary session per this task's standard
+    handoff), verified live on hosted. `universe` now has 13 rows.
   - **Naming-policy gap RESOLVED 2026-09-12 for both cases that hit
     it.** Repo owner's general policy, now established for future
     no-official-name cases: check for a real, widely-used common fan
@@ -557,19 +638,30 @@ worth deferring to a later session rather than batching in for
       the Fleet sub-series exist in our catalog under Card's author
       field currently, so nothing further to link. No migration needed
       -- existing linkage from batch 3 stands, now confirmed.
-  - **Confirmed NOT connected (don't re-research)**: Brandon Sanderson,
-    N.K. Jemisin, Ursula K. Le Guin, Neil Gaiman, Stephen King, Robert
-    Jackson Bennett, Jim Butcher (Codex Alera/Cinder Spires/Dresden
-    Files -- 3 distinct unconnected worlds), James S. A. Corey (The
-    Captive's War/The Expanse -- explicitly not the same universe per
-    the authors themselves, only a shared TV production team), Leigh
-    Bardugo's Ninth House specifically (separate from her own
-    Grishaverse, which IS connected -- see above), Timothy Zahn (Star
-    Wars: The Thrawn Trilogy vs. Star Wars: Thrawn -- same protagonist
-    but officially split, mutually incompatible Legends-vs-Canon
-    continuities, not a true merge; flagged as a genuinely different
-    case shape worth a second look if the repo owner disagrees with
-    treating a non-merged reboot relationship as "not connected").
+  - **Confirmed NOT connected (don't re-research)**: Brandon Sanderson
+    (his Skyward/Reckoners vs. his own Cosmere -- note his Cosmere
+    series-level gap fix above is a different, unrelated finding for
+    the SAME author), N.K. Jemisin (all 3 major series against each
+    other, AND Dreamblood vs. Forward Collection -- batch 4), Ursula K.
+    Le Guin, Neil Gaiman, Stephen King, Robert Jackson Bennett, Jim
+    Butcher (Codex Alera/Cinder Spires/Dresden Files -- 3 distinct
+    unconnected worlds), James S. A. Corey (The Captive's War/The
+    Expanse -- explicitly not the same universe per the authors
+    themselves, only a shared TV production team), Leigh Bardugo's
+    Ninth House specifically (separate from her own Grishaverse, which
+    IS connected -- see above), Timothy Zahn (Star Wars: The Thrawn
+    Trilogy vs. Star Wars: Thrawn -- same protagonist but officially
+    split, mutually incompatible Legends-vs-Canon continuities, not a
+    true merge; flagged as a genuinely different case shape worth a
+    second look if the repo owner disagrees with treating a non-merged
+    reboot relationship as "not connected"), Joe Abercrombie (Shattered
+    Sea vs. The Devils -- batch 4, a different pairing from the
+    already-built First Law World), Peter F. Hamilton (Night's Dawn/
+    Commonwealth Saga/Salvation Sequence -- batch 4), Adrian Tchaikovsky
+    (Children of Time/Elder Race/Service Model/The Final Architecture/
+    The Tyrant Philosophers -- batch 4), V.E. Schwab's Monsters of
+    Verity and Villains specifically (separate from her own Four
+    Londons, which IS connected -- see above, batch 4).
   - **Resolved, no connection, no naming question**: Mark Lawrence's
     `Impossible Times` vs. `The Library Trilogy` (checked against EACH
     OTHER specifically, 2026-09-12) -- confirmed NOT connected. Lawrence's
@@ -588,12 +680,14 @@ worth deferring to a later session rather than batching in for
     the book-level connection isn't lost either way, but the underlying
     series-table duplication is still there.
   - **Everyone else from the refreshed candidate list**: not yet
-    checked. Full detail across five 2026-09-11/2026-09-12
-    project-log.md audit entries. This audit's real hit rate so far: 6
-    of 15 checked candidate-pairings confirmed genuinely connected (one
-    of those 6 blocked on naming), 9 confirmed NOT connected -- treat
+    checked. Full detail across six 2026-09-11/2026-09-12
+    project-log.md audit entries. This audit's real hit rate so far: 9
+    of 23 checked candidate-author-groupings confirmed genuinely
+    connected (built or gap-fixed), 14 confirmed NOT connected -- treat
     every remaining candidate as more likely a false positive than not
-    until checked.
+    until checked. Re-running the candidate query after batch 4 (62
+    authors with 2+ unlinked series before this batch ran) is the
+    starting point for batch 5.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 
