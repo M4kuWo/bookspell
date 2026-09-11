@@ -167,9 +167,10 @@ worth deferring to a later session rather than batching in for
   `.claude/skills/tag-audiobook-editions/SKILL.md`.** Full history kept
   under P3, not deleted -- this pointer exists so a P1 skim doesn't
   miss that the item moved.
-- [ ] **Promote `romance_tone`/`worldbuilding_delivery` from trope
-  pairs to real scalar fields -- split in two, schema half ready to
-  hand off.** The probe already validated (correctly-signed weights,
+- [x] **Promote `romance_tone`/`worldbuilding_delivery` from trope
+  pairs to real scalar fields -- DONE, both schema and scoring halves
+  complete 2026-09-11.** The probe already validated (correctly-signed
+  weights,
   confirmed in production) -- see book-dna.md's "Romance TONE/
   execution-quality" entry and scoring-test-protocol.md's 2026-09-05
   "Execution-DNA validation probes" entry.
@@ -223,9 +224,22 @@ worth deferring to a later session rather than batching in for
   `supabase migration list`, data confirmed correct first, then fixed
   with `supabase migration repair --status applied`. See
   project-log.md's 2026-09-11 "Step 4" entry for full detail.
-  **Next**: the `recommend.py`/`scoring_tests.py` scoring-engine
-  changes that make these fields actually participate in
-  recommendations -- separate, main-conversation work, not started.
+  **Scoring-engine half done 2026-09-11** (commit `7646a1d`): both
+  fields added as content-scoped `NOMINAL_FIELDS`, `mixed` getting
+  partial credit against both poles (same bar as `drive`'s `balanced`).
+  Found and fixed two real, previously-latent general bugs while
+  testing (not specific to these two fields): `score_book()`/
+  `explain_book()` scored an untagged nominal field as a full mismatch
+  instead of skipping it; `build_profile()` could divide by zero when a
+  field's evidence was entirely confidence-zeroed on one side. Checked
+  via full A/B scorecard before landing: one real, exactly-traced
+  regression (2 books flip -- Royal Assassin, Interview with the
+  Vampire -- driven by thin per-rater coverage causing held-out-split
+  mode instability), zero effect on 3 of 4 raters. Landed anyway per
+  explicit repo-owner review of the exact size; expected to self-correct
+  as tagging coverage grows. See scoring-test-protocol.md's 2026-09-11
+  entry for full detail. **Item fully complete, nothing further queued
+  here.**
 
 ## P2 (ongoing/routine, not new decisions)
 
