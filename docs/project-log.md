@@ -9946,3 +9946,93 @@ genuinely many historical narrations -- picking which to record is an
 actual editorial judgment call, not a data-quality fix), 65 with no
 narrator data, 18 with no audio edition. The 64 are the next real
 candidate for a manual research pass.
+
+## 2026-09-11 (later still): cleared the 64-book flagged backlog -- 4 more real content-leakage categories found, final total 1026 rows / 786 books
+
+Repo owner asked to continue with the 64 flagged books. Rather than
+research all 64 individually, reviewed the actual group data first and
+found four more systematic categories of dramatized/non-standard
+content leaking into the "standard" pool, each verified via direct
+search before excluding, then re-ran the full remaining-books analysis
+after each fix -- the same iterate-verify-reapply loop as the
+morning's typo/subset work, just against new patterns:
+
+1. **Penguin's 2022+ full-cast Discworld re-recording** (~20 Terry
+   Pratchett titles affected). A recurring "Bill Nighy, X, Peter
+   Serafinowicz" trio kept appearing as a 3rd/4th narrator group.
+   Verified: Penguin Random House commissioned a full-cast re-recording
+   of all 40 Discworld novels (Ladbroke Audio), with Peter Serafinowicz
+   voicing Death and Bill Nighy narrating footnotes "throughout the
+   series" -- a dramatized production slipping past the existing
+   >4-narrator filter (Hardcover only credits a few named leads per
+   edition) and publisher filter (generic "Penguin Audio" imprint, also
+   used for real standalone narrations). Added a specific two-name
+   ensemble-signature exclusion. Resolved 20 books immediately (Guards!
+   Guards!, Mort, Small Gods, Eric, Wyrd Sisters, Good Omens, The
+   Colour of Magic, Equal Rites, and more) to their real historical
+   narrators (Nigel Planer, Tony Robinson, Stephen Briggs, Celia
+   Imrie).
+2. **Hardcover placeholder narrator values.** "full cast" (Harry Potter
+   and the Philosopher's Stone) and "Ensemble Cast" (The Hobbit) are
+   literal placeholder strings some crowd-sourced editions use instead
+   of actually crediting anyone -- not real names. Filtered out.
+3. **An unofficial fan recording.** Phil Dragash's Lord of the Rings
+   kept appearing across all 3 volumes. Verified via search: an
+   explicitly unofficial, free recording started in 2010 (Internet
+   Archive/Podbean), not a licensed commercial release -- out of scope
+   for a catalog of real commercial editions, excluded by name.
+4. **BBC/Tyndale radio dramatisations under generic publisher names.**
+   Verified via search that BBC's classic-literature/genre audio
+   catalog is almost exclusively full-cast radio dramatisations when
+   2+ people are credited (confirmed on Left Hand of Darkness/
+   Earthsea's "BBC Radio 4 Full-Cast Dramatisation" -- the same
+   production already partially recorded as a dramatized_full_cast row
+   from the earlier BBC Audio batch, so this would have been a real
+   duplicate). Also "David Suchet, Paul Scofield" recurring across both
+   Narnia books under "Tyndale Entertainment" turned out to be Focus on
+   the Family's "Radio Theatre" full-cast dramatization (later also
+   aired on BBC Radio). Extended the dramatized-publisher-hint list and
+   added a narrator-count>=2-plus-BBC-publisher rule (a single
+   BBC-credited narrator, e.g. Brave New World/Peter Firth, stays --
+   only multi-narrator BBC credits are excluded).
+
+**Recalibrated the flagging threshold itself**, based on the accumulated
+evidence: verified via direct search across roughly 20 books total in
+today's review rounds (Name of the Wind, Hitchhiker's Guide, Assassin's
+Apprentice, Outlander, Best Served Cold, Watership Down, Foundation,
+Iron Flame, Time Traveler's Wife, and more) that 2-4 distinct named
+narrator groups are consistently REAL editions once the noise
+categories above are filtered out -- not an anomaly needing individual
+review, but the normal shape of a well-adapted book's audio history
+(UK/US market, abridged/unabridged, an older vs. newer release). Raised
+the "too many groups" flag threshold from >2 to >4, and added a rule
+dropping only genuinely unverifiable single entries (zero Hardcover
+users, no publisher, one crowd-sourced edition record) rather than
+either blocking the book or inserting unverifiable data.
+
+**Batches 3-6 applied** (`20260911140000` through `20260911170000`,
+each tested in a rolled-back transaction with an idempotency re-run,
+applied via `supabase db push`, verified on hosted): 20 + 4 + 4 + 33 =
+61 more books resolved automatically across the fix iterations, 162
+more rows.
+
+**Final 3 genuinely extreme cases, hand-picked rather than bulk-
+inserted or left empty**: Frankenstein (12 real historical narrator
+groups), The Strange Case of Dr Jekyll and Mr Hyde (8), Fahrenheit 451
+(6) -- every name checked showed no typo/dramatized/placeholder red
+flags, but cataloging every single historical narration has low
+practical value and adds noise. Picked the 3 most-corroborated
+narrators per book (highest Hardcover users_count, runtime as tiebreak,
+preferring a solo narrator over a same-tier multi-person group) --
+migration `20260911180000_backfill_standard_narrators_final3_
+classics.sql`, using the real Hardcover edition URLs from the analysis
+data (not placeholder URLs -- caught and fixed before testing, an
+earlier draft of this file used fabricated narrator-name-slug URLs
+instead of the actual numeric edition IDs).
+
+**Final total**: 1026 `standard` rows across 786 of 869 books with a
+`hardcover_id` (up from 605/578 at the start of today's review). The
+remaining 83 books (65 no narrator data in Hardcover at all, 18 no
+audio edition listed) have genuinely nothing to add -- not actionable
+without a different data source. This closes out the standard-edition
+narrator backfill item for real; `docs/TODO.md` updated accordingly.
