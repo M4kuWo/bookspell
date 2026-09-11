@@ -11534,3 +11534,153 @@ Grant, Neal Shusterman, Octavia E. Butler, Rachel Gillig, Rebecca
 Roanhorse, Rebecca Ross, S. A. Chakraborty, Samantha Shannon,
 Stephanie Garber, Stephen Graham Jones, Tahereh Mafi, TJ Klune,
 Veronica Roth.
+
+## 2026-09-12 (later still): series.status/book_count fix, batch 5 -- 15 series fixed, 3 confirmed already correct, 6 new names flagged as a different bug class
+
+Continuing the P2 catalog-wide `series.status`/`book_count` fix as a
+background agent (root cause unchanged: `status` defaults to 'ongoing'
+whenever Hardcover's `is_completed` isn't explicitly true; `book_count`
+is Hardcover's raw edition/omnibus/box-set count, not a curated
+mainline-installment count -- display-only bug in
+`tools/catalog-review/`, `scripts/recommend.py` never reads either
+field).
+
+**A real bookkeeping gap caught before use**: docs/TODO.md's own "next
+batch" pointer said to exclude "84 now-checked names across batches 1-4
+(67 from batches 1-3 + this batch's 17 fixed names)" -- but batch 4
+itself also confirmed 21 *more* names already correct that were never
+folded into that running total (same omission repeated verbatim in both
+docs/TODO.md and this log's own batch-4 entry, not just a one-off typo).
+Reconstructed the accurate list directly from batches 1-4's project-log
+entries by name: 15 (batch 1) + 30 (batch 2: 14 fixed + 16 correct) + 17
+(batch 3) + 38 (batch 4: 17 fixed + 21 correct) = **100 named series**,
+not 84. Used the accurate 100 (plus the 5 still-unsettled flagged names)
+to build this batch's ranking-query exclusion, and corrected the running
+total in docs/TODO.md below so batch 6 doesn't inherit the same gap.
+
+Re-ran the same ranking query (our own catalog's book-count-per-series)
+excluding those 105 names. Worked down the resulting list in ranked
+order, verifying every candidate via live web search before writing
+anything, same standard as batches 1-4.
+
+**15 fixed**:
+- The Rain Wild Chronicles (Robin Hobb): 'ongoing'/20 -> 'completed'/4
+  (Dragon Keeper, Dragon Haven, City of Dragons, Blood of Dragons).
+- Space Odyssey (Arthur C. Clarke): 'ongoing'/12 -> 'completed'/4 (2001
+  through 3001: The Final Odyssey; Clarke died 2008).
+- Dirk Gently (Douglas Adams): 'ongoing'/8 -> 'completed'/2 -- "The
+  Salmon of Doubt" (2002) is a posthumously-published unfinished
+  manuscript, not a completed third novel, excluded per the standing
+  "real published mainline installments" convention.
+- The Book of the New Sun (Gene Wolfe): book_count 21 -> 4 (status
+  already 'completed') -- the named tetralogy only; "The Urth of the
+  New Sun" is a separate later sequel, explicitly described by sources
+  as "not an integral part of" the four-book title itself, excluded the
+  same way batches 1-4 have kept a series' count scoped to its own named
+  title rather than its wider universe.
+- The Final Architecture (Adrian Tchaikovsky): 'ongoing'/5 ->
+  'completed'/3 (Shards of Earth, Eyes of the Void, Lords of
+  Uncreation, 2021-2023).
+- An Ember in the Ashes (Sabaa Tahir): 'ongoing'/7 -> 'completed'/4
+  (through A Sky Beyond the Storm, 2020).
+- The Kane Chronicles (Rick Riordan): 'ongoing'/12 -> 'completed'/3
+  (companion guides not counted).
+- Zones of Thought (Vernor Vinge): 'ongoing'/22 -> 'completed'/3 (Vinge
+  died 2024, no further installment; a linked short story not counted).
+- The Atlas (Olivie Blake): book_count 4 -> 3 (status already
+  'completed'; The Atlas Six, The Atlas Paradox, The Atlas Complex).
+- King of Scars (Leigh Bardugo): 'ongoing'/3 -> 'completed'/2 (confirmed
+  closed duology).
+- Ninth House (Leigh Bardugo): book_count 3 -> 2 (status stays
+  'ongoing') -- "Dead Beat" (book 3, the trilogy's confirmed conclusion)
+  is scheduled for 2026-09-15, not yet published as of this migration
+  (2026-09-12), so not counted yet -- same not-yet-released standard
+  batch 4 applied to The Locked Tomb.
+- Caraval (Stephanie Garber): 'ongoing'/6 -> 'completed'/3 (Caraval,
+  Legendary, Finale).
+- The Riftwar Saga (Raymond E. Feist): book_count 8 -> 3 (status already
+  'completed'; Magician, Silverthorn, A Darkness at Sethanon only -- the
+  wider Riftwar Cycle's other sub-series not counted).
+- The Shepherd King (Rachel Gillig): book_count 3 -> 2 (status already
+  'completed'; confirmed a deliberately closed duology).
+- Cerulean Chronicles (TJ Klune): 'completed'/1 -> 'ongoing'/2 -- a third
+  book is confirmed in development (referenced across multiple
+  retailer/publisher listings, expected 2026) but has no confirmed
+  title or firm date, so it justifies 'ongoing' without being counted;
+  book_count was wrong even against our own catalog's already-linked 2
+  books.
+
+**3 confirmed already correct** (checked via live search, no change):
+The Dresden Files (18, ongoing -- Jim Butcher has published 18 novels
+as of "Twelve Months", Jan 2026; openly planned for 25 total), The
+Vampire Chronicles (13, completed -- Anne Rice's 13 novels through
+Blood Communion, 2018, her de facto final book; she died 2021), The
+Faithful and the Fallen (4, completed -- John Gwynne's closed Malice/
+Valour/Ruin/Wrath quartet, a new candidate surfaced by this batch's own
+ranking query).
+
+**6 new names flagged as a DIFFERENT bug class** (not fixed here -- not
+simple status/book_count errors):
+- **Imperial Radch (publication order)** -- all 5 real books (Ancillary
+  Justice through Translation State) are linked to this
+  duplicate-named series row, while the "Imperial Radch" row batch 2
+  already fixed the status/book_count on now has ZERO books linked. A
+  duplicate-series-row problem (the mirror image of the duplicate-book
+  -row issue batch 4 flagged on LOTR/Farseer/Monk and Robot, but at the
+  series level instead), not a value-correctness one.
+- **Enderverse: Publication Order / The Shadow Series** -- Ender's
+  Shadow and Shadow of the Giant sit under the former (a cross-saga
+  reading-order umbrella), while Shadow of the Hegemon and Shadow
+  Puppets sit under the latter (the real leaf sub-series all 4 books
+  belong to) -- one 5-book "Shadow" saga split across two series rows,
+  violating CLAUDE.md's "series_id always points at a leaf series, never
+  a parent umbrella one" rule.
+- **Middle Earth** -- holds only an omnibus ("The Hobbit & The Lord of
+  the Rings") and "The Silmarillion", not a real leaf series in the
+  normal sense -- same pattern as the already-flagged Hogwarts
+  Library/Roald Dahl Classic Collection.
+- **American Gods** -- groups Neil Gaiman's "American Gods" with
+  "Anansi Boys", a loosely-connected companion novel in the same
+  mythology/universe with a different protagonist, not a numbered
+  direct sequel -- a scope/grouping question in the same family as the
+  omnibus flags above.
+- **Forward Collection** -- a one-time 2019 anthology of 6 unrelated
+  standalone novellas by 6 different authors (Jemisin, Weir, Roth,
+  Crouch, Towles, Tremblay), not a normal single-author mainline series
+  -- whether/how "book_count" even applies to a multi-author anthology
+  brand is a policy question, not a value to just correct to 6.
+
+These 6, plus the pre-existing 5 (Hogwarts Library, The Roald Dahl
+Classic Collection, The Riyria Revelations (Omnibus), Robert Langdon,
+The Inheritance Games), are now all carried in docs/TODO.md's flagged
+list so future batches' ranking queries stop re-surfacing them. 'Saga'
+(out-of-scope graphic novel) was also seen again in the ranked list --
+it had never actually been added to the running exclude list despite
+being noted in batch 2's entry, so every batch since has been
+re-encountering it for nothing; added to the exclude list now.
+
+Migration `20260912800000_fix_series_status_book_count_batch5.sql` --
+tested in a rolled-back transaction first (all 15 updates verified
+clean against expected values), then applied for real to hosted via a
+normal autocommit connection. **Not pushed via `supabase db push` and
+the worktree branch not merged to main** -- both left for the primary
+session (CLDO), same handoff pattern as batches 2-4, to avoid two
+sessions' `db push`/git operations colliding on the same day. Verified
+afterward: `series` table total row count unchanged (484), spot-checked
+Ninth House / The Book of the New Sun / Cerulean Chronicles directly on
+hosted.
+
+**Next (batch 6)**: re-rank remaining series excluding all 118 now-
+checked names across batches 1-5 (100 from batches 1-4 + this batch's 15
+fixed names + this batch's 3 confirmed-correct names, corrected going
+forward per the bookkeeping note above) plus the 12
+flagged-not-settled names (the pre-existing 5 plus this batch's 6 new
+ones plus Saga). Also unresearched from this batch's ranked list,
+available as batch 6's first candidates: Legend (Marie Lu), Emily Wilde
+(Heather Fawcett), Legends & Lattes (Travis Baldree), Oxford Time Travel
+(Connie Willis), Uglies (Scott Westerfeld), Wayward Children (Seanan
+McGuire), Outlander (Diana Gabaldon), Holly Gibney (Stephen King --
+also worth a scope look, most of this sub-series is crime/thriller
+rather than SFF), The Captive's War (James S. A. Corey), Earthseed
+(Octavia Butler, seen in the ranked list but not researched this
+batch).
