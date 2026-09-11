@@ -55,7 +55,14 @@ if (!DATABASE_URL) throw new Error('DATABASE_URL not set (check .env)');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function hcGraphQL(query, variables = {}) {
+// Hardcover's rate limit (confirmed via response headers 2026-09-11):
+// 60 req/min sustained, burst=10. A single well-paced sequential script
+// (1 req/sec) stays under this fine, but concurrent processes sharing the
+// same token can blow the burst allowance -- observed as a malformed
+// response (no `data`, no `errors` field) rather than a clean HTTP 429.
+// Retry with backoff on that specific shape rather than treating it as a
+// permanent per-book failure.
+async function hcGraphQL(query, variables = {}, attempt = 1) {
   const res = await fetch(HARDCOVER_API, {
     method: 'POST',
     headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
@@ -63,6 +70,11 @@ async function hcGraphQL(query, variables = {}) {
   });
   const json = await res.json();
   if (json.errors) throw new Error('Hardcover GraphQL error: ' + JSON.stringify(json.errors));
+  if (!json.data) {
+    if (attempt >= 4) throw new Error('Hardcover returned no data after retries: ' + JSON.stringify(json).slice(0, 300));
+    await sleep(2000 * attempt);
+    return hcGraphQL(query, variables, attempt + 1);
+  }
   await sleep(1000);
   return json.data;
 }
