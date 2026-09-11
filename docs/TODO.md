@@ -333,63 +333,61 @@ worth deferring to a later session rather than batching in for
   First Law/Mark Lawrence below) because the universe already existed
   with an official name -- no naming-policy decision needed.
 - [ ] **Catalog-wide shared-universe linking audit -- not urgent, but
-  needs to be done properly rather than one series at a time.** Only 2
-  `universe` rows exist (Cosmere, Middle-earth), but the First Law case
-  below is confirmed NOT to be the only gap (Cosmere itself had the
-  same gap, just fixed above, see checked item) -- the repo owner also
-  flagged (2026-09-08) that Mark Lawrence's books share one continuity
-  across FOUR of his series in this catalog: `The Broken Empire`
-  (Prince/King/Emperor of Thorns), `The Red Queen's War` (Prince of
-  Fools and sequels), `Book of the Ancestor` (Red Sister and sequels),
-  and `The Library Trilogy` (only book 1, *The Book That Wouldn't
-  Burn*, is in our catalog so far). Confirmed via direct query: none of
-  these 10 books have `universe_id` set. Unlike Cosmere/Middle-earth,
-  **there's no single official name for this shared world** (Lawrence
-  hasn't branded it the way Sanderson branded Cosmere) -- that's a real
-  wrinkle this audit needs a policy for, not just a data-entry task:
-  either find/confirm an informal name the author or fandom actually
-  uses, or accept a repo-chosen descriptive name (e.g. "The Broken
-  Empire World") and document that it's an internal label, not an
-  official one. Also surfaced in passing: at least one connected book
-  (*The Girl and the Stars*, Library Trilogy book 2) isn't in our
-  catalog yet at all -- same "real-world connection outruns our
-  ingestion" pattern as Sharp Ends below.
+  needs to be done properly rather than one series at a time -- First
+  Law DONE 2026-09-11, Mark Lawrence blocked on a naming-policy answer,
+  and the audit's own first step found the real scope is 51 authors,
+  not 2.**
 
-  **This needs a real audit, not a one-off fix**: group the catalog by
-  author (or by known cross-author shared settings, if any exist) and
-  check each author with 2+ series for whether they're actually
-  connected continuities vs. genuinely separate settings -- don't
-  assume connection just because it's the same author. Two known
-  starting cases below; there are very likely more not yet found.
-  Nothing here affects scoring (Series DNA/aggregation already works
-  off each book's own `series_id` directly, confirmed for First Law) --
-  this is a real-world-accuracy/display gap, hence not urgent, but a
-  genuine one worth doing right rather than patching individual
-  examples as they get noticed.
+  **First Law -- DONE 2026-09-11.** Built "The First Law World" as a
+  real `universe` row (docs/schema/book-dna.md's own design doc
+  example, never actually implemented until now): `The First Law` and
+  `The Age of Madness` (the two real series) both link via
+  `series.universe_id`, their own series membership untouched; the 3
+  in-catalog standalones (Best Served Cold, The Heroes, Red Country)
+  now link to the universe directly (`series_id = null`) instead of
+  living in the old ad-hoc "First Law World" pseudo-series, which was
+  deleted (confirmed empty and unreferenced first). **Sharp Ends
+  ingested** (bibliographic data only -- Book DNA tagging is a separate
+  follow-up, not done yet), author field verified clean first, links
+  to the universe the same way as the 3 standalones. Migrations
+  `20260911200000_first_law_universe.sql` and
+  `20260911210000_ingest_sharp_ends.sql`. Full detail in
+  project-log.md's 2026-09-11 "shared-universe linking audit" entry.
 
-  - **First Law**: a `universe` ("The First Law World") should contain
-    `The First Law` (real series) plus `The Age of Madness` (real
-    series) plus the 3-in-catalog-of-4-real standalones (Best Served
-    Cold, The Heroes, Red Country, and Sharp Ends -- a short story
-    collection not yet in our catalog) linking to the universe directly
-    with no series. Matches book-dna.md's own "universe/series/book"
-    design doc exactly -- just never implemented. Doesn't cross-
-    contaminate The First Law/Age of Madness's own correct series_ids.
-    **Sharp Ends should be ingested normally** (resolved 2026-09-08,
-    was flagged as a possible scope question) -- confirmed Arcanum
-    Unbounded and The Last Wish/Sword of Destiny (the same kind of
-    continuity-forward short-story collection) are already in our
-    catalog, already fully tagged as regular novels. This project has
-    already been treating this category as in-scope; add it via
-    normal ingestion, same as any other book.
-  - **Mark Lawrence**: see above -- 4 series (10 in-catalog books),
-    no official shared-world name, one known missing book (*The Girl
-    and the Stars*).
+  **Mark Lawrence -- blocked on a naming-policy answer from the repo
+  owner, surfaced directly rather than decided unilaterally (per
+  CLDO's explicit handoff-note instruction).** 4 series in this
+  catalog share one continuity: `The Broken Empire` (Prince/King/
+  Emperor of Thorns), `The Red Queen's War` (Prince of Fools and
+  sequels), `Book of the Ancestor` (Red Sister and sequels), and `The
+  Library Trilogy` (only book 1, *The Book That Wouldn't Burn*, is in
+  our catalog so far) -- 10 books, none with `universe_id` set.
+  **There's no single official name for this shared world** (Lawrence
+  hasn't branded it the way Sanderson branded Cosmere) -- needs either
+  a confirmed informal name the author/fandom actually uses, or an
+  accepted repo-chosen descriptive name (e.g. "The Broken Empire
+  World") documented as an internal label, not official. Also: *The
+  Girl and the Stars* (Library Trilogy book 2) isn't in our catalog
+  yet either -- same ingestion gap as Sharp Ends was, not yet done.
+  **Do not proceed on this one without an answer** -- same discipline
+  as Step 4 of the romance/worldbuilding conversion earlier this
+  session, a real judgment call gets a live human answer, not a guess.
 
-  Real fix for both: create the `universe` row(s), set `universe_id` on
-  every book in the continuity (standalones get `universe_id` with no
-  `series_id`, per the design doc), matching the Cosmere/Middle-earth
-  pattern already in use. Not done here -- flagged, not attempted.
+  **The audit's own first step (done 2026-09-11) found the real
+  scope**: grouped the whole catalog by author and checked every
+  author with 2+ series not yet linked to a universe -- **51 authors**
+  qualify, not just the 2 known starting cases (full list in
+  project-log.md's 2026-09-11 entry). Resolving all 51 needs real
+  per-author literary verification (genuinely connected continuity vs.
+  just the same author writing unrelated things) -- clearly a
+  multi-session effort, not something to guess at scale or silently
+  drop. **Next**: pick a small batch from the 51 (start with the most
+  clear-cut, well-documented real crossovers -- e.g. Brandon
+  Sanderson's Cosmere-adjacent series already partially handled,
+  George R.R. Martin's Song of Ice and Fire/Dunk-and-Egg/Targaryen
+  History, N.K. Jemisin's Broken Earth-adjacent titles are plausible
+  early candidates, not yet verified) once Mark Lawrence's naming
+  question is resolved and there's appetite for more of this audit.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 

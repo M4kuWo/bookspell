@@ -10188,3 +10188,60 @@ db push`, verified live on hosted, zero migration-tracking mismatches.
 ~181 after this batch). Next batch should re-rank by catalog book count
 again (excluding all 19 now-fixed series) rather than reusing this
 session's candidate list.
+
+## 2026-09-11 (later still): shared-universe linking audit -- First Law built, Sharp Ends ingested, and the audit surface is much bigger than the 2 known starting cases
+
+Started the second task from CLDO's handoff note. Ran the audit's own
+prescribed first step (group the catalog by author, check every author
+with 2+ series for connected-continuity vs. genuinely-separate
+settings) before touching anything -- found **51 authors with 2+ series
+not yet linked to any `universe`**, not just the 2 already-flagged
+cases (First Law, Mark Lawrence). Resolving all 51 requires real
+literary verification per author (which of these are genuinely one
+continuity vs. just the same author writing unrelated things) --
+clearly more than one sitting's worth of work, and not something safe
+to guess at scale. Logged the full list in docs/TODO.md rather than
+resolving or ignoring it silently.
+
+**Built "The First Law World" as a real `universe` row** -- the
+design doc's own example (docs/schema/book-dna.md's "Series &
+universe" section) that was flagged 2026-09-08 as never actually
+implemented. Confirmed no other foreign key references `series.id`
+besides `books.series_id` and `series.parent_series_id` before
+touching anything (checked directly, not assumed), and confirmed no
+other series row's `parent_series_id` pointed at the ad-hoc "First Law
+World" series before deleting it.
+
+- `The First Law` and `The Age of Madness` (the two real series) both
+  now link via `series.universe_id` -- their own `series_id`
+  membership is untouched, no cross-contamination.
+- The 3 in-catalog standalones (Best Served Cold, The Heroes, Red
+  Country) now link to the universe DIRECTLY (`series_id = null`,
+  `position_in_series = null`) -- they were never really "book 4/5/6"
+  of anything, that was the old ad-hoc series's own workaround.
+- The now-empty ad-hoc "First Law World" series row was deleted
+  (confirmed zero dependent books first).
+
+Migration `20260911200000_first_law_universe.sql`, tested in a
+rolled-back transaction, applied via `supabase db push`, verified live
+on hosted, zero migration-tracking mismatches.
+
+**Ingested Sharp Ends** (Joe Abercrombie, 2014) -- the one confirmed
+missing book in this continuity, resolved as in-scope 2026-09-08 (same
+category as Arcanum Unbounded/The Last Wish). Verified the author
+field clean against Hardcover's `cached_contributors` before inserting
+(Joe Abercrombie only, no contamination), per the mandatory ingestion
+policy. Bibliographic data only, per this project's standard
+ingest-then-tag split -- Book DNA tagging is a separate follow-up, not
+done here. Links directly to the new universe, no series_id, matching
+the 3 standalones. Migration `20260911210000_ingest_sharp_ends.sql`,
+same testing discipline, applied and verified. `books` 874 -> 875.
+
+**Mark Lawrence's naming question surfaced to the repo owner directly,
+not decided here** -- per the explicit instruction in CLDO's handoff
+note ("surface it, don't invent a name unilaterally"). Not resolved in
+this session; see the next log entry once an answer comes back.
+
+**Not started**: triaging the other 49 authors on the audit list, and
+Sharp Ends' own Book DNA tagging pass. Both logged as real, separate
+follow-ups in docs/TODO.md, not silently dropped.
