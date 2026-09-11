@@ -1419,6 +1419,45 @@ Deliberately deferred, not in v0.1:
   discipline in `scripts/scoring_tests.py` before landing, same as any
   other scoring change — flagged in
   `docs/scoring-test-protocol.md`, not attempted yet.
+- **Crossovers/easter eggs referencing other books** — raised by the
+  repo owner 2026-09-12, explicitly low-priority ("cool idea for the
+  future," not P1). Two examples he gave, deliberately spanning both
+  shapes this would need to cover: (1) **same-universe crossover
+  cameos** — characters from The Emperor's Soul and Tress of the
+  Emerald Sea appearing in later Mistborn Era Two books, all already
+  linked via the `Cosmere` universe row, but the specific CAMEO itself
+  isn't captured anywhere (`universe` only says "these books share a
+  continuity," not "this specific book contains a nameable appearance
+  from that other specific book"); (2) **cross-franchise cameos with no
+  shared continuity at all** — From a Buick 8's Man in Black character
+  gesturing at The Dark Tower, where the two books are explicitly NOT
+  the same universe (this exact example is already discussed in
+  `docs/project-log.md`'s 2026-09-11 shared-universe-audit entries, but
+  only as a reason NOT to merge two series into one `universe` row —
+  that audit question and this proposed field are related but distinct;
+  don't conflate them). A field/mechanism here would need to capture
+  the SAME thing (a specific, nameable crossover moment) in both cases,
+  independent of whether the two books happen to already share a
+  `universe`.
+  **Real implementation-shape question, not just vocabulary**: unlike
+  most entries in this backlog, this isn't a scalar enum or a
+  self-contained trope — a crossover is inherently a relationship
+  BETWEEN two specific books (or a book and an external franchise not
+  in this catalog at all, if the referenced work isn't SFF or isn't
+  ingested), so it likely needs its own linking table (something like
+  `book_crossover_references`: `book_id`, `referenced_book_id`
+  nullable/`referenced_work_title` for out-of-catalog references, a
+  `relationship_type` — shared_universe_cameo vs. cross_franchise_easter_egg
+  vs. shared_character — and a confidence/severity axis for how central
+  vs. blink-and-miss-it the reference is) rather than a `book_tropes`
+  row. Whether this clears the "does this change what gets recommended"
+  bar (not just "is this real") is genuinely untested — plausible
+  mechanism: a reader who loved Mistborn getting a discovery-delight
+  nudge toward The Emperor's Soul or Tress specifically BECAUSE of the
+  crossover appeal, independent of how those books score on the normal
+  DNA-similarity vector; needs the same real-evidence validation-probe
+  discipline as `romance_tone`/`message_themes` before committing
+  vocabulary, not started.
 
 ## Open for review
 
