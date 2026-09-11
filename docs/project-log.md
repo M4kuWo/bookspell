@@ -10508,7 +10508,6 @@ Bennett (all 3 series).
 **Not yet checked**: everyone else from the original 51, plus the new
 Mark Lawrence Library Trilogy/Impossible Times question.
 
-<<<<<<< HEAD
 ## 2026-09-12: shared-universe audit -- Mark Lawrence's Impossible Times/Library Trilogy question resolved, batch 3 (Robin Hobb, Bardugo, Card built; Butcher, Corey, Zahn confirmed negative; Maas confirmed positive but blocked on naming)
 
 Continuing the audit as CLDA, running from an isolated worktree per the
