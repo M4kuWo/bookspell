@@ -435,25 +435,67 @@ worth deferring to a later session rather than batching in for
   **Tracking note**: the raw "authors with 2+ series, universe_id
   null" query does NOT shrink cleanly as authors get checked --
   confirmed-negative authors correctly keep `universe_id: null`
-  forever, so they keep reappearing in that query. **Don't use a
-  single "N remain" count as a progress tracker -- use this explicit
-  list instead**:
+  forever, so they keep reappearing in that query (66 authors as of
+  2026-09-12, up from 51/49 -- catalog growth plus accumulating
+  negatives, not a bug). **Don't use a single "N remain" count as a
+  progress tracker -- use this explicit list instead**:
   - **Confirmed connected (built)**: Mark Lawrence (Broken Empire
     World, Abeth), Isaac Asimov (Foundation universe), George R.R.
-    Martin (Westeros).
+    Martin (Westeros), Robin Hobb (Realm of the Elderlings), Leigh
+    Bardugo (Grishaverse -- Ninth House excluded, see below), Orson
+    Scott Card (Enderverse).
+  - **Confirmed connected, real evidence, but NOT built -- blocked on a
+    naming-policy decision only the repo owner should make**: Sarah J.
+    Maas (A Court of Thorns and Roses/Throne of Glass/Crescent City --
+    a real, author-confirmed, structural connection with actual
+    character crossovers between the three book-worlds, "I had planted
+    seeds in all my series about the possibility of it being a
+    multiverse" per Maas herself -- but no official branded name exists
+    ("Maasverse" is fan-only) AND no single unifying in-world place name
+    to fall back on either, since the three series are set on three
+    genuinely different planets linked by portal travel, not one place.
+    Neither of this audit's two naming fallbacks cleanly applies here.
+    Second real instance of this exact naming gap, after Mark Lawrence's
+    -- may be worth the repo owner settling a general policy for "no
+    official name AND no single place" cases rather than deciding
+    one-off each time this recurs).
   - **Confirmed NOT connected (don't re-research)**: Brandon Sanderson,
     N.K. Jemisin, Ursula K. Le Guin, Neil Gaiman, Stephen King, Robert
-    Jackson Bennett.
-  - **A new, separate open question surfaced by this audit, not yet
-    checked**: Mark Lawrence's `Impossible Times` and `The Library
-    Trilogy` -- connected to EACH OTHER (a different question from the
-    already-resolved Broken Empire/Abeth work)?
-  - **Everyone else from the original 51-author list**: not yet
-    checked. Full detail across four 2026-09-11 project-log.md audit
-    entries. This audit's real hit rate so far: 3 of 10 checked
-    candidates confirmed genuinely connected, 7 confirmed NOT connected
-    -- treat every remaining candidate as more likely a false positive
-    than not until checked.
+    Jackson Bennett, Jim Butcher (Codex Alera/Cinder Spires/Dresden
+    Files -- 3 distinct unconnected worlds), James S. A. Corey (The
+    Captive's War/The Expanse -- explicitly not the same universe per
+    the authors themselves, only a shared TV production team), Leigh
+    Bardugo's Ninth House specifically (separate from her own
+    Grishaverse, which IS connected -- see above), Timothy Zahn (Star
+    Wars: The Thrawn Trilogy vs. Star Wars: Thrawn -- same protagonist
+    but officially split, mutually incompatible Legends-vs-Canon
+    continuities, not a true merge; flagged as a genuinely different
+    case shape worth a second look if the repo owner disagrees with
+    treating a non-merged reboot relationship as "not connected").
+  - **Resolved, no connection, no naming question**: Mark Lawrence's
+    `Impossible Times` vs. `The Library Trilogy` (checked against EACH
+    OTHER specifically, 2026-09-12) -- confirmed NOT connected. Lawrence's
+    own "Guide to Lawrence" post lists only Broken Empire/Red Queen's War
+    and Book of the Ancestor/Book of the Ice as connected pairs; The
+    Library Trilogy is explicitly "a wholly original tale... no
+    connection to his other work" per a Grimdark Magazine interview.
+  - **A new data-quality issue found and flagged, not fixed (needs a
+    repo-owner judgment call, not a universe-linking action)**: Orson
+    Scott Card's Shadow Saga (Ender's Shadow, Shadow of the Hegemon,
+    Shadow Puppets, Shadow of the Giant) is split across TWO series rows
+    in this catalog -- `The Shadow Series` (2 books) and `Enderverse:
+    Publication Order` (2 books) -- looks like one real series
+    mis-represented as two rows. Out of this audit's scope to
+    restructure; both rows were linked to the new Enderverse universe so
+    the book-level connection isn't lost either way, but the underlying
+    series-table duplication is still there.
+  - **Everyone else from the refreshed candidate list**: not yet
+    checked. Full detail across five 2026-09-11/2026-09-12
+    project-log.md audit entries. This audit's real hit rate so far: 6
+    of 15 checked candidate-pairings confirmed genuinely connected (one
+    of those 6 blocked on naming), 9 confirmed NOT connected -- treat
+    every remaining candidate as more likely a false positive than not
+    until checked.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 

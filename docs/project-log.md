@@ -10507,3 +10507,166 @@ Stephen King (Holly Gibney/Dark Tower/Green Mile), Robert Jackson
 Bennett (all 3 series).
 **Not yet checked**: everyone else from the original 51, plus the new
 Mark Lawrence Library Trilogy/Impossible Times question.
+
+## 2026-09-12: shared-universe audit -- Mark Lawrence's Impossible Times/Library Trilogy question resolved, batch 3 (Robin Hobb, Bardugo, Card built; Butcher, Corey, Zahn confirmed negative; Maas confirmed positive but blocked on naming)
+
+Continuing the audit as CLDA, running from an isolated worktree per the
+repo owner's active handoff note. Re-ran the candidate query fresh: 66
+authors with 2+ unlinked series (up from 51/49 as the catalog has grown
+and prior batches' negatives keep legitimately reappearing, as already
+documented -- this confirms the "explicit checked list, not a raw
+count" tracking approach from the last two batches remains the right
+one).
+
+**Step 0 -- the standing open question, resolved: Mark Lawrence's
+Impossible Times and Library Trilogy are NOT connected to each other.**
+Checked directly rather than assuming either way. Lawrence's own "A
+Guide to Lawrence" blog post explicitly enumerates only two connected
+pairs (Broken Empire/Red Queen's War, and Book of the Ancestor/Book of
+the Ice) and says "my other books are not required reading" --
+Impossible Times and Library Trilogy are conspicuously absent from his
+own connected-pairs list. A Grimdark Magazine interview describes The
+Book That Wouldn't Burn (Library Trilogy #1) as "a wholly original tale
+set in a new world with a brand-new cast of characters... there's no
+connection between this trilogy and his other work" -- the Library's
+premise (an infinite library that conceptually "contains" every book,
+including hypothetically his own other work) is a thematic/conceptual
+device, not a real structural link, matching the same category already
+ruled out for Gaiman's American Gods/Neverwhere and King's Man in Black
+motif. A secondary source also independently confirmed the Impossible
+Times trilogy itself was described as the last entry in its OWN prior
+"shared universe" (unrelated to Library Trilogy) before Lawrence
+deliberately started fresh with an unconnected new world for the
+Library books. No migration action for this pairing -- resolved
+negative, don't re-check.
+
+**Confirmed connected, built:**
+
+- **Robin Hobb -- "Realm of the Elderlings."** The Farseer Trilogy, The
+  Liveship Traders, The Tawny Man, The Rain Wild Chronicles, and Fitz
+  and the Fool are one continuous shared world and cast across
+  generations (the Rain Wild Chronicles explicitly ties Liveship's
+  elderling plot threads forward into Fitz and the Fool) -- not 5
+  independent trilogies that merely share a planet. "Realm of the
+  Elderlings" is the real, consistently-used umbrella term across
+  publisher marketing and every reading-order guide, first appearing in
+  print around the Legends II "Homecoming" era -- not invented, and no
+  collision with any of the 5 series' own names.
+- **Leigh Bardugo -- "Grishaverse"** (King of Scars, Six of Crows, The
+  Shadow and Bone Trilogy only). Official reading order runs Shadow and
+  Bone Trilogy -> Six of Crows -> King of Scars; the King of Scars
+  duology explicitly continues Nikolai Lantsov's arc with returning
+  characters from both earlier series. "Grishaverse" is Bardugo's own
+  coined, publisher-used term. **Ninth House (Alex Stern) checked and
+  confirmed NOT connected** -- explicitly a separate, unrelated
+  universe (Yale-set adult contemporary fantasy, no shared characters or
+  continuity with the Grisha world) -- don't re-research.
+- **Orson Scott Card -- "Enderverse"** (Ender's Saga, The Shadow Series,
+  Enderverse:  Publication Order). The Shadow Saga is an explicit
+  parallel timeline to Ender's Saga -- Ender's Shadow retells Ender's
+  Game's own events from Bean's POV, and the two lines converge and are
+  jointly resolved in The Last Shadow (not in our catalog). "Enderverse"
+  is Card's own used term (e.g. his own collection "First Meetings:
+  Three Stories from the Enderverse"). **Real data problem found and
+  flagged, not fixed**: the Shadow Saga's 4 novels are currently split
+  across TWO separate series rows in this catalog -- "The Shadow
+  Series" (Shadow of the Hegemon, Shadow Puppets) and "Enderverse:
+  Publication Order" (Ender's Shadow, Shadow of the Giant) -- which
+  looks like one real series mistakenly represented as two rows, not a
+  universe-linking question. Out of this audit's scope to restructure
+  existing series rows unilaterally (per the task's own "don't
+  improvise past verify-connection-and-link" boundary), so left as-is;
+  both rows are linked to the new Enderverse universe so the
+  book-level connection is captured either way. **Flagging this for the
+  repo owner as a separate series-grouping cleanup item**, distinct
+  from the universe-linking work itself.
+
+`universe` now has 10 rows (was 7): Cosmere, Middle-earth, The First Law
+World, The Broken Empire World, Abeth, Foundation universe, Westeros,
+plus this batch's Realm of the Elderlings, Grishaverse, Enderverse.
+Migration `20260912200000_realm_of_the_elderlings_grishaverse_
+enderverse.sql`, tested in a rolled-back transaction with a genuine
+idempotency re-run first, then applied via a normal autocommit
+connection (NOT `supabase db push` -- this worktree was explicitly
+instructed to stop short of hosted migration-tracking registration and
+leave that to the primary session), verified live on hosted afterward
+(universe row list and all 11 series->universe links spot-checked).
+
+**Confirmed CONNECTED but NOT built -- a real naming-policy question for
+the repo owner, same shape as the Mark Lawrence question that prompted
+this exact caution originally**:
+
+- **Sarah J. Maas** -- A Court of Thorns and Roses, Throne of Glass, and
+  Crescent City. This is a strong, real, author-confirmed connection,
+  not a thin one: actual character travel and interaction across the
+  three book-worlds (Aelin passes through Crescent City's world at the
+  end of Kingdom of Ash; Bryce travels into Prythian at the end of House
+  of Sky and Breath; Azriel appears as a real, interacting character in
+  Crescent City's House of Flame and Shadow). Maas herself, on record:
+  "I had planted seeds in all my series about the possibility of it
+  being a multiverse. The worlds exist, but they're planets and
+  light-years away." But there's no official branded name -- "Maasverse"
+  is fan-coined only, never used by Maas or her publisher. Unlike Abeth/
+  Westeros/Middle-earth, there's also no single unifying in-world place
+  to fall back to: ACOTAR is set in Prythian, Throne of Glass in Erilea,
+  Crescent City on yet another, separate planet -- three genuinely
+  different worlds linked by portal travel, not one place with one name.
+  Neither of this audit's two established naming fallbacks (a real
+  unambiguous place name, or an "X World"-suffixed name working around a
+  collision) actually applies here, because there's no natural name to
+  begin with, not just a collision to route around. Per the standing
+  instruction from the last handoff, not inventing one -- skipped the
+  migration piece for this one, surfacing it for the repo owner to
+  decide (same open-question shape as Mark Lawrence's naming gap, now a
+  second real instance of it).
+
+**Confirmed NOT connected, no action (don't re-research)**:
+
+- **Jim Butcher** -- Codex Alera, The Cinder Spires, The Dresden Files.
+  Three distinct, unconnected worlds (Roman-flavored elemental fantasy;
+  steampunk airship war; contemporary Chicago urban fantasy) confirmed
+  via multiple sources including Butcher's own Reddit AMA; fan interest
+  in a crossover exists but no official connection.
+- **James S. A. Corey** -- The Captive's War and The Expanse. Explicitly
+  NOT the same universe per the authors' own statements (Captive's War
+  is "the other side of space opera from The Expanse," different
+  influences, far-future setting with no shared history); the only real
+  connection is a shared TV production company/team, not shared
+  fiction.
+- **Timothy Zahn** -- Star Wars: The Thrawn Trilogy vs. Star Wars:
+  Thrawn. A genuinely different case shape than every other pairing
+  checked in this audit so far, worth flagging explicitly: both feature
+  Grand Admiral Thrawn as protagonist (a recurring-protagonist signal
+  that would normally clear this audit's bar), but the two trilogies are
+  OFFICIALLY split, mutually incompatible continuities -- the original
+  1991-93 trilogy is Star Wars Legends, retired from canon by Disney's
+  2014 continuity reset, while the newer Thrawn books are new-canon
+  prequels with a different backstory for the same character. Treated
+  as NOT connected: linking them via `universe_id` would misrepresent
+  two contradictory tellings of the same character as one continuous
+  story, unlike every other confirmed-connected case in this audit,
+  which are all additive/non-contradictory. Judgment call, not an
+  improvised destructive action, so proceeding under this audit's normal
+  discretion rather than routing through the pending-approvals gate --
+  but flagging the reasoning clearly in case the repo owner disagrees
+  with the call.
+
+**Authors checked so far this audit, confirmed connected (built)**: Mark
+Lawrence (Broken Empire World, Abeth), Isaac Asimov (Foundation
+universe), George R.R. Martin (Westeros), Robin Hobb (Realm of the
+Elderlings), Leigh Bardugo (Grishaverse -- Ninth House excluded), Orson
+Scott Card (Enderverse).
+**Confirmed connected but not built pending a naming decision**: Sarah
+J. Maas (ACOTAR/Throne of Glass/Crescent City).
+**Confirmed NOT connected (don't re-research)**: Brandon Sanderson, N.K.
+Jemisin, Ursula K. Le Guin, Neil Gaiman, Stephen King, Robert Jackson
+Bennett, Jim Butcher, James S. A. Corey, Timothy Zahn (split
+Legends/Canon continuities, not a true merge).
+**Resolved, no universe**: Mark Lawrence's Impossible Times/Library
+Trilogy pairing (checked against each other specifically, not
+connected).
+**Not yet checked**: everyone else from the original/refreshed
+candidate list (58 authors remain in the live query once this batch's
+9 resolved names and all prior-batch negatives are excluded, per the
+usual caveat that this raw count isn't a reliable progress tracker on
+its own).
