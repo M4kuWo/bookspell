@@ -719,15 +719,98 @@ worth deferring to a later session rather than batching in for
     restructure; both rows were linked to the new Enderverse universe so
     the book-level connection isn't lost either way, but the underlying
     series-table duplication is still there.
+  - **Batch 5 (2026-09-12)**: 8 authors checked.
+    - **Michael J. Sullivan -- built as "Elan."** Legends of the First
+      Empire + The Riyria Revelations, same world (Elan) ~3,000 years
+      apart per the author's own site ("The Elan Saga"/"World of
+      Elan"); real structural link, not just shared geography --
+      characters who are only historical/legendary figures in Riyria
+      are met directly, in person, in Legends. Named after the real
+      in-world place itself, no naming question.
+    - **Cassandra Clare -- built as "The Shadowhunter Chronicles."**
+      The Infernal Devices + The Mortal Instruments, explicit prequel/
+      sequel (~130 years apart, same Shadowhunter/Downworlder world),
+      direct named ancestor/descendant links between the casts. Named
+      after the real official franchise umbrella term, not invented.
+    - **T. Kingfisher -- built as "The World of the White Rat."** The
+      Saint of Steel + Swordheart, explicit shared setting (Temple of
+      the White Rat) with recurring characters crossing over. Named
+      after the real in-world institution and matching fandom usage
+      (Goodreads' own series grouping, a dedicated fan wiki). **Checked
+      and confirmed NOT part of this universe**: "Sworn Soldier" (the
+      What Moves the Dead novellas) -- separate cast/setting; the only
+      link is a reused pronoun-by-caste linguistic concept, not a
+      shared world. Left unlinked.
+    - **Philip Pullman -- built as "Lyra's World." NAMING FLAG for the
+      repo owner, unlike the other three built this batch.** His Dark
+      Materials + The Book of Dust are genuinely connected (Pullman's
+      own "equel" framing, same world, same protagonist Lyra Belacqua)
+      -- the connection isn't in question, only the name. No official
+      umbrella name and no single widely-used fan term turned up
+      across multiple independent sources (checked "Dustverse"/
+      "Pullman multiverse" specifically -- neither is actually
+      established). "Lyra's World" is a real in-world term (used
+      within the books to distinguish Lyra's home world from Will's
+      and the multiverse's other worlds) echoed loosely by press/fan
+      writeups, but it's this session's own naming call, not a
+      confirmed brand the way Elan/Shadowhunter Chronicles/
+      Riordanverse/Maasverse are -- please sanity-check, easy to
+      rename later.
+    - **Naomi Novik -- Temeraire vs. The Scholomance, confirmed NOT
+      connected.** Entirely separate worlds, no crossover.
+    - **Arthur C. Clarke -- Rama vs. Space Odyssey, confirmed NOT
+      connected.** Clarke's own Author's Note to 2061 states the
+      Odyssey books aren't "necessarily happening in the same
+      universe" as each other, let alone Rama, which has no crossover
+      identified anywhere.
+    - **William Gibson -- Blue Ant/Jackpot/Sprawl, confirmed NOT
+      connected (3 separate continuities).** No shared characters or
+      setting across any pairing.
+    Migration `20260912700000_shared_universe_audit_batch5.sql`,
+    tested in a rolled-back transaction with a genuine idempotency
+    re-run, applied via a normal autocommit connection (not `supabase
+    db push` -- left for the primary session per this task's standard
+    handoff), verified live on hosted. `universe` now has 17 rows.
+  - **New data-quality issue found and flagged, not fixed (needs a
+    repo-owner judgment call, same shape as the Card Shadow Saga note
+    above)**: R. A. Salvatore's "The Dark Elf Trilogy" (1 book in
+    catalog: Homeland) and "The Legend of Drizzt" (1 book in catalog:
+    Exile) look like the SAME real trilogy fragmented across two
+    series rows, not two genuinely separate series sharing a universe
+    -- Homeland/Exile/Sojourn are canonically all 3 books of the Dark
+    Elf Trilogy, itself explicitly books 1-3 of the "Legend of Drizzt"
+    reading-order umbrella. Both rows also carry obviously-wrong
+    `book_count` values (33 and 180) unrelated to their actual 1-book
+    contents, likely the same stale data the separate
+    `series.status`/`book_count` fix P2 task is already working
+    through. Not linked as a universe (would misrepresent a same-
+    series duplication as a two-series connection); not restructured
+    either -- out of this audit's scope.
+  - **Confirmed NOT connected (don't re-research), batch-5 additions**:
+    Naomi Novik (Temeraire vs. The Scholomance), Arthur C. Clarke (Rama
+    vs. Space Odyssey), William Gibson (Blue Ant/Jackpot/Sprawl, 3
+    separate continuities).
   - **Everyone else from the refreshed candidate list**: not yet
-    checked. Full detail across six 2026-09-11/2026-09-12
-    project-log.md audit entries. This audit's real hit rate so far: 9
-    of 23 checked candidate-author-groupings confirmed genuinely
-    connected (built or gap-fixed), 14 confirmed NOT connected -- treat
-    every remaining candidate as more likely a false positive than not
-    until checked. Re-running the candidate query after batch 4 (62
-    authors with 2+ unlinked series before this batch ran) is the
-    starting point for batch 5.
+    checked. Full detail across seven 2026-09-11/2026-09-12
+    project-log.md audit entries. This audit's real hit rate so far: 12
+    of 31 checked candidate-author-groupings confirmed genuinely
+    connected (built or gap-fixed), 17 confirmed NOT connected, 2
+    flagged as series-table data-quality issues rather than true
+    universe questions -- treat every remaining candidate as more
+    likely a false positive than not until checked. Re-running the
+    candidate query after batch 5 (61 authors with 2+ unlinked series
+    before this batch ran) is the starting point for batch 6; batch 5's
+    own untouched leftovers include (non-exhaustive) Amie Kaufman/Jay
+    Kristoff, Anthony Ryan, Becky Chambers, Brent Weeks, C. S. Lewis,
+    Carissa Broadbent, Christopher Paolini, Dan Simmons, Danielle L.
+    Jensen, Douglas Adams, Holly Black, Ilona Andrews, J.K. Rowling,
+    James Islington, Jennifer Lynn Barnes, John Gwynne, John Scalzi,
+    Laini Taylor, Lois McMaster Bujold, Margaret Atwood, Marie Lu,
+    Marissa Meyer, Martha Wells, Michael Crichton, Mira Grant, Neal
+    Shusterman, Octavia E. Butler, Rachel Gillig, Rebecca Roanhorse,
+    Rebecca Ross, Robert A. Heinlein, S. A. Chakraborty, Samantha
+    Shannon, Stephanie Garber, Stephen Graham Jones, Tahereh Mafi, TJ
+    Klune, Veronica Roth.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 
