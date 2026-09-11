@@ -9671,3 +9671,70 @@ the `scripts/recommend.py`/`scripts/scoring_tests.py` changes that make
 `romance_tone`/`worldbuilding_delivery` actually participate in scoring
 are separate, deliberately-not-included work for the main conversation,
 not this skill.
+
+## 2026-09-11 (later): Step 4 -- deleted the old romance/worldbuilding trope data, with a live go-ahead and a real backup manifest
+
+Repo owner gave live, explicit confirmation to run Step 4 (asked
+directly, not inferred from a general "proceed" -- CLDA's own standing
+rule for this machine, on top of the project's file-based
+PENDING_APPROVALS.md gate, per the 2026-09-11 persona-system entry
+above). Condition attached: reversibility had to be real, not assumed
+-- "we will have a list of all tropes deleted from which books... can
+easily be reinstated if the need arises."
+
+That condition wasn't automatically true: Step 3's backfill converts
+each book's *resolved* value into `book_dna`, but does not preserve the
+raw original `book_tropes` rows (trope_id + confidence per book) or the
+`tropes` vocabulary definitions themselves -- those would have been
+genuinely unrecoverable once deleted, without a deliberate backup.
+Queried both directly from hosted immediately before deleting anything
+and wrote the full result --  4 `tropes` rows (id, group_name, spoiler)
+and all 282 `book_tropes` rows (trope_id, confidence, book title,
+author) -- to a permanent, git-tracked companion file,
+`20260911110000_delete_old_romance_worldbuilding_tropes_manifest.tsv`,
+so both are trivially reinstatable (the vocabulary rows directly; the
+book_tropes rows via the usual title/author-subselect pattern) if ever
+needed.
+
+Wrote the actual delete as `20260911110000_delete_old_romance_
+worldbuilding_tropes.sql` (book_tropes rows for the 4 trope IDs, then
+the 4 tropes vocabulary entries -- dependent-row order, per CLAUDE.md).
+Tested in a rolled-back transaction against hosted first: confirmed
+both deletes land exactly 0 remaining rows for the 4 trope IDs, and
+confirmed `book_dna.romance_tone`/`worldbuilding_delivery` non-null
+counts (160/117) are untouched by the delete, as expected.
+
+**A real process mistake, caught and fixed before moving on**: applied
+the actual (non-test) delete directly via psycopg2 against hosted,
+instead of `supabase db push` -- precisely the anti-pattern CLAUDE.md
+documents as a recurring, already-happened incident ("never apply a
+hosted-bound migration via a raw direct Postgres connection instead of
+`supabase db push`"). Caught it immediately by checking `supabase
+migration list --db-url` right after, which showed
+`20260911110000` with `remote: ""` -- hosted's tracking table didn't
+know the version was applied, exactly the setup that makes a future
+`supabase db push` try to re-run a non-idempotent DELETE and fail (or
+worse, silently no-op). Confirmed the data itself was already correct
+on hosted (0 rows remaining for both tables, matching the tested
+transaction) before repairing -- per CLAUDE.md's explicit warning not
+to repair a version whose data isn't actually confirmed present --
+then ran `supabase migration repair --status applied --db-url ...
+20260911110000` (used `--db-url`, not `--linked`, since this
+environment has no `supabase link` set up -- `--linked` and `--db-url`
+are mutually exclusive flags). Re-ran `migration list` afterward and
+confirmed all 183 entries now show matching `local`/`remote` pairs,
+zero mismatches remaining.
+
+Final verification on hosted: `book_tropes` has 0 rows for the 4 old
+trope IDs (was 282), `tropes` has 0 of the 4 vocabulary entries
+remaining, `book_dna.romance_tone`/`worldbuilding_delivery` non-null
+counts unchanged at 160/117.
+
+This closes the schema+backfill half of convert-romance-worldbuilding-
+fields end to end (Steps 1-4 all done and verified on hosted). Local
+sync remains the known, accepted, structural gap documented in the two
+2026-09-09 entries above -- unchanged by this step. Still open, and
+explicitly NOT this session's job: the `scripts/recommend.py`/
+`scripts/scoring_tests.py` changes to make the new scalar fields
+actually participate in scoring, which stays in the main conversation
+per the standing decision.

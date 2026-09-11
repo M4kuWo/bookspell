@@ -302,13 +302,27 @@ worth deferring to a later session rather than batching in for
   backfill applied and verified on hosted: `romance_tone` 160/864
   non-null (80 understated, 79 melodramatic, 1 mixed), `worldbuilding_
   delivery` 117/864 non-null (66 woven, 50 exposition_dump, 1 mixed).
-  `book_field_confidence` backfilled for every touched book. Old
-  `book_tropes` rows (282 across the 4 trope IDs) deliberately left in
-  place -- not Step 4. **Next**: Step 4 (delete the old trope rows +
-  the 4 trope vocabulary entries) -- explicitly gated on a live,
-  direct go-ahead from the repo owner in the main conversation, not
-  just the project's file-based PENDING_APPROVALS.md gate (CLDA's own
-  stricter standing rule for this machine, 2026-09-11). Not started.
+  `book_field_confidence` backfilled for every touched book.
+  **Step 4 done 2026-09-11, schema+backfill half now FULLY COMPLETE**
+  -- old `book_tropes` rows (282 across the 4 trope IDs) and the 4
+  `tropes` vocabulary entries deleted from hosted, only after a live,
+  direct go-ahead from the repo owner (not just the project's
+  file-based PENDING_APPROVALS.md gate). Every deleted row was backed
+  up first to a permanent, git-tracked manifest
+  (`20260911110000_delete_old_romance_worldbuilding_tropes_manifest.tsv`)
+  so it's fully reinstatable if ever needed. Verified on hosted: 0
+  rows remain for the 4 trope IDs in both tables;
+  `romance_tone`/`worldbuilding_delivery` counts unchanged. A real
+  process slip happened and was caught/fixed in the same session: the
+  delete was applied directly via psycopg2 instead of `supabase db
+  push`, desyncing hosted's migration-tracking table (exactly the
+  anti-pattern CLAUDE.md documents as a recurring issue) -- caught via
+  `supabase migration list`, data confirmed correct first, then fixed
+  with `supabase migration repair --status applied`. See
+  project-log.md's 2026-09-11 "Step 4" entry for full detail.
+  **Next**: the `recommend.py`/`scoring_tests.py` scoring-engine
+  changes that make these fields actually participate in
+  recommendations -- separate, main-conversation work, not started.
 
 ## P2 (ongoing/routine, not new decisions)
 

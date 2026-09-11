@@ -1,0 +1,306 @@
+# Permanent, git-tracked backup of every row deleted by the companion
+# migration 20260911110000_delete_old_romance_worldbuilding_tropes.sql.
+# Captured from hosted immediately before deletion, 2026-09-11.
+#
+# Purpose: Steps 1-3 of convert-romance-worldbuilding-fields already
+# converted this data into book_dna.romance_tone/worldbuilding_delivery
+# scalar columns (see 20260911100000_backfill_romance_worldbuilding_fields.sql),
+# but that backfill does not preserve the raw original book_tropes rows or
+# the tropes vocabulary definitions themselves. This file is that raw
+# backup, so both are trivially reinstatable if ever needed:
+#   - tropes vocabulary rows: re-insert directly using the "tropes_table"
+#     section below (id, group_name, spoiler columns).
+#   - book_tropes rows: re-insert each "book_tropes_table" row via
+#     (select id from books where title = '<title>' and author = '<author>'),
+#     trope_id, confidence -- the same title/author-subselect pattern this
+#     project always uses instead of raw UUIDs.
+#
+# === tropes_table (id, group_name, spoiler) ===
+melodramatic_romance_subplot	romance_relationships	false
+understated_romance	romance_relationships	false
+worldbuilding_via_exposition_dump	setting_worldbuilding	false
+worldbuilding_woven_into_narrative	setting_worldbuilding	false
+#
+# === book_tropes_table (trope_id, confidence, book title, book author) ===
+melodramatic_romance_subplot	0.6	1Q84	Haruki Murakami
+melodramatic_romance_subplot	0.6	A Court of Mist and Fury	Sarah J. Maas
+melodramatic_romance_subplot	0.6	A Court of Silver Flames	Sarah J. Maas
+melodramatic_romance_subplot	0.6	A Court of Thorns and Roses	Sarah J. Maas
+melodramatic_romance_subplot	0.2	A Court of Wings and Ruin	Sarah J. Maas
+melodramatic_romance_subplot	0.6	A Dowry of Blood	S.T. Gibson
+melodramatic_romance_subplot	0.6	Alchemised	SenLinYu
+melodramatic_romance_subplot	0.6	Allegiant	Veronica Roth
+melodramatic_romance_subplot	0.6	Breaking Dawn	Stephenie Meyer
+melodramatic_romance_subplot	0.2	Caraval	Stephanie Garber
+melodramatic_romance_subplot	0.2	Carmilla	J. Sheridan Le Fanu
+melodramatic_romance_subplot	0.2	Carry On	Rainbow Rowell
+melodramatic_romance_subplot	0.6	Children of Blood and Bone	Tomi Adeyemi
+melodramatic_romance_subplot	0.6	City of Ashes	Cassandra Clare
+melodramatic_romance_subplot	0.6	City of Bones	Cassandra Clare
+melodramatic_romance_subplot	0.6	City of Fallen Angels	Cassandra Clare
+melodramatic_romance_subplot	0.6	City of Glass	Cassandra Clare
+melodramatic_romance_subplot	0.6	City of Lost Souls	Cassandra Clare
+melodramatic_romance_subplot	0.6	Clockwork Prince	Cassandra Clare
+melodramatic_romance_subplot	0.6	Clockwork Princess	Cassandra Clare
+melodramatic_romance_subplot	0.2	Crown of Midnight	Sarah J. Maas
+melodramatic_romance_subplot	0.6	Daughter of Smoke & Bone	Laini Taylor
+melodramatic_romance_subplot	0.6	Eclipse	Stephenie Meyer
+melodramatic_romance_subplot	0.2	Emily Wilde's Map of the Otherlands	Heather Fawcett
+melodramatic_romance_subplot	0.2	Empire of Storms	Sarah J. Maas
+melodramatic_romance_subplot	0.6	Empire of the Vampire	Jay Kristoff
+melodramatic_romance_subplot	0.2	Fourth Wing	Rebecca Yarros
+melodramatic_romance_subplot	0.2	From Blood and Ash	Jennifer L. Armentrout
+melodramatic_romance_subplot	0.2	Heartless Hunter	Kristen Ciccarelli
+melodramatic_romance_subplot	0.2	House of Earth and Blood	Sarah J. Maas
+melodramatic_romance_subplot	0.6	House of Flame and Shadow	Sarah J. Maas
+melodramatic_romance_subplot	0.6	Ignite Me	Tahereh Mafi
+melodramatic_romance_subplot	0.6	Illuminae	Amie Kaufman, Jay Kristoff
+melodramatic_romance_subplot	0.2	Insurgent	Veronica Roth
+melodramatic_romance_subplot	0.6	Interview with the Vampire	Anne Rice
+melodramatic_romance_subplot	0.6	Iron Flame	Rebecca Yarros
+melodramatic_romance_subplot	0.2	Kingdom of Ash	Sarah J. Maas
+melodramatic_romance_subplot	0.6	Kingdom of the Wicked	Kerri Maniscalco
+melodramatic_romance_subplot	0.2	Legendborn	Tracy Deonn
+melodramatic_romance_subplot	0.2	Lightlark	Alex Aster, Suzy Jackson
+melodramatic_romance_subplot	0.6	New Moon	Stephenie Meyer
+melodramatic_romance_subplot	0.6	One Dark Window	Rachel Gillig
+melodramatic_romance_subplot	0.6	Onyx Storm	Rebecca Yarros
+melodramatic_romance_subplot	0.2	Outlander	Diana Gabaldon
+melodramatic_romance_subplot	0.2	Paladin's Grace	T. Kingfisher
+melodramatic_romance_subplot	0.6	Powerless	Lauren  Roberts
+melodramatic_romance_subplot	0.6	Quicksilver	Callie Hart
+melodramatic_romance_subplot	0.6	Ready Player One	Ernest Cline
+melodramatic_romance_subplot	0.2	Red Queen	Victoria Aveyard
+melodramatic_romance_subplot	0.2	Renegades	Marissa Meyer
+melodramatic_romance_subplot	0.6	Royal Assassin	Robin Hobb
+melodramatic_romance_subplot	0.6	Scarlet	Marissa Meyer
+melodramatic_romance_subplot	0.2	Serpent & Dove	Shelby Mahurin
+melodramatic_romance_subplot	0.6	Shatter Me	Tahereh Mafi
+melodramatic_romance_subplot	0.6	She Who Became the Sun	Shelley Parker-Chan
+melodramatic_romance_subplot	0.6	Siege and Storm	Leigh Bardugo
+melodramatic_romance_subplot	0.6	Somewhere Beyond the Sea	TJ Klune
+melodramatic_romance_subplot	0.2	Strange the Dreamer	Laini Taylor
+melodramatic_romance_subplot	0.6	Sword of Destiny	Andrzej Sapkowski
+melodramatic_romance_subplot	0.2	The Amber Spyglass	Philip Pullman
+melodramatic_romance_subplot	0.6	The Elite	Kiera Cass
+melodramatic_romance_subplot	0.6	The Host	Stephenie Meyer
+melodramatic_romance_subplot	0.6	The Invisible Life of Addie LaRue	V. E. Schwab
+melodramatic_romance_subplot	0.6	The Magicians	Lev Grossman
+melodramatic_romance_subplot	0.6	The One	Kiera Cass
+melodramatic_romance_subplot	0.6	The Princess Bride	William Goldman
+melodramatic_romance_subplot	0.6	The Republic of Thieves	Scott Lynch
+melodramatic_romance_subplot	0.6	The Selection	Kiera Cass
+melodramatic_romance_subplot	0.2	The Serpent and the Wings of Night	Carissa Broadbent
+melodramatic_romance_subplot	0.2	The Space Between Worlds	Micaiah Johnson
+melodramatic_romance_subplot	0.6	The Time Traveler's Wife	Audrey Niffenegger
+melodramatic_romance_subplot	0.6	The Well of Ascension	Brandon Sanderson
+melodramatic_romance_subplot	0.6	The Wise Man's Fear	Patrick Rothfuss
+melodramatic_romance_subplot	0.6	Throne of Glass	Sarah J. Maas
+melodramatic_romance_subplot	0.6	Twilight	Stephenie Meyer
+melodramatic_romance_subplot	0.6	Two Twisted Crowns	Rachel Gillig
+melodramatic_romance_subplot	0.6	Unravel Me	Tahereh Mafi
+melodramatic_romance_subplot	0.6	When the Moon Hatched	Sarah A. Parker
+melodramatic_romance_subplot	0.2	Wizard And Glass	Stephen King
+melodramatic_romance_subplot	0.6	Zodiac Academy: The Awakening	Caroline Peckham, Susanne Valenti
+understated_romance	0.6	11/22/63	Stephen King
+understated_romance	0.6	A Court of Frost and Starlight	Sarah J. Maas
+understated_romance	0.6	A Day of Fallen Night	Samantha Shannon
+understated_romance	0.2	A Discovery of Witches	Deborah Harkness
+understated_romance	0.6	American Gods	Neil Gaiman
+understated_romance	0.6	Assistant to the Villain	Hannah Nicole Maehrer
+understated_romance	0.6	Blood of Elves	Andrzej Sapkowski
+understated_romance	0.6	Bookshops & Bonedust	Travis Baldree
+understated_romance	0.2	Bride	Ali Hazelwood
+understated_romance	0.2	Bury Our Bones in the Midnight Soil	V. E. Schwab
+understated_romance	0.6	Catching Fire	Suzanne Collins
+understated_romance	0.2	Cinder	Marissa Meyer
+understated_romance	0.2	Circe	Madeline Miller
+understated_romance	0.6	Clockwork Angel	Cassandra Clare
+understated_romance	0.6	Crooked Kingdom	Leigh Bardugo
+understated_romance	0.6	Daughter of No Worlds	Carissa Broadbent
+understated_romance	0.6	Dead Until Dark	Charlaine Harris
+understated_romance	0.6	Divergent	Veronica Roth
+understated_romance	0.6	Divine Rivals	Rebecca Ross
+understated_romance	0.6	Emily Wilde's Encyclopaedia of Faeries	Heather Fawcett
+understated_romance	0.2	Golden Son	Pierce Brown
+understated_romance	0.6	Harry Potter and the Half-Blood Prince	J.K. Rowling
+understated_romance	0.6	Heir of Fire	Sarah J. Maas
+understated_romance	0.6	House of Sky and Breath	Sarah J. Maas
+understated_romance	0.6	How to Stop Time	Matt Haig
+understated_romance	0.6	Howl's Moving Castle	Diana Wynne Jones
+understated_romance	0.6	In the Lives of Puppets	TJ Klune
+understated_romance	0.6	Iron Widow	Xiran Jay Zhao
+understated_romance	0.6	Legends & Lattes	Travis Baldree
+understated_romance	0.6	Light From Uncommon Stars	Ryka Aoki
+understated_romance	0.6	Magic Bites	Ilona Andrews
+understated_romance	0.6	Magic Burns	Ilona Andrews
+understated_romance	0.2	Matched	Ally Condie
+understated_romance	0.6	Never Let Me Go	Kazuo Ishiguro
+understated_romance	0.6	Nevernight	Jay Kristoff
+understated_romance	0.6	Once Upon a Broken Heart	Stephanie Garber
+understated_romance	0.6	Our Wives Under the Sea	Julia Armfield
+understated_romance	0.2	Queen of Shadows	Sarah J. Maas
+understated_romance	0.6	Ruin and Rising	Leigh Bardugo
+understated_romance	0.2	Shadow and Bone	Leigh Bardugo
+understated_romance	0.6	Shadows of Self	Brandon Sanderson
+understated_romance	0.6	Six of Crows	Leigh Bardugo
+understated_romance	0.6	Sorcery of Thorns	Margaret  Rogerson
+understated_romance	0.6	Spinning Silver	Naomi Novik
+understated_romance	0.6	Stardust	Neil Gaiman
+understated_romance	0.6	Starling House	Alix E. Harrow
+understated_romance	0.6	Sweep of the Heart	Ilona Andrews
+understated_romance	0.6	Sword of Destiny	Andrzej Sapkowski
+understated_romance	0.6	The Assassin's Blade	Sarah J. Maas
+understated_romance	0.6	The Atlas Six	Olivie Blake
+understated_romance	0.6	The Ballad of Songbirds and Snakes	Suzanne Collins
+understated_romance	0.6	The Bands of Mourning	Brandon Sanderson
+understated_romance	0.2	The Bear and the Nightingale	Katherine Arden
+understated_romance	0.6	The Blacktongue Thief	Christopher Buehlman
+understated_romance	0.6	The Calculating Stars	Mary Robinette Kowal
+understated_romance	0.6	The City of Brass	S. A. Chakraborty
+understated_romance	0.6	The Cruel Prince	Holly Black
+understated_romance	0.6	The Empress of Salt and Fortune	Nghi Vo
+understated_romance	0.2	The Everlasting	Alix E. Harrow
+understated_romance	0.6	The Goblin Emperor	Katherine Addison
+understated_romance	0.6	The Golem and the Djinni	Helene Wecker
+understated_romance	0.6	The House in the Cerulean Sea	TJ Klune
+understated_romance	0.6	The Jasmine Throne	Tasha Suri
+understated_romance	0.2	The Kingdom of Copper	S. A. Chakraborty
+understated_romance	0.6	The Lost Metal	Brandon Sanderson
+understated_romance	0.6	The Ministry of Time	Kaliane Bradley
+understated_romance	0.2	The Night Circus	Erin Morgenstern
+understated_romance	0.6	The Priory of the Orange Tree	Samantha Shannon
+understated_romance	0.6	The Queen of Nothing	Holly Black
+understated_romance	0.6	The Song of Achilles	Madeline Miller
+understated_romance	0.6	The Spellshop	Sarah Beth Durst
+understated_romance	0.6	The Traitor Baru Cormorant	Seth Dickinson
+understated_romance	0.6	The Wicked King	Holly Black
+understated_romance	0.2	These Violent Delights	Chloe Gong
+understated_romance	0.6	They Both Die at the End	Adam Silvera
+understated_romance	0.6	This Is How You Lose the Time War	Amal El-Mohtar, Max Gladstone
+understated_romance	0.2	To Kill a Kingdom	Alexandra Christo, Stephanie Willis, Jacob York
+understated_romance	0.6	Tress of the Emerald Sea	Brandon Sanderson
+understated_romance	0.6	Uprooted	Naomi Novik
+understated_romance	0.6	Warbreaker	Brandon Sanderson
+understated_romance	0.6	Yumi and the Nightmare Painter	Brandon Sanderson
+worldbuilding_via_exposition_dump	0.6	A Deadly Education	Naomi Novik
+worldbuilding_via_exposition_dump	0.6	A Discovery of Witches	Deborah Harkness
+worldbuilding_via_exposition_dump	0.2	A Master of Djinn	P. Djèlí Clark
+worldbuilding_via_exposition_dump	0.2	Aching God	Mike Shel
+worldbuilding_via_exposition_dump	0.2	Altered Carbon	Richard K. Morgan
+worldbuilding_via_exposition_dump	0.6	Anathem	Neal Stephenson
+worldbuilding_via_exposition_dump	0.2	Authority	Jeff VanderMeer
+worldbuilding_via_exposition_dump	0.6	Babel, or The Necessity of Violence: An Arcane History of the Oxford Translators' Revolution	R.F. Kuang
+worldbuilding_via_exposition_dump	0.6	Baptism of Fire	Andrzej Sapkowski
+worldbuilding_via_exposition_dump	0.2	Binti	Nnedi Okorafor
+worldbuilding_via_exposition_dump	0.6	Blackwing	Ed McDonald
+worldbuilding_via_exposition_dump	0.6	Brave New World	Aldous Huxley
+worldbuilding_via_exposition_dump	0.2	Chain-Gang All-Stars	Nana Kwame Adjei-Brenyah
+worldbuilding_via_exposition_dump	0.2	Children of Blood and Bone	Tomi Adeyemi
+worldbuilding_via_exposition_dump	0.6	Children of Memory	Adrian Tchaikovsky
+worldbuilding_via_exposition_dump	0.6	Children of Ruin	Adrian Tchaikovsky
+worldbuilding_via_exposition_dump	0.6	City	Clifford D. Simak
+worldbuilding_via_exposition_dump	0.2	City of Stairs	Robert Jackson Bennett
+worldbuilding_via_exposition_dump	0.2	Consider Phlebas	Iain M. Banks
+worldbuilding_via_exposition_dump	0.6	Cryptonomicon	Neal Stephenson
+worldbuilding_via_exposition_dump	0.6	Dune Messiah	Frank Herbert
+worldbuilding_via_exposition_dump	0.2	Empire of Silence	Christopher Ruocchio
+worldbuilding_via_exposition_dump	0.6	Forward the Foundation	Isaac Asimov
+worldbuilding_via_exposition_dump	0.6	Foundation	Isaac Asimov
+worldbuilding_via_exposition_dump	0.6	Foundation and Empire	Isaac Asimov
+worldbuilding_via_exposition_dump	0.6	Foundryside	Robert Jackson Bennett
+worldbuilding_via_exposition_dump	0.2	Gideon the Ninth	Tamsyn Muir
+worldbuilding_via_exposition_dump	0.6	God Emperor of Dune	Frank Herbert
+worldbuilding_via_exposition_dump	0.2	Godkiller	Hannah Kaner
+worldbuilding_via_exposition_dump	0.2	Harrow the Ninth	Tamsyn Muir
+worldbuilding_via_exposition_dump	0.6	Harry Potter and the Prisoner of Azkaban	J.K. Rowling
+worldbuilding_via_exposition_dump	0.2	Homeland	R. A. Salvatore
+worldbuilding_via_exposition_dump	0.6	Jurassic Park	Michael Crichton
+worldbuilding_via_exposition_dump	0.2	Mistborn: The Final Empire	Brandon Sanderson
+worldbuilding_via_exposition_dump	0.2	Nevernight	Jay Kristoff
+worldbuilding_via_exposition_dump	0.6	Perdido Street Station	China Miéville
+worldbuilding_via_exposition_dump	0.2	Rendezvous with Rama	Arthur C. Clarke
+worldbuilding_via_exposition_dump	0.6	Seveneves	Neal Stephenson
+worldbuilding_via_exposition_dump	0.6	Snow Crash	Neal Stephenson
+worldbuilding_via_exposition_dump	0.6	Starship Troopers	Robert A. Heinlein
+worldbuilding_via_exposition_dump	0.6	Stranger in a Strange Land	Robert A. Heinlein
+worldbuilding_via_exposition_dump	0.2	The City of Brass	S. A. Chakraborty
+worldbuilding_via_exposition_dump	0.2	The Diamond Age	Neal Stephenson
+worldbuilding_via_exposition_dump	0.2	The Dispossessed	Ursula K. Le Guin
+worldbuilding_via_exposition_dump	0.2	The Dragonbone Chair	Tad Williams
+worldbuilding_via_exposition_dump	0.2	The Fellowship of the Ring	J.R.R. Tolkien
+worldbuilding_via_exposition_dump	0.2	The Left Hand of Darkness	Ursula K. Le Guin
+worldbuilding_via_exposition_dump	0.6	The Lies of Locke Lamora	Scott Lynch
+worldbuilding_via_exposition_dump	0.6	The Lord of the Rings	J.R.R. Tolkien
+worldbuilding_via_exposition_dump	0.6	The Silmarillion	J.R.R. Tolkien
+worldbuilding_via_exposition_dump	0.2	The Tainted Cup	Robert Jackson Bennett
+worldbuilding_via_exposition_dump	0.6	The Three-Body Problem	Liu Cixin
+worldbuilding_via_exposition_dump	0.2	The Traitor Baru Cormorant	Seth Dickinson
+worldbuilding_via_exposition_dump	0.2	Too Like the Lightning	Ada Palmer
+worldbuilding_woven_into_narrative	0.6	A Canticle for Leibowitz	Walter M. Miller Jr.
+worldbuilding_woven_into_narrative	0.2	A Desolation Called Peace	Arkady Martine
+worldbuilding_woven_into_narrative	0.2	A Fire Upon the Deep	Vernor Vinge
+worldbuilding_woven_into_narrative	0.6	A Game of Thrones	George R.R. Martin
+worldbuilding_woven_into_narrative	0.6	A Little Hatred	Joe Abercrombie
+worldbuilding_woven_into_narrative	0.6	A Master of Djinn	P. Djèlí Clark
+worldbuilding_woven_into_narrative	0.6	A Memory Called Empire	Arkady Martine
+worldbuilding_woven_into_narrative	0.6	A Natural History of Dragons	Marie Brennan
+worldbuilding_woven_into_narrative	0.6	A Storm of Swords	George R.R. Martin
+worldbuilding_woven_into_narrative	0.6	Age of Myth	Michael J. Sullivan
+worldbuilding_woven_into_narrative	0.6	American Gods	Neil Gaiman
+worldbuilding_woven_into_narrative	0.2	Ancillary Justice	Ann Leckie
+worldbuilding_woven_into_narrative	0.6	Ancillary Mercy	Ann Leckie
+worldbuilding_woven_into_narrative	0.2	Ancillary Sword	Ann Leckie
+worldbuilding_woven_into_narrative	0.6	Black Leopard, Red Wolf	Marlon James
+worldbuilding_woven_into_narrative	0.6	Black Sun	Rebecca Roanhorse
+worldbuilding_woven_into_narrative	0.6	Blindsight	Peter Watts
+worldbuilding_woven_into_narrative	0.6	Blood of Elves	Andrzej Sapkowski
+worldbuilding_woven_into_narrative	0.6	Blood Song	Anthony Ryan
+worldbuilding_woven_into_narrative	0.2	Children of Time	Adrian Tchaikovsky
+worldbuilding_woven_into_narrative	0.6	Crooked Kingdom	Leigh Bardugo
+worldbuilding_woven_into_narrative	0.6	Daughter of Smoke & Bone	Laini Taylor
+worldbuilding_woven_into_narrative	0.6	Deadhouse Gates	Steven Erikson
+worldbuilding_woven_into_narrative	0.6	Dune	Frank Herbert
+worldbuilding_woven_into_narrative	0.6	Gardens of the Moon	Steven Erikson
+worldbuilding_woven_into_narrative	0.6	Gideon the Ninth	Tamsyn Muir
+worldbuilding_woven_into_narrative	0.6	Grey Sister	Mark Lawrence
+worldbuilding_woven_into_narrative	0.6	His Majesty's Dragon	Naomi Novik
+worldbuilding_woven_into_narrative	0.6	Holy Sister	Mark Lawrence
+worldbuilding_woven_into_narrative	0.6	Homeland	R. A. Salvatore
+worldbuilding_woven_into_narrative	0.6	Hyperion	Dan Simmons
+worldbuilding_woven_into_narrative	0.6	Jade City	Fonda Lee
+worldbuilding_woven_into_narrative	0.6	Jonathan Strange & Mr Norrell	Susanna Clarke
+worldbuilding_woven_into_narrative	0.6	Malice	John Gwynne
+worldbuilding_woven_into_narrative	0.2	Mistborn: The Final Empire	Brandon Sanderson
+worldbuilding_woven_into_narrative	0.6	Neuromancer	William Gibson
+worldbuilding_woven_into_narrative	0.6	Neverwhere	Neil Gaiman
+worldbuilding_woven_into_narrative	0.6	Ninefox Gambit	Yoon Ha Lee
+worldbuilding_woven_into_narrative	0.6	Piranesi	Susanna Clarke
+worldbuilding_woven_into_narrative	0.6	Promise of Blood	Brian McClellan
+worldbuilding_woven_into_narrative	0.2	Red Rising	Pierce Brown
+worldbuilding_woven_into_narrative	0.6	Red Sister	Mark Lawrence
+worldbuilding_woven_into_narrative	0.6	Rivers of London	Ben Aaronovitch
+worldbuilding_woven_into_narrative	0.6	Roadside Picnic	Arkady Strugatsky, Boris Strugatsky
+worldbuilding_woven_into_narrative	0.6	Senlin Ascends	Josiah Bancroft
+worldbuilding_woven_into_narrative	0.6	She Who Became the Sun	Shelley Parker-Chan
+worldbuilding_woven_into_narrative	0.6	Some Desperate Glory	Emily Tesh
+worldbuilding_woven_into_narrative	0.6	The Atlas Six	Olivie Blake
+worldbuilding_woven_into_narrative	0.6	The Blade Itself	Joe Abercrombie
+worldbuilding_woven_into_narrative	0.6	The Bone Shard Daughter	Andrea Stewart
+worldbuilding_woven_into_narrative	0.6	The City & The City	China Miéville
+worldbuilding_woven_into_narrative	0.6	The Fifth Season	N.K. Jemisin
+worldbuilding_woven_into_narrative	0.6	The Goblin Emperor	Katherine Addison
+worldbuilding_woven_into_narrative	0.6	The Golden Compass	Philip Pullman
+worldbuilding_woven_into_narrative	0.6	The Golem and the Djinni	Helene Wecker
+worldbuilding_woven_into_narrative	0.6	The Grace of Kings	Ken Liu
+worldbuilding_woven_into_narrative	0.6	The Justice of Kings	Richard Swan
+worldbuilding_woven_into_narrative	0.6	The Library at Mount Char	Scott Hawkins
+worldbuilding_woven_into_narrative	0.6	The Name of the Wind	Patrick Rothfuss
+worldbuilding_woven_into_narrative	0.2	The Player of Games	Iain M. Banks
+worldbuilding_woven_into_narrative	0.6	The Poppy War	R.F. Kuang
+worldbuilding_woven_into_narrative	0.2	The Priory of the Orange Tree	Samantha Shannon
+worldbuilding_woven_into_narrative	0.6	The Shadow of the Torturer	Gene Wolfe
+worldbuilding_woven_into_narrative	0.6	The Sword of Kaigen	M.L. Wang
+worldbuilding_woven_into_narrative	0.6	The Way of Kings	Brandon Sanderson
+worldbuilding_woven_into_narrative	0.6	Use of Weapons	Iain M. Banks
+worldbuilding_woven_into_narrative	0.2	Words of Radiance	Brandon Sanderson
