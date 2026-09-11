@@ -10128,3 +10128,63 @@ unstable. Zero effect on Osnat/Dandan/Gabriel. Repo owner reviewed the
 exact size and landed it anyway -- expected to self-correct as
 `romance_tone`/`worldbuilding_delivery` coverage grows, not a code
 problem. Full detail: scoring-test-protocol.md's 2026-09-11 entry.
+
+## 2026-09-11 (later still): series.status/book_count fix, batch 1 -- 14 series corrected
+
+Repo owner (via CLDO) left a direct handoff note pointing this session
+at the two ready P2 tasks; picked the `series.status`/`book_count` fix
+first since it had a settled approach and no open policy question
+(unlike the shared-universe audit's naming wrinkle).
+
+Selected the batch by ranking every `status='ongoing'` series (minus
+the 5 already fixed 2026-09-08) by how many books each has in our own
+catalog -- a cheap, available proxy for "highest-profile" since neither
+our schema nor Hardcover exposes a direct series-level popularity
+metric. Took the top 15 by that ranking.
+
+**Verified every single one via live search against real-world
+publication status before writing anything** -- no guessing, matching
+the 2026-09-08 standard exactly. 14 of 15 needed a real fix; A Court of
+Thorns and Roses was already correct (5 published, book 6 not out
+until Oct 2026) and needed no change, so isn't in the migration.
+
+**Real fixes landed**:
+- **Completed series wrongly marked `ongoing`** (6): The Demon Cycle
+  (5 books, done 2017), Powder Mage (3-book trilogy, done 2015 --
+  distinct from McClellan's separate "Gods of Blood and Powder" sequel
+  trilogy), The Lunar Chronicles (4 books), The Licanius Trilogy (3
+  books), The Red Queen's War (3 books), Arc of a Scythe (3-book
+  trilogy, "Gleanings" companion not counted), Ender's Saga (the
+  original 4-book "Ender Quartet," distinct from the later 5-book
+  "Ender Quintet" which adds a different book, Ender in Exile, not in
+  this catalog series).
+- **`book_count` wrong on genuinely still-ongoing series** (7): Bobiverse
+  (5->6, a 6th book published literally the day before this check,
+  2026-09-10, not yet in our catalog but real), Red Rising Saga (7->6,
+  the unpublished 7th book "Red God" confirmed still unfinished as of
+  March 2026), The Murderbot Diaries (7->8, matching our own catalog's
+  current 8 main-position rows through Platform Decay), A Song of Ice
+  and Fire (7->5, not counting the unpublished Winds of Winter), The
+  Kingkiller Chronicle (3->2, not counting the unpublished Doors of
+  Stone or the Slow Regard of Silent Things novella), Crescent City
+  (20->3, the raw count was clearly a Hardcover edition/format
+  artifact), Dungeon Crawler Carl (12->8, matching our catalog's
+  current 8 rows through A Parade of Horribles).
+
+One real ambiguity hit and resolved carefully rather than trusted at
+face value: an initial search on Ender's Saga returned internally
+contradictory results (conflating the 4-book Quartet with the 5-book
+Quintet, and citing a title -- "The Last Shadow" -- that doesn't match
+any real Card bibliography). Re-searched with a more targeted query
+before trusting it; confirmed the Quartet is a real, complete,
+self-contained 4-book set distinct from the Quintet addition.
+
+Migration `20260911190000_fix_series_status_book_count_batch1.sql` --
+every `update` scoped by series `name` (verified unique first, never a
+raw UUID), tested in a rolled-back transaction, applied via `supabase
+db push`, verified live on hosted, zero migration-tracking mismatches.
+
+**~180 series remain** (of the original ~195+ estimate, now closer to
+~181 after this batch). Next batch should re-rank by catalog book count
+again (excluding all 19 now-fixed series) rather than reusing this
+session's candidate list.

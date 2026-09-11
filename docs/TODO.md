@@ -291,27 +291,36 @@ worth deferring to a later session rather than batching in for
   sweeps already tracked elsewhere in this file (romance_tone,
   worldbuilding delivery).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
-  -- ~200 of 343 series rows affected, root cause found 2026-09-08.**
-  `status` defaults to `'ongoing'` whenever Hardcover's `is_completed`
-  flag isn't explicitly `true` (including simply missing data);
-  `book_count` is Hardcover's raw per-series edition/omnibus/box-set
-  count, not a curated mainline-installment number. Doesn't affect
-  scoring at all (neither field is read by `scripts/recommend.py`) --
-  purely a `tools/catalog-review/` display bug, so no urgency pressure,
-  but real and visible to anyone browsing the tool. 5 specifically-
-  flagged series already fixed (see project-log.md's 2026-09-08 entry)
-  -- the other ~195+ would need real per-series verification (publication
-  status, a curated book count), which doesn't scale to a single
-  session. **Approach decided 2026-09-11**: option (a) from the
-  original three -- manually verify+fix the most-viewed/highest-profile
-  series first (same standard as the first 5: check real publication
-  status via search, don't just clear the display bug with a guess),
-  rather than (b) hunting for a better Hardcover endpoint (not
-  confirmed one exists) or (c) hiding the fields (loses real
-  information for the series that ARE already correct). Work in
-  bounded batches, same discipline as every other batch skill in this
-  project -- pick a reasonable batch size and stop-and-report, don't
-  try to clear all ~195 in one sitting.
+  -- root cause found 2026-09-08, batch 1 done 2026-09-11 (19 of ~200
+  series fixed so far).** `status` defaults to `'ongoing'` whenever
+  Hardcover's `is_completed` flag isn't explicitly `true` (including
+  simply missing data); `book_count` is Hardcover's raw per-series
+  edition/omnibus/box-set count, not a curated mainline-installment
+  number. Doesn't affect scoring at all (neither field is read by
+  `scripts/recommend.py`) -- purely a `tools/catalog-review/` display
+  bug, so no urgency pressure, but real and visible to anyone browsing
+  the tool. **Approach**: manually verify+fix the most-viewed/
+  highest-profile series first (real publication status via search,
+  never a guess), in bounded batches, stop-and-report each time.
+  **Batch 1 (2026-09-11)**: ranked candidates by our own catalog's
+  book-count-per-series (the available proxy for "highest-profile,"
+  since no direct popularity metric exists on `series` or via
+  Hardcover) -- top 15 by that ranking, all 15 verified via live search
+  before any value was written. 14 needed a real fix (6 completed
+  series wrongly marked ongoing: The Demon Cycle, Powder Mage, The
+  Lunar Chronicles, The Licanius Trilogy, The Red Queen's War, Arc of a
+  Scythe, Ender's Saga; 7 wrong `book_count` on genuinely-ongoing
+  series: Bobiverse, Red Rising Saga, The Murderbot Diaries, A Song of
+  Ice and Fire, The Kingkiller Chronicle, Crescent City, Dungeon
+  Crawler Carl). 1 (A Court of Thorns and Roses) was already correct.
+  Migration `20260911190000_fix_series_status_book_count_batch1.sql`.
+  Full detail, including one real search-reliability catch (an initial
+  Ender's Saga search returned internally contradictory/unreliable
+  results, re-verified with a cleaner query before trusting it), in
+  project-log.md's 2026-09-11 "series.status/book_count fix, batch 1"
+  entry. **Next**: re-rank remaining ~181 series by catalog book count
+  (excluding all 19 now-fixed) for batch 2 -- don't reuse this
+  session's candidate list, it's now stale.
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also
