@@ -296,10 +296,19 @@ worth deferring to a later session rather than batching in for
   captured in any tracked migration or seed file, so a from-scratch
   local bootstrap fails regardless of this migration -- see
   project-log.md's two 2026-09-09 entries on this). Accepted as a known
-  gap for this migration; not blocking. **Next**: Steps 2-4 (fresh
-  overlap re-check, backfill, delete old trope data) -- not yet started,
-  still needs its own delegated session per the skill's bounded-step
-  discipline (don't chain steps in one sitting).
+  gap for this migration; not blocking.
+  **Steps 2-3 done 2026-09-11** -- fresh overlap re-check found the same
+  5 dual-tagged books as the 2026-09-09 snapshot (no new ones appeared),
+  backfill applied and verified on hosted: `romance_tone` 160/864
+  non-null (80 understated, 79 melodramatic, 1 mixed), `worldbuilding_
+  delivery` 117/864 non-null (66 woven, 50 exposition_dump, 1 mixed).
+  `book_field_confidence` backfilled for every touched book. Old
+  `book_tropes` rows (282 across the 4 trope IDs) deliberately left in
+  place -- not Step 4. **Next**: Step 4 (delete the old trope rows +
+  the 4 trope vocabulary entries) -- explicitly gated on a live,
+  direct go-ahead from the repo owner in the main conversation, not
+  just the project's file-based PENDING_APPROVALS.md gate (CLDA's own
+  stricter standing rule for this machine, 2026-09-11). Not started.
 
 ## P2 (ongoing/routine, not new decisions)
 

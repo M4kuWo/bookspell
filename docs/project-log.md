@@ -9583,3 +9583,91 @@ live channel exists between the two sessions, so this is file-based and
 asynchronous: CLDA writes the request and stops, tells the user
 directly so they know to bring it to CLDO, and CLDO checks the file at
 the start of every repo sync.
+
+## 2026-09-11: ran Steps 2-3 of the romance_tone/worldbuilding_delivery
+skill -- overlap cases re-verified fresh, both fields backfilled from
+existing trope data, stopped before Step 4
+
+Executed Steps 2 and 3 (only) of
+`.claude/skills/convert-romance-worldbuilding-fields/SKILL.md`, with
+live, direct repo-owner authorization for exactly these two steps in
+the same conversation -- Step 4 (deleting the old `book_tropes` rows
+and the 4 trope vocabulary entries) was explicitly out of scope and was
+not touched, per that same authorization; the file-based
+`PENDING_APPROVALS.md` gate was not the operative mechanism here since
+a live channel existed, and the file was not touched either.
+
+**Step 2 (fresh overlap re-query against hosted, not trusting the
+skill doc's 2026-09-09 snapshot)**: re-ran both overlap queries exactly
+as written in the skill. Result: the SAME 5 dual-tagged books the doc
+already listed -- the tagging sweep has not produced any new
+dual-tagged book in either pair in the two days since the doc was
+written. Full list, with the resolution rule (higher-confidence side
+wins on a mismatch; genuine ties become `mixed`) applied exactly as
+specified:
+
+| Book | Author | Pair | Confidences | Resolution |
+|---|---|---|---|---|
+| Sword of Destiny | Andrzej Sapkowski | romance | understated 0.6 / melodramatic 0.6 (tied) | `mixed`, confidence 0.6 |
+| A Master of Djinn | P. Djèlí Clark | worldbuilding | woven 0.6 / exposition_dump 0.2 | `woven`, confidence 0.6 (higher side wins) |
+| Gideon the Ninth | Tamsyn Muir | worldbuilding | woven 0.6 / exposition_dump 0.2 | `woven`, confidence 0.6 (higher side wins) |
+| Homeland | R. A. Salvatore | worldbuilding | woven 0.6 / exposition_dump 0.2 | `woven`, confidence 0.6 (higher side wins) |
+| Mistborn: The Final Empire | Brandon Sanderson | worldbuilding | woven 0.2 / exposition_dump 0.2 (tied) | `mixed`, confidence 0.2 |
+
+No confidence ties looked like copy-paste duplicates (each pair of
+tagging events came from separate tagging passes per `book_tropes`
+timestamps), so no case needed a stop-and-ask beyond the standard rule.
+
+**Step 3 (backfill)**: for every book with exactly one of a pair's two
+tropes, a direct 1:1 `update ... where book_id in (... except ...)`
+mapping; the 5 overlap cases above got one title/author-scoped `UPDATE`
+each (never a raw UUID), applying Step 2's resolution. Also backfilled
+`book_field_confidence` for every book touched (`source = 'ai_inferred'`,
+confidence = the value carried over per the table above), idempotently
+(`on conflict (book_id, field_name) do nothing`).
+
+Tested the entire backfill (updates + confidence inserts, including a
+second re-run to confirm idempotency) in a rolled-back transaction
+against hosted first. Saved as
+`supabase/migrations/20260911100000_backfill_romance_worldbuilding_fields.sql`,
+applied for real via `supabase db push --db-url` (percent-encoded
+password; `supabase link`/`-p` not set up in this environment, same as
+Step 1). `supabase migration list --db-url` confirms every entry has a
+matching `local`/`remote` pair, including this new version -- no gaps,
+no duplicate-timestamp collisions found (`ls supabase/migrations/ |
+sort | uniq -c -w14` clean before pushing).
+
+Local apply was skipped -- this sandbox's local Supabase stack has a
+known, already-documented structural bootstrap gap (see this file's two
+earlier 2026-09-09 "confirmed the local-bootstrap gap is structural"
+entries); proceeded hosted-only, same as Step 1.
+
+**Verification on hosted, post-apply**:
+- `romance_tone` non-null count: 160, exactly matching the distinct
+  (union, not sum) book count from `book_tropes` across
+  `understated_romance`/`melodramatic_romance_subplot` (81 + 80 raw
+  tags, 160 distinct books -- Sword of Destiny's dual tag collapses to
+  one).
+- `worldbuilding_delivery` non-null count: 117, exactly matching the
+  distinct book count from `book_tropes` across
+  `worldbuilding_woven_into_narrative`/`worldbuilding_via_exposition_dump`
+  (67 + 54 raw tags, 117 distinct books -- the 4 dual-tagged books each
+  collapse to one).
+- All 5 overlap cases individually spot-checked: each book_dna row
+  holds exactly the resolved value from the table above, and no other
+  field on that row was touched.
+- `book_field_confidence` has a `romance_tone`/`worldbuilding_delivery`
+  row (source `ai_inferred`) for every one of the 160/117 books --
+  zero touched books found missing a confidence row.
+- `book_tropes` and `tropes` were NOT touched: 282 rows (81+80+67+54)
+  still present for the 4 trope IDs, all 4 vocabulary entries still in
+  `tropes`. Step 4 was not run.
+
+Migration file and this log entry left unstaged/uncommitted for the
+main conversation to review and commit; `docs/TODO.md` and
+`docs/PENDING_APPROVALS.md` were deliberately not touched by this
+session. Flagging directly, per the skill's own closing instruction:
+the `scripts/recommend.py`/`scripts/scoring_tests.py` changes that make
+`romance_tone`/`worldbuilding_delivery` actually participate in scoring
+are separate, deliberately-not-included work for the main conversation,
+not this skill.
