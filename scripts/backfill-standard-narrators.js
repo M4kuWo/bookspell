@@ -106,11 +106,23 @@ function normalizeName(name) {
   return name.trim().replace(/\s+/g, ' ');
 }
 
+// Not real names -- Hardcover placeholder values some crowd-sourced
+// editions use instead of actually crediting anyone (confirmed on Harry
+// Potter and the Philosopher's Stone's "full cast" and The Hobbit's
+// "Ensemble Cast" entries, neither of which names an actual person).
+const PLACEHOLDER_NARRATOR_NAMES = new Set(['full cast', 'ensemble cast', 'various', 'unknown', 'cast', 'multiple narrators', 'various narrators']);
+
+// Confirmed via search 2026-09-11: an explicitly unofficial, free fan
+// recording (Phil Dragash's Lord of the Rings, started 2010, distributed
+// on Internet Archive/Podbean, not a licensed commercial release) --
+// out of scope for a catalog of real commercial audiobook editions.
+const NON_COMMERCIAL_NARRATOR_NAMES = new Set(['Phil Dragash']);
+
 function narratorSet(edition) {
   const names = (edition.cached_contributors || [])
     .filter((c) => c.contribution === 'Narrator')
     .map((c) => c.author?.name && normalizeName(c.author.name))
-    .filter(Boolean);
+    .filter((n) => n && !PLACEHOLDER_NARRATOR_NAMES.has(n.toLowerCase()) && !NON_COMMERCIAL_NARRATOR_NAMES.has(n));
   // dedupe + stable order for grouping key
   return [...new Set(names)].sort();
 }
@@ -121,7 +133,7 @@ function narratorSet(edition) {
 // 'standard' pool as a spurious extra "narrator group". A large named
 // cast (dramatized work) or an explicit GraphicAudio-style publisher name
 // are both strong, cheap signals; use either to exclude.
-const DRAMATIZED_PUBLISHER_HINTS = ['graphicaudio', 'l.a. theatre works', 'big finish'];
+const DRAMATIZED_PUBLISHER_HINTS = ['graphicaudio', 'l.a. theatre works', 'big finish', 'radio productions', 'radio drama'];
 
 // Recurring cast members of specific known full-cast dramatized productions
 // that slip past the publisher/narrator-count filters because Hardcover only
