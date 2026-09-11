@@ -133,7 +133,7 @@ function narratorSet(edition) {
 // 'standard' pool as a spurious extra "narrator group". A large named
 // cast (dramatized work) or an explicit GraphicAudio-style publisher name
 // are both strong, cheap signals; use either to exclude.
-const DRAMATIZED_PUBLISHER_HINTS = ['graphicaudio', 'l.a. theatre works', 'big finish', 'radio productions', 'radio drama'];
+const DRAMATIZED_PUBLISHER_HINTS = ['graphicaudio', 'l.a. theatre works', 'big finish', 'radio productions', 'radio drama', 'radio theatre', 'tyndale entertainment'];
 
 // Recurring cast members of specific known full-cast dramatized productions
 // that slip past the publisher/narrator-count filters because Hardcover only
@@ -151,7 +151,15 @@ function isLikelyDramatized(edition, narrators) {
   if (narrators.length > 4) return true;
   if (narrators.some((n) => KNOWN_ENSEMBLE_SIGNATURE_NARRATORS.includes(n))) return true;
   const pub = (edition.publisher?.name || '').toLowerCase();
-  return DRAMATIZED_PUBLISHER_HINTS.some((hint) => pub.includes(hint));
+  if (DRAMATIZED_PUBLISHER_HINTS.some((hint) => pub.includes(hint))) return true;
+  // BBC's classic-literature/genre audio catalog is almost exclusively
+  // full-cast radio dramatisations when 2+ people are credited (confirmed
+  // via search 2026-09-11: Left Hand of Darkness/Earthsea's "BBC Radio 4
+  // Full-Cast Dramatisation"). A single BBC-credited narrator is a real
+  // standard reading (e.g. Brave New World/Peter Firth) and is NOT
+  // excluded by this rule.
+  if (narrators.length >= 2 && /\bbbc\b/.test(pub)) return true;
+  return false;
 }
 
 function groupEditionsByNarratorSet(editions) {
