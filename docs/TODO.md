@@ -336,40 +336,49 @@ worth deferring to a later session rather than batching in for
   external producer's own release calendar -- fold into whenever
   Step A2 work happens to touch these series anyway, not a reason to
   open a dedicated session on its own.
-- [ ] **Continue the romance_tone/worldbuilding_delivery tagging
-  sweep** -- as of 2026-09-07 end-of-session: romance_tone batch 19,
-  worldbuilding-delivery batch 16 done (~136 romance_tone candidates
-  and ~399 worldbuilding candidates remain). **Worldbuilding-delivery
-  update, 2026-09-09: batch 19 done, 395 worldbuilding candidates
-  remain** (see project-log.md's 2026-09-09 "worldbuilding_delivery
-  sweep batch 19" entry) -- cut short by that session's web search cap
-  after only 20 of a planned 30+ candidates got a real search attempt
-  (5 tagged: 3 `worldbuilding_woven_into_narrative`, 2
-  `worldbuilding_via_exposition_dump`); a lower hit rate than recent
-  batches (5/20 vs. the usual ~5-6/6-8), though likely explained by
-  this batch's series-heavy candidate mix (ASOIAF, Wheel of Time,
-  Dresden Files all yielded real-but-too-generic discourse, not clean
-  delivery-mechanism-specific evidence) rather than confirmed pool
-  depletion -- worth watching over the next batch or two, not yet a
-  process change. Remember the mandatory density self-check (CLAUDE.md)
-  before ending any batch session.
-  **Batch 20 attempted 2026-09-09, zero progress: the session's web
-  search budget was already fully exhausted (200 of 200 used) before a
-  single candidate could be researched** -- see project-log.md's
-  2026-09-09 "worldbuilding_delivery sweep batch 20" entry. No tags
-  applied, no migration, pool still 395. The prepared 40-title candidate
-  list (Clockwork Angel through Feet of Clay) is ready for the next
-  session to actually search against; two author-contamination/exact-
-  title-string notes were logged for whoever picks it up (Doomsday
-  Book's stored author includes cover illustrator Daniel Dos Santos;
-  "Dawn " has a trailing space and Emily Wilde's Map of the Otherlands
-  uses a curly apostrophe in its stored title).
-  **For romance_tone specifically, default to a broad search + targeted
-  follow-up per candidate (not a single search)** -- see
-  project-log.md's 2026-09-07 session-wrap-up entry: the easy,
-  heavily-reviewed candidate pool is depleting, single searches are
-  increasingly landing nothing usable or (once, caught) misattributing
-  a quote to the wrong romance pairing in a book with more than one.
+- [ ] **SUPERSEDED 2026-09-11 -- the mechanism this item describes no
+  longer exists, read before touching.** This item used to track
+  continuing to tag books with the `understated_romance`/
+  `melodramatic_romance_subplot`/`worldbuilding_woven_into_narrative`/
+  `worldbuilding_via_exposition_dump` trope pairs (a ~136/~395-candidate
+  backlog as of 2026-09-09, see history below). **Those 4 trope IDs and
+  all their `book_tropes` rows were permanently deleted 2026-09-11**
+  (Step 4 of `convert-romance-worldbuilding-fields`, see
+  project-log.md's 2026-09-11 "Step 4" entry and the main TODO's P1
+  entry above) -- the probe validated, the data was converted into real
+  `book_dna.romance_tone`/`worldbuilding_delivery` scalar columns, and
+  the old trope-tagging path is gone by design (re-tagging either trope
+  would fail: the vocabulary entries don't exist anymore).
+  **Any future sweep continuing this work must write directly to the
+  scalar columns** (values: `understated`/`melodramatic`/`mixed` for
+  romance_tone, `woven`/`exposition_dump`/`mixed` for
+  worldbuilding_delivery -- see the skill doc's schema decision and
+  resolution rule for ties) via a new, small migration per batch, not
+  `book_tropes` inserts. The old ~136/~395 candidate-pool estimates
+  below are stale too -- they were sized against trope-tagging
+  candidates and haven't been re-evaluated against the scalar-field
+  target. Whoever picks this up should re-scope it as a fresh item
+  before resuming, not just swap the target column in the old process.
+  **Original history, kept for candidate-research context only (search
+  findings/quotes already gathered may still be reusable)**: as of
+  2026-09-07 end-of-session, romance_tone batch 19, worldbuilding-
+  delivery batch 16 done (~136 romance_tone candidates and ~399
+  worldbuilding candidates remained under the old trope process).
+  Worldbuilding-delivery batch 19 (2026-09-09) tagged 5 more (3 woven, 2
+  exposition_dump) before hitting that session's web search cap: 395
+  remained. Batch 20 (2026-09-09) made zero progress -- session's web
+  search budget was already exhausted before a single candidate could
+  be researched; a prepared 40-title candidate list (Clockwork Angel
+  through Feet of Clay) was left ready for the next session, along with
+  two author-contamination/exact-title-string notes (Doomsday Book's
+  stored author includes cover illustrator Daniel Dos Santos; "Dawn "
+  has a trailing space and Emily Wilde's Map of the Otherlands uses a
+  curly apostrophe in its stored title) that remain valid regardless of
+  which mechanism tags them. For romance_tone specifically, a broad
+  search + targeted follow-up per candidate (not a single search) was
+  the working approach -- see project-log.md's 2026-09-07 session-wrap-
+  up entry: the easy, heavily-reviewed candidate pool was already
+  depleting, single searches were increasingly landing nothing usable.
 - [x] **Catalog tagging completion -- FULLY DONE as of 2026-09-09.** 871
   books total (2 down from 873 -- see next paragraph), **861 tagged,
   10 untagged and all 10 are confirmed permanent exceptions** -- no
