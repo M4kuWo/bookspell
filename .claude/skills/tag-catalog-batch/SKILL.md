@@ -68,6 +68,39 @@ a value not listed there. If you think a real gap exists in the
 vocabulary (a trope or value that should exist but doesn't), don't
 silently work around it -- note it in your final report instead.
 
+## Step 1.5: verify this skill still matches the live schema -- mandatory, every invocation
+
+**Don't skip this because "the schema probably hasn't changed."** Real,
+already-happened example (2026-09-12): this skill's own mandatory
+`book_dna` column list (Step 3 below) silently fell a full column pair
+behind the real schema for a full day after `romance_tone`/
+`worldbuilding_delivery` landed, and its Step 0 described a mechanism
+(inserting into `book_tropes`) that had been deleted the same day the
+fields landed -- following the skill as-written would have either
+silently under-tagged every book in the batch or failed outright. This
+is now a standing CLAUDE.md rule ("Data quality / tagging"), and this
+step is the mechanical enforcement of it.
+
+Run this once, before tagging anything:
+
+```sql
+select column_name from information_schema.columns
+where table_name = 'book_dna'
+order by column_name;
+```
+
+Compare the result against Step 3's mandatory column list below (plus
+`book_id`, `genre`, and the 5 excluded Tier B audiobook columns). If a
+live column isn't on that list, or a listed column no longer exists:
+**stop and fix Step 3's list (and this skill's other affected sections,
+and the example INSERT) before tagging a single book** -- don't tag a
+batch against a list you already know is stale, and don't silently work
+around the mismatch by improvising what to do with the new column.
+Flag it to the repo owner in your report either way, even after fixing
+it yourself, since a live schema/skill mismatch this large usually means
+`docs/schema/book-dna.schema.yaml`/`book-dna.md` need the same fix (see
+the CLAUDE.md rule above).
+
 ## Step 0: PRIORITY BATCH -- romance_tone/worldbuilding_delivery backfill sweep (updated 2026-09-12 -- now scalar book_dna columns, not tropes)
 
 **This takes priority over everything below, including the romance_driven

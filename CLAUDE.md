@@ -169,6 +169,26 @@ repo) so it's discoverable from either side.
 
 ## Data quality / tagging
 
+- **A `book_dna` schema change (new/removed/changed column) is not done
+  until `docs/schema/book-dna.schema.yaml`, `docs/schema/book-dna.md`,
+  AND `.claude/skills/tag-catalog-batch/SKILL.md` (its mandatory-column
+  list, example INSERT, and any field-specific tagging guidance) are all
+  updated in the same session as the migration** — not left for someone
+  else to notice later. Real, already-happened example (2026-09-12):
+  `romance_tone`/`worldbuilding_delivery` landed as real columns
+  2026-09-11, but the schema docs were never touched (schema.yaml had no
+  entry for either field at all) and the tagging skill still described
+  them as tropes to insert into `book_tropes` — tropes whose vocabulary
+  entries had been deleted the same day, so following the skill literally
+  would have failed outright on the very first insert. **Before running
+  `tag-catalog-batch`, independent of whether you trust the rule above
+  was followed**: check the skill's mandatory `book_dna` column list
+  against the table's actual live columns (`select column_name from
+  information_schema.columns where table_name = 'book_dna'`) — if they
+  don't match, fix the skill first, don't tag a batch against a stale
+  list (a batch tagged with a missing mandatory column is the same
+  silent-partial-insert failure mode the skill already warns about for
+  every other field).
 - Every Book DNA field is a **closed, controlled vocabulary** — never
   invent a value not listed in `docs/schema/book-dna.schema.yaml`. If a
   real gap exists, that's a schema change to propose, not a value to
