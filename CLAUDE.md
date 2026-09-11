@@ -12,6 +12,26 @@ cross-cutting task backlog — mutable, not append-only) before making
 non-trivial changes — don't re-litigate decisions already made there,
 and check `docs/TODO.md` before picking your own next task.
 
+**Active handoff note (2026-09-11, remove once acted on)**: if you're
+CLDA, the repo owner has two tasks ready for you, both fully specified
+in `docs/TODO.md` (P2 section) — no need to ask what to do, just read
+them there. Either order, or run both as separate tracks:
+1. **`series.status`/`book_count` fix** — the approach is already
+   decided (verify+fix the highest-profile series first via real
+   search, same standard as the 5 already done), work in bounded
+   batches, don't try to clear all ~195 in one sitting.
+2. **Shared-universe linking audit** — First Law and Mark Lawrence's 4
+   series are the two known starting cases. One thing to flag rather
+   than decide yourself: Mark Lawrence's shared world has no official
+   name the way Cosmere does, so you'll hit a real naming-policy
+   question partway through — surface it, don't invent a name
+   unilaterally.
+
+Neither touches `scripts/recommend.py`/`scripts/scoring_tests.py`
+(CLDO's romance_tone/worldbuilding_delivery scoring work, landed
+2026-09-11, is unrelated and already done) or anything CLDA worked on
+this week, so no coordination conflict either way.
+
 ## Persona system
 
 Two named, standing personas exist for this project (added 2026-09-10),
