@@ -292,6 +292,23 @@ async function analyzeBook(bookRow) {
   groups = mergeSubsetGroups(groups);
   groups = mergeTypoVariantGroups(groups);
 
+  // Drop groups with genuinely no corroborating signal at all (zero
+  // Hardcover users, no publisher, only one crowd-sourced edition record).
+  // Confirmed 2026-09-11 on a diverse sample of ~20 books across multiple
+  // rounds of review (Name of the Wind, Hitchhiker's Guide, Foundation,
+  // Iron Flame, Time Traveler's Wife, and more) that a low/zero-signal
+  // group is almost always a REAL edition once dramatized/typo/subset/
+  // placeholder noise is filtered out -- but a group with absolutely
+  // nothing corroborating it (no users, no publisher) is a step further
+  // than "unpopular," it's "unverifiable," and isn't safe to insert
+  // without evidence either way.
+  groups = groups.filter((g) => {
+    const totalUsers = g.editions.reduce((s, e) => s + (e.users_count || 0), 0);
+    const hasPublisher = g.editions.some((e) => e.publisher?.name);
+    return totalUsers > 0 || hasPublisher || g.editions.length > 1;
+  });
+  if (groups.length === 0) return { book: bookRow, status: 'no_narrator_data', groups: [] };
+
   const resolved = groups.map((g) => {
     const rep = pickRepresentative(g.editions);
     return {
@@ -304,15 +321,18 @@ async function analyzeBook(bookRow) {
     };
   });
 
-  // Flag only genuinely ambiguous multi-group cases. Two DIFFERENT named
-  // groups (after typo-variant merging above already collapsed same-person
-  // spelling noise) are treated as 'ok' regardless of low users_count --
-  // confirmed 6/6 on manual verification that a low-popularity second
-  // group is almost always a real distinct edition (UK/US market,
-  // abridged/unabridged, older release), not noise. 3+ surviving distinct
-  // groups is a different, harder problem (usually a public-domain classic
-  // with many real historical narrations) that still needs a human pick.
-  const status = resolved.length > 2 ? 'flag_too_many_groups' : 'ok';
+  // Flag only genuinely extreme multi-group cases. Verified via direct
+  // search across ~20 books in 2026-09-11 review rounds (Name of the
+  // Wind, Foundation, Iron Flame, Time Traveler's Wife, and more) that
+  // 2-4 distinct named groups are consistently REAL editions once
+  // dramatized/typo/subset/placeholder/unverifiable-signal noise is
+  // filtered out -- not noise, and not something that needs an individual
+  // human pick. 5+ surviving groups is where it's actually a public-
+  // domain classic with many genuine historical narrations (Frankenstein:
+  // 12, Dr Jekyll and Mr Hyde: 8, Fahrenheit 451: 6) -- that volume still
+  // benefits from a human sanity check before bulk-inserting, so it stays
+  // flagged.
+  const status = resolved.length > 4 ? 'flag_too_many_groups' : 'ok';
 
   return { book: bookRow, status, groups: resolved };
 }
