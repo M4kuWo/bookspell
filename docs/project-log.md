@@ -10413,3 +10413,39 @@ Asimov as confirmed-positive; Gaiman and Elantris were bonus findings
 outside the original 6-candidate batch). Stephen King specifically
 flagged as a strong next candidate given today's new cameo-vs-
 structural-connection distinction.
+
+## 2026-09-11 (later still): shared-universe audit, Stephen King checked -- confirmed NOT connected, no action
+
+Repo owner asked to continue with Stephen King specifically, the
+strongest-flagged next candidate from batch 2 (Holly Gibney recurs as
+an actual protagonist across several King novels, a real structural
+pattern distinct from Dark Tower's cameo-tier connections to his wider
+catalog). Checked our actual catalog scope first: `Holly Gibney`
+(only "If It Bleeds" -- position 2, no book 1), `The Dark Tower` (all
+8 core books), `The Green Mile` (1 book, itself).
+
+Verified all three pairings via search rather than trusting the
+"Holly Gibney is a real recurring protagonist" fact alone to imply a
+connection to the OTHER two candidates specifically:
+
+- **Holly Gibney's continuity is real (Mr. Mercedes -> The Outsider ->
+  If It Bleeds -> Holly) but explicitly separate from the Dark Tower**
+  -- described directly as its own, smaller branch of King's wider
+  mythology: grounded, crime-focused, "few supernatural elements,"
+  contrasted specifically against Dark Tower's scale. Confirmed NOT
+  merged the way Asimov's Foundation/Robot are.
+- **The Green Mile's Dark Tower connection is confirmed purely
+  thematic/symbolic** (a "white vs. black force" parallel drawn by
+  fans/scholars) -- explicitly "no direct link... as there is with,
+  say, Salem's Lot," and no shared characters. Exactly the cameo tier
+  already ruled out for Gaiman.
+- **If It Bleeds' own real connection (to The Outsider/Mr. Mercedes) is
+  moot for this catalog** -- neither of those books exists here at
+  all, so there's nothing in our current catalog to link Holly Gibney
+  to, real continuity or not.
+
+**No universe built. All three stay as separate, unlinked series** --
+a confirmed-negative result, logged so King isn't re-investigated on
+this same basis later. No migration this entry.
+
+**46 authors remain** on the original 51-author audit list.

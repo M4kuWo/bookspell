@@ -411,20 +411,30 @@ worth deferring to a later session rather than batching in for
   in project-log.md's 2026-09-11 "shared-universe audit, batch 2"
   entry.
 
-  **47 authors remain** (51 minus Sanderson/Jemisin/Le Guin/Asimov this
-  batch resolved -- Gaiman and the Elantris fix were bonus findings
-  outside the original 6-candidate research set). **Next**: **Stephen
-  King is the strongest flagged candidate** -- Holly Gibney recurs as
-  an actual protagonist across several of his novels (Mr. Mercedes
-  trilogy, The Outsider, If It Bleeds, Holly), a real structural case
-  distinct from the Dark Tower's cameo-tier connections to his wider
-  catalog -- not yet verified, check specifics (does Holly Gibney
-  actually appear/matter in the specific books our catalog has: Holly
-  Gibney, The Dark Tower, The Green Mile?) before linking anything.
-  Same caution applies to every remaining candidate -- George R.R.
-  Martin's Song of Ice and Fire/Dunk-and-Egg/Targaryen History and
-  Robert Jackson Bennett's Divine Cities/Founders Trilogy/Ana and Din
-  Mysteries are other plausible next picks, none verified yet.
+  **Stephen King checked 2026-09-11, confirmed NOT connected -- no
+  action.** Our catalog only has `Holly Gibney` ("If It Bleeds," no
+  book 1), `The Dark Tower` (all 8 core books), `The Green Mile` (1
+  book). Verified via search: Holly Gibney's continuity (Mr. Mercedes
+  -> The Outsider -> If It Bleeds -> Holly) is real but explicitly a
+  SEPARATE, smaller branch of King's mythology from the Dark Tower
+  (confirmed directly, not the same continuity); The Green Mile's Dark
+  Tower connection is confirmed purely thematic/symbolic, no shared
+  characters, same cameo tier already ruled out for Gaiman; and Holly
+  Gibney's own real connection is to books (The Outsider, Mr. Mercedes)
+  that aren't in our catalog at all, so there's nothing to link her to
+  here regardless. All 3 stay separate, unlinked series. Full detail in
+  project-log.md's 2026-09-11 "Stephen King checked" entry.
+
+  **46 authors remain.** Same verify-before-linking caution applies to
+  every one -- George R.R. Martin's Song of Ice and Fire/Dunk-and-Egg/
+  Targaryen History and Robert Jackson Bennett's Divine Cities/
+  Founders Trilogy/Ana and Din Mysteries are plausible next picks,
+  none verified yet. This audit's actual hit rate so far: 2 of 8
+  checked candidates confirmed genuinely connected (Mark Lawrence's
+  Broken Empire+Red Queen's War, Asimov's Foundation+Robot), 6
+  confirmed NOT connected despite surface plausibility -- treat every
+  remaining candidate as more likely a false positive than not until
+  checked.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 
