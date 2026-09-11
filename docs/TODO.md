@@ -334,44 +334,45 @@ worth deferring to a later session rather than batching in for
   with an official name -- no naming-policy decision needed.
 - [ ] **Catalog-wide shared-universe linking audit -- not urgent, but
   needs to be done properly rather than one series at a time -- First
-  Law DONE 2026-09-11, Mark Lawrence blocked on a naming-policy answer,
-  and the audit's own first step found the real scope is 51 authors,
-  not 2.**
+  Law and Mark Lawrence's two universes both DONE 2026-09-11, and the
+  audit's own first step found the real scope is 51 authors, not 2.**
 
-  **First Law -- DONE 2026-09-11.** Built "The First Law World" as a
-  real `universe` row (docs/schema/book-dna.md's own design doc
-  example, never actually implemented until now): `The First Law` and
-  `The Age of Madness` (the two real series) both link via
-  `series.universe_id`, their own series membership untouched; the 3
-  in-catalog standalones (Best Served Cold, The Heroes, Red Country)
-  now link to the universe directly (`series_id = null`) instead of
-  living in the old ad-hoc "First Law World" pseudo-series, which was
-  deleted (confirmed empty and unreferenced first). **Sharp Ends
-  ingested** (bibliographic data only -- Book DNA tagging is a separate
-  follow-up, not done yet), author field verified clean first, links
-  to the universe the same way as the 3 standalones. Migrations
-  `20260911200000_first_law_universe.sql` and
-  `20260911210000_ingest_sharp_ends.sql`. Full detail in
-  project-log.md's 2026-09-11 "shared-universe linking audit" entry.
+  **First Law -- DONE.** Built "The First Law World" as a real
+  `universe` row (docs/schema/book-dna.md's own design doc example,
+  never actually implemented until now): `The First Law` and `The Age
+  of Madness` both link via `series.universe_id`; the 3 in-catalog
+  standalones (Best Served Cold, The Heroes, Red Country) link directly
+  (`series_id = null`) instead of living in the old ad-hoc pseudo-
+  series, which was deleted. **Sharp Ends ingested** (bibliographic
+  data only -- tagging is a separate follow-up, not done yet).
+  Migrations `20260911200000_first_law_universe.sql` and
+  `20260911210000_ingest_sharp_ends.sql`.
 
-  **Mark Lawrence -- blocked on a naming-policy answer from the repo
-  owner, surfaced directly rather than decided unilaterally (per
-  CLDO's explicit handoff-note instruction).** 4 series in this
-  catalog share one continuity: `The Broken Empire` (Prince/King/
-  Emperor of Thorns), `The Red Queen's War` (Prince of Fools and
-  sequels), `Book of the Ancestor` (Red Sister and sequels), and `The
-  Library Trilogy` (only book 1, *The Book That Wouldn't Burn*, is in
-  our catalog so far) -- 10 books, none with `universe_id` set.
-  **There's no single official name for this shared world** (Lawrence
-  hasn't branded it the way Sanderson branded Cosmere) -- needs either
-  a confirmed informal name the author/fandom actually uses, or an
-  accepted repo-chosen descriptive name (e.g. "The Broken Empire
-  World") documented as an internal label, not official. Also: *The
-  Girl and the Stars* (Library Trilogy book 2) isn't in our catalog
-  yet either -- same ingestion gap as Sharp Ends was, not yet done.
-  **Do not proceed on this one without an answer** -- same discipline
-  as Step 4 of the romance/worldbuilding conversion earlier this
-  session, a real judgment call gets a live human answer, not a guess.
+  **Mark Lawrence -- DONE, but as TWO separate universes, not one --
+  a real correction the repo owner caught in this session's own
+  premise.** The original 2026-09-08 note (and this session's initial
+  assumption) wrongly grouped all 4 Lawrence series into one shared
+  world. Corrected: **The Broken Empire + The Red Queen's War** are
+  genuinely the same world (concurrent, same planet, confirmed via
+  search) -- linked as "The Broken Empire World" (the real press/
+  fandom name, "the Broken Empire," would collide with the existing
+  series name of the same name, so used the "World"-suffixed fallback
+  instead). **Book of the Ancestor's real connection is to Book of the
+  Ice** (a different, separate series, NOT to The Broken Empire or The
+  Library Trilogy) -- both set on the planet Abeth, no official branded
+  name beyond that (confirmed via search), so the universe is named
+  "Abeth" directly. Book of the Ice (3 books) wasn't in the catalog at
+  all -- **ingested AND fully tagged** (Book DNA, tropes, content
+  warnings, per tag-catalog-batch/SKILL.md's process; a HIGH_RISK_FIELD
+  catch along the way -- an initial search wrongly claimed book 1 was
+  first-person, a targeted follow-up search corrected it to third-
+  limited). Also corrected a second error: *The Girl and the Stars* is
+  Book of the Ice book 1, not Library Trilogy book 2 as the original
+  note assumed -- the Library Trilogy's real book 2 remains
+  unidentified. Migrations `20260911220000_broken_empire_universe.sql`,
+  `20260911230000_ingest_book_of_the_ice_and_abeth_universe.sql`,
+  `20260911240000_tag_book_of_the_ice.sql`. Full detail across two
+  2026-09-11 project-log.md entries.
 
   **The audit's own first step (done 2026-09-11) found the real
   scope**: grouped the whole catalog by author and checked every
@@ -383,11 +384,13 @@ worth deferring to a later session rather than batching in for
   multi-session effort, not something to guess at scale or silently
   drop. **Next**: pick a small batch from the 51 (start with the most
   clear-cut, well-documented real crossovers -- e.g. Brandon
-  Sanderson's Cosmere-adjacent series already partially handled,
-  George R.R. Martin's Song of Ice and Fire/Dunk-and-Egg/Targaryen
-  History, N.K. Jemisin's Broken Earth-adjacent titles are plausible
-  early candidates, not yet verified) once Mark Lawrence's naming
-  question is resolved and there's appetite for more of this audit.
+  Sanderson's remaining Cosmere-adjacent series, George R.R. Martin's
+  Song of Ice and Fire/Dunk-and-Egg/Targaryen History, N.K. Jemisin's
+  Broken Earth-adjacent titles are plausible early candidates, none
+  verified yet -- **this session's own two corrections are a direct
+  warning against assuming any of these without checking first**,
+  Mark Lawrence looked just as obviously "one shared world" at first
+  glance too).
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 

@@ -10245,3 +10245,98 @@ this session; see the next log entry once an answer comes back.
 **Not started**: triaging the other 49 authors on the audit list, and
 Sharp Ends' own Book DNA tagging pass. Both logged as real, separate
 follow-ups in docs/TODO.md, not silently dropped.
+
+## 2026-09-11 (later still): Mark Lawrence's shared universes resolved -- a real correction to this audit's own premise, plus Book of the Ice ingested and tagged
+
+Repo owner answered the surfaced naming question directly, and in doing
+so corrected a real error in this audit's own research: the original
+2026-09-08 TODO note (and this session's own initial assumption) had
+Book of the Ancestor sharing a universe with The Broken Empire/The Red
+Queen's War. **Wrong** -- The Broken Empire and The Red Queen's War are
+genuinely the same world (concurrent timelines, same planet, different
+locations, confirmed via search as officially "the Broken Empire," with
+overlapping characters), but Book of the Ancestor's real connection is
+to a separate series, Book of the Ice, set on a different planet
+(Abeth) -- confirmed directly by the repo owner, who has read the
+books. Exactly the kind of "confidently wrong on a specific checkable
+detail" failure this project's own standing policy warns about, caught
+here by asking before executing rather than after.
+
+**Universe 1 -- The Broken Empire World (6 books, both real series)**:
+linked The Broken Empire and The Red Queen's War via series.universe_id.
+Naming: "the Broken Empire" is the real press/fandom name for this
+world, but using that exact string would collide with the existing
+"The Broken Empire" series name already in this catalog -- used "The
+Broken Empire World" instead (repo owner's own fallback), same "World"
+suffix pattern as First Law. Migration
+`20260911220000_broken_empire_universe.sql`.
+
+**Universe 2 -- Abeth (Book of the Ancestor + Book of the Ice)**: no
+official branded name exists for this shared setting beyond the
+planet's own name (confirmed via search -- informally "the Abeth
+universe"), so named it "Abeth" directly per the repo owner's own
+suggestion. Book of the Ice (3 books: The Girl and the Stars/The Girl
+and the Mountain/The Girl and the Moon) wasn't in the catalog at all --
+repo owner asked for it to be added AND tagged specifically so this
+connection could be made properly, rather than leaving Book of the
+Ancestor unlinked with no real partner series in-catalog.
+
+**Also corrected a second real error found during this**: the original
+audit note claimed *The Girl and the Stars* was Library Trilogy book 2.
+Verified via search: it's actually Book of the Ice book 1 -- a
+different book entirely. The Library Trilogy's real book 2 remains
+unidentified.
+
+**Ingested all 3 Book of the Ice books** (bibliographic data, author
+field verified clean first) and **fully tagged them** per
+tag-catalog-batch/SKILL.md's process. Research grounding on the
+HIGH_RISK_FIELDS, not pattern-matched: an initial general search on
+book 1's POV claimed first-person; a more targeted follow-up search
+(checking pronoun usage specifically) corrected this to third-person
+limited, single POV -- caught exactly the failure CLAUDE.md's
+HIGH_RISK_FIELDS policy exists for, on the very book this policy was
+being actively applied to. Confirmed via search that books 2-3 expand
+to multiple POV (Yaz plus at least Thurin and a third character named
+inconsistently across sources as "Quell"/"Quina") -- `pov_count: few`
+for both, with real residual naming uncertainty flagged via
+`book_field_confidence` rather than asserted as fully certain. Also
+confirmed via search: "bleak and vicious" tone escalating across the
+trilogy, no explicit sexual content across any of Lawrence's series,
+found-family/self-discovery themes, and (for book 3 specifically) a
+"self_contained," genuinely satisfying trilogy conclusion rather than
+requires_series.
+
+Fields without direct research evidence were reasoned from the
+well-evidenced fields and flagged via `book_field_confidence` at 0.5
+where genuinely uncertain, not asserted as equally solid -- per this
+project's confidence-layer convention. Density self-check passed: 5.0
+tropes/book and 2.67 content-warnings/book for this batch vs. the
+catalog's live average of 5.45/1.73.
+
+**A real idempotency bug caught before applying anything**: the
+`book_dna`/`book_tropes`/`book_content_warnings` inserts initially had
+no `on conflict` guard (tag-catalog-batch's own example migration
+doesn't need one, since it's normally run once per book, never
+re-run) -- but this migration's own rolled-back-transaction test
+re-run (CLAUDE.md's standing testing convention) surfaced a real
+`UniqueViolation` on the second pass. Added `on conflict (book_id) do
+nothing` / `on conflict (book_id, trope_id) do nothing` / `on conflict
+(book_id, warning_id) do nothing` to all three, re-tested clean.
+Migration `20260911240000_tag_book_of_the_ice.sql`.
+
+Also opportunistically fixed Book of the Ancestor's own
+`series.status`/`book_count` (was `ongoing`/7, should be `completed`/3,
+confirmed via search) while already touching that row for the universe
+link -- same display bug as docs/TODO.md's separate catalog-wide fix
+item, no reason to leave it wrong for that item's own future batch to
+rediscover.
+
+`books` 875 -> 878, `book_dna` 864 -> 867, `universe` 3 -> 5 (First Law
+World, The Broken Empire World, Abeth all real now, alongside Cosmere/
+Middle-earth). All 4 migrations from this entry tested in rolled-back
+transactions (with genuine idempotency re-runs, not just a single
+pass), applied via `supabase db push`, verified live on hosted, zero
+migration-tracking mismatches throughout.
+
+**Still open**: the other 49 authors on the shared-universe audit list,
+untouched by this session -- a real, separate, multi-session effort.
