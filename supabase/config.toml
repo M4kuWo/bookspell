@@ -235,13 +235,19 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# Restored to the hosted project's actual prior value (2026-09-13) --
+# `supabase config push` had briefly overwritten this along with
+# max_frequency/otp_length/mfa below to this file's stock local-dev
+# defaults as a side effect of pushing the whole file just to change
+# site_url/additional_redirect_urls. Keep this true on hosted; disabling
+# it means new signups skip email verification entirely.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
-max_frequency = "1s"
+max_frequency = "1m0s"
 # Number of characters used in the email OTP.
-otp_length = 6
+otp_length = 8
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
@@ -311,9 +317,11 @@ auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 max_enrolled_factors = 10
 
 # Control MFA via App Authenticator (TOTP)
+# Restored to hosted's prior value (2026-09-13) -- see auth.email's
+# enable_confirmations comment above, same unintended-push side effect.
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]
