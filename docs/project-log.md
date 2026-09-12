@@ -12886,5 +12886,5 @@ didn't attempt a real login-gated pass since the harness already proved
 the actual markup/CSS/collapse behavior). Harness file deleted after
 use, not committed.
 
-Committed as (pending), pushed. Next: another catalog-tagging batch and
+Committed as `6a19e67`, pushed. Next: another catalog-tagging batch and
 the next shared-universe-audit batch, per the repo owner's request.
