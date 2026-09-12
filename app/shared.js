@@ -189,11 +189,17 @@ async function showBookInfo(bookId) {
     const runtime = formatRuntime(e.runtime_minutes);
     if (runtime) metaParts.push(runtime);
     if (e.parts_total) metaParts.push(`Part${e.parts_total > 1 ? 's' : ''} ${e.parts_released ?? '?'}/${e.parts_total}${e.release_status === 'fully_released' ? ' · complete' : ''}`);
+    const castLabel = e.edition_type === 'dramatized_full_cast' ? 'Cast' : 'Narrator(s)';
     return `
       <div class="audiobook-edition">
         <div class="edition-title">${formatEditionType(e.edition_type)}${e.production_company ? ` — ${escapeHtml(e.production_company.trim())}` : ''}</div>
         ${metaParts.length > 0 ? `<div class="edition-meta">${metaParts.join(' · ')}</div>` : ''}
-        ${e.narrators && e.narrators.length > 0 ? `<div class="dna-chips">${e.narrators.map((n) => `<span class="dna-chip">${escapeHtml(n)}</span>`).join('')}</div>` : ''}
+        ${e.narrators && e.narrators.length > 0 ? `
+          <details style="margin-top:6px;">
+            <summary style="cursor:pointer; font-size:0.78rem; font-weight:600; color:var(--ink-soft);">${castLabel} (${e.narrators.length})</summary>
+            <div class="dna-chips" style="margin-top:6px;">${e.narrators.map((n) => `<span class="dna-chip">${escapeHtml(n)}</span>`).join('')}</div>
+          </details>
+        ` : ''}
       </div>
     `;
   }).join('');

@@ -12816,3 +12816,75 @@ sections, unchanged in priority by today's work):
   pieces the repo owner happened to test live) would be worth doing
   once, to catch anything that slipped through code-review-only
   verification.
+
+## 2026-09-13 -- confirmed audiobook-edition data model, backfilled missing GraphicAudio/BBC cast lists, made cast collapsible in the app
+
+Mathias asked two direct questions about the audiobook edition data: (1)
+do we store GraphicAudio/BBC full-cast lists, not just standard-edition
+narrators, and (2) when a book has genuinely multiple distinct
+narrations (his own example: Wheel of Time's classic Kramer/Reading
+narration vs. Rosamund Pike's later solo re-recording), are both stored
+rather than one overwriting the other. Checked both directly against
+hosted rather than trusting memory: (1) yes -- `narrators` is a flat
+array used for both standard narrators and full-cast lists (no
+character-role mapping, a known documented gap), and 76 of 97
+`dramatized_full_cast` rows already had one; (2) yes, confirmed on the
+exact book named -- The Eye of the World has two separate `standard`
+rows, one for Kramer/Reading and one for Pike, each with its own
+`runtime_minutes`, matching `scripts/backfill-standard-narrators.js`'s
+documented narrator-set-identity grouping.
+
+Asked to pull the remaining missing cast data since it looked cheap:
+of the 21 `dramatized_full_cast` rows still missing a cast list
+(flagged but not investigated in the prior session's entry), 12 were
+genuinely recoverable and are now backfilled; the other 9 are confirmed
+not a research gap (6 are the pre-existing deliberate Earthsea/
+Foundation BBC bundled-dramatization no-op; 3 -- Dresden Files 5: Death
+Masks, all 3 parts of Red Rising Saga 6: Light Bringer, and Throne of
+Glass -- genuinely have no cast published on GraphicAudio's site at
+all, checked across every alternate part-number/URL variant before
+concluding this). Full reasoning and the exact 12/9 breakdown now in
+`docs/TODO.md`.
+
+**A real tooling gotcha hit and worked around**: `WebFetch` returned "no
+cast information in the page content" for every GraphicAudio product
+page, even ones later confirmed to have a full cast -- its markdown
+conversion was silently dropping the `Director & Cast` tab's content,
+present in the raw HTML the whole time (`<div class="attribute-label">
+Starring</div>`). Caught by fetching the same URL directly via curl and
+diffing before concluding the data genuinely didn't exist -- avoided
+what would have been a false "not recoverable" conclusion across all 15
+GraphicAudio rows. `supabase db query --linked --file` (a real,
+previously-untried read path this session) was used for every hosted
+lookup instead of a raw psycopg2 connection, since hosted's local
+Supabase stack isn't bootstrapped in this sandbox -- confirmed it
+accepts single-statement read queries fine and doesn't touch hosted's
+migration-tracking table (only real schema/data changes go through
+`supabase db push`).
+
+Cast arrays for the 12 recovered rows were generated programmatically
+from a curated JSON file (never hand-typed into the SQL string), tested
+in a rolled-back transaction against hosted first (each `update` scoped
+by title subselect + `edition_type` + `source_url`, guarded to only
+touch still-`null` rows), then applied for real via `supabase db push`.
+Migration `20260913120000_backfill_missing_dramatized_cast_lists.sql`.
+Verified post-push: exactly 9 `dramatized_full_cast` rows still missing
+cast, matching the 9 confirmed-unavailable ones above.
+
+**App change**: the book-info modal's per-edition narrator/cast chips
+(`app/shared.js`) are now inside their own `<details>` element, closed
+by default, labeled "Narrator(s) (N)" for standard editions or "Cast
+(N)" for full-cast dramatizations -- each edition's cast collapses
+independently or the WoT-style multi-edition case would show two
+different actors' names at once with no way to tell which edition they
+belong to. Verified visually (not just `node --check`) against a
+throwaway local static-file harness rendering the exact same template
+with mock multi-edition data (this session's browser automation worked
+fine against `127.0.0.1`, unlike the last two sessions' `chrome-
+extension://` failures against the real Supabase-authenticated app --
+didn't attempt a real login-gated pass since the harness already proved
+the actual markup/CSS/collapse behavior). Harness file deleted after
+use, not committed.
+
+Committed as (pending), pushed. Next: another catalog-tagging batch and
+the next shared-universe-audit batch, per the repo owner's request.

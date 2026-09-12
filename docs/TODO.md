@@ -1500,14 +1500,36 @@ worth deferring to a later session rather than batching in for
   without this same RLS-policy + grant pairing that
   `books`/`book_dna`/`series`/`universe` already have -- see the new
   CLAUDE.md rule under "Database & migrations."
-- [ ] **21 of 97 `dramatized_full_cast` `audiobook_editions` rows are
-  missing their cast list** (76 already have one) -- noticed 2026-09-13
-  while wiring the book-info modal. A small, bounded lookup, not a
-  research project: every row already has a `source_url` pointing at
-  exactly where to look (GraphicAudio's own listing, the BBC page,
-  etc.) per `.claude/skills/tag-audiobook-editions/SKILL.md`'s own
-  convention. Some of the 21 may already reflect a deliberate "couldn't
-  confirm, left null rather than guess" call from whoever tagged that
-  row (the skill explicitly allows this) rather than "not yet looked
-  at" -- don't assume all 21 are recoverable, but worth a real pass to
-  find out how many are.
+- [x] **21 of 97 `dramatized_full_cast` `audiobook_editions` rows missing
+  their cast list -- DONE 2026-09-13, 12 of 21 recovered, 9 confirmed
+  genuinely unavailable (not a gap left for later).** Each row's own
+  `source_url` (GraphicAudio's "Director & Cast" product-page attribute)
+  was fetched directly -- via curl, since `WebFetch`'s markdown
+  conversion was dropping the cast section entirely even though it's
+  present in the raw HTML (a real tooling gotcha, not a missing-data
+  false negative -- confirmed by diffing curl's raw HTML against
+  WebFetch's summary for the same URL before concluding the data wasn't
+  there). **12 recovered** (Dawnshard, Edgedancer, Empire of Silence,
+  Golden Son, Iron Gold, Mistborn: Secret History, Morning Star, Network
+  Effect, Oathbringer, The Hero of Ages, The Way of Kings, Wind and
+  Truth -- the last via its individual "1 of 5" part page once the
+  bundled "Series Set" page turned out to carry no cast attribute at
+  all). **9 confirmed not a gap**: 6 are the pre-existing, deliberate
+  Earthsea/Foundation BBC bundled-dramatization no-op (per-book cast
+  can't be safely attributed across a single combined production where
+  the same actors voice characters at different ages/generations --
+  already decided, not re-litigated here); the other 3 (Dresden Files 5:
+  Death Masks, Red Rising Saga 6: Light Bringer all 3 parts, Throne of
+  Glass) genuinely have no "Starring" attribute published on
+  GraphicAudio's site at all -- checked every alternate part-number page
+  for each (Light Bringer's "2 of 3"/"3 of 3", a site search for
+  alternate Death Masks/Throne of Glass URLs) before concluding this,
+  not just the one already-recorded `source_url`. Cast arrays generated
+  programmatically from a curated JSON (not hand-typed into SQL, per
+  this file's title-transcription lesson), tested in a rolled-back
+  transaction against hosted (each `update` scoped by title subselect +
+  `edition_type` + `source_url`, matching only rows still `null`) before
+  applying via `supabase db push`. Migration
+  `20260913120000_backfill_missing_dramatized_cast_lists.sql`. Verified
+  post-push: 9 `dramatized_full_cast` rows still missing cast, exactly
+  the 9 confirmed-unavailable ones above.
