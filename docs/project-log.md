@@ -11684,3 +11684,143 @@ also worth a scope look, most of this sub-series is crime/thriller
 rather than SFF), The Captive's War (James S. A. Corey), Earthseed
 (Octavia Butler, seen in the ranked list but not researched this
 batch).
+
+## 2026-09-12 (later still): series.status/book_count fix, batch 6 -- 14 series fixed, 3 confirmed already correct, stopped early on a genuine research wall
+
+Continuing the P2 catalog-wide `series.status`/`book_count` fix (root
+cause: `status` defaults to 'ongoing' whenever Hardcover's
+`is_completed` isn't explicitly true; `book_count` is Hardcover's raw
+edition/omnibus/box-set count, not a curated mainline-installment
+count -- neither field is read by `scripts/recommend.py`, display-only
+bug in `tools/catalog-review/`). Ran as a background agent (CLDA
+persona) from an isolated worktree.
+
+Re-ran the ranking query excluding all 118 named series checked across
+batches 1-5 plus the 12 previously-flagged-but-unsettled names.
+**Caught a real filter bug before it caused a silent gap**: the DB's
+actual stored name for "Enderverse: Publication Order" has a double
+space after the colon (`Enderverse:  Publication Order`, confirmed via
+`select name, length(name) from series where name ilike 'Enderverse%'`)
+-- the single-space version this file and TODO.md had been carrying
+since batch 5 was silently NOT excluding it, so it kept resurfacing in
+the ranked list for nothing. Fixed the exclusion to use the real
+string (not "fixing" the stray space itself, a separate cosmetic issue
+out of this task's scope) and confirmed 129 unique excluded name
+strings covered 130 nominal checked/flagged entries (the one collision
+being the Imperial Radch duplicate-row name, already known from batch
+5).
+
+With the catalog's growth, almost every top candidate again sits at a
+flat 2-3 books currently linked in our own catalog. Worked down the
+ranked list, verifying every candidate via live web search before
+writing anything -- same standard as batches 1-5 -- until this
+session's web-search tool budget ran out entirely (200 of 200 calls
+used) partway through. Landed on **14 clean, fully-verified fixes**
+plus **3 confirmed-already-correct** before that happened -- close
+enough to the ~15 target that stopping there (per this task's own
+"stop earlier if you hit a research wall" instruction) was the right
+call rather than pushing into guessing on the remaining unverified
+candidates.
+
+**14 fixed**:
+- **Status + book_count fixes (wrongly 'ongoing', confirmed completed
+  with no evidence of more coming)**: Uglies (Scott Westerfeld,
+  ongoing/11 -> completed/4 -- the original tetralogy; "Impostors" is a
+  separate spin-off series), Miss Peregrine's Peculiar Children (Ransom
+  Riggs, ongoing/10 -> completed/6 -- two trilogies, 2011-2021), The
+  Vagrant (Peter Newman, ongoing/10 -> completed/3, aka the Deathless
+  Trilogy), The Daevabad Trilogy (S.A. Chakraborty, ongoing/5 ->
+  completed/3 -- "The River of Silver" companion collection excluded,
+  same convention as Earthsea Cycle/Book of the New Sun in prior
+  batches), Commonwealth Saga (Peter F. Hamilton, ongoing/9 ->
+  completed/2), Daemon (Daniel Suarez, ongoing/5 -> completed/2 --
+  explicitly written/marketed as a concluding duology), Bloodsworn Saga
+  (John Gwynne, ongoing/6 -> completed/3), The Handmaid's Tale
+  (Margaret Atwood, ongoing/10 -> completed/2 -- no third book written
+  or announced despite the TV adaptation's continued expansion).
+- **book_count-only fixes (status already correct)**: Lock In (John
+  Scalzi, 3 -> 2 -- "Unlocked: An Oral History of Haden's Syndrome" is
+  a prequel novella, excluded per the companion-work convention; status
+  stayed 'ongoing', no completion statement found either way), The
+  Captive's War (James S.A. Corey, 4 -> 2 -- 2 published novels of a
+  confirmed trilogy, "Livesuit" novella and the unpublished third book
+  excluded), Emily Wilde (Heather Fawcett, 6 -> 3 -- a 4th book is
+  confirmed for January 2027 and a 5th is in progress, neither
+  published yet), Wayward Children (Seanan McGuire, 35 -> 11 -- an
+  actively continuing novella series, the old value was a wildly
+  inflated raw Hardcover edition count), Crowns of Nyaxia (Carissa
+  Broadbent, 9 -> 5 -- a planned 6-book series across 3 duologies, 5 of
+  6 mainline installments published, 1 confirmed still coming; two
+  standalone/novella titles excluded), Teixcalaan (Arkady Martine, 4 ->
+  2 -- see judgment call below).
+
+**3 confirmed already correct**: Skyward Flight (Brandon Sanderson &
+Janci Patterson -- completed/3, the companion novella trilogy set
+during Cytonic, distinct from the main "Skyward" series fixed in batch
+2), The Age of Madness (Joe Abercrombie -- completed/3, 2019-2021), The
+Giver (Lois Lowry, "The Giver Quartet" -- completed/4, 1993-2012;
+already correct even though only 2 of the 4 are currently linked in our
+catalog, since book_count reflects the real series total, not our own
+catalog-linkage count -- same convention every prior batch has used).
+
+**One judgment call flagged for visibility**: Teixcalaan's book_count
+was fixed but its status deliberately left 'ongoing' on genuinely
+mixed, unresolved evidence -- one source frames A Memory Called Empire
+as "book one" of a trilogy, implying a third book is planned, while
+other sources describe the series as a completed duology. With no
+search budget left to resolve the contradiction, left status untouched
+per the standing "don't flip status without a clear signal" precedent
+(same shape as The Old Kingdom/Silo in prior batches) rather than
+guess.
+
+**Two new likely-out-of-scope names surfaced, not decided (same shape
+as batch 4's Robert Langdon/The Inheritance Games flag)**: Kingsbridge
+(Ken Follett) is historical fiction, not sci-fi/fantasy. Holly Gibney
+(Stephen King) was already flagged in the shared-universe audit's batch
+6 as "worth a scope look, most of this sub-series is crime/thriller
+rather than SFF" for a different task; it also surfaced in this task's
+own ranking query, so it's flagged here too. Both left completely
+untouched, added to docs/TODO.md's flagged-name exclude list.
+
+**New data-quality issue noticed in passing, NOT fixed (a different bug
+class -- author-field contamination, not status/book_count)**: the
+"Threshold" series row's `books.author` values mix Peter Clines with
+what look like a translator ("Jean-Pierre Pugi") and an audiobook
+narrator ("Ray Porter") -- the same contamination pattern CLAUDE.md's
+"Data quality / tagging" section already tracks (the
+Sapkowski/David-French case). Not this task's fix to make. Left
+"Threshold" itself entirely unresearched for status/book_count too --
+its own identity wasn't pinned down this batch (Peter Clines has
+multiple similarly-named works, and the contaminated author field made
+that harder to untangle with the remaining search budget) -- available
+for batch 7 with a clean start.
+
+Migration `20260912900000_fix_series_status_book_count_batch6.sql` --
+tested in a rolled-back transaction first (all 14 names verified to
+match exactly once, post-update values checked), then applied for real
+to hosted via a normal autocommit psycopg2 connection. **Not yet pushed
+via `supabase db push` and the branch not yet merged to main** -- both
+left for CLDO to do serially, same handoff pattern as batches 2-5, to
+avoid two sessions' `db push`/git operations racing on the same day.
+Verified afterward: `series` table total row count unchanged (484),
+spot-checked Uglies / Bloodsworn Saga / Teixcalaan directly on hosted.
+
+Running total: 91 series fixed across batches 1-6 (77 from batches 1-5
++ 14 this batch), 44 confirmed already correct (1+16+0+21+3 = 41 from
+batches 1-5 + 3 this batch -- double-checked this arithmetic explicitly
+given a prior batch's own undercounting bug here), 118 checked/settled
+overall (batches 1-5) + 17 more this batch = **135** checked total
+(91 + 44 = 135, verified), plus 14 flagged-unsettled names (12 carried
+over + 2 new this batch). `docs/TODO.md` updated with the new exclude
+list and a batch-7 pointer.
+
+**Next (batch 7)**: re-rank remaining series excluding all 135
+now-checked names across batches 1-6 plus the 14 flagged-not-settled
+names (see docs/TODO.md's updated entry for the full lists). A
+substantial unresearched candidate tail is already available from this
+batch's ranked list (Revelation Space, Outlander, Legend, Six of Crows,
+Legends & Lattes, The Founders Trilogy, Earthseed, Blood and Ash, Ready
+Player One, Ana and Din Mysteries, The Roots of Chaos, Oxford Time
+Travel, Elantris, Before the Coffee Gets Cold, Once Upon a Broken
+Heart, Sword of Truth, Kate Daniels, Threshold) -- don't reuse batch
+1-5's stale candidate lists.
