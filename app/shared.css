@@ -87,7 +87,7 @@ label {
   color: var(--ink-soft);
   margin: 0 0 6px;
 }
-input[type="text"], input[type="email"], input[type="password"], input[type="file"], input[type="date"], select {
+input[type="text"], input[type="email"], input[type="password"], input[type="file"], input[type="date"], input[type="number"], select {
   width: 100%;
   font-size: 1rem;
   padding: 12px 14px;

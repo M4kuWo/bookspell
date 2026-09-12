@@ -13133,3 +13133,83 @@ all 20 titles present, `Judas Unchained`'s author field corrected.
 74 tagged as of the prior 4-batch sitting - 20 this batch - 8 flagged
 graphic novels), plus whatever additional omnibus/unpublished/scope
 exceptions keep surfacing at the same rate as this batch (5 this time).
+
+## 2026-09-13 (later still) -- v1 app: relative rating dates, clearer year-only input, audiobook-availability recommendation filters; a real process gap fixed in the tagging vocabulary-growth pipeline
+
+Four more items from a live-testing round.
+
+**Relative rating dates**: `app/shared.js` gained `formatRelativeDate()`
+("3 months ago", "2 years, 1 month ago" for longer spans, "today"/
+"yesterday" for the near term) -- `rate.html`'s "My ratings" list now
+shows this instead of the raw `rated_date`, with the exact stored date
+as a hover tooltip so nothing is actually hidden, just made easier to
+skim. Verified against a spread of test dates in a throwaway local
+harness (today back through ~2 years) before wiring it in.
+
+**The unlabeled box under the date picker (the year-only input) was
+genuinely unclear, as flagged**: added a plain "— or, if you only
+remember the year —" divider between the date field and the year
+field in `rate.html`, and fixed a real, previously-unnoticed styling
+gap in `shared.css` -- `input[type="number"]` was never included in the
+shared full-width input rule, so the year box rendered at the browser's
+tiny default width (its placeholder text didn't even fully fit) right
+next to the new divider text, which would have made the "clarity" fix
+worse, not better, if left alone. Both fixed together, verified
+visually.
+
+**Audiobook-availability recommendation filters**: three-way filter
+(no filter / has any audiobook edition / has a GraphicAudio-or-BBC-
+style full-cast dramatization / full cast with 3+ narrators) added to
+`dashboard.html`, next to the existing "none of/less of" filters.
+Deliberately implemented as a client-side post-filter over the engine's
+own ranking, NOT a change to `recommend()`'s scoring logic -- giving
+the scoring engine a notion of audiobook editions would be a real
+scoring-engine change (CLDO-only territory per CLAUDE.md, with its own
+test-protocol/two-failure-scenario bar), when this is really just a
+candidate-pool restriction. `recommend()` already scores the entire
+catalog on every call regardless of `top_n` (only the final truncation
+differs), so `api/main.py`'s `/recommendations` endpoint just got a new
+optional, bounded `top_n` query param (default 10, capped at 100) --
+the frontend requests a bigger pool (50) only when a filter is active,
+filters it down using a single `audiobook_editions` query scoped to the
+candidate book_ids already in hand from `attachThumbnails()`, then
+slices back down to 10 for display. No `recommend.py` changes at all.
+`api/README.md` updated to document the new param. Requires the Render
+deploy to pick up `api/main.py`'s change before the filters actually
+take effect in production -- confirm after the next deploy.
+
+**A real process gap found and fixed in the trope/content-warning
+vocabulary-growth pipeline** (the repo owner asked directly whether new
+tropes are still surfacing as the catalog grows, or whether nobody's
+looking anymore). Checked rather than guessed: `tag-catalog-batch`'s
+Step 1 always told taggers to flag a suspected vocabulary gap instead
+of silently working around it, and that mechanism genuinely has been
+used -- two real "Vocabulary gap noted, not acted on" entries exist in
+this log from 2026-09-09 (a climate/natural-disaster mass-casualty
+content-warning gap on *The Ministry for the Future*, and a first-
+contact-via-natural-evolution trope gap on *The Mountain in the Sea*),
+each correctly deferred per this project's own bar ("does this change
+the recommendation," not "is this a real term") pending a second book
+hitting the same gap. **But nothing tracked those flagged gaps
+centrally** -- each lived only in that day's own log entry, meaning a
+second book hitting the exact same gap in a later batch (today's batch
+5 tagged 20 more books, itself flagging zero gaps) had no real way to
+be recognized as a second occurrence short of someone remembering or
+re-reading a 12,800+-line log by hand. That's a real, structural gap in
+the process, not a sign the catalog stopped needing new vocabulary.
+
+Fixed: `docs/schema/book-dna.md`'s "Future fields backlog" now opens
+with a running **"Flagged single-occurrence vocabulary gaps"** tracker,
+seeded with both of the above (including the two specific titles their
+own log entries already named as plausible next occurrences to watch
+for -- *Alien Clay*/*Blindsight* for the first-contact gap). `.claude/
+skills/tag-catalog-batch/SKILL.md`'s Step 1 now points at it as an
+active per-batch check (cross-check every book against the "Open" list;
+a match is the second occurrence the whole tracker exists to catch;
+add any new single-book gap there too, not just to that day's log
+entry) rather than the old passive "note it in your report" phrasing,
+which had no way of ever producing a second-occurrence catch on its
+own.
+
+Not committed/pushed yet in this entry -- see the immediately following
+commit for all of the above together.

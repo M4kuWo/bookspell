@@ -13,10 +13,15 @@ and why this split was chosen, and `docs/project-log.md`'s 2026-09-12/13
 
 - `GET /rule-targets` — no auth, the catalog's own valid "none of
   X"/"less of X" targets (mirrors `R.list_user_rule_targets()`).
-- `GET /recommendations?genre=fantasy|sci_fi` (genre optional) — auth
-  required (`Authorization: Bearer <supabase-jwt>`), returns this
-  user's top-10 recommendations plus a human-readable why-summary per
-  book.
+- `GET /recommendations?genre=fantasy|sci_fi&top_n=10` (both optional,
+  `top_n` capped at 100) — auth required
+  (`Authorization: Bearer <supabase-jwt>`), returns this user's top-N
+  recommendations (default 10) plus a human-readable why-summary per
+  book. `top_n` exists so a client-side post-filter (e.g. the app's
+  audiobook-availability filters, which can't be applied inside
+  `recommend()` without a real scoring-engine change) can ask for a
+  bigger ranked pool to filter down from, rather than only ever seeing
+  10 candidates before filtering.
 - `POST /import/goodreads` — auth required, multipart file upload (a
   Goodreads library export CSV, or a Fable library exported via a
   third-party browser extension into that same format), upserts

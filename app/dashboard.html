@@ -43,6 +43,18 @@
     <div id="current-rules"><div class="empty-state">No filters yet.</div></div>
   </details>
 
+  <details class="filters">
+    <summary>Filters — audiobook availability</summary>
+    <div class="field" style="margin-top:10px; margin-bottom:0;">
+      <select id="audiobook-filter">
+        <option value="">No audiobook filter</option>
+        <option value="any">Has an audiobook edition</option>
+        <option value="dramatized">Has a full-cast dramatization (GraphicAudio/BBC)</option>
+        <option value="full_cast">Full cast, 3+ narrators</option>
+      </select>
+    </div>
+  </details>
+
   <button class="btn-primary" id="get-recs-btn">Get recommendations</button>
 
   <div class="genre-toggle" id="genre-toggle" style="margin-top:16px;">
@@ -209,17 +221,32 @@ async function loadCurrentRules() {
   }));
 }
 
+// Audiobook-availability filtering happens client-side, after the
+// engine's own ranking -- recommend() has no notion of audiobook
+// editions at all, and giving it one would be a real scoring-engine
+// change (CLDO-only territory, see CLAUDE.md) for what's really just a
+// candidate-pool restriction. Instead: ask the API for a bigger ranked
+// pool (top_n) whenever a filter is active, then filter that pool down
+// to DISPLAY_COUNT client-side -- order is preserved either way since
+// recommend() already returns its pool best-first.
+const DISPLAY_COUNT = 10;
+const FILTERED_POOL_SIZE = 50;
+
 document.getElementById('get-recs-btn').addEventListener('click', async () => {
   const loading = document.getElementById('loading');
   const resultsArea = document.getElementById('results-area');
+  const audiobookMode = document.getElementById('audiobook-filter').value;
   loading.style.display = 'flex';
   resultsArea.innerHTML = '';
   resultsByGenre = {};
   try {
     const genres = ['', 'fantasy', 'sci_fi'];
+    const topN = audiobookMode ? FILTERED_POOL_SIZE : DISPLAY_COUNT;
     const responses = await Promise.all(genres.map((g) => {
-      const qs = g ? `?genre=${g}` : '';
-      return apiFetch(`/recommendations${qs}`);
+      const params = new URLSearchParams();
+      if (g) params.set('genre', g);
+      params.set('top_n', topN);
+      return apiFetch(`/recommendations?${params}`);
     }));
     for (let i = 0; i < genres.length; i++) {
       const res = responses[i];
@@ -232,6 +259,10 @@ document.getElementById('get-recs-btn').addEventListener('click', async () => {
       return;
     }
     await attachThumbnails(resultsByGenre);
+    if (audiobookMode) await applyAudiobookFilter(resultsByGenre, audiobookMode);
+    for (const g of genres) {
+      if (resultsByGenre[g]) resultsByGenre[g] = resultsByGenre[g].slice(0, DISPLAY_COUNT);
+    }
     renderResults(resultsByGenre[currentGenre]);
   } catch (e) {
     resultsArea.innerHTML = `<div class="empty-state">Couldn't reach the recommendation service. It may still be waking up — try again in a moment.</div>`;
@@ -255,6 +286,28 @@ async function attachThumbnails(byGenre) {
     r.cover_url = match?.cover_url || null;
     r.book_id = match?.id || null;
   }));
+}
+
+// mode: 'any' (has at least one audiobook_editions row), 'dramatized'
+// (has a GraphicAudio/BBC-style full-cast row), or 'full_cast' (a
+// dramatized row with more than two credited narrators -- "full cast"
+// as distinct from a 1-2-narrator standard edition). One query covers
+// all three modes since they're increasingly narrow subsets of the
+// same rows.
+async function applyAudiobookFilter(byGenre, mode) {
+  const ids = [...new Set(Object.values(byGenre).flat().map((r) => r.book_id).filter(Boolean))];
+  if (ids.length === 0) return;
+  const { data } = await sb.from('audiobook_editions').select('book_id, edition_type, narrators').in('book_id', ids);
+  const qualifying = new Set();
+  (data || []).forEach((e) => {
+    if (mode === 'any') { qualifying.add(e.book_id); return; }
+    if (e.edition_type !== 'dramatized_full_cast') return;
+    if (mode === 'dramatized') { qualifying.add(e.book_id); return; }
+    if (mode === 'full_cast' && e.narrators && e.narrators.length > 2) qualifying.add(e.book_id);
+  });
+  Object.keys(byGenre).forEach((g) => {
+    byGenre[g] = (byGenre[g] || []).filter((r) => r.book_id && qualifying.has(r.book_id));
+  });
 }
 
 function matchClass(label) {

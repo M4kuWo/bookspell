@@ -129,6 +129,31 @@ function formatRuntime(mins) {
   return mins ? `${(mins / 60).toFixed(1)}h` : null;
 }
 
+// "3 months ago" / "2 years, 1 month ago" style relative phrasing for a
+// stored 'YYYY-MM-DD' rated_date -- readers rarely think in exact dates,
+// but the exact value is still the source of truth (shown as a title
+// tooltip wherever this is used), this is just a friendlier label over it.
+function formatRelativeDate(dateStr) {
+  if (!dateStr) return null;
+  const then = new Date(`${dateStr}T00:00:00`);
+  if (isNaN(then)) return null;
+  const now = new Date();
+  const days = Math.floor((now - then) / 86400000);
+  if (days < 0) return dateStr; // a future date somehow -- just show it as-is
+  if (days === 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) { const w = Math.floor(days / 7); return `${w} week${w > 1 ? 's' : ''} ago`; }
+  let months = (now.getFullYear() - then.getFullYear()) * 12 + (now.getMonth() - then.getMonth());
+  if (now.getDate() < then.getDate()) months--;
+  if (months < 12) return `${months} month${months > 1 ? 's' : ''} ago`;
+  const years = Math.floor(months / 12);
+  const remMonths = months % 12;
+  return remMonths === 0
+    ? `${years} year${years > 1 ? 's' : ''} ago`
+    : `${years} year${years > 1 ? 's' : ''}, ${remMonths} month${remMonths > 1 ? 's' : ''} ago`;
+}
+
 function ensureModalEl() {
   let overlay = document.getElementById('book-info-overlay');
   if (overlay) return overlay;

@@ -80,7 +80,8 @@
         <button type="button" class="chip-btn" data-relative="365">Last year</button>
       </div>
       <input type="date" id="picked-date">
-      <input type="number" id="picked-year" placeholder="Or just the year, e.g. 2013" min="1900" max="2100" style="margin-top:8px;">
+      <div style="text-align:center; font-size:0.75rem; color:var(--ink-soft); margin:6px 0;">— or, if you only remember the year —</div>
+      <input type="number" id="picked-year" placeholder="e.g. 2013" min="1900" max="2100">
     </div>
 
     <div class="field" id="reason-field" style="margin-top:14px; margin-bottom:0; display:none;">
@@ -405,7 +406,7 @@ async function loadMyRatings() {
       ${r.books?.cover_url ? `<img class="thumb" src="${escapeAttr(r.books.cover_url)}" alt="" loading="lazy">` : ''}
       <div style="flex:1 1 auto;">
         <div class="my-rating-title">${escapeHtml(r.books?.title || '(unknown title)')}</div>
-        <div class="my-rating-author">${escapeHtml(r.books?.author || '')} · <span class="pill ${r.rating}">${RATING_LABELS[r.rating]}</span>${r.format ? ` · ${titleCase(r.format)}` : ''}${r.rated_date ? ` · ${r.rated_date}` : ''}</div>
+        <div class="my-rating-author">${escapeHtml(r.books?.author || '')} · <span class="pill ${r.rating}">${RATING_LABELS[r.rating]}</span>${r.format ? ` · ${titleCase(r.format)}` : ''}${r.rated_date ? ` · <span title="${escapeAttr(r.rated_date)}">${escapeHtml(formatRelativeDate(r.rated_date))}</span>` : ''}</div>
       </div>
       <div class="my-rating-actions">
         <button class="icon-btn" title="Book info" data-info="${r.book_id}">ⓘ</button>

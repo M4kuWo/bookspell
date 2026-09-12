@@ -145,7 +145,7 @@ def rule_targets():
 
 
 @app.get("/recommendations")
-def recommendations(genre: str = None, authorization: str = Header(default=None)):
+def recommendations(genre: str = None, top_n: int = 10, authorization: str = Header(default=None)):
     user_id = require_user_id(authorization)
     catalog = get_catalog()
     ratings = _load_user_ratings(user_id, catalog)
@@ -154,9 +154,16 @@ def recommendations(genre: str = None, authorization: str = Header(default=None)
 
     if genre not in (None, "fantasy", "sci_fi"):
         raise HTTPException(status_code=400, detail="genre must be 'fantasy', 'sci_fi', or omitted")
+    # recommend() already scores the whole catalog every call regardless
+    # of top_n (only the final truncation differs) -- this is not a
+    # scoring-engine change, just exposing a parameter recommend.py
+    # already supports. Bounded so a client filtering post-hoc (e.g. the
+    # audiobook-availability filters) can ask for a bigger pool without
+    # the endpoint returning the entire catalog.
+    top_n = max(1, min(top_n, 100))
 
     results = R.recommend(
-        catalog, ratings, top_n=10, genre=genre,
+        catalog, ratings, top_n=top_n, genre=genre,
         user_rules=user_rules, format_preference=format_preference,
     )
     out = []

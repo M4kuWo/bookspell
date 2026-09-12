@@ -64,9 +64,30 @@ Read `docs/schema/book-dna.md` (human-readable, has rationale for every
 field/trope) and `docs/schema/book-dna.schema.yaml` (the exact
 machine-readable field list and controlled vocabularies) before tagging
 anything. Every field is a closed, controlled vocabulary -- never invent
-a value not listed there. If you think a real gap exists in the
-vocabulary (a trope or value that should exist but doesn't), don't
-silently work around it -- note it in your final report instead.
+a value not listed there.
+
+**Also read `docs/schema/book-dna.md`'s "Flagged single-occurrence
+vocabulary gaps" tracker (top of the "Future fields backlog" section)
+before tagging, and treat it as a real, active checklist, not
+background reading** -- added 2026-09-13 specifically because gaps were
+being flagged in `docs/project-log.md` batch reports but nothing
+tracked them centrally, so a SECOND book hitting the same gap in a
+later batch had no way to be recognized as one (nobody was going to
+re-read thousands of lines of prior log entries to check). For every
+book in your batch: if it hits a gap already listed there as "Open,"
+that's the second occurrence this tracker exists to catch -- propose
+the real vocabulary addition now (a new trope/content-warning/value,
+scoped the same way any other schema change is) rather than deferring
+a third time, and move the entry to "Promoted / resolved" once you do.
+If you find a genuinely new single-book gap this batch (a trope or
+value that should exist but doesn't, per the "does this change the
+recommendation" bar below), don't just note it in your report the way
+this step used to say -- add it to the tracker's "Open" list too (with
+the book and date), so a future batch can actually check for the
+second occurrence instead of independently rediscovering the same gap.
+Either way, the "why" narrative still belongs in your `docs/
+project-log.md` report same as before -- the tracker is what makes a
+repeat recognizable, not a replacement for the log entry.
 
 ## Step 1.5: verify this skill still matches the live schema -- mandatory, every invocation
 
