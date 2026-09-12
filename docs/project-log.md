@@ -12888,3 +12888,105 @@ use, not committed.
 
 Committed as `6a19e67`, pushed. Next: another catalog-tagging batch and
 the next shared-universe-audit batch, per the repo owner's request.
+
+## 2026-09-13 (later still) -- shared-universe audit batch 8 -- 8 authors checked, 1 confirmed connected and built ("Meridian Empire"), 7 confirmed NOT connected
+
+Continuing `docs/TODO.md`'s P2 shared-universe linking audit (batch 8),
+run as the primary (CLDO) session. Re-ran the candidate query (grouping
+`books` by `author` joined to `series`, filtering to series with
+`universe_id is null`, requiring 2+ distinct such series per author,
+ordered by total book count descending). Filtered out every author
+already checked across batches 1-7 (both the "confirmed connected" and
+"confirmed NOT connected" lists in `docs/TODO.md`), leaving the same
+"untouched leftover pool" batch 7 left behind, still current -- the
+catalog hadn't changed meaningfully for any of those 23 authors since
+batch 7 wrote that list. Picked the top 8 by book count: Brent Weeks
+(8 books), Becky Chambers (7), Tahereh Mafi (5), James Islington (5),
+Marissa Meyer (5), Jennifer Lynn Barnes (4), Stephanie Garber (4), and
+John Gwynne (4).
+
+**Result: 1 confirmed connected and built, 7 confirmed NOT connected.**
+Verified each against real, specific evidence (author statements,
+official/publisher pages, multiple independent corroborating sources),
+not a vague "feels connected" or "feels separate" impression:
+
+- **Stephanie Garber -- Caraval + Once Upon a Broken Heart, confirmed
+  connected, built as "Meridian Empire."** Confirmed directly by the
+  author herself in a Goodreads Q&A: asked whether a 4th Caraval book
+  was coming, she said no, but Once Upon a Broken Heart was -- "the
+  start of a new series... set in [the] same Universe as Caraval." This
+  clears the audit's structural-connection bar, not just a shared-vibe
+  claim: Jacks, Caraval's antagonist, is the male lead and viewpoint
+  character of Once Upon a Broken Heart, and Caraval's own protagonists
+  (Scarlett and Tella) make a direct in-story appearance in it. No
+  official or widely-used fan umbrella term was found for the combined
+  universe (checked specifically, per this audit's naming policy) --
+  but the setting itself has a real in-world name, "Meridian Empire,"
+  used consistently across both series (Flatiron's official "The World
+  of Caraval" companion site, and the "Spectacular" novella both use it
+  directly), matching the established place-name pattern this audit
+  already uses (Westeros/Abeth/Middle-earth/Elan) rather than inventing
+  a "-verse" coinage. Migration
+  `20260913140000_shared_universe_audit_batch8.sql`, tested in a
+  rolled-back transaction with a genuine idempotency re-run first, then
+  applied for real via `supabase db push --linked` and verified live on
+  hosted. `universe` now has 19 rows.
+- **Brent Weeks -- Night Angel Trilogy vs. Lightbringer, confirmed NOT
+  connected.** Asked directly on Goodreads whether Lightbringer connects
+  to Night Angel, Weeks answered plainly: "No, it's a different world,
+  different magic, etc."
+- **Becky Chambers -- Wayfarers vs. Monk & Robot, confirmed NOT
+  connected.** Wayfarers is set in the Galactic Commons, a space-opera
+  setting; Monk & Robot is set on Panga, a solarpunk far-future Earth-
+  moon setting with no shared characters, history, or technology base
+  between the two.
+- **Tahereh Mafi -- Shatter Me vs. This Woven Kingdom, confirmed NOT
+  connected.** This Woven Kingdom was explicitly designed and marketed
+  as a wholly separate project from Shatter Me -- a new Persian-
+  mythology-inspired fantasy world, unconnected cast and setting.
+- **James Islington -- Hierarchy (The Will of the Many) vs. The Licanius
+  Trilogy, confirmed NOT connected.** Licanius is set in the world of
+  Andarra; Hierarchy is set under the Catenan Republic. Multiple sources
+  (publisher pages, fan wikis) independently confirm distinct
+  characters, histories, and magic systems between the two -- no
+  crossover of any kind.
+- **Marissa Meyer -- Renegades vs. The Lunar Chronicles, confirmed NOT
+  connected.** Renegades is a superhero-genre trilogy set in Gatlon
+  City; The Lunar Chronicles is a sci-fi fairytale-retelling series set
+  across Earth and Luna. Different genre, cast, and setting with no
+  identified crossover.
+- **Jennifer Lynn Barnes -- The Inheritance Games vs. The Naturals,
+  confirmed NOT connected.** The Inheritance Games (the Hawthorne
+  family mystery) and The Naturals (an FBI teen-profiler program) are
+  both contemporary-set YA by the same author but have distinct casts
+  and settings; the Inheritance Games' own confirmed expanded universe
+  is with The Grandest Game/The Brothers Hawthorne, not The Naturals --
+  no source treats the two as connected.
+- **John Gwynne -- The Bloodsworn Saga vs. The Faithful and the Fallen,
+  confirmed NOT connected.** The Bloodsworn Saga is an explicitly new,
+  separate Norse/Beowulf-inspired world (Vigrið); The Faithful and the
+  Fallen is set in the Banished Lands. (Worth noting for context, not
+  action: The Faithful and the Fallen's real in-continuity sequel is Of
+  Blood and Bone, which IS the same Banished Lands world -- but that
+  series isn't in our catalog, so it didn't surface in this audit's
+  candidate query and isn't part of this finding.)
+
+**Naming policy**: invoked once this batch (Meridian Empire, per above)
+-- searched specifically for an existing fan-coined umbrella term before
+falling back to the real in-world place name, consistent with how
+Westeros/Abeth/Middle-earth/Elan were each named.
+
+**No new data-quality issues found this batch.** The already-flagged
+Card Shadow Saga and R.A. Salvatore Dark Elf Trilogy/Legend of Drizzt
+series-splitting issues were not re-encountered (neither author
+resurfaced in this batch's candidate set).
+
+**Next (batch 9)**: re-rank remaining series excluding all authors now
+checked across batches 1-8 (add this batch's 8: Brent Weeks, Becky
+Chambers, Tahereh Mafi, James Islington, Marissa Meyer, Jennifer Lynn
+Barnes, Stephanie Garber, John Gwynne). Untouched leftover pool as of
+this batch (non-exhaustive, from the batch-7 list minus this batch's 8):
+Anthony Ryan, Carissa Broadbent, Danielle L. Jensen, Laini Taylor, Marie
+Lu, Mira Grant, Octavia E. Butler, Rachel Gillig, Rebecca Roanhorse,
+Rebecca Ross, S. A. Chakraborty, Samantha Shannon, Stephen Graham Jones,
+TJ Klune, Veronica Roth.

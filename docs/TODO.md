@@ -834,7 +834,9 @@ worth deferring to a later session rather than batching in for
     Four Londons -- batch 4, Shades of Magic + Threads of Power only,
     see below), Brandon Sanderson (Cosmere series-level gap fix, batch
     4 -- see below; his Skyward/Reckoners are still separately confirmed
-    NOT connected to the Cosmere, see the negatives list).
+    NOT connected to the Cosmere, see the negatives list), Stephanie
+    Garber (Meridian Empire -- batch 8, Caraval + Once Upon a Broken
+    Heart).
   - **Batch 4 (2026-09-12)**: 8 authors checked.
     - **Rick Riordan -- built as "Riordanverse."** Percy Jackson and the
       Olympians, The Heroes of Olympus, The Kane Chronicles, Magnus
@@ -1125,25 +1127,57 @@ worth deferring to a later session rather than batching in for
     universes (Elan, The Shadowhunter Chronicles, The World of the
     White Rat, Lyra's World) -- added now so it stays accurate; no
     change to the underlying data, only to this summary list.
+  - **Batch 8 (2026-09-13, primary/CLDO session)**: 8 authors checked,
+    1 confirmed connected and built, 7 confirmed NOT connected (see
+    project-log.md's 2026-09-13 "shared-universe audit batch 8" entry
+    for full evidence per pairing). **Stephanie Garber -- built as
+    "Meridian Empire"** (Caraval + Once Upon a Broken Heart): confirmed
+    connected directly by the author (Goodreads Q&A: Once Upon a Broken
+    Heart is "set in [the] same Universe as Caraval"), with a real
+    structural link -- Jacks (Caraval's antagonist) is the male lead of
+    Once Upon a Broken Heart, and Scarlett/Tella from Caraval appear in
+    it directly. No fan umbrella term exists for the combined universe
+    (checked specifically), so named after the real in-world place name
+    used across both series instead of inventing a "-verse" coinage,
+    matching the Westeros/Abeth/Middle-earth/Elan pattern. Migration
+    `20260913140000_shared_universe_audit_batch8.sql`, tested in a
+    rolled-back transaction with a genuine idempotency re-run, applied
+    via `supabase db push --linked` (this session's DB access path --
+    no local Supabase stack bootstrapped in this sandbox), verified
+    live on hosted. `universe` now has 19 rows. Checked and confirmed
+    NOT connected: **Brent Weeks** (Night Angel Trilogy vs.
+    Lightbringer -- Weeks's own Goodreads answer: "a different world,
+    different magic, etc."). **Becky Chambers** (Wayfarers vs. Monk &
+    Robot -- Galactic Commons space opera vs. solarpunk Panga, no
+    shared characters/setting). **Tahereh Mafi** (Shatter Me vs. This
+    Woven Kingdom -- explicitly designed as a separate project/world).
+    **James Islington** (Hierarchy/The Will of the Many vs. The Licanius
+    Trilogy -- Catenan Republic vs. Andarra, distinct characters/
+    histories/magic systems per multiple sources). **Marissa Meyer**
+    (Renegades vs. The Lunar Chronicles -- superhero Gatlon City vs.
+    sci-fi fairytale-retelling setting, no crossover). **Jennifer Lynn
+    Barnes** (The Inheritance Games vs. The Naturals -- distinct casts/
+    settings; Inheritance Games' real confirmed expanded universe is
+    with The Grandest Game/The Brothers Hawthorne, not The Naturals).
+    **John Gwynne** (The Bloodsworn Saga vs. The Faithful and the Fallen
+    -- explicitly separate new Norse-inspired world (Vigrið) vs. the
+    Banished Lands; noted in passing, not acted on: Faithful and the
+    Fallen's real in-continuity sequel is Of Blood and Bone, which isn't
+    in our catalog and so didn't surface in this audit).
   - **Everyone else from the refreshed candidate list**: not yet
-    checked. Full detail across nine 2026-09-11/2026-09-12
-    project-log.md audit entries. This audit's real hit rate so far: 13
-    of 47 checked candidate-author-groupings confirmed genuinely
-    connected (built or gap-fixed), 32 confirmed NOT connected, 2
+    checked. Full detail across ten 2026-09-11/2026-09-12/2026-09-13
+    project-log.md audit entries. This audit's real hit rate so far: 14
+    of 55 checked candidate-author-groupings confirmed genuinely
+    connected (built or gap-fixed), 39 confirmed NOT connected, 2
     flagged as series-table data-quality issues rather than true
     universe questions -- treat every remaining candidate as more
     likely a false positive than not until checked. Re-running the
-    candidate query after batch 7 (57 authors with 2+ unlinked series
-    before this batch ran, one fewer expected after Harry Potter's
-    series drop out of the "universe_id is null" pool) is the starting
-    point for batch 8; the untouched leftover pool (non-exhaustive) is
-    now: Anthony Ryan, Becky Chambers, Brent Weeks, Carissa Broadbent,
-    Danielle L. Jensen, James Islington, Jennifer Lynn Barnes, John
-    Gwynne, Laini Taylor, Marie Lu, Marissa Meyer, Mira Grant, Octavia
-    E. Butler, Rachel Gillig, Rebecca Roanhorse, Rebecca Ross, S. A.
-    Chakraborty, Samantha Shannon, Stephanie Garber, Stephen Graham
-    Jones, Tahereh
-    Mafi, TJ Klune, Veronica Roth.
+    candidate query after batch 8 is the starting point for batch 9; the
+    untouched leftover pool (non-exhaustive) is now: Anthony Ryan,
+    Carissa Broadbent, Danielle L. Jensen, Laini Taylor, Marie Lu, Mira
+    Grant, Octavia E. Butler, Rachel Gillig, Rebecca Roanhorse, Rebecca
+    Ross, S. A. Chakraborty, Samantha Shannon, Stephen Graham Jones, TJ
+    Klune, Veronica Roth.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 
