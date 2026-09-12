@@ -48,6 +48,11 @@
       <label for="picked-date">When did you read it? (optional)</label>
       <input type="date" id="picked-date">
     </div>
+    <div class="field" id="reason-field" style="margin-top:14px; margin-bottom:0; display:none;">
+      <label for="reason-select">Why? (optional — helps us improve recommendations)</label>
+      <select id="reason-select"></select>
+      <input type="text" id="reason-other" placeholder="Say more…" style="margin-top:8px; display:none;">
+    </div>
   </div>
 
   <h2>My ratings</h2>
@@ -77,6 +82,10 @@ searchInput.addEventListener('input', () => {
   searchDebounce = setTimeout(() => searchBooks(val), 250);
 });
 
+// Search matches books, series, AND universes -- a series/universe match
+// drills into a book list (ordered by position_in_series) instead of
+// selecting a book directly, so a reader can rate a whole series one by
+// one without needing to remember every title.
 async function searchBooks(query) {
   if (!query || query.trim().length < 2) {
     resultsEl.style.display = 'none';
@@ -84,48 +93,181 @@ async function searchBooks(query) {
     return;
   }
   const q = query.trim();
-  const { data, error } = await sb
-    .from('books')
-    .select('id,title,author,cover_url')
-    .or(`title.ilike.%${q}%,author.ilike.%${q}%`)
-    .order('title')
-    .limit(12);
-  renderResults(error ? [] : data);
+  const [booksRes, seriesRes, universeRes] = await Promise.all([
+    sb.from('books').select('id,title,author,cover_url').or(`title.ilike.%${q}%,author.ilike.%${q}%`).order('title').limit(12),
+    sb.from('series').select('id,name').ilike('name', `%${q}%`).order('name').limit(5),
+    sb.from('universe').select('id,name').ilike('name', `%${q}%`).order('name').limit(3),
+  ]);
+  renderSearchResults(seriesRes.data || [], universeRes.data || [], booksRes.data || []);
 }
 
-function renderResults(books) {
-  if (books.length === 0) {
+function renderSearchResults(seriesList, universeList, books) {
+  if (seriesList.length === 0 && universeList.length === 0 && books.length === 0) {
     resultsEl.innerHTML = '<div class="empty-state">No matches — try a different spelling.</div>';
     resultsEl.style.display = 'block';
     return;
   }
-  resultsEl.innerHTML = books.map((b) => `
+  let html = '';
+  if (universeList.length > 0) {
+    html += universeList.map((u) => `
+      <div class="result-row" data-universe="${u.id}" data-name="${escapeAttr(u.name)}">
+        <span class="result-title">${escapeHtml(u.name)}</span>
+        <span class="result-author">Universe →</span>
+      </div>
+    `).join('');
+  }
+  if (seriesList.length > 0) {
+    html += seriesList.map((s) => `
+      <div class="result-row" data-series="${s.id}" data-name="${escapeAttr(s.name)}">
+        <span class="result-title">${escapeHtml(s.name)}</span>
+        <span class="result-author">Series →</span>
+      </div>
+    `).join('');
+  }
+  html += books.map((b) => `
     <div class="result-row with-thumb" data-id="${b.id}" data-title="${escapeAttr(b.title)}" data-author="${escapeAttr(b.author || '')}">
       ${b.cover_url ? `<img class="thumb" src="${escapeAttr(b.cover_url)}" alt="" loading="lazy">` : ''}
       <span class="result-title" style="flex:1 1 auto;">${escapeHtml(b.title)}</span>
       <span class="result-author">${escapeHtml(b.author || '')}</span>
     </div>
   `).join('');
+  resultsEl.innerHTML = html;
   resultsEl.style.display = 'block';
-  resultsEl.querySelectorAll('.result-row').forEach((row) => {
-    row.addEventListener('click', () => {
-      selectedBook = { id: row.dataset.id, title: row.dataset.title, author: row.dataset.author };
-      document.getElementById('picked-title').textContent = selectedBook.title;
-      document.getElementById('picked-author').textContent = selectedBook.author;
-      pickedEl.querySelectorAll('.rating-btn').forEach((b) => b.classList.remove('active'));
-      document.getElementById('picked-date').value = '';
-      pickedEl.style.display = 'block';
-      resultsEl.style.display = 'none';
-      searchInput.value = '';
-      pickedEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    });
+  wireResultRows();
+}
+
+function wireResultRows() {
+  resultsEl.querySelectorAll('[data-id]').forEach((row) => {
+    row.addEventListener('click', () => pickBook({ id: row.dataset.id, title: row.dataset.title, author: row.dataset.author }));
   });
+  resultsEl.querySelectorAll('[data-series]').forEach((row) => {
+    row.addEventListener('click', () => showSeriesBooks(row.dataset.series, row.dataset.name));
+  });
+  resultsEl.querySelectorAll('[data-universe]').forEach((row) => {
+    row.addEventListener('click', () => showUniverseSeries(row.dataset.universe, row.dataset.name));
+  });
+}
+
+function pickBook(book) {
+  selectedBook = book;
+  document.getElementById('picked-title').textContent = book.title;
+  document.getElementById('picked-author').textContent = book.author;
+  pickedEl.querySelectorAll('.rating-btn').forEach((b) => b.classList.remove('active'));
+  document.getElementById('picked-date').value = '';
+  reasonField.style.display = 'none';
+  pickedEl.style.display = 'block';
+  resultsEl.style.display = 'none';
+  searchInput.value = '';
+  pickedEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Existing ratings for the books shown, so a "browse a series" list can
+// show what's already rated instead of making the reader guess or
+// re-search books they already got to.
+async function ratingsMapFor(bookIds) {
+  if (bookIds.length === 0) return new Map();
+  const { data } = await sb.from('ratings').select('book_id, rating').eq('user_id', session.user.id).in('book_id', bookIds);
+  return new Map((data || []).map((r) => [r.book_id, r.rating]));
+}
+
+async function showSeriesBooks(seriesId, seriesName) {
+  const { data: books } = await sb
+    .from('books').select('id,title,author,cover_url,position_in_series')
+    .eq('series_id', seriesId).order('position_in_series', { nullsFirst: false });
+  const ratedMap = await ratingsMapFor((books || []).map((b) => b.id));
+  resultsEl.innerHTML = `
+    <div class="result-row" data-back="1" style="cursor:pointer;"><span class="result-title">← Back to search</span></div>
+    ${(books || []).map((b) => `
+      <div class="result-row with-thumb" data-id="${b.id}" data-title="${escapeAttr(b.title)}" data-author="${escapeAttr(b.author || '')}">
+        ${b.cover_url ? `<img class="thumb" src="${escapeAttr(b.cover_url)}" alt="" loading="lazy">` : ''}
+        <span class="result-title" style="flex:1 1 auto;">${b.position_in_series ? `#${b.position_in_series} · ` : ''}${escapeHtml(b.title)}</span>
+        ${ratedMap.has(b.id) ? `<span class="pill ${ratedMap.get(b.id)}">${RATING_LABELS[ratedMap.get(b.id)]}</span>` : '<span class="result-author">Not rated</span>'}
+        <button type="button" class="icon-btn" title="Book info" data-series-info="${b.id}">ⓘ</button>
+      </div>
+    `).join('') || '<div class="empty-state">No books catalogued for this series yet.</div>'}
+  `;
+  resultsEl.style.display = 'block';
+  wireResultRows();
+  resultsEl.querySelector('[data-back]')?.addEventListener('click', () => searchBooks(searchInput.value));
+  resultsEl.querySelectorAll('[data-series-info]').forEach((btn) => btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showBookInfo(btn.dataset.seriesInfo);
+  }));
+}
+
+async function showUniverseSeries(universeId, universeName) {
+  const { data: seriesList } = await sb.from('series').select('id,name').eq('universe_id', universeId).order('name');
+  resultsEl.innerHTML = `
+    <div class="result-row" data-back="1" style="cursor:pointer;"><span class="result-title">← Back to search</span></div>
+    ${(seriesList || []).map((s) => `
+      <div class="result-row" data-series="${s.id}" data-name="${escapeAttr(s.name)}">
+        <span class="result-title">${escapeHtml(s.name)}</span>
+        <span class="result-author">Series →</span>
+      </div>
+    `).join('') || '<div class="empty-state">No series catalogued for this universe yet.</div>'}
+  `;
+  resultsEl.style.display = 'block';
+  wireResultRows();
+  resultsEl.querySelector('[data-back]')?.addEventListener('click', () => searchBooks(searchInput.value));
+}
+
+// Reason is entirely optional and never blocks the instant rating save
+// below -- it's a separate, lightweight follow-up UPDATE on the same
+// row if/when the reader actually picks one. Option sets differ by
+// sentiment (a "loved it" reason list makes no sense for a "hated it").
+const REASON_OPTIONS = {
+  positive: ['Great characters', 'Compelling plot', 'Beautiful writing/prose', 'Immersive worldbuilding', 'Emotional impact', "Couldn't put it down", 'Other'],
+  neutral: ['Started strong, lost me later', 'Fine but forgettable', 'Good in parts, uneven overall', 'Not what I expected', 'Other'],
+  negative: ['Weak characters', 'Slow pacing', 'Confusing or messy plot', "Prose didn't work for me", "Didn't like the ending", 'Not my genre/vibe', 'Other'],
+};
+function reasonGroupFor(rating) {
+  if (rating === 'loved' || rating === 'liked') return 'positive';
+  if (rating === 'it_was_okay') return 'neutral';
+  return 'negative';
+}
+const reasonField = document.getElementById('reason-field');
+const reasonSelect = document.getElementById('reason-select');
+const reasonOther = document.getElementById('reason-other');
+let reasonBookId = null;
+
+reasonSelect.addEventListener('change', () => {
+  if (!reasonSelect.value) return;
+  if (reasonSelect.value === 'Other') {
+    reasonOther.style.display = 'block';
+    reasonOther.value = '';
+    reasonOther.focus();
+    return;
+  }
+  reasonOther.style.display = 'none';
+  saveReason(reasonSelect.value);
+});
+function commitOtherReason() {
+  const text = reasonOther.value.trim();
+  if (text) saveReason(text);
+}
+reasonOther.addEventListener('blur', commitOtherReason);
+reasonOther.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitOtherReason(); } });
+
+async function saveReason(reason) {
+  if (!reasonBookId) return;
+  const { error } = await sb.from('ratings').update({ reason }).eq('user_id', session.user.id).eq('book_id', reasonBookId);
+  if (error) return showToast(`Couldn't save reason: ${error.message}`);
+  showToast('Thanks — noted.');
 }
 
 pickedEl.addEventListener('click', async (e) => {
   const btn = e.target.closest('.rating-btn');
   if (!btn || !selectedBook) return;
+  pickedEl.querySelectorAll('.rating-btn').forEach((b) => b.classList.remove('active'));
+  btn.classList.add('active');
   await saveRating(selectedBook.id, btn.dataset.rating, selectedBook.title, selectedBook.author);
+
+  reasonBookId = selectedBook.id;
+  reasonSelect.innerHTML = '<option value="">Choose one…</option>' +
+    REASON_OPTIONS[reasonGroupFor(btn.dataset.rating)].map((o) => `<option value="${escapeAttr(o)}">${escapeHtml(o)}</option>`).join('');
+  reasonSelect.value = '';
+  reasonOther.style.display = 'none';
+  reasonField.style.display = 'block';
 });
 
 async function saveRating(bookId, rating, title, author) {
@@ -143,7 +285,7 @@ async function loadMyRatings() {
   const container = document.getElementById('my-ratings');
   const { data, error } = await sb
     .from('ratings')
-    .select('id, book_id, rating, rated_date, updated_at, books(title, author, cover_url)')
+    .select('id, book_id, rating, rated_date, reason, updated_at, books(title, author, cover_url)')
     .order('updated_at', { ascending: false });
   if (error) {
     container.innerHTML = `<div class="empty-state">Couldn't load your ratings: ${escapeHtml(error.message)}</div>`;
@@ -161,16 +303,28 @@ async function loadMyRatings() {
         <div class="my-rating-author">${escapeHtml(r.books?.author || '')} · <span class="pill ${r.rating}">${RATING_LABELS[r.rating]}</span>${r.rated_date ? ` · ${r.rated_date}` : ''}</div>
       </div>
       <div class="my-rating-actions">
-        <button class="icon-btn" title="Change rating" data-edit="${r.book_id}" data-title="${escapeAttr(r.books?.title || '')}" data-author="${escapeAttr(r.books?.author || '')}" data-date="${r.rated_date || ''}">✎</button>
+        <button class="icon-btn" title="Book info" data-info="${r.book_id}">ⓘ</button>
+        <button class="icon-btn" title="Change rating" data-edit="${r.book_id}" data-title="${escapeAttr(r.books?.title || '')}" data-author="${escapeAttr(r.books?.author || '')}" data-date="${r.rated_date || ''}" data-current-rating="${r.rating}" data-reason="${escapeAttr(r.reason || '')}">✎</button>
         <button class="icon-btn" title="Remove" data-delete="${r.id}">✕</button>
       </div>
     </div>
   `).join('');
+  container.querySelectorAll('[data-info]').forEach((b) => b.addEventListener('click', () => showBookInfo(b.dataset.info)));
   container.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => {
     selectedBook = { id: b.dataset.edit, title: b.dataset.title, author: b.dataset.author };
     document.getElementById('picked-title').textContent = selectedBook.title;
     document.getElementById('picked-author').textContent = selectedBook.author;
     document.getElementById('picked-date').value = b.dataset.date || '';
+    pickedEl.querySelectorAll('.rating-btn').forEach((rb) => rb.classList.toggle('active', rb.dataset.rating === b.dataset.currentRating));
+    reasonBookId = selectedBook.id;
+    reasonSelect.innerHTML = '<option value="">Choose one…</option>' +
+      REASON_OPTIONS[reasonGroupFor(b.dataset.currentRating)].map((o) => `<option value="${escapeAttr(o)}">${escapeHtml(o)}</option>`).join('');
+    const existingReason = b.dataset.reason || '';
+    const isKnownOption = REASON_OPTIONS[reasonGroupFor(b.dataset.currentRating)].includes(existingReason);
+    reasonSelect.value = isKnownOption ? existingReason : (existingReason ? 'Other' : '');
+    reasonOther.style.display = (existingReason && !isKnownOption) ? 'block' : 'none';
+    reasonOther.value = (existingReason && !isKnownOption) ? existingReason : '';
+    reasonField.style.display = 'block';
     pickedEl.style.display = 'block';
     pickedEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));

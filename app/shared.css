@@ -78,7 +78,7 @@ label {
   color: var(--ink-soft);
   margin: 0 0 6px;
 }
-input[type="text"], input[type="email"], input[type="password"], input[type="file"] {
+input[type="text"], input[type="email"], input[type="password"], input[type="file"], input[type="date"], select {
   width: 100%;
   font-size: 1rem;
   padding: 12px 14px;
@@ -292,6 +292,54 @@ nav.top .nav-spacer { flex: 1 1 auto; }
 @media (min-width: 640px) {
   .genre-toggle, .rating-row { flex-wrap: nowrap; }
 }
+
+.icon-link {
+  background: none;
+  border: none;
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 2000;
+}
+@media (min-width: 640px) {
+  .modal-overlay { align-items: center; }
+}
+.modal-box {
+  background: var(--surface);
+  color: var(--ink);
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: 14px 14px 0 0;
+  padding: 18px;
+}
+@media (min-width: 640px) {
+  .modal-box { border-radius: 14px; }
+}
+.modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px; }
+.modal-title { font-weight: 700; font-size: 1.1rem; }
+.modal-author { color: var(--ink-soft); font-size: 0.85rem; margin-bottom: 14px; }
+.modal-close { background: none; border: none; color: var(--ink-soft); font-size: 1.3rem; padding: 0 4px; line-height: 1; }
+.dna-section-title { font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin: 18px 0 8px; }
+.dna-section-title:first-of-type { margin-top: 0; }
+.dna-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+.dna-row .k { font-size: 0.78rem; color: var(--ink-soft); }
+.dna-row .v { font-size: 0.9rem; font-weight: 600; }
+.dna-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dna-chip { background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 0.8rem; }
+.dna-synopsis { font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 6px; }
 
 .auth-mode-toggle { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
 .auth-mode-toggle button {

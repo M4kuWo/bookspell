@@ -37,6 +37,8 @@
       <input type="text" id="rule-search" placeholder="Search a trope or field value…" autocomplete="off">
     </div>
     <div id="rule-search-results" class="results-box" style="display:none;"></div>
+    <button type="button" class="icon-link" id="browse-filters-btn" style="margin:8px 0;">Not sure what to type? Browse all options →</button>
+    <div id="rule-browse" style="display:none;"></div>
     <div id="current-rules"><div class="empty-state">No filters yet.</div></div>
   </details>
 
@@ -106,6 +108,22 @@ ruleSearch.addEventListener('input', () => {
   ruleDebounce = setTimeout(() => renderRuleSearchResults(ruleSearch.value), 200);
 });
 
+function ruleOptionRowHtml(t) {
+  return `
+    <div class="result-row" style="flex-direction:column; align-items:stretch; cursor:default;">
+      <span class="result-title" style="margin-bottom:6px;">${escapeHtml(t.label)}</span>
+      <div class="rule-add-row">
+        <button class="btn-secondary" data-exclude="${escapeAttr(t.key)}">None of this</button>
+        <button class="btn-secondary" data-reduce="${escapeAttr(t.key)}">Less of this</button>
+      </div>
+    </div>
+  `;
+}
+function wireRuleOptionButtons(container) {
+  container.querySelectorAll('[data-exclude]').forEach((b) => b.addEventListener('click', () => addRule(b.dataset.exclude, 'exclude')));
+  container.querySelectorAll('[data-reduce]').forEach((b) => b.addEventListener('click', () => addRule(b.dataset.reduce, 'reduce', 0.6)));
+}
+
 function renderRuleSearchResults(query) {
   if (!query || query.trim().length < 2) {
     ruleResultsEl.style.display = 'none';
@@ -118,18 +136,39 @@ function renderRuleSearchResults(query) {
     ruleResultsEl.style.display = 'block';
     return;
   }
-  ruleResultsEl.innerHTML = matches.map((t) => `
-    <div class="result-row" style="flex-direction:column; align-items:stretch; cursor:default;">
-      <span class="result-title" style="margin-bottom:6px;">${escapeHtml(t.label)}</span>
-      <div class="rule-add-row">
-        <button class="btn-secondary" data-exclude="${escapeAttr(t.key)}">None of this</button>
-        <button class="btn-secondary" data-reduce="${escapeAttr(t.key)}">Less of this</button>
-      </div>
-    </div>
-  `).join('');
+  ruleResultsEl.innerHTML = matches.map(ruleOptionRowHtml).join('');
   ruleResultsEl.style.display = 'block';
-  ruleResultsEl.querySelectorAll('[data-exclude]').forEach((b) => b.addEventListener('click', () => addRule(b.dataset.exclude, 'exclude')));
-  ruleResultsEl.querySelectorAll('[data-reduce]').forEach((b) => b.addEventListener('click', () => addRule(b.dataset.reduce, 'reduce', 0.6)));
+  wireRuleOptionButtons(ruleResultsEl);
+}
+
+// Item #8: for a reader who doesn't already know the vocabulary, let
+// them browse everything groupable (tropes by their existing
+// group_name, field values by their field) instead of only searching.
+const browseEl = document.getElementById('rule-browse');
+const browseBtn = document.getElementById('browse-filters-btn');
+let browseOpen = false;
+browseBtn.addEventListener('click', () => {
+  browseOpen = !browseOpen;
+  browseBtn.textContent = browseOpen ? 'Hide the full list ↑' : 'Not sure what to type? Browse all options →';
+  browseEl.style.display = browseOpen ? 'block' : 'none';
+  if (browseOpen && !browseEl.dataset.rendered) renderRuleBrowse();
+});
+function renderRuleBrowse() {
+  const groups = new Map();
+  for (const t of ruleTargets) {
+    const groupKey = t.kind === 'trope' ? (t.group_name || 'Other tropes') : t.field;
+    if (!groups.has(groupKey)) groups.set(groupKey, []);
+    groups.get(groupKey).push(t);
+  }
+  const sortedGroups = [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  browseEl.innerHTML = sortedGroups.map(([groupKey, targets]) => `
+    <details style="margin-top:8px; border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
+      <summary style="cursor:pointer; font-size:0.88rem;">${escapeHtml(titleCase(groupKey))} <span style="color:var(--ink-soft);">(${targets.length})</span></summary>
+      <div style="margin-top:8px;">${targets.map(ruleOptionRowHtml).join('')}</div>
+    </details>
+  `).join('');
+  wireRuleOptionButtons(browseEl);
+  browseEl.dataset.rendered = '1';
 }
 
 async function addRule(ruleKey, ruleType, strength) {
@@ -200,16 +239,21 @@ document.getElementById('get-recs-btn').addEventListener('click', async () => {
   }
 });
 
-// The recommend API returns title/author only (no cover) -- fetched
+// The recommend API returns title/author only (no id/cover) -- fetched
 // client-side against `books` directly (RLS already grants authenticated
 // select) rather than changing the deployed backend's response shape for
-// a purely cosmetic addition.
+// what's otherwise a cosmetic addition. The id doubles as what the new
+// "Book info" button (feedback #11) needs to open the DNA modal.
 async function attachThumbnails(byGenre) {
   const allTitles = [...new Set(Object.values(byGenre).flat().map((r) => r.title))];
   if (allTitles.length === 0) return;
-  const { data } = await sb.from('books').select('title, cover_url').in('title', allTitles);
-  const covers = new Map((data || []).map((b) => [b.title, b.cover_url]));
-  Object.values(byGenre).forEach((list) => list.forEach((r) => { r.cover_url = covers.get(r.title) || null; }));
+  const { data } = await sb.from('books').select('id, title, cover_url').in('title', allTitles);
+  const byTitle = new Map((data || []).map((b) => [b.title, b]));
+  Object.values(byGenre).forEach((list) => list.forEach((r) => {
+    const match = byTitle.get(r.title);
+    r.cover_url = match?.cover_url || null;
+    r.book_id = match?.id || null;
+  }));
 }
 
 function matchClass(label) {
@@ -239,8 +283,10 @@ function renderResults(results) {
       ${r.dealbreaker_summary ? `<div class="rec-summary dealbreaker">${escapeHtml(r.dealbreaker_summary)}</div>` : ''}
       ${r.mismatch_summary ? `<div class="rec-summary mismatch">${escapeHtml(r.mismatch_summary)}</div>` : ''}
       ${r.series_note ? `<div class="rec-summary mismatch">${escapeHtml(r.series_note)}</div>` : ''}
+      ${r.book_id ? `<button type="button" class="icon-link" style="margin-top:8px;" data-info="${r.book_id}">Book info</button>` : ''}
     </div>
   `).join('');
+  resultsArea.querySelectorAll('[data-info]').forEach((b) => b.addEventListener('click', () => showBookInfo(b.dataset.info)));
 }
 </script>
 </body>
