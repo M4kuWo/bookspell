@@ -422,6 +422,15 @@ worth deferring to a later session rather than batching in for
   documented pattern) -- catch those at tagging time as usual, flag
   anything with no real SFF content for the repo owner rather than
   silently tagging or silently skipping it.
+  **18 of the 378 tagged 2026-09-13** (CLDO session, following
+  `tag-catalog-batch`, partial-series-first) -- see project-log.md's
+  2026-09-13 "Catalog tagging batch, 18 books" entry for full detail,
+  including one real catch (a candidate, "Red God," turned out to be
+  unpublished -- correctly left untagged, not a tagging error). Discworld,
+  The Mortal Instruments, and Percy Jackson and the Olympians are now
+  each **fully tagged/complete** as a direct result. ~352 of the 378
+  remain (378 - 18 tagged - 8 flagged graphic novels), plus whatever
+  non-SFF leakage tagging turns up along the way.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12 (91 of ~484 series fixed so far: 14+14+17+17+15+14 across

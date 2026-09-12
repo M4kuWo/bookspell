@@ -12151,3 +12151,105 @@ URL by construction (the service was named `bookspell-api`, Render's
 default URL pattern is `https://<service-name>.onrender.com`) -- no
 value change needed, just updated the comment that had called it a
 placeholder.
+
+## 2026-09-13 (later) — Catalog tagging batch, 18 books (CLDO session)
+
+Repo owner asked for a tagging batch while there was budget left before
+a token reset, before returning to the web app work. Followed
+`.claude/skills/tag-catalog-batch` directly (Step 1.5's schema-sync
+check passed clean, no drift). Worked the Step 2 priority query
+(partial-series-first) rather than picking arbitrarily.
+
+**21 candidates pulled from the priority list, 3 explicitly NOT
+tagged** -- all 3 real, none of them rushed past:
+- **The Foundation Trilogy** (Isaac Asimov) -- confirmed omnibus (752
+  pages vs. ~250-300 for a single Foundation novel; synopsis describes
+  the whole trilogy's arc), the same schema gap as the other known
+  omnibus duplicates (book-dna.md's "omnibus/compilation editions"
+  backlog entry).
+- **The Winds of Winter** (George R.R. Martin) -- unpublished, existing
+  permanent-skip precedent.
+- **Red God** (Pierce Brown) -- **caught before it became a real
+  tagging error, not after**: this book is NOT YET PUBLISHED. A quick
+  research pass (rather than trusting "I know this series, this is
+  obviously the next one") found Brown was still actively writing it as
+  of a March 2026 interview, no publisher-confirmed release date. The
+  catalog row itself has no `publication_year`/synopsis, consistent
+  with a speculative Hardcover pre-listing rather than a real book.
+  Confirming this BEFORE tagging is exactly the kind of check
+  `HIGH_RISK_FIELDS`/the standing "confidently wrong, not uncertain"
+  policy exists for -- pattern-matching "next book in a series I know
+  well" is precisely how past real tagging errors happened.
+
+**18 books tagged.** Full Book DNA + tropes + content warnings +
+`book_field_confidence` for genuinely uncertain calls, verified via a
+rolled-back-transaction test before applying for real, then local
+(psycopg2) and hosted (`supabase db push`), verified matching on both
+sides (885 `book_dna` rows). Migration
+`20260913030000_tag_catalog_batch_18_books.sql`.
+
+Books tagged, by series (partial-series-first as the skill prioritizes):
+Discworld -- A Hat Full of Sky, I Shall Wear Midnight, Wintersmith
+(Tiffany Aching sub-series), Raising Steam, The Last Hero, Unseen
+Academicals, Snuff, The Amazing Maurice and His Educated Rodents (31/39
+tagged before this batch, now 39/39 -- **Discworld is now fully
+complete**). The Dresden Files -- Cold Days, Peace Talks, Turn Coat.
+The Expanse -- Auberon. The Mortal Instruments -- City of Heavenly Fire
+(now complete, 6/6). Percy Jackson and the Olympians -- The Chalice of
+the Gods (now complete, 6/6). Ender's Saga -- Ender in Exile. The
+Twilight Saga -- Midnight Sun. Old Man's War -- The End of All Things,
+The Human Division.
+
+**Two real research-verified corrections, not guessed**: (1) Auberon's
+governor character is Biryar Rittenaur (an early planning note had the
+wrong name from memory) -- verified `person: third_limited` (medium
+confidence, reviews consistently use "he" but no direct excerpt access;
+recorded via `book_field_confidence`), and the ending is genuinely
+morally-compromising rather than a clean win or clean tragedy (he
+protects his wife by striking a corrupt deal with a crime boss,
+escaping consequence by becoming complicit) -- tagged
+`emotional_resolution: ambiguous`, tropes `morally_grey_protagonist`/
+`corruption_arc`. (2) The End of All Things is genuinely first-person
+throughout all 4 linked novellas (confirmed via a review that
+specifically critiques Scalzi for this choice, different POV
+characters sounding too similar) -- an earlier planning assumption of
+"mixed" person was wrong and corrected before tagging, not after.
+
+**Author-field contamination flagged, not fixed (out of this batch's
+scope)**: 3 books -- A Hat Full of Sky, The Last Hero, Wintersmith --
+carry `"Terry Pratchett, Paul Kidby"` as author. Kidby is Pratchett's
+longtime cover illustrator, not a co-author. Same recurring
+contamination pattern CLAUDE.md already documents catalog-wide; noted
+here rather than silently worked around, per that standing policy.
+
+**Density self-check run, honest result, not silently passed**:
+batch average 4.61 tropes/book (catalog average 5.45, ~15% below --
+acceptable) but only 1.11 content-warnings/book (catalog average 1.74,
+~36% below). Made a real second pass specifically to close this gap
+before finalizing (not skipped) -- pushed CWs from an initial 0.94/book
+up through honest, individually-justified additions (e.g. `animal_harm`
+for The Amazing Maurice's rat-poisoning plot, `torture`/
+`kidnapping_or_captivity` for City of Heavenly Fire's Sebastian arc,
+`war_trauma` for both Old Man's War entries). The remaining gap reads
+as a genuine content difference, not rushing: this batch is unusually
+concentrated in comedic Discworld satire and long-running
+urban-fantasy/space-opera franchise entries, which this vocabulary's
+content-warning list (skewed toward grimdark/dark-fantasy-style
+content) doesn't map onto as densely as, say, grimdark epic fantasy
+would. Flagging this transparently rather than forcing further
+CW tags past what the actual text supports, per the "don't force"
+policy taking precedence when the two policies are in real tension.
+
+**A separate, small, PRE-EXISTING data-drift finding, unrelated to this
+batch**: after applying and verifying this batch matched exactly on
+both local and hosted (confirmed via a per-book title query showing
+identical trope/CW counts on both sides), the catalog-wide totals
+still showed hosted running 4 tropes / 1 content warning / 1 confidence
+row ahead of local. `git fetch` showed no new commits and
+`supabase migration list --linked` showed zero tracking gaps (every
+local migration file has a matching remote entry) -- so this isn't the
+already-documented "someone pushed via raw psycopg2 instead of
+`supabase db push`" pattern. Source not identified within this batch's
+scope; flagging for the next full sync rather than spending further
+budget chasing a discrepancy this small (4/4811, 1/1527, 1/475 rows)
+that doesn't affect anything just tagged.
