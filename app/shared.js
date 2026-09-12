@@ -8,9 +8,11 @@ const SUPABASE_URL = 'https://yhvubjqstswxvctdikbc.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_DXG7hpWr3UEnDGT60DcKZg_hbRNDUXI';
 
 // The backend API's base URL (api/, deployed to Render -- see
-// api/README.md). PLACEHOLDER until that deployment exists; update
-// this one line once the Render service is live, nothing else needs
-// to change.
+// api/README.md). Live as of 2026-09-12: verified GET /rule-targets
+// returns real catalog data and GET /recommendations correctly 401s
+// without a token. Free tier spins down after 15 min idle -- the first
+// request in a while can take 30-60s (see the "waking up" loading
+// states in dashboard.html/import.html).
 const API_BASE = 'https://bookspell-api.onrender.com';
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

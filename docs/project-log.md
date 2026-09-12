@@ -12091,3 +12091,63 @@ dashboard action above, deploying `api/` to Render (needs the repo
 owner's own Render account), and the real ratings/import round-trip +
 mobile-viewport verification the plan's own Verification section
 calls for -- none of these are fakeable without a live hosted session.
+
+## 2026-09-12 (later) — `api/` deployed to Render, actually live and verified
+
+Repo owner deployed `bookspell-api` on Render's free tier via the
+dashboard (Claude driving the browser directly). Two real bugs hit and
+fixed during this, neither fakeable in local testing since they only
+manifest against a genuine external network + hosted Auth:
+
+1. **Direct Postgres connection unreachable from Render.** First deploy
+   failed with `psycopg2.OperationalError: ... Network is unreachable`
+   against `db.<ref>.supabase.co:5432` -- that host resolves IPv6-only,
+   and Render's outbound network has no IPv6. Fixed by switching
+   `DATABASE_URL` to Supabase's transaction pooler
+   (`aws-0-ap-southeast-1.pooler.supabase.com:6543`, username
+   `postgres.<project-ref>`), which supports IPv4 and is Supabase's own
+   documented answer for exactly this platform-connectivity case.
+2. **A stray leading character in the pasted connection string broke
+   DSN parsing** (`psycopg2.ProgrammingError: invalid dsn: missing "="
+   after ")"`) -- a rendering/copy artifact (a `〉`-style character)
+   ended up prepended to the value when it was entered. Caught by
+   reading the value back and zooming in on it character-by-character
+   rather than assuming a re-paste would be clean; fixed by clearing
+   the field and retyping cleanly.
+
+**A real security correction mid-session**: this project's JWT
+verification (`api/main.py`) was originally written against an
+unverified assumption (Supabase's legacy shared HS256 secret). The repo
+owner, while getting the hosted connection string, surfaced a
+`SUPABASE_JWKS_URL` value that only exists under Supabase's newer
+asymmetric-key model -- confirmed directly (fetched the real JWKS
+endpoint, got back one real ES256 key) rather than assumed, and
+`api/main.py`/`api/README.md`/`api/requirements.txt` were fixed to use
+`PyJWKClient` before deployment, not after. See the corresponding commit
+for the full before/after and the tests run against the real JWKS
+endpoint (a garbage token rejected, a well-formed-but-forged-signature
+token correctly fetching the real key and failing verification).
+
+**A real credential-hygiene note, not a code issue**: the repo owner
+pasted a live `SUPABASE_SECRET_KEY` and (twice) a real database
+password directly into chat during this process. Neither was stored or
+reused by Claude beyond the one legitimate use (typing the connection
+string into Render's own field), but both are now sitting in
+conversation history -- the database password was already being
+rotated as part of fixing issue 2 above (a second, independent reason
+to have done so, not just hygiene), and the secret key rotation is
+still a repo-owner action item, not yet done as of this entry.
+
+**Verified live** (not just "deploy succeeded"): `GET
+https://bookspell-api.onrender.com/rule-targets` returns real catalog
+data (200), `GET /recommendations` with no token correctly 401s. Full
+ratings/import round-trip against a real signed-up user is still the
+next real verification step -- this confirms the service and its DB/
+auth wiring work, not that every endpoint's business logic is exercised
+end-to-end yet.
+
+`app/shared.js`'s `API_BASE` already matched the real assigned Render
+URL by construction (the service was named `bookspell-api`, Render's
+default URL pattern is `https://<service-name>.onrender.com`) -- no
+value change needed, just updated the comment that had called it a
+placeholder.
