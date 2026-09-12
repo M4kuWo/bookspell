@@ -12,6 +12,20 @@ cross-cutting task backlog — mutable, not append-only) before making
 non-trivial changes — don't re-litigate decisions already made there,
 and check `docs/TODO.md` before picking your own next task.
 
+**Also check `.claude/skills/` for anything relevant to a table/feature
+you're about to build on, before you build on it.** Real,
+already-happened example (2026-09-13): the v1 app's book-info modal was
+built to show audiobook data, but `audiobook_editions` (a real,
+1000+-row table with narrators/cast/production data) was never checked
+for — it exists specifically because `.claude/skills/
+tag-audiobook-editions/SKILL.md` had been populating it in a separate
+effort, and that skill file (plus the design-rationale entry it points
+to in `docs/schema/book-dna.md`) would have surfaced this immediately.
+A table existing with no docs/schema/ entry of its own and no mention
+in CLAUDE.md is not evidence it's unused — check the skills directory,
+not just the two doc files above, before assuming a feature starts from
+nothing.
+
 ## Persona system
 
 Two named, standing personas exist for this project (added 2026-09-10),
@@ -128,6 +142,24 @@ stack to dry-run against, discovered 2026-09-09).
   but the same order of operations without that direct-apply check
   first would have looked like `db push` silently failing on a
   perfectly valid piece of data.
+- **A title-scoped `where title = '...'` migration must match the
+  EXACT characters stored in the database, including which apostrophe
+  it is** — some titles use a Unicode curly quote (’, U+2019), not a
+  plain straight one ('), and these are different bytes to a SQL string
+  literal. Real, already-happened example (2026-09-13): hand-retyping a
+  script-generated migration introduced a wrong-apostrophe-type bug in 2
+  of 40 titles (`A Wizard's Guide to Defensive Baking`, `The Handmaid's
+  Tale`), which wouldn't have errored — the subselect would have just
+  silently matched zero rows, a no-op `UPDATE` with no warning. Caught
+  by diffing the hand-typed file against the already-tested
+  generator-script output before applying, not by the migration failing.
+  **Generate title-scoped SQL programmatically from the real stored
+  title string (a Python script writing the file) rather than hand-
+  transcribing a title you read off a query result** — this class of
+  bug is invisible to a rolled-back-transaction test too, since a
+  no-op UPDATE "succeeds" just as cleanly as a real one; only comparing
+  row counts before/after (or diffing against source data) would catch
+  it.
 - **Before pushing, check for duplicate migration timestamps** —
   `ls supabase/migrations/ | sort | uniq -c -w14 | awk '$1>1'` (or just
   eyeball it after a merge). Real, already-happened example: two
@@ -158,6 +190,28 @@ stack to dry-run against, discovered 2026-09-09).
 - **Before deleting anything, check for dependent rows in other tables
   first** (e.g. a book's `book_dna`/`book_tropes`/`book_content_warnings`/
   `book_field_confidence` rows) — don't assume "should be empty," verify it.
+- **A new public-catalog-style table needs RLS enabled + a permissive
+  read policy + an explicit grant to BOTH `anon` and `authenticated`, in
+  the same migration that creates it** — don't leave "wire it into
+  something that reads it" for later, because a table with none of this
+  looks *silently identical to an empty table* from any client's
+  perspective (no error, just zero rows), which is indistinguishable
+  from a real data gap. Real, already-happened example (2026-09-13):
+  `audiobook_editions` (created 2026-09-05, populated to 1000+ rows by
+  `.claude/skills/tag-audiobook-editions/SKILL.md`) had RLS disabled
+  and no grant to either role at all. The v1 app's book-info modal was
+  built against it and would have silently shown "no data" for every
+  book — indistinguishable from the real, separate Tier-B tagging gap
+  it was built to explain — had the grants not been checked before
+  shipping. Compounding the same bug: the follow-up fix granted only
+  `authenticated` (matching the app's login flow) and initially missed
+  `anon`, breaking a *different* consumer (`tools/catalog-review`, which
+  queries as `anon` with no login) that had been silently broken for the
+  same underlying reason. **Check `books`/`book_dna`'s existing grants
+  as the reference pattern** (`select grantee, table_name from
+  information_schema.role_table_grants where table_name = '...' and
+  privilege_type = 'SELECT'`) and match both roles, not just whichever
+  one the specific feature you're building happens to use.
 
 ## Database backups
 
@@ -379,6 +433,72 @@ repo) so it's discoverable from either side.
   by editing `scoring_tests.py`'s own `_full_score()` directly to call
   the experimental variant, the way the series-trajectory-penalty
   experiment (tested successfully) did it.
+
+## v1 web app (`app/`, `api/`)
+
+Static multi-page frontend (no build step, `supabase-js` from a CDN
+`<script>` tag) on GitHub Pages, talking directly to hosted Supabase
+(Auth + RLS-scoped tables) plus a small FastAPI backend (`api/`,
+deployed to Render) for the actual `recommend()`/`explain_match()`
+calls. See `~/.claude/plans/jaunty-chasing-eclipse.md` (or its
+successor if superseded) for the original build plan.
+
+- **`supabase config push` pushes the ENTIRE local `config.toml` to
+  hosted, not just the section you meant to change.** Real,
+  already-happened example (2026-09-13): pushing a `site_url`/
+  `additional_redirect_urls` change also silently flipped hosted's
+  `enable_confirmations`/`otp_length`/`max_frequency`/MFA settings to
+  this file's stock local-dev defaults (email confirmation off, an
+  effectively unthrottled 1-second email rate limit) for the few
+  minutes between two pushes, until the diff `config push` itself
+  prints was actually read and the values restored. **Always read
+  the diff `config push` prints before/after** — don't just run it and
+  move on — and expect this any time `config.toml` has drifted from
+  hosted's real values for reasons unrelated to what you're changing.
+- **An element toggled via the `hidden` IDL/content attribute must not
+  have its `display` property set unconditionally in CSS** — an author
+  stylesheet declaration always overrides the browser's own
+  `[hidden] { display: none }` default for the same property, REGARDLESS
+  of specificity (origin beats specificity in the cascade), so
+  `el.hidden = true` silently does nothing if some rule elsewhere sets
+  `display` on that element without excluding the hidden state. Real,
+  already-happened example (2026-09-13): the book-info modal's
+  `.modal-overlay { display: flex }` meant its close button visibly did
+  nothing — the modal was already permanently "on," just usually
+  unnoticed because `overlay.hidden` started `true` before the element
+  was ever inserted. Fix: scope the rule to `:not([hidden])`
+  (`.modal-overlay:not([hidden]) { display: flex; ... }`), never set
+  `display` on a hideable element outside that guard.
+- **Dark/light theming uses CSS custom-property tokens, not selector
+  overrides** (`shared.css`'s `--paper`/`--ink`/`--accent`/etc., plus
+  the `--gold`/`--gold-bg`/`--gold-border` set added 2026-09-13) —
+  define every themed value as a token in the bare `:root` block, redefine
+  the SAME tokens inside `@media (prefers-color-scheme: dark)` (guarded
+  `:root:not([data-theme="light"])`) and again under
+  `:root[data-theme="dark"]`, and have components reference `var(--x)`
+  only. **Never write a component-specific dark-mode override directly
+  on a class selector outside those two blocks** — caught myself about
+  to do exactly that while building the gold membership badge (a
+  `:root:not([data-theme="light"]) .membership-badge {...}` rule placed
+  OUTSIDE the `@media` block, which would have applied the dark color to
+  every viewer by default regardless of their actual theme, since almost
+  every root element matches `:not([data-theme="light"])` unless the
+  user explicitly chose light) — fixed before it shipped by switching to
+  the token pattern instead.
+- **`audiobook_editions`** (real per-edition narrator/cast/production
+  data, distinct from `book_dna`'s own Tier B "listening quality"
+  fields, which remain genuinely untagged catalog-wide) is populated by
+  `.claude/skills/tag-audiobook-editions/SKILL.md`, with its full design
+  rationale in `docs/schema/book-dna.md`'s "Future fields backlog"
+  entry — read both before touching this table. `edition_type` values:
+  `standard`, `dramatized_full_cast`, `abridged`, `audio_original`,
+  `other`. `narrators` is a flat name array (no character-role
+  mapping — a known, documented future gap, not a bug). A known,
+  flagged-not-fixed data-quality issue: some GraphicAudio full-cast
+  productions are mislabeled `edition_type = 'standard'` in the current
+  data (see `docs/TODO.md`) — don't treat `edition_type` as fully
+  reliable without cross-checking narrator count/production company
+  for genuinely ambiguous-looking rows.
 
 ## Safety / credentials
 

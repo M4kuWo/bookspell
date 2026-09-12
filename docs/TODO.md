@@ -1185,6 +1185,23 @@ worth deferring to a later session rather than batching in for
   history below). This is the concrete basis for the P1->P3 demotion
   above: there genuinely is nothing left to add today, only future
   releases to watch for.
+  **UPDATE (2026-09-13)**: `audiobook_editions` is now 1123 rows total
+  (795 distinct books) -- far more than the 94-row snapshot this entry
+  was written against on 2026-09-09, meaning real collection work
+  continued after this P3 demotion (not reconciled against this entry's
+  history yet -- a future session should figure out where that
+  additional work is logged and fold it in here). Also discovered and
+  fixed the same day: **the table had RLS disabled and no grant to
+  `anon` OR `authenticated` at all**, meaning NEITHER `tools/catalog-
+  review` NOR the (newly-built) v1 app's book-info modal could actually
+  read any of this data until `20260913100000`/`20260913110000` fixed
+  it -- all this real collection work has been invisible to every
+  consumer since the table existed. Also found (not fixed): some
+  GraphicAudio full-cast rows are mislabeled `edition_type = 'standard'`
+  (see the data-quality entry further down in this P3 section). None of
+  this changes the P3 reasoning above (known candidate
+  pools for genuinely NEW editions are still exhausted) -- it's a
+  data-visibility/quality fix, not new sourcing work.
   **Full history kept below, not deleted** (moved here from P1
   2026-09-11):
   **Progress as of 2026-09-08: Steps A1a + A1b done for GraphicAudio,
@@ -1467,12 +1484,30 @@ worth deferring to a later session rather than batching in for
   cases wrong (some legitimate standard editions do use 2-3 narrators).
   Whoever owns `audiobook_editions`' data collection should sweep for
   this rather than the app layer silently reclassifying it.
-- [ ] **`audiobook_editions` had RLS disabled and no grant to
-  `authenticated`** until fixed 2026-09-13
-  (`20260913100000_expose_audiobook_editions_to_app.sql`) -- caught
-  before shipping the book-info modal's edition/narrator display (which
-  would otherwise have silently shown "no data" for every book,
-  indistinguishable from the real Tier-B tagging gap). Worth checking
-  whether any other future table gets created without this same
-  RLS-policy + grant pairing that `books`/`book_dna`/`series`/`universe`
-  already have.
+- [x] **`audiobook_editions` had RLS disabled and no grant to EITHER
+  `anon` or `authenticated`** until fixed 2026-09-13
+  (`20260913100000_expose_audiobook_editions_to_app.sql` for
+  `authenticated`, `20260913110000_grant_audiobook_editions_to_anon.sql`
+  for `anon` once the mismatch against `books`/`book_dna`'s grants was
+  noticed) -- caught before shipping the v1 app's book-info modal
+  edition/narrator display (which would otherwise have silently shown
+  "no data" for every book, indistinguishable from the real Tier-B
+  tagging gap), and it also explains why `tools/catalog-review`'s own
+  audiobook display (which queries as `anon`, no login) has likely been
+  silently empty since this table was created. Both verified fixed with
+  real REST calls under each role against hosted, not just a grants
+  check. Worth checking whether any other future table gets created
+  without this same RLS-policy + grant pairing that
+  `books`/`book_dna`/`series`/`universe` already have -- see the new
+  CLAUDE.md rule under "Database & migrations."
+- [ ] **21 of 97 `dramatized_full_cast` `audiobook_editions` rows are
+  missing their cast list** (76 already have one) -- noticed 2026-09-13
+  while wiring the book-info modal. A small, bounded lookup, not a
+  research project: every row already has a `source_url` pointing at
+  exactly where to look (GraphicAudio's own listing, the BBC page,
+  etc.) per `.claude/skills/tag-audiobook-editions/SKILL.md`'s own
+  convention. Some of the 21 may already reflect a deliberate "couldn't
+  confirm, left null rather than guess" call from whoever tagged that
+  row (the skill explicitly allows this) rather than "not yet looked
+  at" -- don't assume all 21 are recoverable, but worth a real pass to
+  find out how many are.

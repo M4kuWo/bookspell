@@ -12724,3 +12724,95 @@ Both new migrations tested in a rolled-back transaction, applied to
 local and hosted, hosted verified matching (905 `audiobook_length`-
 populated rows, the same pre-existing 1-row drift from batch 1 still
 present and still deferred). Committed as `06fc1c8`, pushed.
+
+## 2026-09-13 -- v1 app: found and fixed catalog-review's own audiobook display was silently broken too; session wrap-up
+
+Two follow-up questions from the user after the fourth app batch led to
+a second real fix. First question: why does The Way of Kings show no
+`romance_tone`? Checked directly -- it's not an oversight, the book
+genuinely doesn't qualify as a candidate for the ongoing romance_tone
+backfill sweep (`drive: character_driven`, `romance_heat_frequency:
+rare`, no qualifying romance tropes) -- `null` here is the sweep's
+correct, documented output for a book with only minor secondary
+romantic content, not a book that's been skipped. 190/941 books have
+`romance_tone` set catalog-wide; 132 real candidates remain queued.
+
+Second question: is getting the cast for every BBC/GraphicAudio edition
+a big lift? Checked: of 97 `dramatized_full_cast` rows, 76 already have
+a full cast list stored; only 21 are missing one, and every row already
+has a `source_url` pointing at where to look. Added to `docs/TODO.md`
+as a small, bounded item -- not the large effort implied by "every
+edition."
+
+**While answering these, read `.claude/skills/tag-audiobook-editions/
+SKILL.md` for the first time this session** (should have been read
+before building the book-info modal two batches ago, not after --
+CLAUDE.md's top-level "before doing anything else" reading list now
+explicitly says to check `.claude/skills/` for this reason). It
+confirmed `audiobook_editions`'s real design (edition_type vocabulary,
+the flat-narrator-array shape, the documented character-role-mapping
+gap) and pointed at `docs/schema/book-dna.md`'s own design-rationale
+entry, which showed real collection history: 94 rows as of 2026-09-09,
+now 1123 (795 distinct books) -- meaning substantial additional
+collection happened after the 2026-09-11 P1->P3 demotion that hasn't
+been reconciled into that TODO entry's own history yet (flagged there
+for a future session, not chased down now).
+
+**A second real bug, same root cause as the one already fixed this
+session, caught by checking `tools/catalog-review/index.html`'s own
+audiobook display code rather than assuming the earlier fix covered
+everything**: that tool queries `audiobook_editions` using the anon key
+directly as its bearer token (no login flow), meaning it runs as
+Postgres's `anon` role -- but this session's earlier grant fix
+(`20260913100000`) only granted `authenticated`, matching the app's
+login flow but missing `anon` entirely. Cross-checked against
+`books`/`book_dna`'s existing grants (both roles) to find the mismatch,
+fixed with `20260913110000_grant_audiobook_editions_to_anon.sql`, and
+verified with the exact anon-key REST call `catalog-review` itself
+makes returning real data on hosted. **This means `tools/catalog-
+review`'s audiobook display has likely been silently empty since the
+table was created (2026-09-05)** -- a real, previously-invisible bug in
+a different, older tool, surfaced only because this session happened to
+build something else against the same table and thought to check its
+grants.
+
+### Session wrap-up
+
+Per the repo owner's request, this closes out a long single-terminal
+session covering: catalog tagging batch 4/4 (18 books, 13 series
+completions), Supabase Auth's real site_url/redirect config (plus
+catching and fixing `supabase config push`'s whole-file side effect),
+a full signup->login->backend smoke test, and four rounds of real-user
+app-testing feedback (36 total feedback items across UX polish, three
+real bugs self-caught or user-caught, two schema migrations for
+`ratings` fields, a new `book_suggestions` table, and the
+`audiobook_editions` grants fix covered above). `CLAUDE.md` updated
+with five durable lessons from today: checking `.claude/skills/` before
+building on an unfamiliar table, the new-table RLS+grant pairing rule,
+the Unicode-curly-quote migration-escaping gotcha, the `hidden`+
+unconditional-`display` CSS gotcha, and a new "v1 web app" section
+covering the `config push` whole-file behavior, the token-based
+dark-mode pattern, and `audiobook_editions`'s real shape.
+
+**Open threads for the next session** (also see `docs/TODO.md`'s P1-P3
+sections, unchanged in priority by today's work):
+- App: 4 rounds of live-testing feedback addressed; no 5th round
+  requested yet as of this entry -- the natural next step is simply
+  more live testing, or picking up whichever `docs/TODO.md` item the
+  repo owner prioritizes next (tagging, scoring, or more app work).
+- The 21 missing-cast `dramatized_full_cast` rows and the 18
+  ambiguous-runtime `audiobook_length` books are both small, well-scoped,
+  ready-to-pick-up items (see `docs/TODO.md`'s P3 section).
+- The GraphicAudio-mislabeled-as-`standard` data-quality issue and the
+  94->1123-row reconciliation gap in the P3 audiobook-editions entry are
+  both flagged, not investigated further -- genuine next-session
+  candidates if audiobook data quality becomes a priority.
+- This session's browser-automation tooling (click/JS-exec) errored
+  consistently all day (`Cannot access a chrome-extension:// URL of
+  different extension`) -- every app-code verification this session was
+  done via `node --check` + manual review + direct DB/REST checks, never
+  actual interactive clicking. If a fresh terminal's browser tooling
+  works again, a real interactive pass over the whole app (not just the
+  pieces the repo owner happened to test live) would be worth doing
+  once, to catch anything that slipped through code-review-only
+  verification.
