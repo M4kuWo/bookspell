@@ -11684,3 +11684,127 @@ also worth a scope look, most of this sub-series is crime/thriller
 rather than SFF), The Captive's War (James S. A. Corey), Earthseed
 (Octavia Butler, seen in the ranked list but not researched this
 batch).
+
+## 2026-09-12 (later still): shared-universe audit batch 7 -- 8 authors checked, 1 confirmed connected and built ("Wizarding World"), 7 confirmed NOT connected
+
+Continuing docs/TODO.md's P2 shared-universe linking audit (batch 7),
+run as a background agent (CLDA persona) from an isolated worktree.
+Re-ran the candidate query: 57 authors with 2+ series and
+`universe_id is null`. Filtered out every author already listed in
+docs/TODO.md as checked across batches 1-6, leaving the same
+"untouched leftover pool" batch 6 left behind. Picked 8: Amie
+Kaufman & Jay Kristoff (joint pairing), Jay Kristoff (solo pairing),
+Ilona Andrews, Neal Shusterman, Holly Black, Christopher Paolini,
+J.K. Rowling, and Margaret Atwood.
+
+**Result: 1 confirmed connected and built, 7 confirmed NOT
+connected.** Verified each against real, specific evidence, not just
+"seems separate" (or "seems connected"):
+
+- **J.K. Rowling -- Harry Potter and Hogwarts Library, confirmed
+  connected, built as "Wizarding World."** This is one of the most
+  structurally explicit cases this audit has found: "Hogwarts
+  Library" (our catalog's series row for Fantastic Beasts and Where
+  to Find Them / Quidditch Through the Ages / The Tales of Beedle the
+  Bard) isn't a separate fictional world sharing a universe with
+  Harry Potter -- these three are presented as genuine in-universe
+  Hogwarts texts. Fantastic Beasts carries a real in-character
+  foreword from Albus Dumbledore describing it as "an approved
+  textbook at Hogwarts School of Witchcraft and Wizardry ever since
+  its publication"; both Fantastic Beasts and Quidditch Through the
+  Ages are referenced as books Hogwarts students actually use within
+  the main seven-book series itself; The Tales of Beedle the Bard is
+  the specific book Dumbledore bequeaths to Hermione in Deathly
+  Hallows and which she reads from within the story. Named after the
+  real, official franchise umbrella term -- harrypotter.com's own
+  site describes itself as "the official home of Harry Potter,
+  Fantastic Beasts, and the Wizarding World" -- not invented, no
+  naming-policy question. Tested in a rolled-back transaction with a
+  genuine idempotency re-run first, then applied for real via a
+  normal autocommit connection (not `supabase db push` -- left for
+  the primary session per this task's standard handoff). Verified
+  live on hosted: both series rows now carry the new universe's id.
+  Migration `20260913000000_shared_universe_audit_batch7.sql`.
+  `universe` now has 18 rows.
+- **Amie Kaufman & Jay Kristoff -- The Aurora Cycle vs. The Illuminae
+  Files, confirmed NOT connected.** Both co-written series by the
+  same duo, but explicitly different casts and a different universe
+  per the authors' and publishers' own descriptions -- Illuminae
+  Files is an alien-invasion trilogy, Aurora Cycle a separate far-
+  future setting with different alien species. Shared tone/style,
+  not shared canon.
+- **Jay Kristoff (solo) -- Empire of the Vampire vs. The Nevernight
+  Chronicle, confirmed NOT connected.** Kristoff himself describes
+  Empire of the Vampire as "not tied in with my other fantasy work...
+  a completely new thing with a new world, new mythos, and a new
+  (anti)hero," explicitly calling it a spiritual (style/tone)
+  successor to Nevernight rather than a continuation of its canon.
+- **Ilona Andrews -- Kate Daniels vs. Innkeeper Chronicles, confirmed
+  NOT connected.** The author's own release-schedule page states
+  directly that the Innkeeper series is "not part of Kate Daniels
+  story." (Innkeeper does share guest-star crossover characters with
+  a different Andrews series, The Edge, but that's a separate
+  pairing outside this audit's current candidate list -- The Edge and
+  Kate Daniels are still two distinct universes.)
+- **Neal Shusterman -- Arc of a Scythe vs. Unwind Dystology, confirmed
+  NOT connected.** Fans have long theorized Unwind is a direct
+  prequel to Scythe, but Shusterman has explicitly rejected this: he's
+  said he finds having only one universe "immensely boring," prefers
+  "more sandboxes," and there is no connected "Shusterverse" across
+  his dystopian work.
+- **Holly Black -- The Folk of the Air vs. The Charlatan Duology
+  (Book of Night), confirmed NOT connected.** Book of Night is
+  explicitly set in its own world (shadow magic, no fae) distinct
+  from the Faerie of Folk of the Air -- shared authorial voice and
+  morally-ambiguous-protagonist sensibility, not a shared setting.
+- **Christopher Paolini -- Fractalverse (To Sleep in a Sea of Stars)
+  vs. The Inheritance Cycle, confirmed NOT connected.** Paolini has
+  described Fractalverse as his first work "outside of the Eragon
+  universe" -- a deliberate genre/setting departure (sword-and-dragon
+  fantasy to adult science fiction). Real Easter eggs exist (a
+  cat-owning enigmatic woman echoing Angela/Solembum, two
+  "Entropists" echoing the Twins) but these are authorial in-jokes for
+  attentive readers, not evidence of a merged continuity -- same
+  cameo/reference tier this audit has already ruled insufficient
+  elsewhere.
+- **Margaret Atwood -- MaddAddam vs. The Handmaid's Tale, confirmed
+  NOT connected.** No source found treating these as a shared universe
+  (one claim to the contrary, in a listicle-style LA Review of Books
+  piece framing MaddAddam as a Handmaid's-Tale "expanded universe,"
+  reads as loose thematic framing rather than a textual or authorial
+  claim, and isn't corroborated anywhere else). The two are
+  incompatible on their own terms -- Gilead's theocratic-coup near-
+  future and the Oryx and Crake timeline's corporate-bioengineering
+  collapse are different histories with no shared characters, setting,
+  or cross-reference in either work.
+
+**Naming policy**: not invoked this batch -- "Wizarding World" is a
+real, official, currently-in-use franchise name (not a fan coinage
+and not a case with no official name), so no fan-term search or
+name-invention question arose.
+
+**No new data-quality issues found this batch.** The already-flagged
+Card Shadow Saga and R.A. Salvatore Dark Elf Trilogy/Legend of Drizzt
+series-splitting issues were not re-encountered (both authors already
+fully checked in prior batches).
+
+**Next (batch 8)**: re-rank remaining series excluding all authors now
+checked across batches 1-7 (add this batch's 8: Amie Kaufman & Jay
+Kristoff, Jay Kristoff solo, Ilona Andrews, Neal Shusterman, Holly
+Black, Christopher Paolini, J.K. Rowling, Margaret Atwood) plus the
+same still-unsettled flagged-series-name list carried since batch 5
+(Hogwarts Library, The Roald Dahl Classic Collection, The Riyria
+Revelations (Omnibus), Robert Langdon, The Inheritance Games, Imperial
+Radch (publication order), Enderverse: Publication Order, The Shadow
+Series, Middle Earth, American Gods, Forward Collection, Saga -- note
+Hogwarts Library itself is now resolved for universe-linking purposes
+via this batch's Wizarding World build, though the separate
+series.status/book_count "is this even a real series" question about
+it, tracked on the other P2 track, is untouched). Untouched leftover
+pool as of this batch (non-exhaustive, from the batch-6 list minus
+this batch's 8): Anthony Ryan, Becky Chambers, Brent Weeks, Carissa
+Broadbent, Danielle L. Jensen, James Islington, Jennifer Lynn Barnes,
+John Gwynne, Laini Taylor, Marie Lu, Marissa Meyer, Mira Grant, Octavia
+E. Butler, Rachel Gillig, Rebecca Roanhorse, Rebecca Ross, S. A.
+Chakraborty, Samantha Shannon, Stephanie Garber, Stephen Graham Jones,
+Tahereh Mafi, TJ Klune, Veronica Roth.

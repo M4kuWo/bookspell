@@ -665,7 +665,12 @@ worth deferring to a later session rather than batching in for
     Martin (Westeros), Robin Hobb (Realm of the Elderlings), Leigh
     Bardugo (Grishaverse -- Ninth House excluded, see below), Orson
     Scott Card (Enderverse), Sarah J. Maas (Maasverse -- see resolution
-    below), Rick Riordan (Riordanverse -- batch 4), V.E. Schwab (The
+    below), Rick Riordan (Riordanverse -- batch 4), Michael J. Sullivan
+    (Elan -- batch 5), Cassandra Clare (The Shadowhunter Chronicles --
+    batch 5), T. Kingfisher (The World of the White Rat -- batch 5,
+    Sworn Soldier excluded, see below), Philip Pullman (Lyra's World --
+    batch 5, naming flag, see below), J.K. Rowling (Wizarding World --
+    batch 7, Harry Potter + Hogwarts Library), V.E. Schwab (The
     Four Londons -- batch 4, Shades of Magic + Threads of Power only,
     see below), Brandon Sanderson (Cosmere series-level gap fix, batch
     4 -- see below; his Skyward/Reckoners are still separately confirmed
@@ -915,25 +920,69 @@ worth deferring to a later session rather than batching in for
     Murderbot; NOT the Books of the Raksura, which isn't part of this
     pairing). **Lois McMaster Bujold** (Vorkosigan Saga vs. World of
     the Five Gods -- confirmed separate SF/fantasy universes).
+  - **Batch 7 (2026-09-12, background agent)**: 8 authors checked, 1
+    confirmed connected and built, 7 confirmed NOT connected (see
+    project-log.md's 2026-09-12 "shared-universe audit batch 7" entry
+    for full evidence per pairing). **J.K. Rowling -- built as
+    "Wizarding World"** (Harry Potter + Hogwarts Library): the
+    strongest-evidence case this audit has found so far -- Hogwarts
+    Library's 3 books (Fantastic Beasts and Where to Find Them,
+    Quidditch Through the Ages, The Tales of Beedle the Bard) are
+    presented as genuine in-universe Hogwarts texts (Dumbledore's own
+    foreword calls Fantastic Beasts an "approved textbook at Hogwarts,"
+    both it and Quidditch Through the Ages are referenced as books
+    Hogwarts students use within the main 7-book series, and Beedle the
+    Bard is the specific book Dumbledore bequeaths to Hermione in
+    Deathly Hallows). Named after the real official franchise term
+    (harrypotter.com's own "Wizarding World" branding), no naming
+    question. Migration `20260913000000_shared_universe_audit_batch7.sql`,
+    tested in a rolled-back transaction with a genuine idempotency
+    re-run, applied via a normal autocommit connection (not `supabase
+    db push` -- left for the primary session), verified live on hosted.
+    `universe` now has 18 rows. Checked and confirmed NOT connected:
+    **Amie Kaufman & Jay Kristoff** (The Aurora Cycle vs. The Illuminae
+    Files -- same co-writing duo, explicitly different casts/universes
+    per their own description). **Jay Kristoff solo** (Empire of the
+    Vampire vs. The Nevernight Chronicle -- Kristoff's own words: "not
+    tied in with my other fantasy work... a completely new thing").
+    **Ilona Andrews** (Kate Daniels vs. Innkeeper Chronicles -- the
+    author's own site states Innkeeper is "not part of Kate Daniels
+    story"). **Neal Shusterman** (Arc of a Scythe vs. Unwind Dystology
+    -- Shusterman has explicitly rejected fan theories of a shared
+    "Shusterverse"). **Holly Black** (The Folk of the Air vs. The
+    Charlatan Duology/Book of Night -- Book of Night is its own
+    shadow-magic world, not the Faerie of Folk of the Air). **Christopher
+    Paolini** (Fractalverse/To Sleep in a Sea of Stars vs. The
+    Inheritance Cycle -- Paolini's own description of Fractalverse as
+    his first work "outside of the Eragon universe"; real Easter eggs
+    exist but are authorial in-jokes, not merged canon, same
+    cameo/reference tier already ruled insufficient elsewhere).
+    **Margaret Atwood** (MaddAddam vs. The Handmaid's Tale -- no
+    corroborated source treats these as one universe; incompatible
+    histories/settings with no shared characters).
+    **Bookkeeping fix made in passing**: the top-level "Confirmed
+    connected (built)" list above had never folded in batch 5's 4 new
+    universes (Elan, The Shadowhunter Chronicles, The World of the
+    White Rat, Lyra's World) -- added now so it stays accurate; no
+    change to the underlying data, only to this summary list.
   - **Everyone else from the refreshed candidate list**: not yet
-    checked. Full detail across eight 2026-09-11/2026-09-12
-    project-log.md audit entries. This audit's real hit rate so far: 12
-    of 39 checked candidate-author-groupings confirmed genuinely
-    connected (built or gap-fixed), 25 confirmed NOT connected, 2
+    checked. Full detail across nine 2026-09-11/2026-09-12
+    project-log.md audit entries. This audit's real hit rate so far: 13
+    of 47 checked candidate-author-groupings confirmed genuinely
+    connected (built or gap-fixed), 32 confirmed NOT connected, 2
     flagged as series-table data-quality issues rather than true
     universe questions -- treat every remaining candidate as more
     likely a false positive than not until checked. Re-running the
-    candidate query after batch 6 (57 authors with 2+ unlinked series
-    before this batch ran) is the starting point for batch 7; the
-    untouched leftover pool (non-exhaustive) is now: Amie Kaufman/Jay
-    Kristoff, Anthony Ryan, Becky Chambers, Brent Weeks, Carissa
-    Broadbent, Christopher Paolini, Danielle L. Jensen, Holly Black,
-    Ilona Andrews, J.K. Rowling, James Islington, Jay Kristoff (solo,
-    Empire of the Vampire/The Nevernight Chronicle), Jennifer Lynn
-    Barnes, John Gwynne, Laini Taylor, Margaret Atwood, Marie Lu,
-    Marissa Meyer, Mira Grant, Neal Shusterman, Octavia E. Butler,
-    Rachel Gillig, Rebecca Roanhorse, Rebecca Ross, S. A. Chakraborty,
-    Samantha Shannon, Stephanie Garber, Stephen Graham Jones, Tahereh
+    candidate query after batch 7 (57 authors with 2+ unlinked series
+    before this batch ran, one fewer expected after Harry Potter's
+    series drop out of the "universe_id is null" pool) is the starting
+    point for batch 8; the untouched leftover pool (non-exhaustive) is
+    now: Anthony Ryan, Becky Chambers, Brent Weeks, Carissa Broadbent,
+    Danielle L. Jensen, James Islington, Jennifer Lynn Barnes, John
+    Gwynne, Laini Taylor, Marie Lu, Marissa Meyer, Mira Grant, Octavia
+    E. Butler, Rachel Gillig, Rebecca Roanhorse, Rebecca Ross, S. A.
+    Chakraborty, Samantha Shannon, Stephanie Garber, Stephen Graham
+    Jones, Tahereh
     Mafi, TJ Klune, Veronica Roth.
 
 ## P3 (blocked or parked -- check the blocker before picking up)
