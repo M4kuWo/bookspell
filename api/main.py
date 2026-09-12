@@ -133,7 +133,7 @@ def rule_targets():
 
 
 @app.get("/recommendations")
-def recommendations(genre: str = None, user_id: str = None, authorization: str = Header(default=None)):
+def recommendations(genre: str = None, authorization: str = Header(default=None)):
     user_id = require_user_id(authorization)
     catalog = get_catalog()
     ratings = _load_user_ratings(user_id, catalog)

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookspell — Import</title>
+<link rel="stylesheet" href="shared.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top" id="top-nav"></nav>
+  <h1>Import your reading history</h1>
+  <p class="sub">Upload a Goodreads library export (or a Fable library exported via a third-party tool into the same format — Fable itself doesn't offer an export yet) and we'll match it against our catalog.</p>
+
+  <div class="card">
+    <p style="margin-top:0;"><strong>Goodreads:</strong> on a computer, go to My Books → Tools → Import and export → Export Library, then upload the CSV it downloads.</p>
+    <p style="margin-bottom:0; color:var(--ink-soft); font-size:0.88rem;">This only imports YOUR OWN ratings into YOUR OWN account here — nothing is shared with anyone else.</p>
+  </div>
+
+  <div class="field">
+    <label for="csv-file">Goodreads-format CSV</label>
+    <input type="file" id="csv-file" accept=".csv">
+  </div>
+  <button class="btn-primary" id="upload-btn" disabled>Upload and import</button>
+  <div id="loading" style="display:none; margin-top:14px;" class="waking">
+    <div class="spinner"></div>
+    <span>Matching your books against the catalog — this can also take up to a minute if the import service was idle. Hang tight…</span>
+  </div>
+  <div id="import-result" style="margin-top:16px;"></div>
+</div>
+<div id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+(async () => {
+  const session = await requireAuth();
+  if (!session) return;
+  renderNav('import.html');
+})();
+
+const fileInput = document.getElementById('csv-file');
+const uploadBtn = document.getElementById('upload-btn');
+fileInput.addEventListener('change', () => { uploadBtn.disabled = !fileInput.files.length; });
+
+uploadBtn.addEventListener('click', async () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const loading = document.getElementById('loading');
+  const resultEl = document.getElementById('import-result');
+  loading.style.display = 'flex';
+  resultEl.innerHTML = '';
+  uploadBtn.disabled = true;
+  try {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await apiFetch('/import/goodreads', { method: 'POST', body: form });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      resultEl.innerHTML = `<div class="empty-state">Import failed: ${escapeHtml(body.detail || res.statusText)}</div>`;
+      return;
+    }
+    const { matched, unmatched } = await res.json();
+    let html = `<div class="card"><strong>${matched}</strong> book${matched === 1 ? '' : 's'} matched and saved to your ratings.</div>`;
+    if (unmatched && unmatched.length > 0) {
+      html += `<h2>Not found in our catalog (${unmatched.length})</h2><div class="results-box">` +
+        unmatched.slice(0, 30).map((u) => `
+          <div class="result-row" style="cursor:default;">
+            <span class="result-title">${escapeHtml(u.title)}</span>
+            <span class="result-author">${escapeHtml(u.author || '')}</span>
+          </div>
+        `).join('') + '</div>' +
+        `<p class="sub">These aren't in our sci-fi/fantasy catalog yet (or weren't a confident match) — you can rate anything we do have on the <a href="rate.html">My ratings</a> page instead.</p>`;
+    }
+    resultEl.innerHTML = html;
+    showToast(`Imported ${matched} book${matched === 1 ? '' : 's'}.`);
+  } catch (e) {
+    resultEl.innerHTML = `<div class="empty-state">Couldn't reach the import service. It may still be waking up — try again in a moment.</div>`;
+  } finally {
+    loading.style.display = 'none';
+    uploadBtn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

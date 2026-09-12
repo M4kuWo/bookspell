@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookspell — Recommendations</title>
+<link rel="stylesheet" href="shared.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .genre-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+  .genre-toggle button { flex: 1; background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
+  .genre-toggle button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .rec-card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px; margin-bottom: 12px; }
+  .rec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .rec-title { font-weight: 700; }
+  .rec-author { color: var(--ink-soft); font-size: 0.85rem; }
+  .rec-summary { font-size: 0.9rem; margin-top: 6px; }
+  .rec-summary.mismatch { color: var(--ink-soft); }
+  .rec-summary.dealbreaker { color: var(--disliked); font-weight: 600; }
+  details.filters { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 14px; margin-bottom: 18px; }
+  details.filters summary { cursor: pointer; font-weight: 600; }
+  .rule-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+  .rule-row:last-child { border-bottom: none; }
+  .rule-add-row { display: flex; gap: 6px; margin-top: 6px; }
+  .rule-add-row button { flex: 1; font-size: 0.82rem; padding: 8px 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top" id="top-nav"></nav>
+  <h1>Recommendations</h1>
+  <p class="sub">Based on everything you've rated so far.</p>
+
+  <div class="genre-toggle" id="genre-toggle">
+    <button data-genre="" class="active">Both</button>
+    <button data-genre="fantasy">Fantasy</button>
+    <button data-genre="sci_fi">Sci-Fi</button>
+  </div>
+
+  <details class="filters">
+    <summary>Filters — none of / less of…</summary>
+    <div class="field" style="margin-top:10px;">
+      <input type="text" id="rule-search" placeholder="Search a trope or field value…" autocomplete="off">
+    </div>
+    <div id="rule-search-results" class="results-box" style="display:none;"></div>
+    <div id="current-rules"><div class="empty-state">No filters yet.</div></div>
+  </details>
+
+  <button class="btn-primary" id="get-recs-btn">Get recommendations</button>
+  <div id="loading" style="display:none; margin-top:14px;" class="waking">
+    <div class="spinner"></div>
+    <span>Waking up the recommendation engine — this can take up to a minute the first time. Hang tight…</span>
+  </div>
+  <div id="results-area" style="margin-top:16px;"></div>
+</div>
+<div id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+let session, currentGenre = '', ruleTargets = [];
+
+(async () => {
+  session = await requireAuth();
+  if (!session) return;
+  renderNav('dashboard.html');
+  loadRuleTargets();
+  loadCurrentRules();
+})();
+
+document.querySelectorAll('#genre-toggle button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#genre-toggle button').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentGenre = btn.dataset.genre;
+  });
+});
+
+async function loadRuleTargets() {
+  try {
+    const res = await apiFetch('/rule-targets');
+    ruleTargets = await res.json();
+  } catch (e) {
+    ruleTargets = [];
+  }
+}
+
+const ruleSearch = document.getElementById('rule-search');
+const ruleResultsEl = document.getElementById('rule-search-results');
+let ruleDebounce = null;
+ruleSearch.addEventListener('input', () => {
+  clearTimeout(ruleDebounce);
+  ruleDebounce = setTimeout(() => renderRuleSearchResults(ruleSearch.value), 200);
+});
+
+function renderRuleSearchResults(query) {
+  if (!query || query.trim().length < 2) {
+    ruleResultsEl.style.display = 'none';
+    return;
+  }
+  const q = query.trim().toLowerCase();
+  const matches = ruleTargets.filter((t) => t.label.toLowerCase().includes(q) || t.key.toLowerCase().includes(q)).slice(0, 15);
+  if (matches.length === 0) {
+    ruleResultsEl.innerHTML = '<div class="empty-state">No matches.</div>';
+    ruleResultsEl.style.display = 'block';
+    return;
+  }
+  ruleResultsEl.innerHTML = matches.map((t) => `
+    <div class="result-row" style="flex-direction:column; align-items:stretch; cursor:default;">
+      <span class="result-title" style="margin-bottom:6px;">${escapeHtml(t.label)}</span>
+      <div class="rule-add-row">
+        <button class="btn-secondary" data-exclude="${escapeAttr(t.key)}">None of this</button>
+        <button class="btn-secondary" data-reduce="${escapeAttr(t.key)}">Less of this</button>
+      </div>
+    </div>
+  `).join('');
+  ruleResultsEl.style.display = 'block';
+  ruleResultsEl.querySelectorAll('[data-exclude]').forEach((b) => b.addEventListener('click', () => addRule(b.dataset.exclude, 'exclude')));
+  ruleResultsEl.querySelectorAll('[data-reduce]').forEach((b) => b.addEventListener('click', () => addRule(b.dataset.reduce, 'reduce', 0.6)));
+}
+
+async function addRule(ruleKey, ruleType, strength) {
+  const { error } = await sb.from('user_rules').upsert(
+    { user_id: session.user.id, rule_key: ruleKey, rule_type: ruleType, strength: strength ?? null },
+    { onConflict: 'user_id,rule_key' }
+  );
+  if (error) return showToast(`Couldn't add filter: ${error.message}`);
+  showToast('Filter added.');
+  ruleSearch.value = '';
+  ruleResultsEl.style.display = 'none';
+  loadCurrentRules();
+}
+
+async function loadCurrentRules() {
+  const container = document.getElementById('current-rules');
+  const { data, error } = await sb.from('user_rules').select('id, rule_key, rule_type').order('created_at');
+  if (error || !data || data.length === 0) {
+    container.innerHTML = '<div class="empty-state">No filters yet.</div>';
+    return;
+  }
+  container.innerHTML = data.map((r) => {
+    const target = ruleTargets.find((t) => t.key === r.rule_key);
+    const label = target ? target.label : r.rule_key;
+    return `
+      <div class="rule-row">
+        <span>${r.rule_type === 'exclude' ? 'None of' : 'Less of'}: ${escapeHtml(label)}</span>
+        <button class="icon-btn" style="color:var(--ink-soft); background:none; border:none; cursor:pointer;" data-remove="${r.id}">✕</button>
+      </div>
+    `;
+  }).join('');
+  container.querySelectorAll('[data-remove]').forEach((b) => b.addEventListener('click', async () => {
+    await sb.from('user_rules').delete().eq('id', b.dataset.remove);
+    loadCurrentRules();
+  }));
+}
+
+document.getElementById('get-recs-btn').addEventListener('click', async () => {
+  const loading = document.getElementById('loading');
+  const resultsArea = document.getElementById('results-area');
+  loading.style.display = 'flex';
+  resultsArea.innerHTML = '';
+  try {
+    const qs = currentGenre ? `?genre=${currentGenre}` : '';
+    const res = await apiFetch(`/recommendations${qs}`);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      resultsArea.innerHTML = `<div class="empty-state">Couldn't get recommendations: ${escapeHtml(body.detail || res.statusText)}</div>`;
+      return;
+    }
+    const { results } = await res.json();
+    renderResults(results);
+  } catch (e) {
+    resultsArea.innerHTML = `<div class="empty-state">Couldn't reach the recommendation service. It may still be waking up — try again in a moment.</div>`;
+  } finally {
+    loading.style.display = 'none';
+  }
+});
+
+function matchClass(label) {
+  if (label === 'Strong match') return 'match-strong';
+  if (label === 'Good match') return 'match-good';
+  if (label === 'Mixed match') return 'match-mixed';
+  return 'match-poor';
+}
+
+function renderResults(results) {
+  const resultsArea = document.getElementById('results-area');
+  if (!results || results.length === 0) {
+    resultsArea.innerHTML = '<div class="empty-state">No recommendations yet — rate a few books first.</div>';
+    return;
+  }
+  resultsArea.innerHTML = results.map((r) => `
+    <div class="rec-card">
+      <div class="rec-head">
+        <div>
+          <div class="rec-title">${escapeHtml(r.title)}</div>
+          <div class="rec-author">${escapeHtml(r.author)}</div>
+        </div>
+        <span class="pill ${matchClass(r.match_label)}">${escapeHtml(r.match_label)}</span>
+      </div>
+      ${r.summary ? `<div class="rec-summary">${escapeHtml(r.summary)}</div>` : ''}
+      ${r.dealbreaker_summary ? `<div class="rec-summary dealbreaker">${escapeHtml(r.dealbreaker_summary)}</div>` : ''}
+      ${r.mismatch_summary ? `<div class="rec-summary mismatch">${escapeHtml(r.mismatch_summary)}</div>` : ''}
+      ${r.series_note ? `<div class="rec-summary mismatch">${escapeHtml(r.series_note)}</div>` : ''}
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>

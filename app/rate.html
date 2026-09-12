@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookspell — Rate Books</title>
+<link rel="stylesheet" href="shared.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .rating-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .rating-btn { flex: 1 1 auto; padding: 10px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-weight: 600; font-size: 0.85rem; }
+  .rating-btn.active.loved { background: var(--loved); color: #fff; border-color: var(--loved); }
+  .rating-btn.active.liked { background: var(--liked); color: #fff; border-color: var(--liked); }
+  .rating-btn.active.it_was_okay { background: var(--okay); color: #fff; border-color: var(--okay); }
+  .rating-btn.active.disliked { background: var(--disliked); color: #fff; border-color: var(--disliked); }
+  .rating-btn.active.hated { background: var(--hated); color: #fff; border-color: var(--hated); }
+  .my-rating-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .my-rating-row:last-child { border-bottom: none; }
+  .my-rating-title { font-weight: 600; }
+  .my-rating-author { color: var(--ink-soft); font-size: 0.85rem; }
+  .my-rating-actions { display: flex; gap: 8px; align-items: center; flex: 0 0 auto; }
+  .icon-btn { background: none; border: none; color: var(--ink-soft); font-size: 1rem; padding: 4px 6px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top" id="top-nav"></nav>
+  <h1>Rate books</h1>
+  <p class="sub">Search the catalog, pick a rating. You can change or remove any rating below at any time.</p>
+
+  <div class="field">
+    <label for="book-search">Search for a book</label>
+    <input type="text" id="book-search" placeholder="Title or author…" autocomplete="off">
+  </div>
+  <div id="results" class="results-box" style="display:none;"></div>
+
+  <div id="picked" class="card" style="display:none;">
+    <div><strong id="picked-title"></strong></div>
+    <div class="my-rating-author" id="picked-author"></div>
+    <div class="rating-row">
+      <button class="rating-btn hated" data-rating="hated">Hated</button>
+      <button class="rating-btn disliked" data-rating="disliked">Disliked</button>
+      <button class="rating-btn it_was_okay" data-rating="it_was_okay">It was okay</button>
+      <button class="rating-btn liked" data-rating="liked">Liked</button>
+      <button class="rating-btn loved" data-rating="loved">Loved</button>
+    </div>
+  </div>
+
+  <h2>My ratings</h2>
+  <div id="my-ratings" class="results-box"><div class="empty-state">Loading…</div></div>
+</div>
+<div id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+let session, selectedBook = null, searchDebounce = null;
+const RATING_LABELS = { loved: 'Loved', liked: 'Liked', it_was_okay: 'It was okay', disliked: 'Disliked', hated: 'Hated' };
+
+(async () => {
+  session = await requireAuth();
+  if (!session) return;
+  renderNav('rate.html');
+  loadMyRatings();
+})();
+
+const searchInput = document.getElementById('book-search');
+const resultsEl = document.getElementById('results');
+const pickedEl = document.getElementById('picked');
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(searchDebounce);
+  const val = searchInput.value;
+  searchDebounce = setTimeout(() => searchBooks(val), 250);
+});
+
+async function searchBooks(query) {
+  if (!query || query.trim().length < 2) {
+    resultsEl.style.display = 'none';
+    resultsEl.innerHTML = '';
+    return;
+  }
+  const q = query.trim();
+  const { data, error } = await sb
+    .from('books')
+    .select('id,title,author')
+    .or(`title.ilike.%${q}%,author.ilike.%${q}%`)
+    .order('title')
+    .limit(12);
+  renderResults(error ? [] : data);
+}
+
+function renderResults(books) {
+  if (books.length === 0) {
+    resultsEl.innerHTML = '<div class="empty-state">No matches — try a different spelling.</div>';
+    resultsEl.style.display = 'block';
+    return;
+  }
+  resultsEl.innerHTML = books.map((b) => `
+    <div class="result-row" data-id="${b.id}" data-title="${escapeAttr(b.title)}" data-author="${escapeAttr(b.author || '')}">
+      <span class="result-title">${escapeHtml(b.title)}</span>
+      <span class="result-author">${escapeHtml(b.author || '')}</span>
+    </div>
+  `).join('');
+  resultsEl.style.display = 'block';
+  resultsEl.querySelectorAll('.result-row').forEach((row) => {
+    row.addEventListener('click', () => {
+      selectedBook = { id: row.dataset.id, title: row.dataset.title, author: row.dataset.author };
+      document.getElementById('picked-title').textContent = selectedBook.title;
+      document.getElementById('picked-author').textContent = selectedBook.author;
+      pickedEl.querySelectorAll('.rating-btn').forEach((b) => b.classList.remove('active'));
+      pickedEl.style.display = 'block';
+      resultsEl.style.display = 'none';
+      searchInput.value = '';
+      pickedEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  });
+}
+
+pickedEl.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.rating-btn');
+  if (!btn || !selectedBook) return;
+  await saveRating(selectedBook.id, btn.dataset.rating, selectedBook.title, selectedBook.author);
+});
+
+async function saveRating(bookId, rating, title, author) {
+  const { error } = await sb.from('ratings').upsert(
+    { user_id: session.user.id, book_id: bookId, rating, source: 'manual' },
+    { onConflict: 'user_id,book_id' }
+  );
+  if (error) return showToast(`Couldn't save: ${error.message}`);
+  showToast(`Saved: ${title} — ${RATING_LABELS[rating]}`);
+  loadMyRatings();
+}
+
+async function loadMyRatings() {
+  const container = document.getElementById('my-ratings');
+  const { data, error } = await sb
+    .from('ratings')
+    .select('id, book_id, rating, updated_at, books(title, author)')
+    .order('updated_at', { ascending: false });
+  if (error) {
+    container.innerHTML = `<div class="empty-state">Couldn't load your ratings: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="empty-state">Nothing rated yet — search above to start.</div>';
+    return;
+  }
+  container.innerHTML = data.map((r) => `
+    <div class="my-rating-row">
+      <div>
+        <div class="my-rating-title">${escapeHtml(r.books?.title || '(unknown title)')}</div>
+        <div class="my-rating-author">${escapeHtml(r.books?.author || '')} · <span class="pill ${r.rating}">${RATING_LABELS[r.rating]}</span></div>
+      </div>
+      <div class="my-rating-actions">
+        <button class="icon-btn" title="Change rating" data-edit="${r.book_id}" data-title="${escapeAttr(r.books?.title || '')}" data-author="${escapeAttr(r.books?.author || '')}">✎</button>
+        <button class="icon-btn" title="Remove" data-delete="${r.id}">✕</button>
+      </div>
+    </div>
+  `).join('');
+  container.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => {
+    selectedBook = { id: b.dataset.edit, title: b.dataset.title, author: b.dataset.author };
+    document.getElementById('picked-title').textContent = selectedBook.title;
+    document.getElementById('picked-author').textContent = selectedBook.author;
+    pickedEl.style.display = 'block';
+    pickedEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }));
+  container.querySelectorAll('[data-delete]').forEach((b) => b.addEventListener('click', async () => {
+    const { error: delErr } = await sb.from('ratings').delete().eq('id', b.dataset.delete);
+    if (delErr) return showToast(`Couldn't remove: ${delErr.message}`);
+    showToast('Rating removed.');
+    loadMyRatings();
+  }));
+}
+</script>
+</body>
+</html>

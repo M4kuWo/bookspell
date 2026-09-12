@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookspell</title>
+<link rel="stylesheet" href="shared.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bookspell</h1>
+  <p class="sub">Sci-fi/fantasy recommendations built from real book DNA, not star averages. Sign in or create an account to get your own.</p>
+
+  <div id="auth-view">
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" autocomplete="email" placeholder="you@example.com">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" autocomplete="current-password" placeholder="At least 6 characters">
+    </div>
+    <button class="btn-primary" id="sign-in-btn">Sign in</button>
+    <button class="btn-secondary" id="sign-up-btn" style="width:100%; margin-top:8px;">Create account</button>
+
+    <div style="text-align:center; margin:18px 0; color:var(--ink-soft); font-size:0.85rem;">or</div>
+
+    <button class="btn-secondary" id="magic-link-btn" style="width:100%;">Email me a sign-in link instead</button>
+    <p id="status-msg" class="sub" style="margin-top:14px;"></p>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const next = params.get('next') || 'dashboard.html';
+
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    // Covers both a returning signed-in visitor AND a magic-link
+    // click landing back here (see magic-link-btn below for why the
+    // redirect always targets this page, never `next` directly) --
+    // auto-forward once a session exists, rather than making the
+    // magic-link path a dead end.
+    window.location.href = next;
+    return;
+  }
+})();
+
+function status(msg, isError) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--danger)' : 'var(--ink-soft)';
+}
+
+document.getElementById('sign-in-btn').addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  if (!email || !password) return status('Enter both email and password.', true);
+  status('Signing in…');
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) return status(error.message, true);
+  window.location.href = next;
+});
+
+document.getElementById('sign-up-btn').addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  if (!email || !password) return status('Enter both email and password.', true);
+  if (password.length < 6) return status('Password needs to be at least 6 characters.', true);
+  status('Creating your account…');
+  const { error } = await sb.auth.signUp({ email, password });
+  if (error) return status(error.message, true);
+  status('Account created — check your email to confirm, then sign in above.');
+});
+
+document.getElementById('magic-link-btn').addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  if (!email) return status('Enter your email first.', true);
+  status('Sending link…');
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    // Always redirects back to THIS page (with `next` preserved in the
+    // query string) rather than straight to `next` itself -- Supabase
+    // validates emailRedirectTo against the project's redirect-URL
+    // allow-list, which only lists this page, not every page in the
+    // app. The on-load check above then forwards to `next` once the
+    // session from the magic-link click is live.
+    options: { emailRedirectTo: `${location.origin}${location.pathname}${location.search}` },
+  });
+  if (error) return status(error.message, true);
+  status('Check your email for a sign-in link.');
+});
+</script>
+</body>
+</html>
