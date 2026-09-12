@@ -11,7 +11,7 @@
 <div class="wrap">
   <nav class="top" id="top-nav"></nav>
   <h1>Import your reading history</h1>
-  <p class="sub">Upload a Goodreads library export (or a Fable library exported via a third-party tool into the same format — Fable itself doesn't offer an export yet) and we'll match it against our catalog.</p>
+  <p class="sub">Upload a Goodreads library export (or a Fable library exported via a third-party tool into the same format — Fable itself doesn't offer an export yet) and we'll match it against our catalog. <a href="rate.html">← Back to my ratings</a></p>
 
   <div class="card">
     <p style="margin-top:0;"><strong>Goodreads:</strong> on a computer, go to My Books → Tools → Import and export → Export Library, then upload the CSV it downloads.</p>
@@ -36,7 +36,7 @@
 (async () => {
   const session = await requireAuth();
   if (!session) return;
-  renderNav('import.html');
+  renderNav('import.html', session);
 })();
 
 const fileInput = document.getElementById('csv-file');

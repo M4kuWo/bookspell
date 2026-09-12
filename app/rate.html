@@ -26,7 +26,7 @@
 <div class="wrap">
   <nav class="top" id="top-nav"></nav>
   <h1>Rate books</h1>
-  <p class="sub">Search the catalog, pick a rating. You can change or remove any rating below at any time.</p>
+  <p class="sub">Search the catalog, pick a rating. You can change or remove any rating below at any time. Already have a Goodreads or Fable library? <a href="import.html">Import it instead →</a></p>
 
   <div class="field">
     <label for="book-search">Search for a book</label>
@@ -44,6 +44,10 @@
       <button class="rating-btn liked" data-rating="liked">Liked</button>
       <button class="rating-btn loved" data-rating="loved">Loved</button>
     </div>
+    <div class="field" style="margin-top:14px; margin-bottom:0;">
+      <label for="picked-date">When did you read it? (optional)</label>
+      <input type="date" id="picked-date">
+    </div>
   </div>
 
   <h2>My ratings</h2>
@@ -59,7 +63,7 @@ const RATING_LABELS = { loved: 'Loved', liked: 'Liked', it_was_okay: 'It was oka
 (async () => {
   session = await requireAuth();
   if (!session) return;
-  renderNav('rate.html');
+  renderNav('rate.html', session);
   loadMyRatings();
 })();
 
@@ -82,7 +86,7 @@ async function searchBooks(query) {
   const q = query.trim();
   const { data, error } = await sb
     .from('books')
-    .select('id,title,author')
+    .select('id,title,author,cover_url')
     .or(`title.ilike.%${q}%,author.ilike.%${q}%`)
     .order('title')
     .limit(12);
@@ -96,8 +100,9 @@ function renderResults(books) {
     return;
   }
   resultsEl.innerHTML = books.map((b) => `
-    <div class="result-row" data-id="${b.id}" data-title="${escapeAttr(b.title)}" data-author="${escapeAttr(b.author || '')}">
-      <span class="result-title">${escapeHtml(b.title)}</span>
+    <div class="result-row with-thumb" data-id="${b.id}" data-title="${escapeAttr(b.title)}" data-author="${escapeAttr(b.author || '')}">
+      ${b.cover_url ? `<img class="thumb" src="${escapeAttr(b.cover_url)}" alt="" loading="lazy">` : ''}
+      <span class="result-title" style="flex:1 1 auto;">${escapeHtml(b.title)}</span>
       <span class="result-author">${escapeHtml(b.author || '')}</span>
     </div>
   `).join('');
@@ -108,6 +113,7 @@ function renderResults(books) {
       document.getElementById('picked-title').textContent = selectedBook.title;
       document.getElementById('picked-author').textContent = selectedBook.author;
       pickedEl.querySelectorAll('.rating-btn').forEach((b) => b.classList.remove('active'));
+      document.getElementById('picked-date').value = '';
       pickedEl.style.display = 'block';
       resultsEl.style.display = 'none';
       searchInput.value = '';
@@ -123,8 +129,9 @@ pickedEl.addEventListener('click', async (e) => {
 });
 
 async function saveRating(bookId, rating, title, author) {
+  const ratedDate = document.getElementById('picked-date').value || null;
   const { error } = await sb.from('ratings').upsert(
-    { user_id: session.user.id, book_id: bookId, rating, source: 'manual' },
+    { user_id: session.user.id, book_id: bookId, rating, rated_date: ratedDate, source: 'manual' },
     { onConflict: 'user_id,book_id' }
   );
   if (error) return showToast(`Couldn't save: ${error.message}`);
@@ -136,7 +143,7 @@ async function loadMyRatings() {
   const container = document.getElementById('my-ratings');
   const { data, error } = await sb
     .from('ratings')
-    .select('id, book_id, rating, updated_at, books(title, author)')
+    .select('id, book_id, rating, rated_date, updated_at, books(title, author, cover_url)')
     .order('updated_at', { ascending: false });
   if (error) {
     container.innerHTML = `<div class="empty-state">Couldn't load your ratings: ${escapeHtml(error.message)}</div>`;
@@ -147,13 +154,14 @@ async function loadMyRatings() {
     return;
   }
   container.innerHTML = data.map((r) => `
-    <div class="my-rating-row">
-      <div>
+    <div class="my-rating-row with-thumb">
+      ${r.books?.cover_url ? `<img class="thumb" src="${escapeAttr(r.books.cover_url)}" alt="" loading="lazy">` : ''}
+      <div style="flex:1 1 auto;">
         <div class="my-rating-title">${escapeHtml(r.books?.title || '(unknown title)')}</div>
-        <div class="my-rating-author">${escapeHtml(r.books?.author || '')} · <span class="pill ${r.rating}">${RATING_LABELS[r.rating]}</span></div>
+        <div class="my-rating-author">${escapeHtml(r.books?.author || '')} · <span class="pill ${r.rating}">${RATING_LABELS[r.rating]}</span>${r.rated_date ? ` · ${r.rated_date}` : ''}</div>
       </div>
       <div class="my-rating-actions">
-        <button class="icon-btn" title="Change rating" data-edit="${r.book_id}" data-title="${escapeAttr(r.books?.title || '')}" data-author="${escapeAttr(r.books?.author || '')}">✎</button>
+        <button class="icon-btn" title="Change rating" data-edit="${r.book_id}" data-title="${escapeAttr(r.books?.title || '')}" data-author="${escapeAttr(r.books?.author || '')}" data-date="${r.rated_date || ''}">✎</button>
         <button class="icon-btn" title="Remove" data-delete="${r.id}">✕</button>
       </div>
     </div>
@@ -162,6 +170,7 @@ async function loadMyRatings() {
     selectedBook = { id: b.dataset.edit, title: b.dataset.title, author: b.dataset.author };
     document.getElementById('picked-title').textContent = selectedBook.title;
     document.getElementById('picked-author').textContent = selectedBook.author;
+    document.getElementById('picked-date').value = b.dataset.date || '';
     pickedEl.style.display = 'block';
     pickedEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }));

@@ -19,6 +19,43 @@
   --hated: #a13f3f;
   --danger: #a13f3f;
 }
+/* Dark palette: system preference by default (no explicit choice stamped
+   on <html>), an explicit toggle (see shared.js applyTheme()) wins either
+   direction via the [data-theme] rules below. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #14170f;
+    --ink: #e9ecdf;
+    --ink-soft: #a2a893;
+    --accent: #6fa877;
+    --accent-strong: #8fc498;
+    --line: #333a2c;
+    --surface: #1d2117;
+    --loved: #4a8a55;
+    --liked: #7fa860;
+    --okay: #a89b73;
+    --disliked: #c98356;
+    --hated: #c05555;
+    --danger: #c05555;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #14170f;
+  --ink: #e9ecdf;
+  --ink-soft: #a2a893;
+  --accent: #6fa877;
+  --accent-strong: #8fc498;
+  --line: #333a2c;
+  --surface: #1d2117;
+  --loved: #4a8a55;
+  --liked: #7fa860;
+  --okay: #a89b73;
+  --disliked: #c98356;
+  --hated: #c05555;
+  --danger: #c05555;
+}
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
@@ -69,6 +106,7 @@ button {
 
 nav.top {
   display: flex;
+  align-items: center;
   gap: 6px;
   overflow-x: auto;
   padding-bottom: 10px;
@@ -86,6 +124,83 @@ nav.top a {
   white-space: nowrap;
 }
 nav.top a.active { background: var(--accent); color: #fff; }
+nav.top .nav-spacer { flex: 1 1 auto; }
+
+.theme-toggle {
+  flex: 0 0 auto;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  border-radius: 8px;
+  width: 34px; height: 34px;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.account-menu { position: relative; flex: 0 0 auto; }
+.avatar-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  width: 34px; height: 34px;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.account-dropdown {
+  position: absolute;
+  top: 40px; right: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  min-width: 180px;
+  padding: 6px;
+  z-index: 10;
+}
+.account-dropdown .who {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+.account-dropdown button {
+  width: 100%;
+  text-align: left;
+  background: none;
+  color: var(--ink);
+  font-weight: 500;
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+.account-dropdown button:hover { background: var(--paper); }
+
+.pw-field { position: relative; }
+.pw-field input { padding-right: 44px; }
+.pw-toggle {
+  position: absolute;
+  right: 6px; top: 50%; transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+.thumb {
+  width: 40px; height: 58px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--line);
+  flex: 0 0 auto;
+}
+.result-row.with-thumb, .rec-head.with-thumb, .my-rating-row.with-thumb { align-items: center; }
 
 .card {
   border: 1px solid var(--line);
@@ -171,3 +286,13 @@ nav.top a.active { background: var(--accent); color: #fff; }
 @media (min-width: 640px) {
   .genre-toggle, .rating-row { flex-wrap: nowrap; }
 }
+
+.auth-mode-toggle { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+.auth-mode-toggle button {
+  flex: 1;
+  background: var(--surface);
+  color: var(--ink-soft);
+  border-radius: 0;
+  padding: 12px;
+}
+.auth-mode-toggle button.active { background: var(--accent); color: #fff; }

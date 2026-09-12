@@ -17,6 +17,28 @@ const API_BASE = 'https://bookspell-api.onrender.com';
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Theme: 'system' (default, no localStorage entry -- follows the OS via
+// the plain @media query in shared.css), or an explicit 'light'/'dark'
+// override stamped on <html data-theme> and remembered per-browser.
+// Applied on every page load (including index.html, pre-auth) so the
+// choice made from the nav's toggle sticks everywhere.
+function applyStoredTheme() {
+  try {
+    const stored = localStorage.getItem('bookspell-theme');
+    if (stored === 'light' || stored === 'dark') {
+      document.documentElement.setAttribute('data-theme', stored);
+    }
+  } catch (e) { /* private-mode/blocked storage -- just use system default */ }
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const isDark = current === 'dark' || (!current && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const next = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('bookspell-theme', next); } catch (e) { /* ignore */ }
+}
+applyStoredTheme();
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -42,7 +64,30 @@ async function requireAuth() {
     window.location.href = `index.html?next=${encodeURIComponent(location.pathname.split('/').pop())}`;
     return null;
   }
+  await ensureProfile(session);
   return session;
+}
+
+// A `profiles` row is created lazily on first authenticated page load
+// rather than via a DB trigger -- signUp() itself can't write it directly
+// since a brand-new signup has no active session yet when email
+// confirmation is required (see index.html). display_name comes from the
+// `options.data` passed to signUp(), which Supabase stores on the user
+// regardless of confirmation status, so it's available here the first
+// time that user actually gets a real session.
+async function ensureProfile(session) {
+  const { data: existing } = await sb.from('profiles').select('id').eq('id', session.user.id).maybeSingle();
+  if (existing) return;
+  const displayName = session.user.user_metadata?.display_name || null;
+  await sb.from('profiles').insert({ id: session.user.id, display_name: displayName });
+}
+
+function displayNameFor(session) {
+  return session.user.user_metadata?.display_name || session.user.email.split('@')[0];
+}
+
+function initials(name) {
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '?';
 }
 
 // Every call to our own backend (api/) needs the user's Supabase JWT --
@@ -54,19 +99,38 @@ async function apiFetch(path, options = {}) {
   return fetch(`${API_BASE}${path}`, { ...options, headers });
 }
 
-function renderNav(active) {
+// Only 2 top-level destinations -- Import lives inside rate.html instead
+// (a link there, not its own tab) since it's a one-off action, not
+// something visited as often as the other two.
+function renderNav(active, session) {
   const items = [
     ['dashboard.html', 'Recommendations'],
     ['rate.html', 'My ratings'],
-    ['import.html', 'Import'],
   ];
   const nav = document.getElementById('top-nav');
   if (!nav) return;
+  const name = session ? displayNameFor(session) : '';
   nav.innerHTML = items.map(([href, label]) =>
     `<a href="${href}" class="${active === href ? 'active' : ''}">${label}</a>`
-  ).join('') + `<a href="#" id="sign-out-link">Sign out</a>`;
-  document.getElementById('sign-out-link').addEventListener('click', async (e) => {
-    e.preventDefault();
+  ).join('') + `
+    <span class="nav-spacer"></span>
+    <button class="theme-toggle" id="theme-toggle-btn" title="Toggle dark/light" type="button">◐</button>
+    <div class="account-menu">
+      <button class="avatar-btn" id="account-btn" type="button" title="${escapeAttr(name)}">${escapeHtml(initials(name))}</button>
+      <div class="account-dropdown" id="account-dropdown" hidden>
+        <div class="who">${escapeHtml(name)}</div>
+        <button type="button" id="sign-out-btn">Sign out</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+  const dropdown = document.getElementById('account-dropdown');
+  document.getElementById('account-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    dropdown.hidden = !dropdown.hidden;
+  });
+  document.addEventListener('click', () => { dropdown.hidden = true; });
+  document.getElementById('sign-out-btn').addEventListener('click', async () => {
     await sb.auth.signOut();
     window.location.href = 'index.html';
   });

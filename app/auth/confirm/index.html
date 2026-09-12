@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookspell — Confirming</title>
+<link rel="stylesheet" href="../../shared.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="wrap">
+  <h1>Bookspell</h1>
+  <div class="waking" id="status-box">
+    <div class="spinner"></div>
+    <span id="status-text">Confirming your account…</span>
+  </div>
+  <p class="sub" style="margin-top:14px;"><a href="../../index.html">Back to sign in</a></p>
+</div>
+
+<script src="../../shared.js"></script>
+<script>
+// Supabase's default confirmation/recovery/invite email template links
+// here as {SiteURL}/auth/confirm?token_hash=...&type=... -- this page's
+// only job is completing that exchange client-side (Supabase's newer
+// default template pattern expects the app to own this route, rather
+// than a Supabase-hosted verify link that redirects back on its own).
+(async () => {
+  const params = new URLSearchParams(location.search);
+  const tokenHash = params.get('token_hash');
+  const type = params.get('type') || 'email';
+  const statusText = document.getElementById('status-text');
+  const statusBox = document.getElementById('status-box');
+
+  if (!tokenHash) {
+    statusBox.classList.remove('waking');
+    statusText.textContent = 'This confirmation link is missing its token — it may have been copied incorrectly.';
+    return;
+  }
+
+  const { error } = await sb.auth.verifyOtp({ token_hash: tokenHash, type });
+  if (error) {
+    statusBox.classList.remove('waking');
+    statusText.textContent = `Couldn't confirm: ${error.message}. The link may have expired — try signing in, or request a new one.`;
+    return;
+  }
+  statusText.textContent = 'Confirmed! Taking you in…';
+  window.location.href = '../../dashboard.html';
+})();
+</script>
+</body>
+</html>

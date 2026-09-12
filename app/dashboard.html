@@ -31,12 +31,6 @@
   <h1>Recommendations</h1>
   <p class="sub">Based on everything you've rated so far.</p>
 
-  <div class="genre-toggle" id="genre-toggle">
-    <button data-genre="" class="active">Both</button>
-    <button data-genre="fantasy">Fantasy</button>
-    <button data-genre="sci_fi">Sci-Fi</button>
-  </div>
-
   <details class="filters">
     <summary>Filters — none of / less of…</summary>
     <div class="field" style="margin-top:10px;">
@@ -47,6 +41,13 @@
   </details>
 
   <button class="btn-primary" id="get-recs-btn">Get recommendations</button>
+
+  <div class="genre-toggle" id="genre-toggle" style="margin-top:16px;">
+    <button data-genre="" class="active">Both</button>
+    <button data-genre="fantasy">Fantasy</button>
+    <button data-genre="sci_fi">Sci-Fi</button>
+  </div>
+
   <div id="loading" style="display:none; margin-top:14px;" class="waking">
     <div class="spinner"></div>
     <span>Waking up the recommendation engine — this can take up to a minute the first time. Hang tight…</span>
@@ -58,11 +59,17 @@
 <script src="shared.js"></script>
 <script>
 let session, currentGenre = '', ruleTargets = [];
+// Keyed by genre ('' = Both, 'fantasy', 'sci_fi') -- populated once per
+// "Get recommendations" click, then switching genre tabs just re-renders
+// from here instead of re-fetching (each pool is scored against a
+// genre-scoped catalog/threshold, so it's 3 real fetches up front, not
+// one fetch filtered 3 ways client-side).
+let resultsByGenre = {};
 
 (async () => {
   session = await requireAuth();
   if (!session) return;
-  renderNav('dashboard.html');
+  renderNav('dashboard.html', session);
   loadRuleTargets();
   loadCurrentRules();
 })();
@@ -72,6 +79,13 @@ document.querySelectorAll('#genre-toggle button').forEach((btn) => {
     document.querySelectorAll('#genre-toggle button').forEach((b) => b.classList.remove('active'));
     btn.classList.add('active');
     currentGenre = btn.dataset.genre;
+    if (resultsByGenre[currentGenre]) {
+      renderResults(resultsByGenre[currentGenre]);
+    } else if (Object.keys(resultsByGenre).length > 0) {
+      // A filter changed since the last fetch invalidated the cache, or
+      // this tab just hasn't loaded yet for some other reason.
+      document.getElementById('results-area').innerHTML = '<div class="empty-state">Click "Get recommendations" to load this view.</div>';
+    }
   });
 });
 
@@ -127,6 +141,7 @@ async function addRule(ruleKey, ruleType, strength) {
   showToast('Filter added.');
   ruleSearch.value = '';
   ruleResultsEl.style.display = 'none';
+  resultsByGenre = {}; // stale until "Get recommendations" is clicked again
   loadCurrentRules();
 }
 
@@ -149,6 +164,7 @@ async function loadCurrentRules() {
   }).join('');
   container.querySelectorAll('[data-remove]').forEach((b) => b.addEventListener('click', async () => {
     await sb.from('user_rules').delete().eq('id', b.dataset.remove);
+    resultsByGenre = {};
     loadCurrentRules();
   }));
 }
@@ -158,22 +174,43 @@ document.getElementById('get-recs-btn').addEventListener('click', async () => {
   const resultsArea = document.getElementById('results-area');
   loading.style.display = 'flex';
   resultsArea.innerHTML = '';
+  resultsByGenre = {};
   try {
-    const qs = currentGenre ? `?genre=${currentGenre}` : '';
-    const res = await apiFetch(`/recommendations${qs}`);
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      resultsArea.innerHTML = `<div class="empty-state">Couldn't get recommendations: ${escapeHtml(body.detail || res.statusText)}</div>`;
+    const genres = ['', 'fantasy', 'sci_fi'];
+    const responses = await Promise.all(genres.map((g) => {
+      const qs = g ? `?genre=${g}` : '';
+      return apiFetch(`/recommendations${qs}`);
+    }));
+    for (let i = 0; i < genres.length; i++) {
+      const res = responses[i];
+      if (!res.ok) continue;
+      const { results } = await res.json();
+      resultsByGenre[genres[i]] = results;
+    }
+    if (!resultsByGenre[currentGenre]) {
+      resultsArea.innerHTML = `<div class="empty-state">Couldn't get recommendations. Try again in a moment.</div>`;
       return;
     }
-    const { results } = await res.json();
-    renderResults(results);
+    await attachThumbnails(resultsByGenre);
+    renderResults(resultsByGenre[currentGenre]);
   } catch (e) {
     resultsArea.innerHTML = `<div class="empty-state">Couldn't reach the recommendation service. It may still be waking up — try again in a moment.</div>`;
   } finally {
     loading.style.display = 'none';
   }
 });
+
+// The recommend API returns title/author only (no cover) -- fetched
+// client-side against `books` directly (RLS already grants authenticated
+// select) rather than changing the deployed backend's response shape for
+// a purely cosmetic addition.
+async function attachThumbnails(byGenre) {
+  const allTitles = [...new Set(Object.values(byGenre).flat().map((r) => r.title))];
+  if (allTitles.length === 0) return;
+  const { data } = await sb.from('books').select('title, cover_url').in('title', allTitles);
+  const covers = new Map((data || []).map((b) => [b.title, b.cover_url]));
+  Object.values(byGenre).forEach((list) => list.forEach((r) => { r.cover_url = covers.get(r.title) || null; }));
+}
 
 function matchClass(label) {
   if (label === 'Strong match') return 'match-strong';
@@ -190,8 +227,9 @@ function renderResults(results) {
   }
   resultsArea.innerHTML = results.map((r) => `
     <div class="rec-card">
-      <div class="rec-head">
-        <div>
+      <div class="rec-head with-thumb">
+        ${r.cover_url ? `<img class="thumb" src="${escapeAttr(r.cover_url)}" alt="" loading="lazy">` : ''}
+        <div style="flex:1 1 auto;">
           <div class="rec-title">${escapeHtml(r.title)}</div>
           <div class="rec-author">${escapeHtml(r.author)}</div>
         </div>
