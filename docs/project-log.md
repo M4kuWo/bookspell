@@ -12320,3 +12320,77 @@ genuinely brutal content).
 Migration `20260913040000_tag_catalog_batch2_20_books.sql`, tested in a
 rolled-back transaction, applied to local and hosted, verified matching
 (905 `book_dna` rows both sides).
+
+## 2026-09-13 (later still) — Catalog tagging batch 3, 18 books (CLDO session)
+
+Third batch in the same sitting. Same process: schema check clean,
+fresh Step 2 query.
+
+**3 new permanent-skip candidates, all confirmed omnibus editions (not
+assumed from title alone -- checked page count/synopsis against each)**:
+Monk and Robot (Becky Chambers, 304pp, synopsis explicitly says "two...
+stories...together"), Villains Duology (V.E. Schwab, 944pp, "boxed set
+along with a poster"), Heir of Novron (Michael J. Sullivan, 946pp --
+combines Wintertide + Percepliquis, the last 2 Riyria Revelations
+novels). Same schema gap as the already-known Foundation/Farseer cases.
+Foundation Trilogy/Red God/Winds of Winter/Doors of Stone/Farseer
+Trilogy still reappear at the top of every query as expected -- not
+re-tagged, not re-researched.
+
+**18 books tagged**: The Sun Eater -- Demon in White, Kingdoms of Death
+(**series now fully tagged, 4/4**). Red Queen -- King's Cage. Hogwarts
+Library -- Quidditch Through the Ages (an unusual case, a fake in-
+universe "textbook," not a normal narrative -- tagged as best fits the
+schema, flagged as a real format mismatch rather than forced to look
+like a normal novel). Hainish Cycle -- Rocannon's World, The Word for
+World Is Forest. The Scholomance -- The Golden Enclaves. Artemis Fowl
+-- The Lost Colony. The Liveship Traders -- The Mad Ship. The Magicians
+-- The Magician's Land. Space Odyssey -- 2010: Odyssey Two. Zones of
+Thought -- A Deepness in the Sky. Blood and Ash -- A Kingdom of Flesh
+and Fire. An Ember in the Ashes -- A Torch Against the Night. The Old
+Kingdom -- Abhorsen. Fitz and the Fool -- Assassin's Fate. Night Angel
+-- Beyond the Shadows. Cradle -- Blackflame.
+
+**Research-verified before tagging**: The Magician's Land confirmed
+third-person (not first, despite Quentin-narrated assumptions from the
+earlier books) and multi-POV in this specific installment (Janet/Eliot/
+Plum sections, not just Quentin) -- corrected before tagging, not after.
+The Sun Eater's retrospective-memoir narration structure confirmed (an
+elderly Hadrian Marlowe narrating his own past with deliberate
+foreshadowing of outcomes he already knows) -- tagged with the
+`retrospective_memoir_narration` trope specifically because of this
+confirmed structural detail, not just "it's first person."
+
+**Author-field contamination flagged, not fixed (out of scope)**:
+Rocannon's World (`"..., Stefan Rudnicki"`) and Blackflame
+(`"Travis Baldree, ..."`) both credit the audiobook narrator as a
+second author. Same recurring pattern.
+
+**A genuine format-mismatch case, handled transparently**: Quidditch
+Through the Ages is a fake in-universe "textbook," not a normal
+narrative -- most craft fields (POV, drive, pacing) don't really apply
+in their usual sense. Tagged with best-fit values and a
+`book_field_confidence` entry on `person` flagging the mismatch, rather
+than silently forcing it to read like an ordinary novel or skipping it
+entirely (it's a real, separately-published book, not an omnibus or
+unpublished work -- no principled reason to skip it the way those are
+skipped).
+
+**Density self-check, same honest process**: two full passes needed
+this time (thinner starting point than batches 1-2, this pool skewed
+toward shorter/older works) -- landed at 4.28 tropes/book (catalog
+average 5.45, ~21.5% below) and 1.28 CWs/book (average 1.74, ~26%
+below) after real, individually-justified additions each pass. Caught
+and fixed a real duplicate-trope bug during testing (added `prophecy`
+to Kingdoms of Death twice across two passes, caught by the rolled-back
+transaction test failing on a unique-constraint violation before
+anything was applied for real -- exactly what that test step is for).
+Remaining gap read as genuine: this pool included 2 short Le Guin
+novellas and one non-narrative reference book that can't honestly
+carry as many tropes/warnings as a doorstop epic fantasy without
+inventing content that isn't there.
+
+Migration `20260913050000_tag_catalog_batch3_18_books.sql`, tested in a
+rolled-back transaction (caught the duplicate-trope bug above before
+ever touching real data), applied to local and hosted, verified
+matching (923 `book_dna` rows both sides).
