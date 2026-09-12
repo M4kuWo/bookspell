@@ -345,10 +345,10 @@ worth deferring to a later session rather than batching in for
   silently tagging or silently skipping it.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
-  done 2026-09-12, batch 7 done 2026-09-13 (107 of ~484 series fixed so
-  far: 14+14+17+17+15+14+16 across batches 1-7 -- the denominator grew a
-  lot from the 2026-09-12 378-book/118-series ingestion round, this
-  isn't the catalog shrinking work).** `status` defaults to
+  done 2026-09-12, batches 7-8 done 2026-09-13 (124 of 484 series fixed
+  so far: 14+14+17+17+15+14+16+17 across batches 1-8 -- the denominator
+  grew a lot from the 2026-09-12 378-book/118-series ingestion round,
+  this isn't the catalog shrinking work).** `status` defaults to
   `'ongoing'` whenever Hardcover's `is_completed` flag isn't explicitly
   `true` (including simply missing data); `book_count` is Hardcover's
   raw per-series edition/omnibus/box-set count, not a curated
@@ -622,20 +622,118 @@ worth deferring to a later session rather than batching in for
   See project-log.md's 2026-09-13 "series.status/book_count fix, batch
   7" entry for full reasoning and sourcing on all 21 checks.
 
-  **Next (batch 8)**: re-rank remaining series by catalog book count,
-  excluding all **156** now-checked names across batches 1-7 (135 from
-  batches 1-6 + this batch's 16 fixed + this batch's 5 confirmed-correct)
-  plus the **15** still-unsettled flagged names: Hogwarts Library, The
-  Roald Dahl Classic Collection, The Riyria Revelations (Omnibus), Robert
-  Langdon, The Inheritance Games, Imperial Radch (publication order),
-  Enderverse:  Publication Order (DB name has a double space -- match the
-  real string, not the single-space version), The Shadow Series, Middle
-  Earth, American Gods, Forward Collection, Saga, Kingsbridge, Holly
-  Gibney (pre-existing 14) + Elantris (this batch's new linkage-bug
-  flag) -- don't reuse any prior batch's candidate list, all are now
-  stale. No unresearched candidates were left over this batch (the
-  entire batch-6-surfaced tail plus 4 fresh names were all checked) --
-  batch 8 starts from a fresh re-run of the ranking query.
+  **Batch 8 (2026-09-13)**: reconstructed the accurate 156-name
+  "checked" list by name straight from batches 1-7's own project-log.md
+  entries (15 + 30 + 17 + 38 + 18 + 17 + 21 = 156, verified against the
+  live `series` table -- all 156 matched exactly one row, with one
+  naming correction folded in: batch 4's "Mistborn Era Two" is actually
+  stored as "Mistborn Era Two (Wax and Wayne)", the shorter form matched
+  zero rows -- same naming-drift bug class as the already-known
+  Enderverse double-space case), plus the 15 still-unsettled flagged
+  names carried from batch 7. 171 unique exclude strings after dedup.
+  Re-ran the ranking query excluding those 171 names -- **the
+  "count(b.id) currently linked" ranking signal has now essentially
+  saturated: every remaining series sits flat at exactly 1 book linked
+  in our own catalog**, no more meaningful primary sort available from
+  that proxy. Used Hardcover's raw `book_count` descending as a
+  secondary sort instead, to surface established multi-book franchises
+  most likely to carry a badly inflated raw count, and worked down that
+  list. **17 needed a real fix**: The Chronicles of Amber (book_count
+  only, 111->10), Sookie Stackhouse (ongoing/42 -> completed/13),
+  Dragonlance: Chronicles (ongoing/39 -> completed/3), Redwall
+  (ongoing/38 -> completed/22), The Chronicles of Prydain (ongoing/27 ->
+  completed/5), The Queen of the Tearling (ongoing/27 -> completed/3),
+  The Belgariad (ongoing/19 -> completed/5), Temeraire (ongoing/21 ->
+  completed/9), Odd Thomas (ongoing/22 -> completed/7), Gormenghast
+  (ongoing/18 -> completed/4 -- see judgment-call note below), The Iron
+  Druid Chronicles (ongoing/31 -> completed/9), The Prince of Nothing
+  (ongoing/17 -> completed/3), Honor Harrington (book_count only,
+  44->14), Pern (book_count only, 58->24), Bartimaeus (ongoing/7 ->
+  completed/3), Newsflesh (ongoing/13 -> completed/3), Parasol
+  Protectorate (ongoing/13 -> completed/5). **0 candidates checked this
+  batch turned out already correct.** Migration
+  `20260913200000_fix_series_status_book_count_batch8.sql` -- tested in
+  a rolled-back transaction first (all 17 names matched exactly once,
+  post-update values verified), then applied for real to hosted via a
+  normal autocommit connection; **not yet pushed via `supabase db push`
+  and the branch not yet merged to main**, same handoff-to-CLDO pattern
+  as batches 2-7. `series` table total row count unchanged (484),
+  spot-checked Redwall / Honor Harrington / Bartimaeus / The Chronicles
+  of Amber / Pern directly on hosted. See project-log.md's 2026-09-13
+  "batch 8" entry for full reasoning and sourcing on all 17 fixes.
+
+  **One judgment call flagged for visibility**: Gormenghast's book_count
+  is set to 4, not the commonly-cited "trilogy" of 3 -- "Titus Awakes"
+  (2011) is explicitly published and marketed as "Gormenghast, Volume
+  4" / "The Lost Book of Gormenghast", completed by Peake's widow Maeve
+  Gilmore from his own notes and fragments after his death, not a loose
+  companion work, so it was counted per this batch's "real published
+  mainline installment" convention.
+
+  **Five new names flagged as likely out-of-scope, not decided, same
+  shape as batch 4's Robert Langdon/The Inheritance Games and batch 6's
+  Kingsbridge/Holly Gibney flags**: The Walking Dead and Watchmen are
+  both confirmed graphic novels/comics (out of v1 scope per the existing
+  comics policy); The Divine Comedy (Dante) and Asian Saga: Chronological
+  Order (James Clavell -- historical fiction) are not sci-fi/fantasy;
+  Blindness (Jose Saramago) is dystopian literary fiction not shelved as
+  genre SFF. All five likely Hardcover genre-search false positives,
+  left untouched pending a scope call from the repo owner.
+
+  **Two new duplicate/non-leaf-series-row issues flagged, not fixed (a
+  different bug class from status/book_count)**: The Legend of Drizzt
+  and The Dark Elf Trilogy are the exact duplicate-series-row problem
+  already named (but not yet fixed) in the shared-universe audit's
+  batch-6 summary -- Salvatore's real Drizzt bibliography spans 30+
+  novels across many named sub-series, and any accurate book_count needs
+  the duplicate/umbrella question resolved first. The Mistborn Saga and
+  Mistborn are a parent/umbrella-series pair for the same pattern batch
+  4 already handled correctly for this book (Mistborn Era One / Era Two
+  are the real leaf series); "Mistborn" correctly has 0 books linked,
+  but "The Mistborn Saga" has 1 book incorrectly linked to the umbrella
+  row instead of to Era One or Era Two -- a `books.series_id` linkage
+  bug, the same shape as batch 7's Elantris flag. Both pairs added to
+  the flagged-name list below.
+
+  **Three candidates seen but deliberately left UNRESEARCHED this batch**
+  (not a different bug class, just not reached/settled -- available as
+  batch 9's first candidates): Shannara (Chronological Order) (a
+  genuinely large, multi-sub-series bibliography on the scale of Wheel
+  of Time/Horus Heresy, needs sub-series-by-sub-series verification, not
+  a quick single-search answer), World of the Five Gods (Publication)
+  (sources disagree 3 vs. 4 novels depending on how one Penric-adjacent
+  work is classified against the 11 separately-published Penric
+  novellas -- genuinely mixed evidence), Capitaine Nemo (only source
+  found ties the row's one linked book, "Twenty Thousand Leagues Under
+  the Sea", to Verne but doesn't establish this as an officially branded
+  series rather than an informal "books featuring Captain Nemo"
+  grouping). Also seen but not reached: Rivers of London and Vorkosigan
+  Saga (Publication Order), both real ongoing series where the exact
+  core-novel-vs-novella split needs more careful per-title verification
+  than this batch's search budget allowed for cleanly.
+
+  **Next (batch 9)**: re-rank remaining series, excluding all **173**
+  now-checked names across batches 1-8 (156 from batches 1-7 + this
+  batch's 17 fixed, 0 confirmed-correct) plus the **24** still-unsettled
+  flagged names: Hogwarts Library, The Roald Dahl Classic Collection,
+  The Riyria Revelations (Omnibus), Robert Langdon, The Inheritance
+  Games, Imperial Radch (publication order), Enderverse:  Publication
+  Order (DB name has a double space -- match the real string), The
+  Shadow Series, Middle Earth, American Gods, Forward Collection, Saga,
+  Kingsbridge, Holly Gibney, Elantris (pre-existing 15) + The Walking
+  Dead, Watchmen, The Divine Comedy, Asian Saga: Chronological Order,
+  Blindness, The Legend of Drizzt, The Dark Elf Trilogy, The Mistborn
+  Saga, Mistborn (this batch's 9 new flags) -- don't reuse any prior
+  batch's candidate list, all are now stale except the 3 unresearched
+  names above (Shannara (Chronological Order), World of the Five Gods
+  (Publication), Capitaine Nemo) plus Rivers of London and Vorkosigan
+  Saga (Publication Order), which remain live candidates for batch 9
+  since they were seen but not settled this batch. Note that the
+  "count(b.id) currently linked" primary ranking signal has now
+  saturated at 1 book/series for essentially the whole remaining catalog
+  -- batch 9 should keep using Hardcover's raw `book_count` descending as
+  the secondary sort, as this batch did, rather than expecting the old
+  ranking to still discriminate.
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also
