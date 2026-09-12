@@ -141,7 +141,7 @@ async function showBookInfo(bookId) {
   overlay.hidden = false;
 
   const [{ data: book }, { data: dna }, { data: tropeRows }, { data: cwRows }] = await Promise.all([
-    sb.from('books').select('title, author, synopsis, page_count, publication_year, cover_url').eq('id', bookId).maybeSingle(),
+    sb.from('books').select('title, author, synopsis, page_count, publication_year, cover_url, position_in_series, series(name), universe(name)').eq('id', bookId).maybeSingle(),
     sb.from('book_dna').select('*').eq('book_id', bookId).maybeSingle(),
     sb.from('book_tropes').select('trope_id').eq('book_id', bookId),
     sb.from('book_content_warnings').select('warning_id, severity').eq('book_id', bookId),
@@ -161,6 +161,10 @@ async function showBookInfo(bookId) {
     .filter(([, v]) => v !== null);
   const tropes = (tropeRows || []).map((t) => titleCase(t.trope_id));
   const cws = (cwRows || []).map((c) => `${titleCase(c.warning_id)} (${titleCase(c.severity)})`);
+  const membership = [
+    book.series ? `Part of the <strong>${escapeHtml(book.series.name)}</strong> series${book.position_in_series ? ` (#${book.position_in_series})` : ''}` : null,
+    book.universe ? `Part of the <strong>${escapeHtml(book.universe.name)}</strong> universe` : null,
+  ].filter(Boolean);
 
   box.innerHTML = `
     <div class="modal-header">
@@ -171,25 +175,32 @@ async function showBookInfo(bookId) {
       <button class="modal-close" id="modal-close-btn">✕</button>
     </div>
     ${book.synopsis ? `<div class="dna-synopsis">${escapeHtml(book.synopsis)}</div>` : ''}
+    ${membership.length > 0 ? `<div class="dna-synopsis">${membership.join(' · ')}</div>` : ''}
     ${!dna ? '<div class="empty-state">Not tagged with Book DNA yet.</div>' : `
-      <div class="dna-section-title">Book DNA</div>
-      <div class="dna-grid">
-        ${dnaRows.map(([k, v]) => `<div class="dna-row"><div class="k">${escapeHtml(titleCase(k))}</div><div class="v">${escapeHtml(v)}</div></div>`).join('')}
-      </div>
-      ${audioRows.length > 0 ? `
-        <div class="dna-section-title">Audiobook</div>
-        <div class="dna-grid">
-          ${audioRows.map(([k, v]) => `<div class="dna-row"><div class="k">${escapeHtml(titleCase(k))}</div><div class="v">${escapeHtml(v)}</div></div>`).join('')}
-        </div>
-      ` : ''}
-      ${tropes.length > 0 ? `
-        <div class="dna-section-title">Tropes</div>
-        <div class="dna-chips">${tropes.map((t) => `<span class="dna-chip">${escapeHtml(t)}</span>`).join('')}</div>
-      ` : ''}
-      ${cws.length > 0 ? `
-        <div class="dna-section-title">Content warnings</div>
-        <div class="dna-chips">${cws.map((c) => `<span class="dna-chip">${escapeHtml(c)}</span>`).join('')}</div>
-      ` : ''}
+      <details open><summary class="dna-section-title">Audiobook</summary>
+        ${audioRows.length > 0 ? `
+          <div class="dna-grid">
+            ${audioRows.map(([k, v]) => `<div class="dna-row"><div class="k">${escapeHtml(titleCase(k))}</div><div class="v">${escapeHtml(v)}</div></div>`).join('')}
+          </div>
+        ` : '<div class="empty-state" style="text-align:left; padding:8px 0;">Only audiobook length is tagged catalog-wide so far -- narrator, cast, and production details are a known, not-yet-tagged gap (see docs/schema/book-dna.md).</div>'}
+      </details>
+      <details open><summary class="dna-section-title">Book DNA</summary>
+        <details open style="margin-top:6px;"><summary style="cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--ink-soft);">Fields</summary>
+          <div class="dna-grid" style="margin-top:8px;">
+            ${dnaRows.map(([k, v]) => `<div class="dna-row"><div class="k">${escapeHtml(titleCase(k))}</div><div class="v">${escapeHtml(v)}</div></div>`).join('')}
+          </div>
+        </details>
+        ${tropes.length > 0 ? `
+          <details open style="margin-top:10px;"><summary style="cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--ink-soft);">Tropes</summary>
+            <div class="dna-chips" style="margin-top:8px;">${tropes.map((t) => `<span class="dna-chip">${escapeHtml(t)}</span>`).join('')}</div>
+          </details>
+        ` : ''}
+        ${cws.length > 0 ? `
+          <details open style="margin-top:10px;"><summary style="cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--ink-soft);">Content warnings</summary>
+            <div class="dna-chips" style="margin-top:8px;">${cws.map((c) => `<span class="dna-chip">${escapeHtml(c)}</span>`).join('')}</div>
+          </details>
+        ` : ''}
+      </details>
     `}
   `;
   document.getElementById('modal-close-btn').addEventListener('click', closeModal);
@@ -215,7 +226,8 @@ function renderNav(active, session) {
   const nav = document.getElementById('top-nav');
   if (!nav) return;
   const name = session ? displayNameFor(session) : '';
-  nav.innerHTML = items.map(([href, label]) =>
+  nav.innerHTML = `<img src="logo.svg" alt="Bookspell" width="26" height="26" style="flex:0 0 auto;">` +
+    items.map(([href, label]) =>
     `<a href="${href}" class="${active === href ? 'active' : ''}">${label}</a>`
   ).join('') + `
     <span class="nav-spacer"></span>

@@ -303,7 +303,13 @@ nav.top .nav-spacer { flex: 1 1 auto; }
   text-decoration: underline;
 }
 
-.modal-overlay {
+/* :not([hidden]) is deliberate -- an unconditional `display: flex` on
+   .modal-overlay would override the browser's own `[hidden] {display:
+   none}` default (an author declaration always wins over a UA one for
+   the same property), silently defeating `el.hidden = true` and making
+   the close button look like it does nothing. Scoping the flex rule to
+   :not([hidden]) lets the UA default actually hide it again. */
+.modal-overlay:not([hidden]) {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.45);
@@ -332,7 +338,7 @@ nav.top .nav-spacer { flex: 1 1 auto; }
 .modal-title { font-weight: 700; font-size: 1.1rem; }
 .modal-author { color: var(--ink-soft); font-size: 0.85rem; margin-bottom: 14px; }
 .modal-close { background: none; border: none; color: var(--ink-soft); font-size: 1.3rem; padding: 0 4px; line-height: 1; }
-.dna-section-title { font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin: 18px 0 8px; }
+.dna-section-title { font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin: 18px 0 8px; cursor: pointer; }
 .dna-section-title:first-of-type { margin-top: 0; }
 .dna-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
 .dna-row .k { font-size: 0.78rem; color: var(--ink-soft); }
@@ -340,6 +346,20 @@ nav.top .nav-spacer { flex: 1 1 auto; }
 .dna-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .dna-chip { background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 0.8rem; }
 .dna-synopsis { font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 6px; }
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-btn {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.chip-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.checkbox-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 0.9rem; }
+.checkbox-row input[type="checkbox"] { width: auto; accent-color: var(--accent); }
 
 .auth-mode-toggle { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
 .auth-mode-toggle button {

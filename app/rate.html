@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bookspell — Rate Books</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
 <link rel="stylesheet" href="shared.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -34,6 +35,23 @@
   </div>
   <div id="results" class="results-box" style="display:none;"></div>
 
+  <details style="margin: -8px 0 20px;">
+    <summary style="cursor:pointer; font-size:0.85rem; color:var(--ink-soft);">Can't find a book or series? Suggest it →</summary>
+    <div class="field" style="margin-top:10px;">
+      <label for="suggest-title">Book or series title</label>
+      <input type="text" id="suggest-title" placeholder="e.g. The Blade Itself">
+    </div>
+    <div class="field">
+      <label for="suggest-author">Author (optional)</label>
+      <input type="text" id="suggest-author">
+    </div>
+    <div class="field">
+      <label for="suggest-note">Anything else? (optional)</label>
+      <input type="text" id="suggest-note" placeholder="e.g. the whole series, or just this one book">
+    </div>
+    <button class="btn-secondary" id="suggest-submit-btn" style="width:100%;">Send suggestion</button>
+  </details>
+
   <div id="picked" class="card" style="display:none;">
     <div><strong id="picked-title"></strong></div>
     <div class="my-rating-author" id="picked-author"></div>
@@ -44,15 +62,34 @@
       <button class="rating-btn liked" data-rating="liked">Liked</button>
       <button class="rating-btn loved" data-rating="loved">Loved</button>
     </div>
+
+    <div class="field" style="margin-top:14px; margin-bottom:0;">
+      <label>Format</label>
+      <div class="chip-row">
+        <button type="button" class="chip-btn" data-format="print">Book</button>
+        <button type="button" class="chip-btn" data-format="audiobook">Audiobook</button>
+      </div>
+    </div>
+
     <div class="field" style="margin-top:14px; margin-bottom:0;">
       <label for="picked-date">When did you read it? (optional)</label>
+      <div class="chip-row" id="date-quick-picks" style="margin-bottom:8px;">
+        <button type="button" class="chip-btn" data-relative="7">Last week</button>
+        <button type="button" class="chip-btn" data-relative="30">Last month</button>
+        <button type="button" class="chip-btn" data-relative="90">3 months ago</button>
+        <button type="button" class="chip-btn" data-relative="365">Last year</button>
+      </div>
       <input type="date" id="picked-date">
+      <input type="number" id="picked-year" placeholder="Or just the year, e.g. 2013" min="1900" max="2100" style="margin-top:8px;">
     </div>
+
     <div class="field" id="reason-field" style="margin-top:14px; margin-bottom:0; display:none;">
-      <label for="reason-select">Why? (optional — helps us improve recommendations)</label>
-      <select id="reason-select"></select>
+      <label>Why? (optional, pick any that apply)</label>
+      <div id="reason-checkboxes"></div>
       <input type="text" id="reason-other" placeholder="Say more…" style="margin-top:8px; display:none;">
     </div>
+
+    <button class="btn-primary" id="submit-rating-btn" style="margin-top:18px;">Submit rating</button>
   </div>
 
   <h2>My ratings</h2>
@@ -154,7 +191,9 @@ function pickBook(book) {
   document.getElementById('picked-author').textContent = book.author;
   pickedEl.querySelectorAll('.rating-btn').forEach((b) => b.classList.remove('active'));
   document.getElementById('picked-date').value = '';
+  document.getElementById('picked-year').value = '';
   reasonField.style.display = 'none';
+  setFormat(getDefaultFormat());
   pickedEl.style.display = 'block';
   resultsEl.style.display = 'none';
   searchInput.value = '';
@@ -211,10 +250,9 @@ async function showUniverseSeries(universeId, universeName) {
   resultsEl.querySelector('[data-back]')?.addEventListener('click', () => searchBooks(searchInput.value));
 }
 
-// Reason is entirely optional and never blocks the instant rating save
-// below -- it's a separate, lightweight follow-up UPDATE on the same
-// row if/when the reader actually picks one. Option sets differ by
-// sentiment (a "loved it" reason list makes no sense for a "hated it").
+// Reason is optional and multi-select (item #1) -- checkboxes rather
+// than a single dropdown, plus a free-text "Other". Option sets differ
+// by sentiment (a "loved it" reason list makes no sense for "hated it").
 const REASON_OPTIONS = {
   positive: ['Great characters', 'Compelling plot', 'Beautiful writing/prose', 'Immersive worldbuilding', 'Emotional impact', "Couldn't put it down", 'Other'],
   neutral: ['Started strong, lost me later', 'Fine but forgettable', 'Good in parts, uneven overall', 'Not what I expected', 'Other'],
@@ -226,66 +264,133 @@ function reasonGroupFor(rating) {
   return 'negative';
 }
 const reasonField = document.getElementById('reason-field');
-const reasonSelect = document.getElementById('reason-select');
+const reasonCheckboxesEl = document.getElementById('reason-checkboxes');
 const reasonOther = document.getElementById('reason-other');
-let reasonBookId = null;
 
-reasonSelect.addEventListener('change', () => {
-  if (!reasonSelect.value) return;
-  if (reasonSelect.value === 'Other') {
-    reasonOther.style.display = 'block';
-    reasonOther.value = '';
-    reasonOther.focus();
-    return;
+// preselected: existing `reasons` array when editing a rating, [] for a
+// fresh pick. Any preselected string that isn't one of the fixed
+// options is treated as free text typed under "Other" previously.
+function renderReasonCheckboxes(group, preselected) {
+  const options = REASON_OPTIONS[group];
+  const known = options.filter((o) => o !== 'Other');
+  const customValues = preselected.filter((r) => !known.includes(r));
+  reasonCheckboxesEl.innerHTML = options.map((o) => `
+    <label class="checkbox-row">
+      <input type="checkbox" value="${escapeAttr(o)}" ${(o !== 'Other' && preselected.includes(o)) ? 'checked' : ''}>
+      ${escapeHtml(o)}
+    </label>
+  `).join('');
+  const otherCb = reasonCheckboxesEl.querySelector('input[value="Other"]');
+  const hasCustom = customValues.length > 0;
+  otherCb.checked = hasCustom;
+  reasonOther.style.display = hasCustom ? 'block' : 'none';
+  reasonOther.value = hasCustom ? customValues.join('; ') : '';
+  otherCb.addEventListener('change', () => {
+    reasonOther.style.display = otherCb.checked ? 'block' : 'none';
+    if (otherCb.checked) reasonOther.focus();
+  });
+}
+function collectReasons() {
+  const checked = [...reasonCheckboxesEl.querySelectorAll('input[type=checkbox]:checked')].map((cb) => cb.value);
+  const reasons = checked.filter((v) => v !== 'Other');
+  if (checked.includes('Other')) {
+    const text = reasonOther.value.trim();
+    if (text) reasons.push(text);
   }
-  reasonOther.style.display = 'none';
-  saveReason(reasonSelect.value);
-});
-function commitOtherReason() {
-  const text = reasonOther.value.trim();
-  if (text) saveReason(text);
-}
-reasonOther.addEventListener('blur', commitOtherReason);
-reasonOther.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitOtherReason(); } });
-
-async function saveReason(reason) {
-  if (!reasonBookId) return;
-  const { error } = await sb.from('ratings').update({ reason }).eq('user_id', session.user.id).eq('book_id', reasonBookId);
-  if (error) return showToast(`Couldn't save reason: ${error.message}`);
-  showToast('Thanks — noted.');
+  return reasons.length > 0 ? reasons : null;
 }
 
-pickedEl.addEventListener('click', async (e) => {
+// Format (item #4): remembers the last format used in this browser so a
+// reader working through an audiobook series doesn't have to reselect
+// it every time; defaults to "print" before any rating has ever set it.
+function getDefaultFormat() {
+  try { return localStorage.getItem('bookspell-last-format') || 'print'; } catch (e) { return 'print'; }
+}
+let selectedFormat = 'print';
+function setFormat(fmt) {
+  selectedFormat = fmt;
+  document.querySelectorAll('[data-format]').forEach((b) => b.classList.toggle('active', b.dataset.format === fmt));
+}
+document.querySelectorAll('[data-format]').forEach((b) => b.addEventListener('click', () => setFormat(b.dataset.format)));
+
+// Relative date quick-picks (item #3) -- readers rarely remember an
+// exact date but often remember "about 3 months ago." Each button just
+// fills in the real date/year field; the field itself is still the
+// source of truth at submit time, so typing over a quick-pick works too.
+const pickedDateEl = document.getElementById('picked-date');
+const pickedYearEl = document.getElementById('picked-year');
+document.querySelectorAll('[data-relative]').forEach((b) => b.addEventListener('click', () => {
+  const days = parseInt(b.dataset.relative, 10);
+  pickedDateEl.value = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  pickedYearEl.value = '';
+}));
+pickedDateEl.addEventListener('input', () => { pickedYearEl.value = ''; });
+pickedYearEl.addEventListener('input', () => { pickedDateEl.value = ''; });
+
+pickedEl.addEventListener('click', (e) => {
   const btn = e.target.closest('.rating-btn');
   if (!btn || !selectedBook) return;
   pickedEl.querySelectorAll('.rating-btn').forEach((b) => b.classList.remove('active'));
   btn.classList.add('active');
-  await saveRating(selectedBook.id, btn.dataset.rating, selectedBook.title, selectedBook.author);
-
-  reasonBookId = selectedBook.id;
-  reasonSelect.innerHTML = '<option value="">Choose one…</option>' +
-    REASON_OPTIONS[reasonGroupFor(btn.dataset.rating)].map((o) => `<option value="${escapeAttr(o)}">${escapeHtml(o)}</option>`).join('');
-  reasonSelect.value = '';
-  reasonOther.style.display = 'none';
+  renderReasonCheckboxes(reasonGroupFor(btn.dataset.rating), []);
   reasonField.style.display = 'block';
 });
 
-async function saveRating(bookId, rating, title, author) {
-  const ratedDate = document.getElementById('picked-date').value || null;
+// Item #7: rating no longer auto-saves the instant a sentiment button
+// is clicked -- that was fast, but discouraged ever filling in the
+// optional fields below it. Everything (rating, format, date, reasons)
+// now goes in one upsert on explicit "Submit rating," after which the
+// whole panel resets rather than sitting there looking half-done.
+document.getElementById('submit-rating-btn').addEventListener('click', async () => {
+  if (!selectedBook) return;
+  const activeBtn = pickedEl.querySelector('.rating-btn.active');
+  if (!activeBtn) return showToast('Pick a rating first.');
+  const rating = activeBtn.dataset.rating;
+  const ratedDate = pickedDateEl.value || (pickedYearEl.value ? `${pickedYearEl.value}-07-01` : null);
+  const reasons = collectReasons();
+
   const { error } = await sb.from('ratings').upsert(
-    { user_id: session.user.id, book_id: bookId, rating, rated_date: ratedDate, source: 'manual' },
+    { user_id: session.user.id, book_id: selectedBook.id, rating, rated_date: ratedDate, reasons, format: selectedFormat, source: 'manual' },
     { onConflict: 'user_id,book_id' }
   );
   if (error) return showToast(`Couldn't save: ${error.message}`);
-  showToast(`Saved: ${title} — ${RATING_LABELS[rating]}`);
+  try { localStorage.setItem('bookspell-last-format', selectedFormat); } catch (e) { /* ignore */ }
+  showToast(`Saved: ${selectedBook.title} — ${RATING_LABELS[rating]}`);
+  resetPickedPanel();
   loadMyRatings();
+});
+
+function resetPickedPanel() {
+  pickedEl.style.display = 'none';
+  selectedBook = null;
+  pickedEl.querySelectorAll('.rating-btn').forEach((b) => b.classList.remove('active'));
+  pickedDateEl.value = '';
+  pickedYearEl.value = '';
+  reasonField.style.display = 'none';
+  reasonOther.value = '';
+  reasonOther.style.display = 'none';
+  searchInput.value = '';
+  resultsEl.style.display = 'none';
 }
+
+document.getElementById('suggest-submit-btn').addEventListener('click', async () => {
+  const title = document.getElementById('suggest-title').value.trim();
+  if (!title) return showToast('Enter a title first.');
+  const author = document.getElementById('suggest-author').value.trim() || null;
+  const note = document.getElementById('suggest-note').value.trim() || null;
+  const { error } = await sb.from('book_suggestions').insert({ user_id: session.user.id, title, author, note });
+  if (error) return showToast(`Couldn't send: ${error.message}`);
+  showToast('Thanks — sent to the team.');
+  document.getElementById('suggest-title').value = '';
+  document.getElementById('suggest-author').value = '';
+  document.getElementById('suggest-note').value = '';
+});
 
 async function loadMyRatings() {
   const container = document.getElementById('my-ratings');
   const { data, error } = await sb
     .from('ratings')
-    .select('id, book_id, rating, rated_date, reason, updated_at, books(title, author, cover_url)')
+    .select('id, book_id, rating, rated_date, reasons, format, updated_at, books(title, author, cover_url)')
     .order('updated_at', { ascending: false });
   if (error) {
     container.innerHTML = `<div class="empty-state">Couldn't load your ratings: ${escapeHtml(error.message)}</div>`;
@@ -300,11 +405,11 @@ async function loadMyRatings() {
       ${r.books?.cover_url ? `<img class="thumb" src="${escapeAttr(r.books.cover_url)}" alt="" loading="lazy">` : ''}
       <div style="flex:1 1 auto;">
         <div class="my-rating-title">${escapeHtml(r.books?.title || '(unknown title)')}</div>
-        <div class="my-rating-author">${escapeHtml(r.books?.author || '')} · <span class="pill ${r.rating}">${RATING_LABELS[r.rating]}</span>${r.rated_date ? ` · ${r.rated_date}` : ''}</div>
+        <div class="my-rating-author">${escapeHtml(r.books?.author || '')} · <span class="pill ${r.rating}">${RATING_LABELS[r.rating]}</span>${r.format ? ` · ${titleCase(r.format)}` : ''}${r.rated_date ? ` · ${r.rated_date}` : ''}</div>
       </div>
       <div class="my-rating-actions">
         <button class="icon-btn" title="Book info" data-info="${r.book_id}">ⓘ</button>
-        <button class="icon-btn" title="Change rating" data-edit="${r.book_id}" data-title="${escapeAttr(r.books?.title || '')}" data-author="${escapeAttr(r.books?.author || '')}" data-date="${r.rated_date || ''}" data-current-rating="${r.rating}" data-reason="${escapeAttr(r.reason || '')}">✎</button>
+        <button class="icon-btn" title="Change rating" data-edit="${r.book_id}" data-title="${escapeAttr(r.books?.title || '')}" data-author="${escapeAttr(r.books?.author || '')}" data-date="${r.rated_date || ''}" data-current-rating="${r.rating}" data-reasons="${escapeAttr(JSON.stringify(r.reasons || []))}" data-format="${r.format || ''}">✎</button>
         <button class="icon-btn" title="Remove" data-delete="${r.id}">✕</button>
       </div>
     </div>
@@ -314,16 +419,11 @@ async function loadMyRatings() {
     selectedBook = { id: b.dataset.edit, title: b.dataset.title, author: b.dataset.author };
     document.getElementById('picked-title').textContent = selectedBook.title;
     document.getElementById('picked-author').textContent = selectedBook.author;
-    document.getElementById('picked-date').value = b.dataset.date || '';
+    pickedDateEl.value = b.dataset.date || '';
+    pickedYearEl.value = '';
     pickedEl.querySelectorAll('.rating-btn').forEach((rb) => rb.classList.toggle('active', rb.dataset.rating === b.dataset.currentRating));
-    reasonBookId = selectedBook.id;
-    reasonSelect.innerHTML = '<option value="">Choose one…</option>' +
-      REASON_OPTIONS[reasonGroupFor(b.dataset.currentRating)].map((o) => `<option value="${escapeAttr(o)}">${escapeHtml(o)}</option>`).join('');
-    const existingReason = b.dataset.reason || '';
-    const isKnownOption = REASON_OPTIONS[reasonGroupFor(b.dataset.currentRating)].includes(existingReason);
-    reasonSelect.value = isKnownOption ? existingReason : (existingReason ? 'Other' : '');
-    reasonOther.style.display = (existingReason && !isKnownOption) ? 'block' : 'none';
-    reasonOther.value = (existingReason && !isKnownOption) ? existingReason : '';
+    setFormat(b.dataset.format || getDefaultFormat());
+    renderReasonCheckboxes(reasonGroupFor(b.dataset.currentRating), JSON.parse(b.dataset.reasons || '[]'));
     reasonField.style.display = 'block';
     pickedEl.style.display = 'block';
     pickedEl.scrollIntoView({ behavior: 'smooth', block: 'start' });

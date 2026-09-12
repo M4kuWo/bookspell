@@ -1425,3 +1425,22 @@ worth deferring to a later session rather than batching in for
   `docs/schema/book-dna.md`'s "Future fields backlog", not duplicated
   here. All explicitly waiting on more real rating evidence before
   committing to vocabulary.
+- [ ] **Tier 4 "audiobook-native" `book_dna` fields are still 0%
+  tagged catalog-wide** (`narrator_performance`, `narrator_cast`,
+  `narration_pace_vs_prose`, `accent_authenticity`, `production_quality`
+  -- confirmed 2026-09-13: 0 of 941 tagged books have any of the 5 set,
+  vs. 864/941 for `audiobook_length`, which is a separate, already-tagged
+  field). This is a real, standing gap -- `docs/schema/book-dna.md`
+  already documents it as "skipped for the pilot corpus," and it's what
+  blocks the "medium" (text vs. audio) recommend() parameter floated in
+  that doc's future-fields backlog (confirmed blocked on real data back
+  on 2026-08-29, unchanged as of this check). `books.narrators` is also
+  still populated for only 1 of 1256 books. Surfaced again 2026-09-13
+  by a real user flagging that audiobooks they've personally listened
+  to show no narrator/cast/production info in the app's new book-info
+  modal -- the modal now explains this transparently in-product rather
+  than showing a misleading blank section, but the underlying gap
+  itself is unaddressed. Needs a real tagging pass (verified against
+  Hardcover's own audiobook-edition data or another real source, not
+  guessed) before this is usable -- not undertaken yet, scope/size
+  unassessed.
