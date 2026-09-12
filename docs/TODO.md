@@ -345,10 +345,10 @@ worth deferring to a later session rather than batching in for
   silently tagging or silently skipping it.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
-  done 2026-09-12 (91 of ~484 series fixed so far: 14+14+17+17+15+14 across
-  batches 1-6 -- the denominator grew a lot from the 2026-09-12
-  378-book/118-series ingestion round, this isn't the catalog shrinking
-  work).** `status` defaults to
+  done 2026-09-12, batch 7 done 2026-09-13 (107 of ~484 series fixed so
+  far: 14+14+17+17+15+14+16 across batches 1-7 -- the denominator grew a
+  lot from the 2026-09-12 378-book/118-series ingestion round, this
+  isn't the catalog shrinking work).** `status` defaults to
   `'ongoing'` whenever Hardcover's `is_completed` flag isn't explicitly
   `true` (including simply missing data); `book_count` is Hardcover's
   raw per-series edition/omnibus/box-set count, not a curated
@@ -571,35 +571,71 @@ worth deferring to a later session rather than batching in for
   completely unresearched for status/book_count too (its own identity
   wasn't pinned down this batch) -- available for batch 7.
 
-  **Next (batch 7)**: re-rank remaining series by catalog book count,
-  excluding all **135** now-checked names across batches 1-6 (118 from
-  batches 1-5 + this batch's 14 fixed + this batch's 3 confirmed-correct
-  -- keep this running total accurate going forward) plus the **14**
-  still-unsettled flagged names: Hogwarts Library, The Roald Dahl
-  Classic Collection, The Riyria Revelations (Omnibus), Robert Langdon,
-  The Inheritance Games, Imperial Radch (publication order), Enderverse:
-  Publication Order (DB name has a double space -- "Enderverse:
-  Publication Order" -- match the real string, not the single-space
-  version), The Shadow Series, Middle Earth, American Gods, Forward
-  Collection, Saga (pre-existing 12) + Kingsbridge, Holly Gibney (this
-  batch's 2 new scope flags) -- don't reuse any prior batch's candidate
-  list, all are now stale. Un-researched candidates seen this batch,
-  available as batch 7's first candidates (this session's search budget
-  ran out before reaching them, no assumption made either way):
-  Revelation Space (Alastair Reynolds), Outlander (Diana Gabaldon),
-  Legend (Marie Lu), Six of Crows (Leigh Bardugo), Legends & Lattes
-  (Travis Baldree), The Founders Trilogy (Robert Jackson Bennett),
-  Earthseed (Octavia Butler), Blood and Ash (Jennifer L. Armentrout),
-  Ready Player One (Ernest Cline), Ana and Din Mysteries (Robert Jackson
-  Bennett), The Roots of Chaos (Samantha Shannon), Oxford Time Travel
-  (Connie Willis), Elantris (Brandon Sanderson -- check carefully, looks
-  like it may be a companion-grouping question rather than a plain
-  miscount), Before the Coffee Gets Cold (Toshikazu Kawaguchi), Once
-  Upon a Broken Heart (Stephanie Garber -- book count genuinely unclear
-  from available sources so far), Sword of Truth (Terry Goodkind), Kate
-  Daniels (Ilona Andrews), Threshold (Peter Clines -- resolve the
-  author-field contamination noted above before or while checking this
-  one).
+  **Batch 7 (2026-09-13)**: reconstructed the accurate 135-name
+  "checked" list by name straight from batches 1-6's own project-log.md
+  entries (15 + 30 + 17 + 38 + 18 + 17 = 135, verified against the live
+  `series` table -- all 135 matched exactly one row), rather than
+  trusting the running total alone, plus the 14 still-unsettled flagged
+  names carried from batch 6. Worked the batch-6-surfaced candidate tail
+  first (all 18 names), then continued into 4 fresh names at the same
+  "2 books linked" tier since search budget allowed it. **16 needed a
+  real fix**: Revelation Space (book_count only, 33->4 -- Chasm City
+  excluded as a companion novel), Outlander (book_count only, 44->9),
+  Legend (ongoing/9 -> completed/4 -- Rebel confirmed as the real 4th
+  and final book, not a spin-off), The Founders Trilogy (ongoing/5 ->
+  completed/3), Blood and Ash (book_count only, 23->6 -- the confirmed
+  7th/final book was pushed to fall 2026, not out yet), The Roots of
+  Chaos (book_count only, 2->3), Legends & Lattes (book_count only,
+  2->3), Oxford Time Travel (book_count only, 8->4), Sword of Truth
+  (book_count only, 85->11 -- prequels/sequel/Nicci Chronicles spin-off
+  excluded), Kate Daniels (ongoing/29 -> completed/10), Once Upon a
+  Broken Heart (book_count only, 8->3), Threshold (book_count only,
+  5->4 -- identity resolved as "The Threshold Universe," 14/The
+  Fold/Dead Moon/Terminus), Before the Coffee Gets Cold (book_count
+  only, 4->6), Letters of Enchantment (book_count only, 12->2), The Lot
+  Lands (status only, ongoing -> completed, book_count 3 already
+  correct), Hierarchy (book_count only, 3->2 -- the confirmed 3rd book
+  has no release date yet). **5 confirmed already correct**: Ana and Din
+  Mysteries (ongoing/3 -- real series name is "Shadow of the Leviathan"
+  per Wikipedia, "Ana and Din Mysteries" looks like a Goodreads-style fan
+  label, noted but not renamed here), Six of Crows, Ready Player One,
+  Earthseed, Jurassic Park. Migration
+  `20260913100000_fix_series_status_book_count_batch7.sql` -- tested in
+  a rolled-back transaction first (all 16 names matched exactly once,
+  post-update values verified), then applied for real to hosted via a
+  normal autocommit connection; **not yet pushed via `supabase db push`
+  and the branch not yet merged to main**, same handoff-to-CLDO pattern
+  as batches 2-6. `series` table total row count unchanged (484),
+  spot-checked Kate Daniels / Legend / Sword of Truth directly on
+  hosted.
+
+  **New data-quality issue flagged, not fixed (a different bug class --
+  a `books.series_id` linkage gap, not a status/book_count value
+  error)**: **Elantris** (Brandon Sanderson) -- the real novel
+  "Elantris" (2005) exists in `books` but has `series_id = NULL`, not
+  linked to its own "Elantris" series row at all; the series row instead
+  only has two Cosmere companion novellas linked (The Hope of Elantris,
+  The Emperor's Soul). This was the exact "companion-grouping question,
+  not a plain miscount" shape flagged for batch 7 -- confirmed correct
+  to flag rather than fix. Added to the flagged-name list below.
+
+  See project-log.md's 2026-09-13 "series.status/book_count fix, batch
+  7" entry for full reasoning and sourcing on all 21 checks.
+
+  **Next (batch 8)**: re-rank remaining series by catalog book count,
+  excluding all **156** now-checked names across batches 1-7 (135 from
+  batches 1-6 + this batch's 16 fixed + this batch's 5 confirmed-correct)
+  plus the **15** still-unsettled flagged names: Hogwarts Library, The
+  Roald Dahl Classic Collection, The Riyria Revelations (Omnibus), Robert
+  Langdon, The Inheritance Games, Imperial Radch (publication order),
+  Enderverse:  Publication Order (DB name has a double space -- match the
+  real string, not the single-space version), The Shadow Series, Middle
+  Earth, American Gods, Forward Collection, Saga, Kingsbridge, Holly
+  Gibney (pre-existing 14) + Elantris (this batch's new linkage-bug
+  flag) -- don't reuse any prior batch's candidate list, all are now
+  stale. No unresearched candidates were left over this batch (the
+  entire batch-6-surfaced tail plus 4 fresh names were all checked) --
+  batch 8 starts from a fresh re-run of the ranking query.
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also

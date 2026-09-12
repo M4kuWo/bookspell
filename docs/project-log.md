@@ -11948,3 +11948,174 @@ Player One, Ana and Din Mysteries, The Roots of Chaos, Oxford Time
 Travel, Elantris, Before the Coffee Gets Cold, Once Upon a Broken
 Heart, Sword of Truth, Kate Daniels, Threshold) -- don't reuse batch
 1-5's stale candidate lists.
+
+## 2026-09-13: series.status/book_count fix, batch 7 -- 16 series fixed, 5 confirmed correct
+
+Continuing the P2 catalog-wide `series.status`/`book_count` fix as a
+background agent (CLDA persona). Root cause unchanged: `status`
+defaults to 'ongoing' whenever Hardcover's `is_completed` isn't
+explicitly true; `book_count` is Hardcover's raw edition/omnibus/box-set
+count, not a curated mainline-installment count -- neither field is
+read by `scripts/recommend.py`, display-only bug in
+`tools/catalog-review/`.
+
+**Reconstructed the accurate 135-name exclude list by name, not by
+trusting the running total** -- per this task's own standing caution
+(batch 5 caught a 21-name gap doing exactly this). Pulled the fixed and
+confirmed-correct names directly from batches 1-6's own project-log
+entries: 15 (batch 1) + 30 (batch 2: 14 fixed + 16 correct) + 17 (batch
+3) + 38 (batch 4: 17 fixed + 21 correct) + 18 (batch 5: 15 fixed + 3
+correct) + 17 (batch 6: 14 fixed + 3 correct) = 135, verified every one
+of the 135 strings matches exactly one live `series` row before
+building the exclusion (all matched, no gaps this time). Combined with
+the 14 still-unsettled flagged names carried from batch 6 (including
+confirming the Enderverse double-space name still matches) --148 unique
+exclude strings after dedup (the "Imperial Radch (publication order)"
+string is shared between a batch-2 fix and a batch-5/6 flag, same
+collision batch 6 already documented).
+
+Re-ran the ranking query excluding those 148 names. Worked through the
+entire batch-6-surfaced candidate tail (18 names: Revelation Space,
+Outlander, Legend, Six of Crows, Legends & Lattes, The Founders
+Trilogy, Earthseed, Blood and Ash, Ready Player One, Ana and Din
+Mysteries, The Roots of Chaos, Oxford Time Travel, Elantris, Before the
+Coffee Gets Cold, Once Upon a Broken Heart, Sword of Truth, Kate
+Daniels, Threshold) -- search budget held up, so continued into 4 fresh
+names surfacing at the same "2 books currently linked" tier (Jurassic
+Park, Letters of Enchantment, The Lot Lands, Hierarchy). Verified every
+single one via live web search before writing anything, same standard
+as batches 1-6.
+
+**16 fixed**:
+- Revelation Space (Alastair Reynolds): book_count 33 -> 4 (status
+  'ongoing' already correct). The "Inhibitor Cycle" mainline is 4 novels
+  (Revelation Space, Redemption Ark, Absolution Gap, Inhibitor Phase,
+  2000-2021); Chasm City (2001) is a companion novel Reynolds himself
+  has said "can be read at any point," excluded per the standing
+  companion-work convention.
+- Outlander (Diana Gabaldon): book_count 44 -> 9 (status 'ongoing'
+  already correct). 9 published mainline novels through Go Tell the
+  Bees That I Am Gone (2021); a confirmed 10th book ("A Blessing for a
+  Warrior Going Out") has no release date yet.
+- Legend (Marie Lu): 'ongoing'/9 -> 'completed'/4. Confirmed a closed
+  4-book saga (Legend, Prodigy, Champion, Rebel) -- Rebel is officially
+  the 4th and final book (not a spin-off, despite an ~8-year publication
+  gap and a narrator shift to Day's brother Eden); Marie Lu has said she
+  found real closure writing it.
+- The Founders Trilogy (Robert Jackson Bennett): 'ongoing'/5 ->
+  'completed'/3 (Foundryside, Shorefall, Locklands, 2018-2022 --
+  Locklands explicitly branded "the conclusion" to the trilogy).
+- Blood and Ash (Jennifer L. Armentrout): book_count 23 -> 6 (status
+  'ongoing' already correct). 6 published mainline novels through The
+  Primal of Blood and Bone (2025); the confirmed 7th/final book, The
+  Throne of Bone and Ash, was pushed from spring to fall 2026 and isn't
+  out yet as of this migration.
+- The Roots of Chaos (Samantha Shannon): book_count 2 -> 3 (status
+  'ongoing' already correct). Among the Burning Flowers (2025) confirmed
+  as a genuine full novel (288pp), not a novella, making it a real third
+  mainline installment.
+- Legends & Lattes (Travis Baldree): book_count 2 -> 3 (status 'ongoing'
+  already correct). Brigands & Breadknives (2025) confirmed published as
+  book 3; Baldree's next book is in a different world but he's left the
+  door open to returning here, no completion statement found either way.
+- Oxford Time Travel (Connie Willis): book_count 8 -> 4 (status
+  'ongoing' already correct). 4 mainline novels (Doomsday Book, To Say
+  Nothing of the Dog, Blackout, All Clear); "Fire Watch" (a short story)
+  excluded per the collection-vs-novel convention. A further book, "A
+  Spanner in the Works," is confirmed in development but unpublished.
+- Sword of Truth (Terry Goodkind): book_count 85 -> 11 (status
+  'completed' already correct). The core saga is 11 novels (Wizard's
+  First Rule through Confessor, explicitly concluded); 2 prequels, 1
+  direct sequel, and the separate Richard and Kahlan/Nicci Chronicles
+  follow-up series excluded as not part of the numbered core.
+- Kate Daniels (Ilona Andrews): 'ongoing'/29 -> 'completed'/10. A closed
+  10-book main saga (Magic Bites through Magic Triumphs, 2007-2019,
+  originally planned as 7 books and extended to finish the story); the
+  wider "Kate Daniels world" runs to 18 titles with novellas/spin-offs
+  not part of this numbered mainline count.
+- Once Upon a Broken Heart (Stephanie Garber): book_count 8 -> 3 (status
+  'completed' already correct). A closed 3-book trilogy; a 2026
+  companion novella ("The Mirror of Infinite Endings") excluded per
+  convention.
+- Threshold (Peter Clines): book_count 5 -> 4 (status 'ongoing' already
+  correct). Identity finally resolved -- this is "The Threshold
+  Universe," 4 mainline novels (14, The Fold, Dead Moon, Terminus,
+  2012-2020); "Paradox Bound" is a separate story in Clines's wider
+  connected universe, not a numbered Threshold entry.
+- Before the Coffee Gets Cold (Toshikazu Kawaguchi): book_count 4 -> 6
+  (status 'ongoing' already correct). 6 published mainline novels
+  through Before I Knew I Loved You (published 2026-05-21/26, already
+  out as of this migration).
+- Letters of Enchantment (Rebecca Ross): book_count 12 -> 2 (status
+  'completed' already correct). A closed 2-book duology (Divine Rivals,
+  Ruthless Vows) -- Ross has said everything wraps up in Ruthless Vows;
+  "Wild Reverence" is a new story in the same universe, not a numbered
+  third book.
+- The Lot Lands (Jonathan French, aka the Grey Bastards trilogy):
+  status 'ongoing' -> 'completed' (book_count 3 already correct). The
+  Free Bastards (2020) is explicitly the trilogy's conclusion.
+- Hierarchy (James Islington): book_count 3 -> 2 (status 'ongoing'
+  already correct). The confirmed 3rd/final book, "The Justice of One,"
+  is in progress (~90,000 words of a first draft as of late 2025) but
+  has no release date yet, fan speculation points to 2027/2028.
+
+**5 confirmed already correct** (checked via live search, no change):
+Ana and Din Mysteries (Robert Jackson Bennett, 'ongoing'/3 -- The
+Tainted Cup, A Drop of Corruption, and A Trade of Blood, published
+August 2026, are the 3 real books, matching the already-correct
+book_count even though our catalog has only linked the first 2 so far;
+noted in passing that the real series name per Wikipedia/publisher is
+"Shadow of the Leviathan," "Ana and Din Mysteries" looks like a
+Goodreads-style informal label, not renamed here since that's a
+different kind of change than this task covers), Six of Crows (Leigh
+Bardugo, 'completed'/2 -- a 2026 novella doesn't count as a third
+mainline book, no third novel confirmed), Ready Player One (Ernest
+Cline, 'completed'/2 -- an unwritten prequel ("Ready Player Zero") was
+discussed, not a numbered third book), Earthseed (Octavia E. Butler,
+'completed'/2 -- the planned third book, Parable of the Trickster, was
+never finished; Butler died in 2006 with only false starts), Jurassic
+Park (Michael Crichton, 'completed'/2 -- no third novel was ever
+written; the film sequels aren't book adaptations).
+
+**One data-quality issue flagged, NOT fixed (a different bug class --
+a `books.series_id` linkage gap, not a status/book_count value
+error)**: **Elantris** (Brandon Sanderson) -- the real novel "Elantris"
+(2005) exists in our `books` table but has `series_id = NULL`, not
+linked to its own "Elantris" series row at all; the series row instead
+only has two Cosmere companion novellas linked at fractional positions
+(The Hope of Elantris at 1.5, The Emperor's Soul at 1.75). This is
+exactly the "companion-grouping question, not a plain miscount" shape
+flagged for this batch by name -- confirmed via direct query
+(`select id, title, series_id from books where title ilike
+'%elantris%'`) that the real novel is simply unlinked, not that our
+book-count convention was being misapplied. Left completely untouched;
+added to docs/TODO.md's flagged-name list so future batches' ranking
+queries stop re-surfacing it as a plain value error.
+
+Migration `20260913100000_fix_series_status_book_count_batch7.sql` --
+tested in a rolled-back transaction first (all 16 names verified to
+match exactly one row, before/after values checked explicitly), then
+applied for real to hosted via a normal autocommit psycopg2 connection.
+**Not yet pushed via `supabase db push` and the branch not yet merged
+to main** -- both left for CLDO to do serially, same handoff pattern as
+batches 2-6, to avoid two sessions' `db push`/git operations racing on
+the same day. Verified afterward: `series` table total row count
+unchanged (484), spot-checked Kate Daniels / Legend / Sword of Truth
+directly on hosted.
+
+Running total: 107 series fixed across batches 1-7 (91 from batches 1-6
++ 16 this batch), 49 confirmed already correct (44 from batches 1-6 + 5
+this batch), **156** checked/settled overall (135 from batches 1-6 + 16
+fixed this batch + 5 confirmed-correct this batch = 156; cross-checked
+against 107 fixed + 49 confirmed = 156, both arrive at the same figure
+-- double-checked explicitly given batch 5's own prior undercounting bug
+in this exact spot). `docs/TODO.md` updated with the new 156-name
+exclude list and a batch-8 pointer.
+
+**Next (batch 8)**: re-rank remaining series excluding all 156
+now-checked names across batches 1-7 (see docs/TODO.md's updated entry
+for the exact reconstruction) plus the 15 flagged-not-settled names
+(14 carried from batch 6 + this batch's new Elantris linkage-bug flag).
+No unresearched candidate tail is left over from this batch -- the
+entire batch-6-surfaced list plus 4 fresh names were all checked, so
+batch 8 starts from a fresh ranking-query run.
