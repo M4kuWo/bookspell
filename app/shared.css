@@ -18,6 +18,9 @@
   --disliked: #b06a3a;
   --hated: #a13f3f;
   --danger: #a13f3f;
+  --gold: #9a7418;
+  --gold-bg: rgba(184, 141, 30, 0.12);
+  --gold-border: rgba(184, 141, 30, 0.35);
 }
 /* Dark palette: system preference by default (no explicit choice stamped
    on <html>), an explicit toggle (see shared.js applyTheme()) wins either
@@ -38,6 +41,9 @@
     --disliked: #c98356;
     --hated: #c05555;
     --danger: #c05555;
+    --gold: #e0b84a;
+    --gold-bg: rgba(224, 184, 74, 0.12);
+    --gold-border: rgba(224, 184, 74, 0.35);
   }
 }
 :root[data-theme="dark"] {
@@ -55,6 +61,9 @@
   --disliked: #c98356;
   --hated: #c05555;
   --danger: #c05555;
+  --gold: #e0b84a;
+  --gold-bg: rgba(224, 184, 74, 0.12);
+  --gold-border: rgba(224, 184, 74, 0.35);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -346,6 +355,31 @@ nav.top .nav-spacer { flex: 1 1 auto; }
 .dna-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .dna-chip { background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 0.8rem; }
 .dna-synopsis { font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 6px; }
+.membership-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 16px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+.membership-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--gold);
+  background: var(--gold-bg);
+  border: 1px solid var(--gold-border);
+  border-radius: 999px;
+  padding: 4px 11px;
+}
+.audiobook-edition { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.audiobook-edition:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.audiobook-edition .edition-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 2px; }
+.audiobook-edition .edition-meta { font-size: 0.82rem; color: var(--ink-soft); margin-bottom: 6px; }
 
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip-btn {

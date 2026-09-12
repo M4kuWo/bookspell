@@ -1444,3 +1444,35 @@ worth deferring to a later session rather than batching in for
   Hardcover's own audiobook-edition data or another real source, not
   guessed) before this is usable -- not undertaken yet, scope/size
   unassessed.
+- [ ] **`audiobook_editions.audiobook_length` backfilled from real edition
+  runtime data 2026-09-13** (864 -> 904 of 941 tagged books, migration
+  `20260913090000_backfill_audiobook_length_from_editions.sql`) --
+  mechanical, using docs/schema/book-dna.schema.yaml's own documented
+  hour thresholds, scoped to the 40 books with exactly one unambiguous
+  'standard'-edition runtime. **18 more books have multiple 'standard'
+  rows with genuinely different runtimes** (different narrators/
+  publishers/abridgements -- e.g. two legitimate different narrations)
+  and were deliberately left null rather than guessed at -- a real,
+  small remaining backfill opportunity if someone wants to make a
+  per-book call on which edition's runtime should count.
+- [ ] **Data quality: some `audiobook_editions` rows for GraphicAudio
+  full-cast dramatizations are mislabeled `edition_type = 'standard'`
+  instead of `'dramatized_full_cast'`** -- noticed 2026-09-13 while
+  wiring the app's book-info modal to this table (e.g. "A Court of Frost
+  and Starlight" has a 24-narrator GraphicAudio row tagged `standard`
+  sitting alongside its real single-narrator standard edition). Not
+  fixed here -- flagging only, since telling a genuine full-cast
+  dramatization apart from a real single/dual-narrator "standard"
+  edition by narrator-count heuristic alone risks getting real edge
+  cases wrong (some legitimate standard editions do use 2-3 narrators).
+  Whoever owns `audiobook_editions`' data collection should sweep for
+  this rather than the app layer silently reclassifying it.
+- [ ] **`audiobook_editions` had RLS disabled and no grant to
+  `authenticated`** until fixed 2026-09-13
+  (`20260913100000_expose_audiobook_editions_to_app.sql`) -- caught
+  before shipping the book-info modal's edition/narrator display (which
+  would otherwise have silently shown "no data" for every book,
+  indistinguishable from the real Tier-B tagging gap). Worth checking
+  whether any other future table gets created without this same
+  RLS-policy + grant pairing that `books`/`book_dna`/`series`/`universe`
+  already have.

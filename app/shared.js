@@ -103,9 +103,13 @@ const DNA_FIELD_ORDER = [
   'magic_system_hardness', 'scifi_hardness', 'prose_density', 'prose_complexity',
   'intellectual_weight', 'stakes_scope', 'personal_stakes', 'genre_accessibility',
 ];
-const DNA_AUDIOBOOK_FIELD_ORDER = [
-  'audiobook_length', 'narrator_performance', 'narrator_cast', 'narration_pace_vs_prose',
-  'accent_authenticity', 'production_quality',
+// Tier B (craft/quality judgment) fields -- audiobook_length is a
+// separate, Tier A field handled on its own below, not mixed into this
+// list, since it's real metadata rather than a subjective listening
+// assessment (see docs/schema/book-dna.schema.yaml's audiobook_native
+// module note on the Tier A/B split).
+const DNA_AUDIOBOOK_QUALITY_FIELD_ORDER = [
+  'narrator_performance', 'narration_pace_vs_prose', 'accent_authenticity', 'production_quality',
 ];
 
 function titleCase(s) {
@@ -115,6 +119,14 @@ function formatDnaValue(v) {
   if (v === null || v === undefined) return null;
   if (Array.isArray(v)) return v.map(titleCase).join(', ');
   return titleCase(v);
+}
+function formatEditionType(t) {
+  if (t === 'dramatized_full_cast') return 'Full-Cast Dramatization';
+  if (t === 'standard') return 'Standard';
+  return titleCase(t);
+}
+function formatRuntime(mins) {
+  return mins ? `${(mins / 60).toFixed(1)}h` : null;
 }
 
 function ensureModalEl() {
@@ -140,11 +152,12 @@ async function showBookInfo(bookId) {
   box.innerHTML = '<div class="empty-state">Loading…</div>';
   overlay.hidden = false;
 
-  const [{ data: book }, { data: dna }, { data: tropeRows }, { data: cwRows }] = await Promise.all([
+  const [{ data: book }, { data: dna }, { data: tropeRows }, { data: cwRows }, { data: editions }] = await Promise.all([
     sb.from('books').select('title, author, synopsis, page_count, publication_year, cover_url, position_in_series, series(name), universe(name)').eq('id', bookId).maybeSingle(),
     sb.from('book_dna').select('*').eq('book_id', bookId).maybeSingle(),
     sb.from('book_tropes').select('trope_id').eq('book_id', bookId),
     sb.from('book_content_warnings').select('warning_id, severity').eq('book_id', bookId),
+    sb.from('audiobook_editions').select('edition_type, narrators, production_company, runtime_minutes, release_status, parts_released, parts_total').eq('book_id', bookId).order('edition_type'),
   ]);
 
   if (!book) {
@@ -156,15 +169,34 @@ async function showBookInfo(bookId) {
   const dnaRows = (dna ? DNA_FIELD_ORDER : [])
     .map((f) => [f, formatDnaValue(dna[f])])
     .filter(([, v]) => v !== null);
-  const audioRows = (dna ? DNA_AUDIOBOOK_FIELD_ORDER : [])
+  const audiobookLengthVal = dna ? formatDnaValue(dna.audiobook_length) : null;
+  const audioQualityRows = (dna ? DNA_AUDIOBOOK_QUALITY_FIELD_ORDER : [])
     .map((f) => [f, formatDnaValue(dna[f])])
     .filter(([, v]) => v !== null);
   const tropes = (tropeRows || []).map((t) => titleCase(t.trope_id));
   const cws = (cwRows || []).map((c) => `${titleCase(c.warning_id)} (${titleCase(c.severity)})`);
   const membership = [
-    book.series ? `Part of the <strong>${escapeHtml(book.series.name)}</strong> series${book.position_in_series ? ` (#${book.position_in_series})` : ''}` : null,
-    book.universe ? `Part of the <strong>${escapeHtml(book.universe.name)}</strong> universe` : null,
+    book.series ? `<span class="membership-badge">📚 ${escapeHtml(book.series.name)}${book.position_in_series ? ` #${book.position_in_series}` : ''}</span>` : null,
+    book.universe ? `<span class="membership-badge">✦ ${escapeHtml(book.universe.name)} universe</span>` : null,
   ].filter(Boolean);
+
+  // Real edition/narrator/cast data (audiobook_editions -- collected
+  // separately from book_dna tagging) vs. the still-untagged Tier B
+  // quality-judgment fields are two different things; shown separately
+  // so real data isn't buried under a caveat about the other.
+  const editionBlocks = (editions || []).map((e) => {
+    const metaParts = [];
+    const runtime = formatRuntime(e.runtime_minutes);
+    if (runtime) metaParts.push(runtime);
+    if (e.parts_total) metaParts.push(`Part${e.parts_total > 1 ? 's' : ''} ${e.parts_released ?? '?'}/${e.parts_total}${e.release_status === 'fully_released' ? ' · complete' : ''}`);
+    return `
+      <div class="audiobook-edition">
+        <div class="edition-title">${formatEditionType(e.edition_type)}${e.production_company ? ` — ${escapeHtml(e.production_company.trim())}` : ''}</div>
+        ${metaParts.length > 0 ? `<div class="edition-meta">${metaParts.join(' · ')}</div>` : ''}
+        ${e.narrators && e.narrators.length > 0 ? `<div class="dna-chips">${e.narrators.map((n) => `<span class="dna-chip">${escapeHtml(n)}</span>`).join('')}</div>` : ''}
+      </div>
+    `;
+  }).join('');
 
   box.innerHTML = `
     <div class="modal-header">
@@ -174,15 +206,15 @@ async function showBookInfo(bookId) {
       </div>
       <button class="modal-close" id="modal-close-btn">✕</button>
     </div>
-    ${book.synopsis ? `<div class="dna-synopsis">${escapeHtml(book.synopsis)}</div>` : ''}
-    ${membership.length > 0 ? `<div class="dna-synopsis">${membership.join(' · ')}</div>` : ''}
+    ${book.synopsis ? `<details open><summary class="dna-section-title">Description</summary><div class="dna-synopsis">${escapeHtml(book.synopsis)}</div></details>` : ''}
+    ${membership.length > 0 ? `<div class="membership-line">${membership.join('')}</div>` : ''}
     ${!dna ? '<div class="empty-state">Not tagged with Book DNA yet.</div>' : `
       <details open><summary class="dna-section-title">Audiobook</summary>
-        ${audioRows.length > 0 ? `
-          <div class="dna-grid">
-            ${audioRows.map(([k, v]) => `<div class="dna-row"><div class="k">${escapeHtml(titleCase(k))}</div><div class="v">${escapeHtml(v)}</div></div>`).join('')}
-          </div>
-        ` : '<div class="empty-state" style="text-align:left; padding:8px 0;">Only audiobook length is tagged catalog-wide so far -- narrator, cast, and production details are a known, not-yet-tagged gap (see docs/schema/book-dna.md).</div>'}
+        ${audiobookLengthVal ? `<div class="dna-row" style="margin-bottom:12px;"><div class="k">Length</div><div class="v">${escapeHtml(audiobookLengthVal)}</div></div>` : ''}
+        ${editionBlocks}
+        ${audioQualityRows.length > 0 ? `<div class="dna-grid" style="margin-top:10px;">${audioQualityRows.map(([k, v]) => `<div class="dna-row"><div class="k">${escapeHtml(titleCase(k))}</div><div class="v">${escapeHtml(v)}</div></div>`).join('')}</div>` : ''}
+        ${(!editions || editions.length === 0) && !audiobookLengthVal ? '<div class="empty-state" style="text-align:left; padding:8px 0;">No audiobook edition data collected for this book yet.</div>' : ''}
+        ${(editions && editions.length > 0) ? '<div class="dna-synopsis" style="margin-top:10px; font-size:0.78rem;">Narrator-performance/production-quality ratings aren\'t tagged catalog-wide yet -- the edition, narrator, and cast details above are real, though.</div>' : ''}
       </details>
       <details open><summary class="dna-section-title">Book DNA</summary>
         <details open style="margin-top:6px;"><summary style="cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--ink-soft);">Fields</summary>
