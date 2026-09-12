@@ -46,6 +46,34 @@ worth deferring to a later session rather than batching in for
   2026-09-11 snapshot moved there from this repo's now-removed
   `db_backups/`. No fixed cadence yet -- manual, run when meaningful
   new data has landed or before anything risky.
+- [ ] **Bookspell v1 web app -- IN PROGRESS, started 2026-09-12.** Real
+  accounts, login, per-genre (fantasy/sci-fi) recommendations, manual
+  rating with edit, Goodreads/Fable-CSV import, persistent "none of
+  X"/"less of X" filters -- responsive, live online without the repo
+  owner's PC running. Full architecture in the approved plan
+  (`~/.claude/plans/jaunty-chasing-eclipse.md`, or see
+  `docs/project-log.md`'s 2026-09-12 "Bookspell v1 web app" entry for
+  the same content committed to project history). Key decisions,
+  already made, don't re-litigate: static multi-page frontend (no
+  React/Next.js) using `supabase-js` via CDN, deployed via the existing
+  GitHub Pages setup; Supabase Auth + 3 new RLS-scoped tables
+  (`profiles`/`ratings`/`user_rules`) for everything except live
+  scoring; a small FastAPI backend (new `api/` dir) wrapping
+  `recommend.py` unmodified, deployed to Render's free tier (repo owner
+  chose cold starts over a $7/mo always-on tier -- ship a "waking up"
+  loading state in the UI, don't silently hide the delay). Existing
+  `data/ratings/*.json` raters are deliberately NOT auto-migrated --
+  those stay `scoring_tests.py`'s fixture, untouched.
+  **Build order**: (1) migration for the 3 new tables + RLS, (2) real
+  Supabase Auth config (site URL/redirects on the HOSTED project, not
+  just local `config.toml`), (3) backend endpoints
+  (`/rule-targets` -> `/recommendations` -> `/import/goodreads`,
+  deployed to Render early to validate cold-start behavior for real),
+  (4) frontend pages in rater-journey order (auth -> manual rating ->
+  recommendations -> import -> filters), (5) a real mobile-viewport
+  pass on every page before calling this done -- fixing exactly the
+  mobile-display failure the `tools/dogfood` Streamlit prototype had is
+  a named goal here, not incidental.
 
 ## P1
 

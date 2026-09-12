@@ -11948,3 +11948,57 @@ Player One, Ana and Din Mysteries, The Roots of Chaos, Oxford Time
 Travel, Elantris, Before the Coffee Gets Cold, Once Upon a Broken
 Heart, Sword of Truth, Kate Daniels, Threshold) -- don't reuse batch
 1-5's stale candidate lists.
+
+## 2026-09-12 — Bookspell v1 web app: architecture decided, build started
+
+Repo owner asked to start on the first real, scoped v1 of the actual
+product -- real accounts, login, per-genre recommendations, manual
+rating with edit, Goodreads/Fable import, persistent filters,
+responsive (a named fix for `tools/dogfood`'s confirmed mobile-display
+failure), live online without his PC running. Planned via Claude Code's
+plan-mode workflow (two parallel research passes first, not guessed):
+one mapped `scripts/recommend.py`'s full callable surface
+(`build_profile`/`recommend`/`explain_match`/`audit_book_score`, the
+`user_rules` "none of X"/"less of X" mechanism, genre scoping,
+`load_catalog()`'s cost), the other surveyed everything already built
+(`tools/catalog-review`, `tools/rate-books`, `tools/dogfood`,
+`rating_submissions`, the `books`/`series`/`universe`/`book_dna` schema,
+and confirmed Supabase Auth exists on the hosted project but has never
+actually been configured beyond CLI defaults).
+
+**Two real facts checked before committing to an import design (not
+assumed)**: Goodreads' developer API is closed to new access, but its
+own CSV library export still works today, unrestricted -- and this
+project already has a working, tested importer for that exact format
+(`scripts/import_goodreads.py`). Fable has no official API or export at
+all, but a popular unofficial browser extension exports a Fable library
+to a *Goodreads-compatible* CSV -- so the same importer covers both
+platforms with zero Fable-specific code.
+
+**Architecture (full detail in the approved plan,
+`~/.claude/plans/jaunty-chasing-eclipse.md`)**: a plain static
+multi-page frontend (no React/Next.js -- matches `catalog-review`/
+`rate-books`'s already-proven pattern, deploys via the same existing
+GitHub Pages setup, zero new hosting) using `supabase-js` via CDN (the
+one genuinely new piece of tooling) for auth and RLS-scoped per-user
+data; Supabase Auth + 3 new tables (`profiles`, `ratings`, `user_rules`)
+handle everything except live scoring, talked to directly from the
+frontend, no backend round-trip; a small new FastAPI service (`api/`)
+wraps `recommend.py` completely unmodified for the 3 things that
+genuinely need live Python (`/recommendations`, `/rule-targets`,
+`/import/goodreads`), deployed to Render's free tier. Repo owner chose
+Render's free tier (cold starts, ~30-60s after 15 min idle) over the
+$7/mo always-on tier when asked directly -- UI needs a real "waking up"
+loading state, not a silent hang.
+
+**Existing `data/ratings/*.json` raters deliberately NOT auto-migrated**
+into the new tables -- those stay `scripts/scoring_tests.py`'s fixture
+exactly as CLAUDE.md already documents; anyone who wants to use the real
+app signs up like any other rater.
+
+Build order (see TODO.md's new P0 entry for the full list): migration
+for the 3 tables first, then real Supabase Auth config (hosted
+project's site URL/redirects, not just local `config.toml`'s
+placeholders), then the backend endpoints, then frontend pages in the
+order a new rater would actually hit them, then a real mobile-viewport
+pass on every page before calling any of this done.
