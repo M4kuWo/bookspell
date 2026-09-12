@@ -344,9 +344,9 @@ worth deferring to a later session rather than batching in for
   anything with no real SFF content for the repo owner rather than
   silently tagging or silently skipping it.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
-  -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-5
-  done 2026-09-12 (77 of ~484 series fixed so far: 14+14+17+17+15 across
-  batches 1-5 -- the denominator grew a lot from the 2026-09-12
+  -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
+  done 2026-09-12 (91 of ~484 series fixed so far: 14+14+17+17+15+14 across
+  batches 1-6 -- the denominator grew a lot from the 2026-09-12
   378-book/118-series ingestion round, this isn't the catalog shrinking
   work).** `status` defaults to
   `'ongoing'` whenever Hardcover's `is_completed` flag isn't explicitly
@@ -522,26 +522,84 @@ worth deferring to a later session rather than batching in for
   the exclude list despite being noted back in batch 2, so every batch
   since has re-encountered it for nothing; added now.
 
-  **Next (batch 6)**: re-rank remaining series by catalog book count,
-  excluding all **118** now-checked names across batches 1-5 (100 from
-  batches 1-4 + this batch's 15 fixed + this batch's 3 confirmed-correct
-  -- keep this running total accurate going forward, per the
-  bookkeeping-gap note above) plus the **12** still-unsettled flagged
-  names: Hogwarts Library, The Roald Dahl Classic Collection, The
-  Riyria Revelations (Omnibus), Robert Langdon, The Inheritance Games
-  (pre-existing 5) + Imperial Radch (publication order), Enderverse:
-  Publication Order, The Shadow Series, Middle Earth, American Gods,
-  Forward Collection (this batch's 6 new ones) + Saga (the graphic
-  novel, newly added to this list rather than left to keep resurfacing)
-  -- don't reuse any prior batch's candidate list, all are now stale.
-  Batch 5's unresearched tail (available as batch 6's first
-  candidates): Legend (Marie Lu), Emily Wilde (Heather Fawcett), Legends
-  & Lattes (Travis Baldree), Oxford Time Travel (Connie Willis), Uglies
-  (Scott Westerfeld), Wayward Children (Seanan McGuire), Outlander
-  (Diana Gabaldon), Holly Gibney (Stephen King -- also worth a scope
-  look, most of this sub-series is crime/thriller rather than SFF), The
-  Captive's War (James S. A. Corey), Earthseed (Octavia Butler, seen but
-  not researched).
+  **Batch 6 (2026-09-12, background agent)**: re-ran the ranking query
+  excluding the accurate 118-name total from batches 1-5 plus the 12
+  flagged names (including using the DB's actual stored name for
+  "Enderverse:  Publication Order" -- a double space after the colon,
+  confirmed by direct query, needed so the exclusion filter actually
+  matched it; the single-space version in this file's own prior text
+  was silently not excluding it). 14 needed a real fix: Lock In
+  (book_count only), The Captive's War (book_count only), Uglies,
+  Miss Peregrine's Peculiar Children, The Vagrant, The Daevabad
+  Trilogy, Emily Wilde (book_count only), Wayward Children (book_count
+  only), Commonwealth Saga, Daemon, Bloodsworn Saga, Crowns of Nyaxia
+  (book_count only), The Handmaid's Tale, Teixcalaan (book_count only).
+  3 more checked and found already correct: Skyward Flight, The Age of
+  Madness, The Giver ("The Giver Quartet"). Migration
+  `20260912900000_fix_series_status_book_count_batch6.sql` -- tested in
+  a rolled-back transaction first (all 14 names matched exactly once,
+  post-update values verified), then applied for real to hosted via a
+  normal autocommit connection; **not yet pushed via `supabase db push`
+  and the branch not yet merged to main**, same handoff-to-CLDO pattern
+  as batches 2-5. `series` table total row count unchanged (484).
+  **Stopped at 14 fixes (short of the ~15 target) because this
+  session's live web-search budget ran out (200/200 calls used)
+  partway through the ranked list** -- a genuine research wall per this
+  task's own stopping rule, not a candidate-quality problem. Two
+  judgment calls flagged for visibility: Teixcalaan's book_count was
+  fixed but its status deliberately left 'ongoing' on genuinely mixed,
+  unresolved evidence (one source frames it as book 1 of a trilogy,
+  others call it a completed duology) rather than guess with no search
+  budget left to settle it; Crowns of Nyaxia's book_count reflects 5 of
+  a planned 6 mainline installments, excluding two standalone/novella
+  titles. See project-log.md's 2026-09-12 "batch 6" entry for full
+  reasoning and sourcing on all 17 checks.
+
+  **Two new likely-out-of-scope names surfaced, not decided, same shape
+  as batch 4's Robert Langdon/The Inheritance Games flag**: Kingsbridge
+  (Ken Follett -- historical fiction, not SFF) and Holly Gibney (Stephen
+  King -- crime/thriller, already separately flagged in the
+  shared-universe audit's batch 6 for the same reason). Both added to
+  the flagged-name list below rather than fixed.
+
+  **New data-quality issue noticed in passing, not fixed (a different
+  bug class -- author-field contamination, not status/book_count)**:
+  the "Threshold" series row's author field mixes Peter Clines with what
+  look like a translator ("Jean-Pierre Pugi") and an audiobook narrator
+  ("Ray Porter"), the same contamination pattern CLAUDE.md's "Data
+  quality / tagging" section already tracks. Left "Threshold" itself
+  completely unresearched for status/book_count too (its own identity
+  wasn't pinned down this batch) -- available for batch 7.
+
+  **Next (batch 7)**: re-rank remaining series by catalog book count,
+  excluding all **135** now-checked names across batches 1-6 (118 from
+  batches 1-5 + this batch's 14 fixed + this batch's 3 confirmed-correct
+  -- keep this running total accurate going forward) plus the **14**
+  still-unsettled flagged names: Hogwarts Library, The Roald Dahl
+  Classic Collection, The Riyria Revelations (Omnibus), Robert Langdon,
+  The Inheritance Games, Imperial Radch (publication order), Enderverse:
+  Publication Order (DB name has a double space -- "Enderverse:
+  Publication Order" -- match the real string, not the single-space
+  version), The Shadow Series, Middle Earth, American Gods, Forward
+  Collection, Saga (pre-existing 12) + Kingsbridge, Holly Gibney (this
+  batch's 2 new scope flags) -- don't reuse any prior batch's candidate
+  list, all are now stale. Un-researched candidates seen this batch,
+  available as batch 7's first candidates (this session's search budget
+  ran out before reaching them, no assumption made either way):
+  Revelation Space (Alastair Reynolds), Outlander (Diana Gabaldon),
+  Legend (Marie Lu), Six of Crows (Leigh Bardugo), Legends & Lattes
+  (Travis Baldree), The Founders Trilogy (Robert Jackson Bennett),
+  Earthseed (Octavia Butler), Blood and Ash (Jennifer L. Armentrout),
+  Ready Player One (Ernest Cline), Ana and Din Mysteries (Robert Jackson
+  Bennett), The Roots of Chaos (Samantha Shannon), Oxford Time Travel
+  (Connie Willis), Elantris (Brandon Sanderson -- check carefully, looks
+  like it may be a companion-grouping question rather than a plain
+  miscount), Before the Coffee Gets Cold (Toshikazu Kawaguchi), Once
+  Upon a Broken Heart (Stephanie Garber -- book count genuinely unclear
+  from available sources so far), Sword of Truth (Terry Goodkind), Kate
+  Daniels (Ilona Andrews), Threshold (Peter Clines -- resolve the
+  author-field contamination noted above before or while checking this
+  one).
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also
