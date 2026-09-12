@@ -152,15 +152,21 @@ nav.top .nav-spacer { flex: 1 1 auto; }
   display: flex; align-items: center; justify-content: center;
 }
 .account-dropdown {
-  position: absolute;
-  top: 40px; right: 0;
+  /* `position: fixed` (not `absolute`) deliberately -- nav.top has
+     overflow-x: auto, which per the CSS overflow spec also computes
+     overflow-y to auto (only one axis can stay `visible`), turning it
+     into a clipping container for any absolutely-positioned descendant.
+     top/right are set inline by shared.js from the avatar button's own
+     bounding rect at open time, since `fixed` can't rely on an
+     ancestor's position the way `absolute` did. */
+  position: fixed;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 10px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
   min-width: 180px;
   padding: 6px;
-  z-index: 10;
+  z-index: 1000;
 }
 .account-dropdown .who {
   padding: 8px 10px;

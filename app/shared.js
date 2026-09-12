@@ -125,11 +125,22 @@ function renderNav(active, session) {
   `;
   document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
   const dropdown = document.getElementById('account-dropdown');
-  document.getElementById('account-btn').addEventListener('click', (e) => {
+  const accountBtn = document.getElementById('account-btn');
+  accountBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    dropdown.hidden = !dropdown.hidden;
+    if (!dropdown.hidden) { dropdown.hidden = true; return; }
+    // `position: fixed` (see shared.css) needs its own coordinates --
+    // it can't inherit them from an ancestor the way `absolute` did.
+    const rect = accountBtn.getBoundingClientRect();
+    dropdown.style.top = `${rect.bottom + 6}px`;
+    dropdown.style.right = `${window.innerWidth - rect.right}px`;
+    dropdown.hidden = false;
   });
   document.addEventListener('click', () => { dropdown.hidden = true; });
+  window.addEventListener('resize', () => { dropdown.hidden = true; });
+  // `position: fixed` doesn't track the page scrolling under it -- close
+  // rather than let it drift away from the button that opened it.
+  window.addEventListener('scroll', () => { dropdown.hidden = true; }, { passive: true });
   document.getElementById('sign-out-btn').addEventListener('click', async () => {
     await sb.auth.signOut();
     window.location.href = 'index.html';
