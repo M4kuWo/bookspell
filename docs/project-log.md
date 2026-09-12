@@ -12449,6 +12449,83 @@ authentically light on trope-vocabulary/content-warning-worthy material
 for their genres, and forcing the gap fully closed would mean inventing
 tags the books don't actually support.
 
+## 2026-09-13 -- v1 app: Supabase Auth site URL live, first real-user-testing UX batch
+
+Configured hosted Supabase Auth's real `site_url`/`additional_redirect_urls`
+(the GitHub Pages app URL) via `supabase config push`. Caught a real side
+effect of that command mid-flight: it pushes the WHOLE local `config.toml`,
+not just the auth section being changed -- it briefly flipped hosted's
+`enable_confirmations`/`otp_length`/`max_frequency`/MFA settings to this
+file's stock local-dev defaults (email confirmation off, an effectively
+unthrottled 1s email rate limit) as an unintended side effect. Caught from
+the diff `config push` printed before/after, restored to the prior
+production values in a second push within the same session, and documented
+in `config.toml`'s own comments so a future site_url tweak doesn't repeat
+this. Real window of exposure: a few minutes, no real users yet.
+
+Ran a full throwaway signup->login->backend smoke test against hosted
+(admin-API-created confirmed test user, password-grant login for a real
+JWT, hit the deployed Render backend's `/rule-targets` and
+`/recommendations` with it, confirmed 401 with no/garbage token, deleted
+the test user and verified no residual `profiles`/`ratings`/`user_rules`
+rows). Full chain verified working end to end.
+
+**First real-user testing pass** (14 pieces of feedback from actually
+using the deployed app): addressed 9 of 14 in this session --
+- Fixed a real bug: Supabase's default confirmation-email template links
+  to `{site_url}/auth/confirm?token_hash=...`, and nothing served that
+  route -- real users hit a 404 confirming their account. Added
+  `app/auth/confirm/index.html` to complete the exchange client-side via
+  `verifyOtp()`.
+- Sign-in/sign-up rebuilt as genuinely distinct modes (shared fields
+  were confusing) with password show/hide toggles, a confirm-password
+  field on signup, and a name field (stored in `auth.users` metadata,
+  copied into `profiles.display_name` on first real session via a new
+  `ensureProfile()` in shared.js, since signUp() has no session yet when
+  email confirmation is required).
+- Nav collapsed to 2 tabs (Recommendations, My ratings); Import moved
+  into rate.html as a link rather than its own tab; "Sign out" replaced
+  with an avatar/name dropdown menu (previously a bare link, a real
+  misclick risk); added a dark/light toggle (system-preference default,
+  explicit choice persisted per-browser via localStorage).
+- Dashboard's genre toggle moved below "Get recommendations" and now
+  fetches all 3 genre pools (both/fantasy/sci_fi) up front, caching
+  client-side -- switching tabs after that re-renders instantly instead
+  of silently doing nothing (the reported bug).
+- Thumbnails (`books.cover_url`, already in the schema) added to search
+  results, my-ratings, and recommendation cards; an optional "when did
+  you read it" date added to the rating flow (`ratings.rated_date`
+  already existed, just had no UI).
+- Answered two informational questions with real code references rather
+  than guessing: confirmed cold-start recommend() DOES use the
+  experience mechanic built earlier (`cold_start_weight()`/
+  `reader_experience_fraction()`, `scripts/recommend.py:280-332` --
+  assumes newbie by default, a single confirmed veteran_only-tier
+  rating zeroes it out regardless of list length); confirmed the
+  built-in Supabase mailer's rate limit is real (no custom SMTP
+  configured) and will need a provider before any real onboarding push.
+
+**Not yet done, deferred to a follow-up pass**: browsing the full
+field/trope vocabulary for filters (an "advanced" option), series-level
+search (find all books in a series at once rather than one at a time),
+a book-info modal surfacing full Book DNA on a card, and an optional
+structured why-liked/why-disliked field on ratings (a dropdown + free
+text) -- the last one needs a schema decision (new column vs. reusing
+`ratings.review`), the others are UI-only but larger.
+
+**Testing note**: this session's browser-automation tooling
+(click/JS-exec) errored consistently
+(`Cannot access a chrome-extension:// URL of different extension`) --
+an environment/tool malfunction, not related to these changes. Verified
+via `node --check` on every inline script, careful manual code review,
+and one confirmed live check (an unauthenticated hit on `dashboard.html`
+correctly redirects to `index.html?next=dashboard.html`). Not full
+interactive click-testing -- flagged to the repo owner, who is testing
+live directly.
+
+Committed as `585093c` (app UX batch) on top of `45a2a53` (auth config
+fix) and `894f0c5` (tagging batch 4), all pushed.
+
 Migration `20260913060000_tag_catalog_batch4_18_books.sql`, tested in a
 rolled-back transaction, applied to local and hosted via
 `supabase db push --linked`, verified matching (941 `book_dna` rows both
