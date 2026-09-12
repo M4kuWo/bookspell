@@ -442,9 +442,37 @@ worth deferring to a later session rather than batching in for
   Fallen, Robot, Imperial Radch, The Sun Eater, Fitz and the Fool, The
   Old Kingdom, Night Angel, Cradle, Mars Trilogy, Revelation Space,
   Wayward Children, Outlander, The Final Architecture, Daemon, The
-  Giver, He Who Fights with Monsters, Lock In. ~296 of the 378 remain
-  (378 - 74 tagged - 8 flagged graphic novels), plus whatever
-  non-SFF leakage tagging turns up along the way.
+  Giver, He Who Fights with Monsters, Lock In.
+  **Batch 5 (2026-09-13, CLDO session, same day): 20 more books tagged**
+  -- The Golden Fool, The Last Command, Woken Furies, Hollow City, Judas
+  Unchained, Legendary, Pretties, Prodigy, Rule of Wolves, Shadow &
+  Claw, Shadow of Night, The Book of Life, Shadow of the Giant,
+  Shorefall, Silverthorn, Stone of Tears, Tales from the Cafe, The Ashes
+  and the Star-Cursed King, Heir of Novron, The Atlas Paradox -- see
+  project-log.md's 2026-09-13 "catalog tagging batch 5" entry for full
+  detail (density self-check, romance_tone evidence per book, an
+  author-contamination fix on Judas Unchained, and a correction to
+  batch 3's prior log entry: "Heir of Novron" is NOT actually an omnibus
+  duplicate, re-verified against live data and tagged for real this
+  batch). **19 more series completed**: Tawny Man, Star Wars: The
+  Thrawn Trilogy, Takeshi Kovacs, Miss Peregrine's Peculiar Children,
+  Commonwealth Saga, Caraval, Uglies, Legend, King of Scars, The Book of
+  the New Sun, All Souls, Enderverse: Publication Order, The Founders
+  Trilogy, The Riftwar Saga, Sword of Truth, Before the Coffee Gets
+  Cold, Crowns of Nyaxia, The Riyria Revelations (Omnibus), The Atlas.
+  5 more permanent-skip cases confirmed this batch (2 unpublished
+  re-confirmed already-known: Red God, The Winds of Winter, The Doors
+  of Stone; 4 new confirmed omnibus duplicates: The Foundation Trilogy,
+  The Farseer Trilogy, Monk and Robot, Villains Duology, The Hobbit &
+  The Lord of the Rings). **1 scope question left open, not decided**:
+  *Holly* (Stephen King, Holly Gibney #3) -- already flagged elsewhere
+  as a possible non-SFF case (crime/thriller), but its predecessor is
+  already tagged and it does carry a real supernatural element; left
+  untagged pending a repo-owner scope call rather than guessed either
+  way. **~276 of the 378 remain** (378 - 74 - 20 tagged - 8 flagged
+  graphic novels), plus whatever non-SFF leakage/omnibus/unpublished
+  exceptions keep surfacing at tagging time (5 this batch, on top of
+  the earlier batches' own finds).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12 (91 of ~484 series fixed so far: 14+14+17+17+15+14 across

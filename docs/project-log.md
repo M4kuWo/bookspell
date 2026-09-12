@@ -12990,3 +12990,146 @@ Anthony Ryan, Carissa Broadbent, Danielle L. Jensen, Laini Taylor, Marie
 Lu, Mira Grant, Octavia E. Butler, Rachel Gillig, Rebecca Roanhorse,
 Rebecca Ross, S. A. Chakraborty, Samantha Shannon, Stephen Graham Jones,
 TJ Klune, Veronica Roth.
+
+## 2026-09-13 (later still) -- catalog tagging batch 5: 20 books, 19 series completions, one author-contamination fix, one prior-log correction found
+
+Ran `.claude/skills/tag-catalog-batch/SKILL.md` (CLDO session). Step 1.5
+schema-drift check run fresh first: live `book_dna` has exactly the 33
+mandatory columns plus `book_id`/`genre` plus the 5 columns the skill
+already treats as excluded (`narrator_performance`, `narrator_cast`,
+`narration_pace_vs_prose`, `accent_authenticity`, `production_quality`)
+-- no drift, nothing to fix.
+
+**20 books tagged**, all pulled from Step 2's partial-series-first query
+(top 40 candidates, run against hosted via `supabase db query --linked
+--file` per this session's environment): The Golden Fool (Robin Hobb),
+The Last Command (Timothy Zahn), Woken Furies (Richard K. Morgan),
+Hollow City (Ransom Riggs), Judas Unchained (Peter F. Hamilton),
+Legendary (Stephanie Garber), Pretties (Scott Westerfeld), Prodigy
+(Marie Lu), Rule of Wolves (Leigh Bardugo), Shadow & Claw (Gene Wolfe),
+Shadow of Night + The Book of Life (Deborah Harkness), Shadow of the
+Giant (Orson Scott Card), Shorefall (Robert Jackson Bennett),
+Silverthorn (Raymond E. Feist), Stone of Tears (Terry Goodkind), Tales
+from the Cafe (Toshikazu Kawaguchi), The Ashes and the Star-Cursed King
+(Carissa Broadbent), Heir of Novron (Michael J. Sullivan), The Atlas
+Paradox (Olivie Blake).
+
+**19 series completions** (all now show tagged=total in `books`):
+Tawny Man, Star Wars: The Thrawn Trilogy, Takeshi Kovacs, Miss
+Peregrine's Peculiar Children, Commonwealth Saga, Caraval, Uglies,
+Legend, King of Scars, The Book of the New Sun, All Souls (via the two
+Harkness books together), Enderverse: Publication Order, The Founders
+Trilogy, The Riftwar Saga, Sword of Truth, Before the Coffee Gets Cold,
+Crowns of Nyaxia, The Riyria Revelations (Omnibus), The Atlas -- all
+verified live post-migration, not assumed.
+
+**Author-field contamination caught and fixed before insertion, not
+after**: `Judas Unchained`'s stored author was `"Peter F. Hamilton,
+Marta García Martínez"` -- confirmed via web search that García
+Martínez is the Spanish translator of Hamilton's Commonwealth Saga (she
+translated "La estrella de Pandora"/Pandora's Star), not a co-author.
+Fixed with a title-scoped `update books set author = ...` in the same
+migration, matching the exact contamination pattern this project keeps
+catching in newly-ingested books.
+
+**HIGH_RISK_FIELDS given real research, not pattern-matched from genre
+reputation**: caught `Pretties` (Scott Westerfeld) needs
+`narrator_reliability: unreliable`, not the `reliable` a dystopian-YA
+default would suggest -- the book's own plot mechanism (surgery-induced
+"pretty" brain lesions dulling Tally's critical thinking) makes her a
+textually-grounded unreliable narrator, tagged with a
+`book_field_confidence` entry (0.6) since it's a real judgment call
+about what counts as narratorial unreliability vs. an in-story
+cognitive effect. `Shadow & Claw` (Gene Wolfe) confirmed `unreliable`
+with high confidence -- Severian is the textbook unreliable narrator.
+Multi-POV ensemble books (The Last Command, Silverthorn, Judas
+Unchained, Heir of Novron, Rule of Wolves, Shorefall, Shadow of the
+Giant, The Atlas Paradox) were all tagged `third_limited` rather than
+defaulted to `third_omniscient`, matching this catalog's established
+convention for chapter-rotating-POV epics.
+
+**`romance_tone` tagged only where real, presentation-specific evidence
+was found via web search (reader reviews describing actual scene-level
+tone), never from genre reputation** -- 9 of the 20 books: `Legendary`
+and `Stone of Tears` melodramatic (confirmed via quoted "ultraviolet
+prose"/dramatic declarations and explicit "soap opera"/"melodramatic"
+reviewer language, respectively); `Rule of Wolves`, `Shadow of Night`,
+`The Book of Life`, `The Ashes and the Star-Cursed King`, and `The Atlas
+Paradox` understated (each confirmed via reviews explicitly contrasting
+the romance with melodrama -- "restraint... not a dramatic, passionate
+affair," "tender," "grounded... rather than melodramatic," "restrained
+approach"); `Prodigy` (Marie Lu) tagged `mixed` at confidence 0.2 -- a
+genuine case of disputed reader consensus, some reviews calling it
+"melodramatic," others praising its restraint, a real tie rather than a
+default. The other 11 books were left `null` (too little clean
+romantic-presentation evidence, or too little romantic content at all
+to judge) rather than guessed -- `worldbuilding_delivery` similarly left
+null everywhere except two `woven` tags (The Golden Fool, Hollow City,
+both confidence 0.6) where real evidence was on hand; no
+`exposition_dump` calls this batch given time constraints on research
+depth, flagged rather than guessed.
+
+**Density self-check**: fresh catalog average queried at time of
+tagging (941 books, before this batch) was 5.38 tropes/book, 1.71
+content-warnings/book. This batch: 100 tropes / 20 books = 5.00/book
+(7% below catalog average, well inside the ~20% tolerance), 38 CWs / 20
+books = 1.90/book (above catalog average). No enrichment pass needed.
+
+**Omnibus/duplicate and scope skips, each verified against live data
+before excluding, not assumed from memory**:
+- Confirmed genuine omnibus duplicates (left untagged, matching the
+  existing `books` rows' individually-tagged volumes): *The Foundation
+  Trilogy* (Asimov -- Foundation/Foundation and Empire/Second Foundation
+  all individually tagged already), *The Farseer Trilogy* (title-named
+  row duplicating Assassin's Apprentice/Royal Assassin/Assassin's
+  Quest), *Monk and Robot* (title-named row duplicating A Psalm for the
+  Wild-Built/A Prayer for the Crown-Shy), *Villains Duology* (title-named
+  row duplicating Vicious/Vengeful), *The Hobbit & The Lord of the Rings*
+  (Middle Earth series -- duplicates individually-tagged The
+  Hobbit/Fellowship/Two Towers/Return of the King rows).
+- **A real correction to a prior session's log entry**: batch 3's
+  2026-09-13 entry listed "Heir of Novron" as a confirmed omnibus
+  duplicate alongside Monk and Robot/Villains Duology. Checked directly
+  against live data before trusting that -- it is NOT a duplicate. The
+  Riyria Revelations (Omnibus) series legitimately represents its
+  6 original novels as 3 omnibus volumes (Theft of Swords = books 1-2,
+  Rise of Empire = books 3-4, Heir of Novron = books 5-6, the same
+  2-omnibus-for-4-books pattern already established for Book of the New
+  Sun's Shadow & Claw/Sword & Citadel) -- no individually-cataloged
+  books 5/6 exist to duplicate. Tagged it for real this batch, completing
+  the series. Flagging the discrepancy here rather than silently
+  correcting it without a trace.
+- Confirmed unpublished, left untagged (already-known permanent-skip
+  cases, re-confirmed still true): *Red God* (Pierce Brown, Red Rising
+  Saga #7), *The Winds of Winter* (GRRM), *The Doors of Stone* (Patrick
+  Rothfuss).
+- **Scope question left open, not decided**: *Holly* (Stephen King,
+  Holly Gibney #3) surfaced as a candidate. Its series was already
+  flagged in the shared-universe audit as a possible non-SFF scope issue
+  (crime/thriller, same family as Kingsbridge/Robert Langdon/The
+  Inheritance Games). Its immediate predecessor, *If It Bleeds*, is
+  already tagged, and *Holly* itself does carry a real supernatural
+  element (the antagonists' unnaturally extended lifespans), so this
+  isn't a clean non-SFF case either way -- left untagged and flagged
+  for the repo owner's scope call rather than guessed at, consistent
+  with the standing flag.
+
+Migration `20260913150000_tag_catalog_batch5_20_books.sql` (renamed from
+an initial `20260913130000` slot after `supabase db push` reported an
+out-of-order-insert error against a concurrent same-day migration
+[`20260913140000`, the shared-universe-audit-batch-8 session] that had
+already landed on hosted between this session's schema check and its
+push -- confirmed via `supabase migration list --linked` that
+`20260913130000` had no `remote` entry yet, so renaming to the next free
+slot after `140000` was safe per CLAUDE.md's own renaming rule, and
+avoided needing `--include-all`). Tested in a rolled-back transaction
+first (verified 20 `book_dna` rows, 100 `book_tropes` rows, 38
+`book_content_warnings` rows, 12 `book_field_confidence` rows, and the
+author fix, all before the real push). Applied via `supabase db push
+--linked`; verified post-push: catalog `book_dna` count 941 -> 961,
+all 20 titles present, `Judas Unchained`'s author field corrected.
+
+~276 of the 378-book 2026-09-12 expansion round remain untagged (378 -
+74 tagged as of the prior 4-batch sitting - 20 this batch - 8 flagged
+graphic novels), plus whatever additional omnibus/unpublished/scope
+exceptions keep surfacing at the same rate as this batch (5 this time).
