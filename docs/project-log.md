@@ -12526,6 +12526,47 @@ live directly.
 Committed as `585093c` (app UX batch) on top of `45a2a53` (auth config
 fix) and `894f0c5` (tagging batch 4), all pushed.
 
+**Follow-up same day**: the repo owner tested the first batch live and
+caught a real bug the code review missed -- the account dropdown was
+visually clipped inside the nav bar instead of floating above the page.
+Root cause: `nav.top`'s `overflow-x: auto` computes `overflow-y: auto`
+too per the CSS overflow spec (only one axis can stay `visible`), which
+silently turned the nav into a clipping container for the dropdown
+(`position: absolute` relative to a nav descendant). Fixed by switching
+the dropdown to `position: fixed`, positioned from the avatar button's
+own `getBoundingClientRect()` at open time, closed on scroll/resize
+since a fixed element doesn't track the page moving under it.
+
+Then completed the remaining 4 of the original 14 feedback items:
+- #9 (series/universe search): `rate.html`'s search now also matches
+  `series`/`universe` names; picking one drills into that series'/
+  universe's book list (ordered by `position_in_series`, showing each
+  book's existing rating status) instead of selecting a single book.
+- #11 (book info modal): a shared modal (`shared.js`'s `showBookInfo()`/
+  `ensureModalEl()`) surfacing full Book DNA -- craft fields, audiobook
+  fields (Tier B included when present), tropes, content warnings --
+  wired into recommendation cards, my-ratings rows, and the new series
+  drill-down list.
+- #8 (browsable filters): dashboard's Filters section gained a
+  "browse all options" toggle grouping the full `/rule-targets`
+  vocabulary (tropes by `group_name`, field-values by `field`) into
+  collapsible sections, for a reader who doesn't already know the
+  vocabulary to type.
+- #12 (rating reason): new `ratings.reason` column (migration
+  `20260913070000_add_rating_reason.sql`, tested in a rolled-back
+  transaction, applied to both local and hosted) plus an optional
+  sentiment-appropriate "why?" dropdown (+ free-text "Other") in the
+  rating flow -- fires a lightweight follow-up UPDATE, never blocks the
+  already-instant rating save.
+
+All 14 of the original real-user-testing feedback items are now
+addressed. Same testing caveat as the first batch: this session's
+browser click/JS-exec tooling kept erroring
+(`Cannot access a chrome-extension:// URL of different extension`) on
+every retry -- verified via `node --check` on every script plus
+thorough manual code review, not full interactive click-testing.
+Committed as `6a2236b`, pushed.
+
 Migration `20260913060000_tag_catalog_batch4_18_books.sql`, tested in a
 rolled-back transaction, applied to local and hosted via
 `supabase db push --linked`, verified matching (941 `book_dna` rows both
