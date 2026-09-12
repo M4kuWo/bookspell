@@ -12647,3 +12647,80 @@ belt-and-suspenders check given this session's browser-automation
 tooling still can't click-test interactively (same
 `Cannot access a chrome-extension://...` error as the prior two
 batches). Committed as `883a4c5`, pushed.
+
+## 2026-09-13 -- v1 app: fourth feedback batch -- real audiobook edition data surfaces
+
+A user recalled that audiobook edition data (standard vs. graphic
+audio vs. BBC dramatization, narrators, full cast, parts) had actually
+been collected at some point, and asked why the book-info modal's
+Audiobook section only ever showed the "not tagged" message. Checked,
+and they were right: `audiobook_editions` exists with **1123 real rows**
+(795 distinct books), collected separately from the `book_dna` tagging
+batches, and was simply never checked or wired into the app when the
+modal was first built two batches ago.
+
+**A real bug caught before it shipped, not after**: before wiring the
+modal to this table, checked its grants -- `audiobook_editions` had RLS
+disabled AND no grant to `authenticated` at all. Querying it from the
+app would have silently returned nothing, which looks *identical* to
+the real "not tagged yet" case, meaning this could easily have shipped
+as a second copy of the exact same-looking bug. Fixed
+(`20260913100000_expose_audiobook_editions_to_app.sql`: enabled RLS +
+added a `public read access` policy + granted `authenticated` select,
+matching `books`/`book_dna`'s existing pattern exactly) and verified
+with a real authenticated REST call against hosted (not just a grants
+check) returning The Way of Kings' actual GraphicAudio and Macmillan
+Audio editions before trusting it.
+
+**The modal now shows real data**: each edition (type, narrators or
+full cast list, production company, runtime in hours, serialized
+parts/release status for ongoing GraphicAudio releases) instead of a
+blanket "not tagged" message. The still-true Tier B gap (narrator-
+performance/production-quality ratings) is now a small note shown
+*alongside* real edition data, not in its place.
+
+**Also explains the second complaint from this same round**: "The Way
+of Kings" showed no audiobook length despite that field supposedly
+being tagged catalog-wide -- true, it's tagged for 864/941 books, but
+this specific book personally had a null value. Backfilled 40 books'
+`book_dna.audiobook_length` mechanically from real
+`audiobook_editions.runtime_minutes`
+(`20260913090000_backfill_audiobook_length_from_editions.sql`), using
+docs/schema/book-dna.schema.yaml's own documented hour thresholds
+(short <8h, standard 8-15h, long 15-25h, epic 25h+) -- genuinely
+mechanical, not a tagging judgment call. Scoped conservatively to the
+40 books with exactly one unambiguous 'standard'-edition runtime; 18
+more books have multiple 'standard' rows with real, differing runtimes
+(different narrators/publishers) and were deliberately left null
+rather than guessed at -- noted in `docs/TODO.md` as a real, smaller
+remaining opportunity. Caught a real hand-transcription bug of my own
+while writing this migration: two titles use a curly apostrophe (’) in
+the actual stored data, not a straight one, and my first hand-typed
+draft used the wrong character for both -- caught by diffing against
+the already-tested generator-script output rather than trusting the
+retype, and fixed before applying anywhere.
+
+**A genuine data-quality issue noticed in passing, flagged not fixed**:
+some GraphicAudio full-cast dramatizations are mislabeled
+`edition_type = 'standard'` in `audiobook_editions` (e.g. "A Court of
+Frost and Starlight" has a 24-narrator GraphicAudio row tagged
+`standard`). Not fixed here -- a narrator-count heuristic risks
+misclassifying real 2-3-narrator standard editions, so this belongs to
+whoever owns that table's data collection, not a silent app-layer
+reclassification. Noted in `docs/TODO.md`.
+
+**Two smaller UI fixes from the same round**: series/universe
+membership restyled as gold badges (new `--gold`/`--gold-bg`/
+`--gold-border` tokens, defined for light, dark, and the toggle
+override -- caught myself almost wiring the dark variant as an
+unconditional override outside the `@media` guard before switching to
+the token pattern, which would have applied dark-gold to every viewer
+regardless of theme) separated from the description by a dashed rule.
+The description itself is now a collapsible `<details>` section
+matching every other part of the modal, rather than always-visible
+text.
+
+Both new migrations tested in a rolled-back transaction, applied to
+local and hosted, hosted verified matching (905 `audiobook_length`-
+populated rows, the same pre-existing 1-row drift from batch 1 still
+present and still deferred). Committed as `06fc1c8`, pushed.
