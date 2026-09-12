@@ -12577,3 +12577,73 @@ batch -- still deferred to a future full sync, not investigated here.
 
 This was the last of the 4 explicitly requested tagging batches for
 this sitting.
+
+## 2026-09-13 -- v1 app: third real-user-testing feedback batch
+
+A third round of live testing on the deployed app turned up a real bug
+plus 8 more feature requests.
+
+**Real bug (#6), root-caused and fixed**: the book-info modal's close
+button silently did nothing. Cause: `.modal-overlay` set `display: flex`
+unconditionally in CSS, which per the HTML spec overrides the browser's
+own `[hidden] { display: none }` default -- an author-origin declaration
+always beats a user-agent-origin one for the same property, regardless
+of specificity, so toggling the element's `hidden` IDL property had zero
+visual effect the whole time. Fixed by scoping the rule to
+`.modal-overlay:not([hidden])` so the UA default can apply again.
+
+**Investigated and confirmed real (#8)**: a user reported audiobooks
+they'd personally listened to showed no narrator/cast info in the new
+book-info modal. Checked directly: 0 of 941 tagged books have any of
+the 5 Tier-4 "audiobook-native" `book_dna` fields set
+(`narrator_performance`, `narrator_cast`, `narration_pace_vs_prose`,
+`accent_authenticity`, `production_quality`) -- only `audiobook_length`,
+a separate field, is populated (864/941). `docs/schema/book-dna.md`
+already documented this as a deliberate "skipped for the pilot corpus"
+gap, and it's the same thing blocking the "medium" (text vs. audio)
+recommend() parameter idea in that doc's own backlog -- not something
+today's tagging batches broke, and not previously tracked in
+`docs/TODO.md` (added now). The book-info modal now explains this
+transparently in-product (an explicit note in the Audiobook section)
+rather than just showing an empty section.
+
+**Remaining 7 items addressed**:
+- #9: book-info modal restructured into collapsible `<details>` sections
+  (Audiobook, Book DNA nesting Fields/Tropes/Content warnings), plus new
+  series/universe membership display.
+- #1: "why" reasons converted from single-select to multi-select
+  checkboxes + free-text "Other" -- `ratings.reason` (text) replaced
+  with `ratings.reasons` (`text[]`); zero rows existed yet so no
+  backfill was needed.
+- #3: relative date quick-picks (last week/month/3 months/year) plus a
+  plain year-only input, computing a real date under the hood; the
+  exact date field stays available too.
+- #4: new `ratings.format` column (print/audiobook), defaulted per
+  browser via `localStorage` (a rating-level choice, not an
+  account-wide preference -- format can genuinely vary book to book).
+- #7: rating no longer auto-saves the instant a sentiment button is
+  clicked (it discouraged ever filling in the optional fields) --
+  everything (rating/format/date/reasons) now goes in one upsert on an
+  explicit "Submit rating" button, after which the whole picked-book
+  panel resets rather than sitting there half-done.
+- #2: new `book_suggestions` table + RLS (insert/select own rows only)
+  and a "can't find a book or series?" intake on rate.html, so tagging
+  work can prioritize real reader requests over only Hardcover
+  genre-search pulls.
+- #5: no image-generation tool available this session -- hand-coded an
+  SVG placeholder logo/favicon (`app/logo.svg`, an open book + spark in
+  the app's accent green) wired in as favicon and inline mark across
+  every page, with the repo owner pointed to real AI image tools for a
+  polished version later.
+
+Migration `20260913080000_ratings_reasons_array_format_and_suggestions.sql`
+(the `reason`->`reasons` conversion, `format`, `book_suggestions` + RLS),
+tested in a rolled-back transaction, applied to local and hosted. Also
+ran a direct schema-level smoke test (a throwaway `auth.users` row in a
+rolled-back local transaction) confirming the array-valued `reasons`
+insert, `format` insert, and `book_suggestions` insert all work at the
+database layer before touching any frontend code -- a genuine
+belt-and-suspenders check given this session's browser-automation
+tooling still can't click-test interactively (same
+`Cannot access a chrome-extension://...` error as the prior two
+batches). Committed as `883a4c5`, pushed.
