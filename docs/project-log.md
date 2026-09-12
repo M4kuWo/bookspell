@@ -13213,3 +13213,63 @@ own.
 
 Not committed/pushed yet in this entry -- see the immediately following
 commit for all of the above together.
+
+## 2026-09-13 (later still) -- backfilled total runtime_minutes for 28 multi-part GraphicAudio editions
+
+The book-info modal's `formatRuntime()` already displays
+`audiobook_editions.runtime_minutes` correctly when set; 28
+`dramatized_full_cast` rows were a pure data gap, not a UI bug -- each
+is a multi-part GraphicAudio release (e.g. "The Way of Kings" as parts
+1-5) whose per-part pages were never summed into one total.
+
+**Technique**: each part's real product page lives at
+`graphicaudiointernational.net` (`graphicaudio.net` 302-redirects
+there); fetched with `curl` + a browser User-Agent (WebFetch's markdown
+conversion silently drops the runtime div, confirmed again this
+session -- same failure mode as the cast-list backfill two sessions
+ago) and parsed the `<div class="product-runningtime">` text
+("Approximate Running Time: X Hours" or "X.X Hours", the latter a
+decimal-hour form, e.g. "10.5 Hours" = 10h30m -- caught and fixed a bug
+in the parsing script where a naive `\d+\s*Hours?` regex matched only
+the digits after the decimal point on these, undercounting by up to 10
+hours per part, before it reached any SQL). Sibling part URLs were
+derived by incrementing `N` in each `source_url`'s `-N-of-M-.html`
+suffix.
+
+**All 28 of 28 titles resolved** -- no rows left unresolved, so no
+`docs/TODO.md` entry needed for this batch. The 3 rows whose recorded
+`source_url` wasn't a graphicaudio.net page (no real GraphicAudio URL
+had been captured for them):
+- **A Court of Mist and Fury** (source_url was audible.com) -- found via
+  GraphicAudio's own site search:
+  `a-court-of-thorns-and-roses-2-a-court-of-mist-and-fury-{1,2}-of-2.html`,
+  confirmed by the page's own `<title>` naming the exact book/series.
+- **The Skull Throne** (source_url was amazon.com) -- same site search,
+  found `demon-cycle-4-the-skull-throne-{1,2,3}-of-3.html`, confirmed the
+  same way (Demon Cycle book 4, as expected).
+- **Dark Age** (source_url was amazon.com) -- GraphicAudio's site search
+  only surfaced an unrelated "Second Dark Ages" genre page; resolved by
+  guessing the slug from the established Red Rising Saga naming
+  convention (`red-rising-saga-5-dark-age-1-of-3.html`, HTTP 200) and
+  confirming via the page's own `<title>` before using it.
+
+Per-book totals for a few notable ones (full list of all 28 sums is in
+migration `20260913160000_backfill_graphicaudio_multipart_runtimes.sql`):
+- The Way of Kings: 37.0h (5 parts: 7+7+8+7+8h)
+- Oathbringer: 41.0h (6 parts, 7+7+7+6+7+7h)
+- Rhythm of War: 45.0h (6 parts, 7+7+7+8+8+8h)
+- Wind and Truth: 51.5h (5 parts: 10+10+10.5+11+10h) -- the longest of
+  the 28, as expected for the series' longest volume
+- Dark Age: 33.5h (3 parts, 11.5+11+11h) -- one of the 3 special-case
+  resolutions above
+- A Court of Mist and Fury: 16.0h (2 parts, 8+8h)
+- The Skull Throne: 19.0h (3 parts, 6+7+6h)
+
+Migration `20260913160000_backfill_graphicaudio_multipart_runtimes.sql`,
+generated programmatically from a small Python script (title -> summed
+minutes -> `update ... where runtime_minutes is null` per row, guarded
+so a rerun is a no-op) rather than hand-typed, per this project's own
+title-scoped-migration lesson. Tested in a rolled-back transaction
+first, then pushed via `supabase db push --linked`; verified
+post-push that all 28 target rows now have a non-null
+`runtime_minutes` (0 remaining null across the exact 28-title list).
