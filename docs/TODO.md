@@ -74,6 +74,45 @@ worth deferring to a later session rather than batching in for
   pass on every page before calling this done -- fixing exactly the
   mobile-display failure the `tools/dogfood` Streamlit prototype had is
   a named goal here, not incidental.
+  **Progress as of 2026-09-13** (full detail in project-log.md's
+  2026-09-13 entry): **(1) done** -- `profiles`/`ratings`/`user_rules`
+  tables + RLS, tested/applied/verified both sides. **(2) HALF-DONE,
+  needs the repo owner** -- `config.toml`'s auth URLs updated locally
+  but deliberately NOT pushed to hosted (`supabase config push` pushes
+  the ENTIRE config file, not just `[auth]` -- too broad a blast radius
+  for this session to risk without checking); apply the 2 auth fields
+  via the Supabase dashboard directly, or say the full-file push is
+  fine. **(3) done, smoke-tested locally** -- `api/` built
+  (`GET /rule-targets`, `GET /recommendations`, `POST
+  /import/goodreads`); NOT yet deployed to Render (needs the repo
+  owner's own Render account) and NOT yet verified against a real
+  ratings/import round-trip (needs a genuine hosted signup, which
+  itself is blocked on (2)). **(4) done** -- `app/` frontend (index/
+  dashboard/rate/import.html), same visual convention as
+  `tools/rate-books`. **(5) NOT done** -- planned real-device/browser
+  interactive testing hit a persistent Chrome-automation tooling error
+  this session couldn't resolve; substituted a careful manual code
+  re-review instead, which caught 2 real bugs (a magic-link redirect
+  that Supabase would have silently rejected; a stray unused API query
+  param) -- both fixed, but a genuine mobile-viewport click-through is
+  still owed once (2) unblocks real login.
+  **A real, separate gap found and fixed along the way**:
+  `20260828040000`'s catalog-table SELECT grant only covered the `anon`
+  Postgres role (the two pre-existing anon-key tools) -- a signed-in
+  user's requests run as `authenticated`, a separate role with no such
+  grant, so the app's catalog search would have hit permission-denied
+  despite RLS allowing it. Fixed, migration
+  `20260913020000_grant_catalog_select_to_authenticated.sql`.
+  **Next real step for the repo owner**: (a) resolve (2) above, (b)
+  create a Render account and deploy `api/` per `api/README.md`, (c)
+  update `app/shared.js`'s `API_BASE` placeholder to the real deployed
+  URL, (d) do one real signup -> rate a few books -> get recommendations
+  -> add a filter -> import a real Goodreads CSV pass personally before
+  asking any real rater to try it (per the plan's own Verification
+  section) -- this also finally exercises `import_goodreads.py`'s
+  matching logic against a genuine export file for the first time ever
+  (it's only ever run against a synthetic fixture, per its own
+  docstring).
 
 ## P1
 

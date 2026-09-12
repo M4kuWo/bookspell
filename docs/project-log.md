@@ -12002,3 +12002,92 @@ project's site URL/redirects, not just local `config.toml`'s
 placeholders), then the backend endpoints, then frontend pages in the
 order a new rater would actually hit them, then a real mobile-viewport
 pass on every page before calling any of this done.
+
+## 2026-09-13 — Bookspell v1 web app: steps 1/3/4 built, step 2 half-done, 2 real bugs caught
+
+**Step 1 (migration) done.** `profiles`/`ratings`/`user_rules` tables,
+RLS scoped to `auth.uid()` on every policy, following the two existing
+precedents (public-read catalog tables, `rating_submissions`' own
+insert-only policy) rather than inventing a new pattern. Tested in a
+rolled-back transaction, applied to local and hosted, verified on both.
+Migration `20260913010000_v1_app_user_tables.sql`.
+
+**Step 2 (Supabase Auth config) half-done, deliberately stopped short.**
+Updated `supabase/config.toml`'s `site_url`/`additional_redirect_urls`
+to the real GitHub Pages app URL -- but did NOT run `supabase config
+push`, because that command pushes the ENTIRE local config file
+(db/storage/realtime/rate-limit sections included, not just `[auth]`)
+to the hosted project, and this session has no visibility into whether
+any of those other sections currently differ from hosted's real,
+already-tuned settings. Pushing blindly risked clobbering something
+unrelated to auth. Flagged for the repo owner to either apply the two
+auth fields via the dashboard directly, or explicitly confirm the
+full-file push is fine.
+
+**Step 3 (backend) built and smoke-tested.** New `api/` FastAPI service
+wrapping `recommend.py` unmodified: `GET /rule-targets` (no auth),
+`GET /recommendations` (auth'd, calls `recommend()`/`explain_match()`),
+`POST /import/goodreads` (auth'd, reuses `import_goodreads.py`'s
+matching logic unchanged, upserts into `ratings`). Catalog cached
+in-process (`load_catalog()` isn't request-cheap -- confirmed, not
+assumed, during the plan's research pass). Verified locally: catalog
+loads/caches, JWT auth correctly rejects missing/invalid tokens, genre
+validation, full recommendations pipeline runs end-to-end for a
+cold-start (zero-ratings) user. Not yet verified: a real ratings/import
+round-trip -- needs a genuine hosted `auth.users` row, which local
+Postgres has none of (not fakeable without either standing up local
+GoTrue or waiting for the hosted signup path in Step 2).
+
+**Step 4 (frontend) built.** `app/index.html` (auth: password + magic
+link), `app/rate.html` (manual rating with edit/delete), `app/
+dashboard.html` (genre toggle, persistent none-of/less-of filters,
+recommendations with a "waking up" loading state for Render's cold
+start), `app/import.html` (CSV upload). Same visual convention as
+`tools/rate-books` (palette, mobile-first layout) for product
+consistency. Auth/ratings/rules CRUD talk directly to Supabase via
+`supabase-js`; only recommendations and import go through `api/`.
+
+**A real, separate gap found and fixed while building the frontend, not
+part of the original plan**: `20260828040000_review_tool_read_grants.sql`
+granted catalog-table SELECT to the `anon` Postgres role only (for the
+two pre-existing anon-key-only tools) -- a signed-in user's requests
+run as the separate `authenticated` role, which had no such grant. The
+existing "public read access" RLS policies have no `to` clause so they
+already covered every role -- but a GRANT is a separate, prerequisite
+layer before RLS is even evaluated (the exact gotcha
+`rating_submissions`' own migration comment already flagged for
+INSERT), so `rate.html`'s catalog search/embed would have failed with
+permission-denied despite RLS allowing it. New migration
+`20260913020000_grant_catalog_select_to_authenticated.sql`, tested,
+applied to local and hosted, verified.
+
+**Two real bugs caught by manual code re-review** (planned browser-based
+interactive testing hit a persistent, unrelated Chrome-extension
+tooling error this session couldn't resolve after 3 attempts -- "Cannot
+access a chrome-extension:// URL of different extension" -- so a
+careful second read of the code substituted for it; noting this
+honestly rather than claiming a full click-through happened):
+1. The magic-link sign-in flow set `emailRedirectTo` to whatever page
+   the user came from (e.g. `rate.html`), but Supabase only validates a
+   redirect URL against its allow-list, which (per Step 2 above) only
+   lists `index.html` -- any other target would have been silently
+   rejected by Supabase, breaking the entire magic-link path. Fixed:
+   always redirect to `index.html` (with the intended destination
+   preserved as a `next` query param), which now auto-forwards once a
+   session exists.
+2. `GET /recommendations` had a stray, unused `user_id` query parameter
+   that shadowed the real one derived from the verified JWT -- dead,
+   confusing API surface, not a security issue (the shadowed value was
+   never actually used), but removed.
+
+**Confirmed correct, not just assumed**: `psycopg2-binary`'s version
+pin in `api/requirements.txt` needed dropping (2.9.9 has no Python 3.13
+wheel, tried to build from source and failed missing `pg_config`) --
+matches `scripts/requirements.txt`'s own existing unpinned convention,
+not a new pattern.
+
+**Still open before this is usable by a real rater**: the Step 2
+dashboard action above, deploying `api/` to Render (needs the repo
+owner's own Render account), and the real ratings/import round-trip +
+mobile-viewport verification the plan's own Verification section
+calls for -- none of these are fakeable without a live hosted session.
