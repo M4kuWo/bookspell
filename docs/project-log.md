@@ -12253,3 +12253,70 @@ already-documented "someone pushed via raw psycopg2 instead of
 scope; flagging for the next full sync rather than spending further
 budget chasing a discrepancy this small (4/4811, 1/1527, 1/475 rows)
 that doesn't affect anything just tagged.
+
+## 2026-09-13 (later still) — Catalog tagging batch 2, 20 books (CLDO session)
+
+Second batch in the same sitting (repo owner asked for 4 in a row).
+Same process: Step 1.5 schema check clean, fresh Step 2 priority query
+(already-tagged books from batch 1 auto-excluded).
+
+**2 new permanent-skip candidates found, same documented patterns as
+before, not re-litigated**: The Doors of Stone (Patrick Rothfuss) --
+unpublished, same precedent as Winds of Winter; The Farseer Trilogy
+(Robin Hobb) -- confirmed omnibus, same schema gap as Foundation/
+Villains/Monk and Robot. Foundation Trilogy/Red God/Winds of Winter
+still reappear at the top of every query (expected, they never get a
+`book_dna` row) -- not tagged, not re-researched.
+
+**20 books tagged**: Malazan Book of the Fallen -- House of Chains,
+Midnight Tides, The Bonehunters, Reaper's Gale, Toll the Hounds, The
+Crippled God (all 6 remaining untagged Malazan books -- **series now
+fully tagged**). The Culture -- Excession, Look to Windward, Matter,
+Surface Detail. Robot -- Robots and Empire, The Robots of Dawn (**Robot
+series now fully tagged**). Imperial Radch -- Provenance, Translation
+State (**series now fully tagged**). Earthsea Cycle -- Tehanu. Shatter
+Me -- Restore Me. The Reckoners -- Mitosis. The Maze Runner -- The Kill
+Order. Sprawl -- Burning Chrome. Remembrance of Earth's Past -- The
+Redemption of Time.
+
+**Research-verified before tagging, not pattern-matched** (see this
+session's own research agent output): Malazan's ensemble third-person
+structure and "thrown in the deep end" exposition style (confirmed
+`worldbuilding_delivery: woven` is correct, not `exposition_dump`,
+despite the series' reputation for being confusing to newcomers --
+matches the skill's own Gideon the Ninth precedent exactly: confusing
+because nothing is explained is a woven signal, not an exposition-dump
+one); House of Chains' unusual front-loaded single-POV Karsa Orlong
+opening (`pace_shape: front_loaded`, a real structural feature, not
+guessed); The Redemption of Time's authorship (Baoshu/Li Jun, publisher-
+licensed continuation, Liu Cixin did not write it) and Ken Liu's
+translator-only role; Ann Leckie's pronoun-convention nuance --
+confirmed the core trilogy's blanket Radchaai "she" does NOT carry over
+identically to Provenance (Hwaean he/she/e-at-adulthood) or Translation
+State (multiple real nonbinary pronoun sets, individually chosen) --
+tagging both as continuing the *identical* device would have been
+wrong.
+
+**Author-field contamination flagged, not fixed (out of scope)**: The
+Redemption of Time's author field, `"Baoshu, Ken Liu"` -- Ken Liu is
+the English translator only, not a co-author. Same recurring pattern
+CLAUDE.md already documents.
+
+**Density self-check, same honest process as batch 1**: initial pass
+came in thin (3.45 tropes/book, ~37% below catalog average 5.45) --
+made a real second pass to close it through individually-justified
+additions (e.g. `cloning` for Mitosis's clone-Epic antagonist,
+`powerful_artifact_macguffin` for Provenance's stolen-vestiges plot,
+`redemption_arc` for several Malazan character arcs that genuinely
+resolve that way), landing at 4.5/book (~17% below, in line with batch
+1's final number). Content warnings landed at 1.35/book (catalog
+average 1.74, ~22% below) -- accepted without further forcing, same
+reasoning as batch 1: Culture/Robot/Imperial Radch skew toward
+cerebral/political sci-fi that doesn't map as densely onto this
+vocabulary's warning list as grimdark fantasy does (Malazan itself, by
+contrast, landed well above average on both axes, consistent with its
+genuinely brutal content).
+
+Migration `20260913040000_tag_catalog_batch2_20_books.sql`, tested in a
+rolled-back transaction, applied to local and hosted, verified matching
+(905 `book_dna` rows both sides).
