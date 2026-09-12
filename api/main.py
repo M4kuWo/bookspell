@@ -6,7 +6,7 @@ frontend talking to Supabase -- see the approved plan
 (~/.claude/plans/jaunty-chasing-eclipse.md) for the full architecture
 and why this split was chosen.
 
-Run locally: `DATABASE_URL=... SUPABASE_JWT_SECRET=... uvicorn main:app --reload`
+Run locally: `DATABASE_URL=... SUPABASE_JWKS_URL=... uvicorn main:app --reload`
 (from inside api/). See api/README.md for hosted deployment (Render).
 """
 import os
@@ -17,6 +17,7 @@ import jwt
 import psycopg2
 from fastapi import FastAPI, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from jwt import PyJWKClient
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
 import recommend as R  # noqa: E402
@@ -24,16 +25,26 @@ from import_goodreads import fetch_isbns_by_book_id, import_goodreads_csv  # noq
 
 from catalog_cache import get_catalog  # noqa: E402
 
-SUPABASE_JWT_SECRET = os.environ.get("SUPABASE_JWT_SECRET")
-if not SUPABASE_JWT_SECRET:
+# This project's hosted Supabase uses the newer asymmetric JWT signing
+# keys (confirmed 2026-09-13 -- the project exposes a
+# SUPABASE_JWKS_URL, which only exists under this model), not the
+# legacy shared-secret HS256 scheme an earlier version of this file
+# assumed as an unverified default. Verification here fetches
+# Supabase's public signing key(s) from that JWKS endpoint (cached by
+# PyJWKClient, matched per-token by the `kid` in the JWT header -- this
+# is what lets Supabase rotate signing keys without breaking already-
+# issued tokens) and checks the token's ES256 signature against it.
+# Nothing here can forge a token: the private key never leaves
+# Supabase, only its public counterpart is ever fetched.
+SUPABASE_JWKS_URL = os.environ.get("SUPABASE_JWKS_URL")
+if not SUPABASE_JWKS_URL:
     raise RuntimeError(
-        "SUPABASE_JWT_SECRET not set -- required to verify a caller's Supabase "
+        "SUPABASE_JWKS_URL not set -- required to verify a caller's Supabase "
         "Auth JWT. Find it in the hosted project's dashboard: Project Settings "
-        "-> API -> JWT Secret. (If this project has since moved to Supabase's "
-        "newer asymmetric JWT signing keys instead of a shared secret, this "
-        "HS256 verification approach needs replacing with a JWKS fetch -- not "
-        "yet checked which mode this project is in.)"
+        "-> API -> JWKS URL (looks like "
+        "https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json)."
     )
+_jwks_client = PyJWKClient(SUPABASE_JWKS_URL, cache_keys=True)
 
 app = FastAPI(title="Bookspell API")
 
@@ -61,7 +72,8 @@ def require_user_id(authorization: str = Header(default=None)) -> str:
         raise HTTPException(status_code=401, detail="Missing bearer token")
     token = authorization[len("Bearer "):]
     try:
-        payload = jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"], audience="authenticated")
+        signing_key = _jwks_client.get_signing_key_from_jwt(token)
+        payload = jwt.decode(token, signing_key.key, algorithms=["ES256"], audience="authenticated")
     except jwt.InvalidTokenError as exc:
         raise HTTPException(status_code=401, detail=f"Invalid token: {exc}") from exc
     return payload["sub"]

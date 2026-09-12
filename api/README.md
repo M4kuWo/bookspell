@@ -29,24 +29,21 @@ cd api
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
-SUPABASE_JWT_SECRET=<anything-locally, see below> \
+SUPABASE_JWKS_URL=https://yhvubjqstswxvctdikbc.supabase.co/auth/v1/.well-known/jwks.json \
 .venv/bin/uvicorn main:app --reload
 ```
 
-**`SUPABASE_JWT_SECRET`**: verifies a caller's Supabase Auth JWT. For
-real (hosted) use this MUST be the hosted project's actual JWT secret
-(Dashboard → Project Settings → API → JWT Secret) — a token signed by
-Supabase Auth won't verify against any other value. For local smoke
-testing without a real hosted login, any string works as long as you
-sign your own test token with the same value (see
-`docs/project-log.md`'s 2026-09-13 entry for the exact snippet used to
-verify this locally before deploying).
-
-**Caveat, not yet resolved**: this assumes the hosted project still
-uses Supabase's legacy shared-secret (HS256) JWT model. If it's since
-moved to the newer asymmetric JWT signing keys, this verification
-approach needs replacing with a JWKS fetch instead — not yet checked
-which mode this specific project is in.
+**`SUPABASE_JWKS_URL`**: verifies a caller's Supabase Auth JWT against
+the hosted project's public signing key(s), fetched from this JWKS
+endpoint and cached in-process (`PyJWKClient`, matched per-token by the
+`kid` in the JWT header — this is what lets Supabase rotate signing
+keys without breaking already-issued tokens). Confirmed 2026-09-13:
+this project uses Supabase's newer asymmetric (ES256) signing keys, not
+the legacy shared HS256 secret an earlier version of this doc assumed
+as an unverified default — the JWKS URL is real, public, safe to use
+here or in `.env`, and works identically for local dev and hosted (both
+point at the same hosted Auth service; there's no separate "local"
+JWKS since Auth itself only really exists on the hosted project).
 
 ## Deploying (Render, free tier)
 
@@ -61,7 +58,9 @@ which mode this specific project is in.
      connection string (Dashboard → Project Settings → Database →
      Connection string). Never commit this — same rule as everywhere
      else in this project.
-   - `SUPABASE_JWT_SECRET` — see above.
+   - `SUPABASE_JWKS_URL` — see above. Not secret (it's a public-key
+     endpoint by design), but keep it as an env var rather than
+     hardcoded anyway, consistent with `DATABASE_URL`.
 5. Free tier spins down after 15 min idle; the first request after
    that takes ~30-60s to wake up. The frontend needs a real "waking
    up..." loading state for this — an unexplained 30-60s hang on the
