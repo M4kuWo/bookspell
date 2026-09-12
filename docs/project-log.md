@@ -12394,3 +12394,68 @@ Migration `20260913050000_tag_catalog_batch3_18_books.sql`, tested in a
 rolled-back transaction (caught the duplicate-trope bug above before
 ever touching real data), applied to local and hosted, verified
 matching (923 `book_dna` rows both sides).
+
+## 2026-09-13 -- catalog expansion round 4 tagging batch 4/4, 13 series completed
+
+Fourth of four tagging batches requested in the same sitting (following
+batches 1-3 earlier the same day). Step 1.5 schema-sync check re-run,
+confirmed unchanged (42 `book_dna` columns). Step 2 priority query
+(partial-series-first) returned the now-expected recurring permanent-
+skips (Foundation Trilogy, Red God, Winds of Winter, Doors of Stone,
+Farseer Trilogy, Heir of Novron, Monk and Robot, Villains Duology --
+none re-reviewed) plus 18 new real candidates, all confirmed untagged
+and title-unique before drafting.
+
+**18 books tagged**: Fitz and the Fool -- Fool's Quest (**3/3,
+complete**). The Tawny Man -- Fool's Fate (2/3). The Old Kingdom --
+Lirael (**3/3, complete**). Night Angel -- Shadow's Edge (**3/3,
+complete**). Cradle -- Soulsmith (**3/3, complete**). Mars Trilogy --
+Blue Mars and Green Mars (both tagged this batch, **3/3, complete**).
+Takeshi Kovacs -- Broken Angels (2/3). Revelation Space -- Chasm City
+(**2/2, complete**). Star Wars: The Thrawn Trilogy -- Dark Force Rising
+(2/3). Wayward Children -- Down Among the Sticks and Bones (**2/2,
+complete**). Outlander -- Dragonfly in Amber (**2/2, complete**). The
+Final Architecture -- Eyes of the Void (**2/2, complete**). Daemon --
+Freedom (**2/2, complete**). The Giver -- Gathering Blue (**2/2,
+complete**). He Who Fights with Monsters -- He Who Fights with Monsters
+2 and 3 (both tagged this batch, **3/3, complete**). Lock In -- Head On
+(**2/2, complete**).
+
+13 series brought to full completion within this catalog's current
+scope (not necessarily the real-world series' full published length) --
+every completion claim re-verified via a direct `series`/`books`/
+`book_dna` join query run *after* applying the migration, not assumed
+from pre-batch arithmetic.
+
+**Author-field check**: "He Who Fights with Monsters 2"/"3" both credit
+`"Shirtaloon, Travis Deverell"`. Verified via web search before
+assuming contamination (per the standing mandatory-verification rule):
+Shirtaloon is Travis Deverell's own pen name -- one real author credited
+under both names, not a contributor slipping in as a co-author. Left
+as-is, no fix needed.
+
+**Density self-check**: first pass landed at 3.78 tropes/book, 1.06
+CWs/book against a freshly-queried catalog average of 5.41/2.07 --
+meaningfully below on both. One honest enrichment pass (real,
+individually-justified additions per book -- e.g. `court_intrigue`/
+`long_journey` for the two Fitz-and-the-Fool books once their actual
+Buckkeep-politics and search-for-the-Fool content was considered, a
+`suicide` content warning for Lirael reflecting a real, specific early
+plot point, `colonization_themes` for both Mars Trilogy books) raised it
+to 4.61 tropes/book, 1.78 CWs/book -- about 85% of average on both axes.
+The remaining gap is read as genuine, not under-tagging: the Mars
+Trilogy (Kim Stanley Robinson) and Cradle (Will Wight) both run
+authentically light on trope-vocabulary/content-warning-worthy material
+for their genres, and forcing the gap fully closed would mean inventing
+tags the books don't actually support.
+
+Migration `20260913060000_tag_catalog_batch4_18_books.sql`, tested in a
+rolled-back transaction, applied to local and hosted via
+`supabase db push --linked`, verified matching (941 `book_dna` rows both
+sides). The pre-existing hosted/local drift on `book_tropes`/
+`book_content_warnings`/`book_field_confidence` first flagged during
+batch 1's verification (4/1/1 rows) is still present, unchanged by this
+batch -- still deferred to a future full sync, not investigated here.
+
+This was the last of the 4 explicitly requested tagging batches for
+this sitting.

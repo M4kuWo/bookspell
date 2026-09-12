@@ -422,9 +422,9 @@ worth deferring to a later session rather than batching in for
   documented pattern) -- catch those at tagging time as usual, flag
   anything with no real SFF content for the repo owner rather than
   silently tagging or silently skipping it.
-  **56 of the 378 tagged 2026-09-13, across 3 batches** (CLDO session,
+  **74 of the 378 tagged 2026-09-13, across 4 batches** (CLDO session,
   following `tag-catalog-batch`, partial-series-first) -- see
-  project-log.md's three 2026-09-13 "Catalog tagging batch" entries for
+  project-log.md's four 2026-09-13 "Catalog tagging batch" entries for
   full detail. Batch 1 (18 books) included one real catch: a candidate,
   "Red God," turned out to be unpublished -- correctly left untagged,
   not a tagging error. Batch 2 (20 books) found 2 more permanent-skip
@@ -433,11 +433,17 @@ worth deferring to a later session rather than batching in for
   more confirmed omnibus duplicates (Monk and Robot, Villains Duology,
   Heir of Novron) and one genuine format-mismatch case handled
   transparently (Quidditch Through the Ages, a fake in-universe
-  "textbook," not a normal narrative). Series now **fully
-  tagged/complete** as a direct result: Discworld, The Mortal
+  "textbook," not a normal narrative). Batch 4 (18 books, the last of
+  this sitting's 4 requested batches) verified a pen-name/real-name
+  author credit as legitimate rather than contamination (Shirtaloon /
+  Travis Deverell) and completed 13 more series in one batch. Series now
+  **fully tagged/complete** as a direct result: Discworld, The Mortal
   Instruments, Percy Jackson and the Olympians, Malazan Book of the
-  Fallen, Robot, Imperial Radch, The Sun Eater. ~314 of the 378 remain
-  (378 - 56 tagged - 8 flagged graphic novels), plus whatever
+  Fallen, Robot, Imperial Radch, The Sun Eater, Fitz and the Fool, The
+  Old Kingdom, Night Angel, Cradle, Mars Trilogy, Revelation Space,
+  Wayward Children, Outlander, The Final Architecture, Daemon, The
+  Giver, He Who Fights with Monsters, Lock In. ~296 of the 378 remain
+  (378 - 74 tagged - 8 flagged graphic novels), plus whatever
   non-SFF leakage tagging turns up along the way.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
