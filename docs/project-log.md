@@ -13866,3 +13866,149 @@ Did not touch `scripts/recommend.py`/`scripts/scoring_tests.py`. No
 individual book's full Book DNA was tagged -- this was vocabulary
 addition plus backfill onto already-tagged books only, per the skill's
 explicit scope.
+
+## 2026-09-13 -- Catalog-wide trope-gap sweep #2 (CLDA)
+
+Continuation of the same-day sweep #1 (commit 7e3f556), per the user's
+explicit ask to cover "the rest of the catalog" --
+`.claude/skills/catalog-trope-gap-sweep/SKILL.md`, into the ~366-book
+pool of authors NOT covered by sweep #1 (117 authors with 2+ tagged
+books, excluding sweep #1's 31).
+
+**Steps 1-2 sanity check** (light-touch, per the task's own instruction
+not to fully re-run these): confirmed nothing changed since sweep #1
+earlier today -- Alien Clay still has 0 `book_dna` rows (untagged, out
+of scope), Blindsight still correctly tagged `first_contact` (its
+actual mechanism is contact with a genuine extraterrestrial, not the
+natural-evolution-on-Earth gap the tracker is watching for), and the
+low-confidence pools are byte-identical to sweep #1's counts (41
+`book_tropes` rows, 204 `book_field_confidence` rows below 0.6
+confidence).
+
+**Step 3 (the main sweep)**: 6 parallel non-forked background agents
+(per CLAUDE.md's agent-efficiency guidance), each given the DB
+connection string and the full current 134-trope/37-CW vocabulary
+inline (not re-derived from the schema file per-agent), covering a
+~60-62-book author cluster balanced by round-robin draw over the
+count-sorted candidate pool: Herbert/Leckie/Brett/Ryan/Andrews/
+Shusterman/Klune + 13 more (63 books); Tolkien/Paolini/Kuang/A.C.
+Clarke/Dashner/Butler + 14 more (62); Crichton/D.E. Taylor/R.J.
+Bennett/Crouch/K.S. Robinson/P.K. Dick + 14 more (62); Novik/Islington/
+Kingfisher/McClellan/Vonnegut/Pullman + 13 more (60); Brown/M. Meyer/
+Gibson/Ruocchio/Sullivan/Mafi + 13 more (60); S. Meyer/Stephenson/
+Harrow/Simmons/Jemisin/Zahn + 13 more (59) -- 366 books, 117 authors,
+all 6 clusters reported real coverage (books actually reviewed against
+literary knowledge, not just queried).
+
+**7 new trope values + 1 new content warning landed** (migration
+`20260913220000_catalog_trope_gap_sweep_2_7_new_tropes_1_cw.sql`, 28
+book-trope insertions across 27 books + 3 content-warning insertions),
+each verified against 2+ real catalog books sharing zero trope-level
+signal:
+- `monster_hunter_for_hire` -- promoted from sweep #1's own
+  single-occurrence tracker on a genuine second, cross-genre occurrence:
+  Ilona Andrews's Kate Daniels (Magic Bites, Magic Burns) alongside the
+  original Witcher evidence.
+- `underworld_descent_journey` -- R.F. Kuang's Katabasis + Rick
+  Riordan's The Lightning Thief/The House Of Hades (the classical
+  katabasis structure; only shared tag across all three was the
+  too-broad `epic_quest`).
+- `closed_circle_mystery` -- Stuart Turton's two books + Tamsyn Muir's
+  Gideon the Ninth (isolated-cast-with-no-exit mystery structure,
+  confirmed distinct from `noir_detective_structure` via counter-example
+  books that carry the latter without the former).
+- `flintlock_fantasy_setting` -- Brian McClellan's Powder Mage series
+  (4 books) + Brandon Sanderson's Mistborn Era Two (4 books, none of
+  which had any setting-group tag at all before this).
+- `creation_turns_on_creator` -- Mary Shelley's Frankenstein (both
+  editions) + H.G. Wells's The Island of Doctor Moreau (the "Frankenstein
+  complex" -- deliberately kept as a distinct, Gothic/personal-register
+  value from the next entry rather than merged).
+- `engineered_creation_escapes_control` -- Michael Crichton's Jurassic
+  Park/Prey/The Lost World (institutional-hubris containment-breach
+  disaster, same-author precedent as sweep #1's Firestarter/The
+  Institute; confirmed distinct from `ai_uprising_or_rebellion` since
+  Prey's swarm was deliberately NOT tagged with that existing value).
+- `royal_suitor_selection_competition` -- Kiera Cass's Selection trilogy
+  + Victoria Aveyard's Red Queen (a formalized multi-contestant
+  marriage-competition structure, distinct from `arranged_marriage`/
+  `love_triangle`/`deadly_competition_or_trial`).
+- Content warning `natural_disaster_mass_casualty` -- promotes the
+  tracker's open climate/natural-disaster gap (opened 2026-09-09 on The
+  Ministry for the Future, re-checked-still-open in sweep #1 earlier
+  today) on two independent second occurrences found by different
+  clusters: James Dashner's The Kill Order (solar-flare disaster) and
+  Neal Stephenson's Seveneves (lunar-fragmentation "Hard Rain"
+  bombardment). Named/scoped broadly rather than narrowly "climate"
+  since neither new evidence book is climate-driven -- both are
+  astronomical in origin.
+
+**Found but deliberately NOT added, recorded in the tracker instead**:
+`caste_or_faction_stratified_society` (Divergent/Red Rising/The
+Selection/Empire of Silence -- real cross-author evidence, but held back
+on a genuine self-flagged risk that it would just co-occur with the
+existing `dystopia` tag catalog-wide rather than discriminating a real
+subset of it; needs a broader check before promotion); a
+possible-but-unconfirmed second occurrence of the deferred
+`skinchanging_or_body_possession` candidate (Samantha Shannon's The Bone
+Season "dreamwalking" -- the reviewing agent's own confidence in the
+exact mechanic wasn't solid enough to assert). Plus 6 new
+single-occurrence gaps added to the tracker (Turton's serial
+body-hopping time-loop mystery; Kawaguchi's ritualized consequence-free
+time travel for closure; Shusterman's Scythe "gleaning" as sanctioned
+killing in an otherwise-death-free utopia; M.L. Wang's
+magic-system-powered-by-exploited-underclass reveal; Islington's
+tribute-tax-via-trial-competition system; Stephenie Meyer's The Host
+permanent parasitic possession, deliberately distinguished from
+`skinchanging_or_body_possession` rather than conflated with it) -- see
+`docs/schema/book-dna.md`'s tracker for full per-item reasoning.
+
+**Real candidates considered and rejected** (per-cluster, not
+exhaustive): Ann Leckie's Ancillary hive-mind premise (already
+`hive_mind`), Arkady Martine's/Richard K. Morgan's consciousness-
+transfer tech (already `mind_uploading_or_digital_immortality`),
+Murakami's split-self narrative (already `shadow_self_confrontation`),
+cozy fantasy -- Travis Baldree (already scalar `stakes_scope`/
+`overall_pace`/`darkness`, same logic as sweep #1's multi-pov/
+nonlinear-timeline rejections), Vonnegut's in-world satirical religions
+(already `satirical_or_comedic_scifi`), "unstuck in time" narration
+(already the `timeline` scalar), Daniel Suarez's posthumous-AI-
+orchestration premise (already `ai_consciousness`), N.K. Jemisin's
+bound-god-as-weapon premise (already `slavery` + `mythological_
+pantheon_as_characters` combination), Lev Grossman's Narnia
+deconstruction (already `portal_fantasy` + `dark_academia_setting`),
+and Stuart Turton's serial body-hopping considered-and-rejected as a
+match for `skinchanging_or_body_possession` specifically (mechanically
+different -- no separate vulnerable "home body" -- see its own new
+tracker entry instead).
+
+Both docs (`docs/schema/book-dna.schema.yaml`, `docs/schema/book-dna.md`)
+updated in this same session, including the "Sixth growth round" writeup
+and the tracker updates above. Verified zero-diff between the DB's live
+`tropes`/`content_warning_types` tables and both docs with a script
+(141 tropes, 38 content warnings on both sides), not eyeballed.
+
+**Coverage total across both sweeps**: sweep #1 (377 books/31 authors)
++ sweep #2 (366 books/117 authors) = 743 of the ~961-tagged catalog
+(~77%) directly reviewed by a deliberate sweep pass. Remaining: the
+~218 single-tagged-book authors, lower priority per the skill's own
+"more shared signal to compare" guidance, for a future sweep #3.
+
+**Environment note, same as every other CLDA migration batch today**:
+no linked Supabase project, no local Supabase stack in this sandbox.
+Tested in a rolled-back transaction first (insert, re-run once more in
+the same transaction to confirm idempotency, rollback), then applied
+for real via a direct autocommit psycopg2 connection, per the
+established CLDA workaround. Hosted's `supabase_migrations` tracking
+table does NOT know this version was applied -- CLDO needs
+`supabase migration repair --status applied --linked 20260913220000`
+after confirming data matches (it will -- this session applied and
+verified the real data), per CLAUDE.md's documented recovery procedure.
+This is now the second migration today (alongside `20260913170000`)
+waiting on this same repair step -- both can be repaired in the same
+CLDO session.
+
+Did not touch `scripts/recommend.py`/`scripts/scoring_tests.py`. No
+individual book's full Book DNA was tagged -- vocabulary addition plus
+backfill onto already-tagged books only, per the skill's explicit
+scope.

@@ -122,7 +122,7 @@ loudly without inviting deeper reflection).
 | `ends_on_cliffhanger` | resolved, cliffhanger | **yes** |
 
 `content_warnings` stays neutral data, not an editorial judgment — the
-field describes what's in the book, not whether that's good or bad. 33
+field describes what's in the book, not whether that's good or bad. 38
 values (see schema file), each tagged per book with a `severity` of
 `brief` / `moderate` / `central_theme` — a book where child_abuse is
 referenced once reads very differently than one built entirely around it,
@@ -283,7 +283,7 @@ field.
 |---|---|
 | `magic_system_hardness` | hard, soft, none, na |
 | `scifi_hardness` | hard, soft, na |
-| `tropes` | multi-select controlled vocabulary, 134 values across 6 groups, see schema file |
+| `tropes` | multi-select controlled vocabulary, 141 values across 6 groups, see schema file |
 
 `magic_system_hardness`'s `none` vs. `na` distinction was never actually
 defined until the pilot forced an inference: `none` = a fantasy-genre book
@@ -645,6 +645,121 @@ but rejected as already substantially covered by Dresden's own
 one series), and `remote_piloted_robotic_surrogate` (John Scalzi's Lock
 In/Head On — one duology, arguably one story told across two books).
 
+**Sixth growth round (2026-09-13, third catalog-wide deliberate gap
+sweep, "sweep #2" of `.claude/skills/catalog-trope-gap-sweep/SKILL.md`,
+continuing sweep #1 from earlier the same day)** — 7 new trope values
+plus 1 new content warning added and applied catalog-wide (migration
+`20260913220000_catalog_trope_gap_sweep_2_7_new_tropes_1_cw.sql`), same
+method as the fourth/fifth rounds: real per-book literary verification,
+"does this change the recommendation" bar, willingness to reject
+plausible candidates. Covered the ~366-book pool of authors NOT swept
+by sweep #1 (6 parallel non-forked background agents, ~60-62 books
+each, per CLAUDE.md's agent-efficiency guidance) — see
+`docs/project-log.md`'s 2026-09-13 "sweep #2" entry for the exact
+per-cluster author lists.
+- `monster_hunter_for_hire` (plot_devices) — protagonist's defining
+  narrative structure is a paid, episodic profession, taking discrete
+  contracts to hunt/kill a specific named monster/threat for coin, town
+  to town. **Promoted from sweep #1's single-occurrence tracker** (first
+  seen on Andrzej Sapkowski's Witcher — The Last Wish, Sword of Destiny)
+  on a genuine second, cross-genre occurrence: Ilona Andrews's Kate
+  Daniels (Magic Bites, Magic Burns) — a freelance mercenary/Order-
+  contracted investigator taking paid jobs against specific magical
+  threats in post-Shift Atlanta. Distinct from `noir_detective_structure`
+  (already tagged on both Kate Daniels books) — that's narrative
+  voice/investigation structure; this is the plot-generating job
+  mechanism (contracts, payment, episodic creature-of-the-book).
+- `underworld_descent_journey` (plot_devices) — protagonist(s)
+  physically travel into the literal land of the dead/underworld/hell to
+  rescue a person or retrieve something, and must find a way back. The
+  classical katabasis structure. Evidence, cross-author: R.F. Kuang's
+  Katabasis and Rick Riordan's The Lightning Thief + The House Of Hades
+  — only shared tag across all three was `epic_quest`, too broad to
+  discriminate.
+- `closed_circle_mystery` (plot_devices) — a murder/mystery investigation
+  confined to a small, fixed cast of suspects trapped together in an
+  isolated setting with no way to leave until the killer is found.
+  Evidence, cross-author: Stuart Turton's The 7 1/2 Deaths of Evelyn
+  Hardcastle + The Last Murder at the End of the World, and Tamsyn
+  Muir's Gideon the Ninth. Distinct from `noir_detective_structure`
+  (broader — doesn't require an isolated/fixed cast; Alastair Reynolds's
+  Chasm City and P. Djèlí Clark's A Master of Djinn both carry it without
+  being closed-circle).
+- `flintlock_fantasy_setting` (setting_worldbuilding) — a fantasy setting
+  in a gunpowder/early-industrial era where firearms are a defining part
+  of the world's technology and often its magic system itself. Evidence,
+  cross-author: Brian McClellan's Powder Mage series (4 books) and
+  Brandon Sanderson's Mistborn Era Two (4 books, none of which carried
+  any setting-group tag at all before this). Distinct from `steampunk`
+  and `renaissance_or_mercantile_setting`.
+- `creation_turns_on_creator` (craft_devices) — a creator's own
+  artificial/reanimated/engineered being, the product of their hubris,
+  ultimately turns against and causes the downfall of their maker (the
+  "Frankenstein complex"). Evidence, cross-author: Mary Shelley's
+  Frankenstein (both editions) and H. G. Wells's The Island of Doctor
+  Moreau — zero trope overlap despite sharing this exact mechanism.
+  Deliberately kept distinct from `engineered_creation_escapes_control`
+  below (see that entry) rather than merged into one value — a reader
+  drawn to Frankenstein/Moreau's intimate Gothic creator-tragedy is not
+  the same reader as one drawn to Jurassic Park/Prey's ensemble
+  techno-thriller, despite both sharing the broader "hubris punished by
+  your own creation" theme.
+- `engineered_creation_escapes_control` (plot_devices) — a
+  scientifically-created organism/system breaches human containment and
+  turns on its creators/handlers, driven by institutional hubris/
+  negligence rather than personal malice or a designed AI's intentional
+  revolt. Evidence, same-author (Michael Crichton, 3 separate novels,
+  same precedent as the fifth round's Firestarter/The Institute):
+  Jurassic Park, Prey, and The Lost World — zero trope overlap between
+  Jurassic Park and Prey despite sharing this exact mechanism. Distinct
+  from `ai_uprising_or_rebellion` — notably NOT applied to Prey's swarm
+  even though the vocabulary already existed, since the swarm's threat is
+  emergent/evolutionary rather than a designed AI's deliberate uprising,
+  confirming this is a genuinely separate axis.
+- `royal_suitor_selection_competition` (romance_relationships) — a
+  formalized, multi-contestant competition in which eligible candidates
+  compete for the right to marry a monarch/royal heir, distinct from a
+  single pre-decided union. Evidence, cross-author: Kiera Cass's
+  Selection trilogy (the titular broadcast elimination process) and
+  Victoria Aveyard's Red Queen (the in-world "Queenstrial"). Distinct
+  from `arranged_marriage` (single decided union), `love_triangle`
+  (entanglement, not a structured competition), and
+  `deadly_competition_or_trial` (explicitly lethal-stakes; this
+  competition isn't fight-to-the-death).
+
+**Content warning**: `natural_disaster_mass_casualty` — a natural or
+astronomical disaster causing mass death as a book's inciting/central
+event, distinct from `war_trauma` (human conflict) and
+`pandemic_or_epidemic` (disease). Promotes the tracker's open
+climate/natural-disaster gap (first flagged 2026-09-09 on *The Ministry
+for the Future*, re-checked-but-still-single-occurrence in sweep #1
+earlier the same day as this round) on **two independent second
+occurrences** found by different sweep clusters: James Dashner's *The
+Kill Order* (catastrophic solar flares) and Neal Stephenson's
+*Seveneves* (the Moon shatters, triggering the "Hard Rain" bombardment
+that kills ~7 billion). Deliberately named/scoped broadly rather than
+narrowly "climate" — neither new evidence book is climate-driven, both
+are astronomical in origin, so a climate-scoped name would have missed
+the actual evidence that promoted it. All three evidence books tagged
+`severity: central_theme` (the disaster is each book's defining event,
+not background) and `reveals_spoiler: false` (established at or near
+the opening in all three).
+
+Two real candidates found but deliberately NOT added this round —
+recorded in the tracker below rather than discarded:
+`caste_or_faction_stratified_society` (a formalized, named-caste/faction
+sorting mechanism as a society's defining structure — Divergent, Red
+Rising, The Selection, Empire of Silence — real cross-author evidence,
+but held back on a genuine, self-flagged risk that it would just
+co-occur with the existing `dystopia` tag across most of the catalog
+rather than discriminating a real subset of it; needs a broader
+catalog-wide check before promotion, not just this round's one cluster)
+and a possible-but-unconfirmed second occurrence of the deferred
+`skinchanging_or_body_possession` candidate (Samantha Shannon's *The
+Bone Season* "dreamwalking" — the reviewing agent's own confidence in
+the exact mechanic, host-body control vs. astral travel/communication
+only, wasn't solid enough to assert).
+
 ## Known limitations — engine-level, not schema fixes
 
 Surfaced during the 30-book pilot's reveal-and-score round, when the user
@@ -946,20 +1061,6 @@ don't re-derive it from the log):
   ecology, not a natural-evolution-on-Earth case like The Mountain in the
   Sea's octopuses — check the actual mechanism, don't assume it qualifies
   just because it's evolution-flavored.
-- **Trope**: `monster_hunter_for_hire` — protagonist's defining
-  narrative structure is a paid, episodic profession, taking discrete
-  contracts to hunt/kill a specific named monster/threat for coin, town
-  to town, rather than one continuous journey or an investigative
-  mystery. Found 2026-09-13 (catalog-trope-gap-sweep) on Andrzej
-  Sapkowski's Witcher books (*The Last Wish*, *Sword of Destiny*) — real
-  and cleanly distinct from `epic_quest`/`survivalist_ingenuity`, but
-  only one series/author in the current catalog cleanly fits it; a
-  same-catalog Dresden Files comparison was considered but rejected
-  since most Dresden books are already tagged `noir_detective_structure`
-  for a similar-but-distinct investigation-driven structure. Watch for
-  another clean "monster-of-the-week paid contractor" book (Van
-  Helsing-style monster hunters, bounty-hunter urban fantasy) as the
-  real second occurrence.
 - **Trope**: `skinchanging_or_body_possession` — a character projects
   their consciousness into and directly controls another living
   creature's body (animal or human) while their own body remains
@@ -971,7 +1072,18 @@ don't re-derive it from the log):
   `telepathic_animal_bond` (a two-way bond, not active possession), but
   all evidence is one series. Watch for a second book/series with this
   specific possession mechanic (not just "animal companion" or
-  "shapeshifting").
+  "shapeshifting"). **CHECKED again 2026-09-13 (sweep #2)**, still no
+  confirmed second occurrence — stays Open. Stuart Turton's *The 7 1/2
+  Deaths of Evelyn Hardcastle* was considered and rejected (sequential
+  serial host-hopping within a time loop, no separate vulnerable "home
+  body" left behind — mechanically different, see its own new entry
+  below). Samantha Shannon's *The Bone Season* "dreamwalking" is a
+  **possible but unverified** lead — the reviewing agent's confidence in
+  the exact mechanic (active host-body control vs. astral
+  travel/communication only) wasn't solid enough to assert; worth a
+  firmer check by someone with closer knowledge of books 2-4. Stephenie
+  Meyer's *The Host* was also considered and correctly ruled a different
+  concept, not this one — see its own new entry below.
 - **Trope**: `remote_piloted_robotic_surrogate` — a person's
   consciousness/neural signal controls a separate robotic body in real
   time (telepresence) while their own body remains elsewhere, distinct
@@ -981,9 +1093,93 @@ don't re-derive it from the log):
   distinct from `cybernetic_enhancement`/`android_or_replicant_rights`/
   `mind_uploading_or_digital_immortality`, but both evidence books are
   one duology (arguably one story). Watch for a second, independent
-  telepresence/robotic-surrogate book.
+  telepresence/robotic-surrogate book. **CHECKED again 2026-09-13
+  (sweep #2)**, no matches found across ~366 books/6 author clusters —
+  stays Open.
+- **Trope**: `caste_or_faction_stratified_society` — a society openly
+  organized around a small number of rigid, named castes/factions that
+  determine identity/role/resources, typically introduced via a formal
+  sorting/testing/assignment mechanism (a Choosing Ceremony, an aptitude
+  test), distinct from generic authoritarian oppression with no such
+  formalized stratification. Found 2026-09-13 (sweep #2) with real
+  cross-author evidence — Veronica Roth's *Divergent* (five named
+  factions, Choosing Ceremony), Pierce Brown's *Red Rising* (Color caste
+  system), Kiera Cass's *The Selection* (numbered castes One-Eight),
+  Christopher Ruocchio's *Empire of Silence* (Palatine/Plebeian/
+  Extrasolarian genetic castes) — but deliberately NOT promoted this
+  round on a genuine, self-flagged risk: it may just co-occur with the
+  existing `dystopia` tag across most of the catalog rather than
+  discriminating a real subset of it (several `dystopia`-tagged books in
+  the reviewing cluster, e.g. Fahrenheit 451, Klara and the Sun, have no
+  such formalized caste/faction structure at all, which is a point in
+  its favor, but a full catalog-wide check wasn't done this round).
+  Needs that broader check before promotion, not just more evidence
+  books.
+- **Trope**: serial body-hopping time-loop mystery — protagonist's
+  consciousness wakes in a different host's body each day within a
+  repeating time loop, the host's own will suppressed, but with no
+  separate vulnerable "home body" left elsewhere (the discriminator from
+  `skinchanging_or_body_possession` above). Found 2026-09-13 (sweep #2)
+  on Stuart Turton's *The 7 1/2 Deaths of Evelyn Hardcastle* — distinct
+  from `time_loop` + `amnesia_driven_narrative` (both already tagged on
+  it, neither captures the body-hopping mechanism specifically). One
+  occurrence only.
+- **Trope**: ritualized, consequence-free time travel for emotional
+  closure — a strictly bounded time-travel device (fixed seat/location,
+  fixed short duration, cannot leave the setting, and critically:
+  nothing done in the past changes the present) used purely to say
+  goodbye/gain closure, not for plot-consequence time travel. Found
+  2026-09-13 (sweep #2) on Toshikazu Kawaguchi's *Before the Coffee Gets
+  Cold* and *Tales from the Cafe* — tonally opposite from every other
+  `time_travel`-tagged book checked in the same cluster (Hyperion, Sea of
+  Tranquility). Both evidence books are one author's series; watch for a
+  second, independent author using this same no-consequence-closure
+  mechanic.
+- **Trope**: sanctioned, ritualized killing as a professional class
+  within an otherwise-utopian, death-eliminated society — distinct from
+  `genocide` (group-identity-targeted) and `war_trauma` (conflict-driven).
+  Found 2026-09-13 (sweep #2) on Neal Shusterman's Scythe trilogy (an AI,
+  the Thunderhead, has eliminated natural death; sanctioned Scythes
+  ritually "glean" people to control population). One occurrence only;
+  a content-warning angle on the same premise is also worth watching for
+  separately.
+- **Trope**: magic system revealed to be powered by a hidden, exploited/
+  erased underclass — the setting's celebrated magic is exposed as
+  running on a covered-up atrocity against a subjugated population,
+  central to a plot twist. Found 2026-09-13 (sweep #2) on M.L. Wang's
+  *Blood Over Bright Haven*. Distinct from `magically_binding_bargain`
+  (an individual contract, not a societal-exploitation reveal) and the
+  `magic_system_hardness` scalar (cost mechanics, not this specific
+  reveal). One occurrence only.
+- **Trope**: state magically drains citizens' power/life-force as
+  tribute, with a formal trial/competition mechanic letting individuals
+  reduce their own tax. Found 2026-09-13 (sweep #2) on James Islington's
+  *The Will of the Many* (the Vis/Catenary system). Distinct from
+  `deadly_competition_or_trial` (covers the trial mechanic generically,
+  not the extraction-as-tribute economics it's wrapped around). One
+  occurrence only.
+- **Trope**: permanent, non-consensual parasitic body possession — an
+  entity permanently colonizes a resistant human host with no return
+  trip and no separate vulnerable body of its own, while the original
+  consciousness remains trapped and aware inside. Found 2026-09-13
+  (sweep #2) on Stephenie Meyer's *The Host*. Deliberately distinct from
+  `skinchanging_or_body_possession` above (that's temporary projection
+  with an inert-but-recoverable home body left behind elsewhere; this is
+  permanent occupation with no home body to return to at all) — a real,
+  related, but mechanically different concept, not a second occurrence
+  of the existing entry. One occurrence only.
 
 **Promoted / resolved**:
+- **`monster_hunter_for_hire`** — promoted 2026-09-13 (sweep #2) on a
+  genuine second, cross-genre occurrence (Ilona Andrews's Kate Daniels —
+  Magic Bites, Magic Burns) alongside the original Witcher evidence. See
+  "Vocabulary growth process" above ("Sixth growth round").
+- **Content warning, climate/natural-disaster mass-casualty gap** —
+  promoted 2026-09-13 (sweep #2) as `natural_disaster_mass_casualty`
+  (scoped broadly, not narrowly "climate" — see that entry's own naming
+  rationale) on two independent second occurrences (James Dashner's *The
+  Kill Order*, Neal Stephenson's *Seveneves*). See "Vocabulary growth
+  process" above ("Sixth growth round").
 - **6 trope values** (5 concepts: `sapphic_romance`/`mlm_romance`,
   `infiltration_or_undercover_plot`, `alternate_history`,
   `multi_generational_saga`, `cosmic_horror`) — landed 2026-09-05 via

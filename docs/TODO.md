@@ -190,6 +190,58 @@ worth deferring to a later session rather than batching in for
   to the catalog after 2026-09-13). Also worth a quick pass: whether a
   second real occurrence of the 3 deferred single-series candidates
   above has shown up in newly-tagged books.
+- [x] **Catalog-wide trope/content-warning vocabulary gap sweep #2 --
+  RUN 2026-09-13 by CLDA, same day as sweep #1 above, per the user's
+  explicit ask to cover "the rest of the catalog."** Covered the
+  ~366-book pool of 117 authors NOT swept by sweep #1 (2+ tagged books
+  each). Steps 1-2 (light-touch sanity check, per the task's own
+  instruction not to fully re-run them): confirmed nothing changed since
+  sweep #1 earlier the same day -- Alien Clay still untagged, Blindsight
+  still correctly tagged, low-confidence pools byte-identical (41/204).
+  Step 3: 6 parallel non-forked background agents, ~60-62 books each,
+  full author list and per-cluster findings in
+  `docs/project-log.md`'s 2026-09-13 "sweep #2" entry. **7 new tropes +
+  1 new content warning landed** (migration
+  `20260913220000_catalog_trope_gap_sweep_2_7_new_tropes_1_cw.sql`):
+  `monster_hunter_for_hire` (promoted from sweep #1's own tracker on a
+  genuine second occurrence -- Ilona Andrews's Kate Daniels),
+  `underworld_descent_journey` (Kuang's Katabasis + Riordan's Percy
+  Jackson), `closed_circle_mystery` (Turton x2 + Muir's Gideon the
+  Ninth), `flintlock_fantasy_setting` (McClellan's Powder Mage +
+  Sanderson's Mistborn Era Two), `creation_turns_on_creator` (Shelley's
+  Frankenstein + Wells's The Island of Doctor Moreau),
+  `engineered_creation_escapes_control` (Crichton's Jurassic
+  Park/Prey/The Lost World), `royal_suitor_selection_competition`
+  (Cass's Selection trilogy + Aveyard's Red Queen); content warning
+  `natural_disaster_mass_casualty` (promotes the tracker's open
+  climate/natural-disaster gap on two independent second occurrences --
+  Dashner's The Kill Order, Stephenson's Seveneves -- named broadly
+  since neither is climate-specific). **1 real candidate found but
+  deliberately deferred** (`caste_or_faction_stratified_society` --
+  Divergent/Red Rising/The Selection/Empire of Silence, real evidence
+  but a genuine self-flagged risk of just co-occurring with `dystopia`
+  catalog-wide; needs a broader check before promotion) plus 6 new
+  single-occurrence gaps added to `docs/schema/book-dna.md`'s tracker --
+  see that file for all of them. Both schema docs updated in this same
+  session; **verified zero-diff between the DB's live tables and both
+  docs with a script** (141 tropes, 38 content warnings, exact match).
+  **Applied directly to HOSTED, not via `supabase db push`** -- same
+  environment constraint as sweep #1 (no linked Supabase project, no
+  local stack). Tested in a rolled-back transaction with an idempotency
+  re-run first, then applied via direct autocommit psycopg2. **CLDO
+  needs `supabase migration repair --status applied --linked
+  20260913220000`** after confirming data matches (it will) -- this is
+  now the SECOND migration today waiting on this repair step, alongside
+  `20260913170000` from sweep #1; both can be repaired together.
+  **Running coverage total across both sweeps: 377 + 366 = 743 of the
+  ~961-tagged catalog (~77%).** **Follow-up scope for sweep #3**: the
+  ~218 single-tagged-book authors not reached by either sweep (lower
+  priority per the skill's own "more shared signal to compare"
+  guidance) -- plus worth a check whether `caste_or_faction_stratified_
+  society`'s dystopia-overlap risk resolves cleanly with a full
+  catalog-wide query, and whether the Bone Season "dreamwalking" lead
+  for `skinchanging_or_body_possession` firms up with closer knowledge
+  of the later books in that series.
 - [ ] **CODX (Codex CLI, via the repo owner's ChatGPT Plus
   subscription) as a third working entity -- approach worked out
   2026-09-11, deliberately deferred, do later.** Persona name settled:
