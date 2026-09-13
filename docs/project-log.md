@@ -14604,3 +14604,148 @@ candidates from here).
 Did not touch `scripts/recommend.py`/`scripts/scoring_tests.py`; no Book
 DNA tagging performed (universe-linking only, per this task's scope).
 
+## 2026-09-13 (later still) -- catalog tagging batch (CLDA session): 17 books, 9 series completions, 3 author-contamination fixes
+
+Ran `.claude/skills/tag-catalog-batch/SKILL.md` (CLDA session, first
+attempt at this batch hit a rate limit earlier with no real work done --
+verified via `git status`/`ls supabase/migrations | tail -5` at the
+start that no stray partial migration existed from that attempt before
+starting fresh). Step 1.5 schema-drift check run fresh: live `book_dna`
+has exactly 42 columns = the 33 mandatory fields + `book_id` + `genre`
++ the 5 excluded Tier B audiobook columns (`narrator_performance`,
+`narrator_cast`, `narration_pace_vs_prose`, `accent_authenticity`,
+`production_quality`) + `created_at`/`updated_at` -- no drift, skill's
+mandatory-column list still matches the live table exactly.
+
+**17 books tagged**, all pulled from Step 2's partial-series-first query:
+The Year of the Flood + MaddAddam (Margaret Atwood, MaddAddam), Waking
+Gods + Only Human (Sylvain Neuvel, Themis Files), The Ballad of Never
+After (Stephanie Garber, Once Upon a Broken Heart), The Faith of Beasts
+(James S. A. Corey, The Captive's War), The Hunger of the Gods (John
+Gwynne, Bloodsworn Saga), Wayward Pines - Revolta [confirmed via web
+search to be the Portuguese edition of "Wayward", book 2 -- same content,
+different catalog title] + The Last Town (Blake Crouch, Wayward Pines),
+The Long Dark Tea-Time of the Soul (Douglas Adams, Dirk Gently), The
+Reptile Room + The Wide Window (Lemony Snicket, A Series of Unfortunate
+Events), The Throne of Fire (Rick Riordan, The Kane Chronicles), The
+Vampire Lestat (Anne Rice, The Vampire Chronicles), To Say Nothing of
+the Dog (Connie Willis, Oxford Time Travel), The BFG + The Witches
+(Roald Dahl, The Roald Dahl Classic Collection -- a real grouping of
+standalone Dahl novels sharing box-set metadata, not an omnibus).
+
+**9 series completions** (all now show tagged=total in `books`, verified
+live post-migration): MaddAddam, Themis Files, Once Upon a Broken Heart,
+The Captive's War, Bloodsworn Saga, Wayward Pines, Dirk Gently, The Kane
+Chronicles, The Vampire Chronicles, Oxford Time Travel, and (informally)
+The Roald Dahl Classic Collection and the 3-book ASOUE subset present in
+this catalog -- 12 groupings total if those two non-canonical groupings
+are counted alongside the 9 real series.
+
+Skipped/flagged per this batch's known-exceptions list, none re-tagged:
+none of the 8 known graphic novels or the confirmed omnibus/unpublished
+skip cases (Foundation Trilogy, Red God, The Winds of Winter, The Doors
+of Stone, The Farseer Trilogy, Monk and Robot, Villains Duology) surfaced
+in this batch's top-priority slice. *Holly* also did not surface in this
+particular 40-row pull; the open scope question remains genuinely
+undecided, not touched.
+
+**Author-field contamination caught and fixed before insertion, not
+after**, on 3 of the 17 -- all illustrator credits, not co-authors,
+verified directly against Hardcover's own `contributions` GraphQL data
+(not just "looks contaminated") before fixing: The BFG and The Witches
+both stored as `"Roald Dahl, Quentin Blake"` (Blake is Dahl's illustrator
+on both, confirmed via Hardcover contribution role "Illustrator"); The
+Reptile Room stored as `"Lemony Snicket, Brett Helquist"` (Helquist is
+the series' illustrator, confirmed the same way). All three fixed to the
+single genuine author name in the same migration.
+
+**HIGH_RISK_FIELDS given real research, not pattern-matched from genre
+reputation** -- every HIGH_RISK field on every one of the 17 was checked
+against a synopsis/review search rather than defaulted from genre
+convention. Two real catches worth flagging: *The Witches* (Roald Dahl)
+would have defaulted to `third_omniscient` on the "Dahl children's book"
+pattern the same way James and the Giant Peach and The BFG are tagged --
+but it's actually narrated in **first person** by the unnamed boy
+protagonist (confirmed via direct research), a real exception to the
+Dahl-omniscient default this batch would otherwise have pattern-matched
+into. *Wayward Pines - Revolta* (`pov_count`) and *Only Human*
+(`pov_count`/`drive`) were both genuinely uncertain departures from
+their series' established ensemble/plot_driven pattern (Only Human's
+reviewers specifically note a shift toward character-focus in the
+trilogy finale) -- tagged with `book_field_confidence` at 0.5 rather than
+silently defaulted to match the earlier books.
+
+**`romance_tone` tagged only where real, presentation-specific evidence
+was found via web search, never from genre reputation** -- 4 of the 17:
+`MaddAddam` understated (confirmed via multiple reviews explicitly
+describing the Toby/Zeb relationship as "gentle," "mature," and taking a
+"restrained approach to drama" where the characters "let go of hang-ups...
+rather than dwell on it" -- real scene-level presentation evidence, not
+inferred from how much romance there is); `The Vampire Lestat`
+melodramatic (confirmed via reviews describing Lestat as "so emotional
+and dramatic about everything," "highly emotionally charged," matching
+Interview with the Vampire's own already-tagged melodramatic value for
+the series); `To Say Nothing of the Dog` understated (confirmed via a
+review calling it "oddly gentle," a Victorian "comedy of manners");
+`The Ballad of Never After` tagged `mixed` at confidence 0.2 -- real
+searched evidence existed (reviewers describe mounting "tension" and
+"yearning") but none of it was presentation-specific (declarations vs.
+restraint) rather than pacing/drive-flavored, so per the skill's
+evidence standard this is the genuinely-disputed 0.2 case, not a
+shortcut around doing the research. The remaining 13 books had
+insufficient/ambiguous romantic content to judge and were correctly
+left null rather than forced.
+
+**Vocabulary gap tracker checked, no new gaps found this batch** --
+reviewed `docs/schema/book-dna.md`'s "Flagged single-occurrence
+vocabulary gaps" list before tagging; none of the 17 books hit an
+already-open gap (no natural-evolution first-contact, no
+skinchanging/body-possession mechanic, etc.), and no genuinely new
+single-book gap surfaced during tagging that the existing ~152-trope/
+38-content-warning vocabulary couldn't cleanly cover.
+
+**Density self-check** (run fresh per the skill's required Step 3 gate,
+not skipped): pre-batch catalog average was 5.4547 tropes/book, 1.7170
+CWs/book (961 tagged books). This batch: 81 tropes / 17 books = 4.76
+tropes/book (~13% below catalog average), 27 CWs / 17 books = 1.59
+CWs/book (~7.7% below) -- both comfortably under the skill's ~20%
+thin-batch threshold, confirmed by re-querying the fresh catalog average
+after the migration landed (978 tagged books): 5.4427 tropes/book,
+1.7147 CWs/book -- the batch barely moved the catalog-wide average,
+consistent with a batch that's close to (not meaningfully thinner than)
+typical density.
+
+Migration `20260913270000_catalog_tagging_batch_17_books_9_series_
+completed.sql` tested in a rolled-back transaction first (caught one
+real bug this way: `The Wide Window` had `emotional_register` mistakenly
+set to `'tragic'`, which is actually an `emotional_resolution` value, not
+a valid `emotional_register` one -- the check constraint caught it before
+anything touched hosted for real; fixed to `bittersweet` and the
+transaction test passed clean on retry). Applied for real via a normal
+psycopg2 connection, verified live (978 total tagged books, all 17
+book_dna rows present, spot-checked genre/pov_count/person/romance_tone
+on 3 books plus every `book_field_confidence` row). This session then
+closed the migration-tracking loop itself -- `npx supabase migration
+repair --status applied --db-url "$DATABASE_URL" --yes 20260913270000`
+succeeded without `supabase link`, and `supabase migration list
+--db-url "$DATABASE_URL"` afterward confirmed every local migration
+timestamp has a matching remote one, no gap left pending for CLDO.
+
+**Also flagged, not acted on (out of this batch's scope)**: a duplicate
+migration-file timestamp pre-dating this session,
+`20260911110000_delete_old_romance_worldbuilding_tropes.sql` (appears
+twice under `ls supabase/migrations/ | sort | uniq -c -w14`), surfaced
+by this session's routine pre-push duplicate check -- not touched since
+it's unrelated to this batch and its hosted-applied status wasn't
+verified before considering a rename; worth a look next time CLDO syncs.
+`supabase migration list` also warned about a stray non-`.sql` file
+matching a migration-timestamp prefix
+(`20260911110000_delete_old_romance_worldbuilding_tropes_manifest.tsv`)
+-- same file, not investigated further, flagged for the same reason.
+
+Did not touch `scripts/recommend.py`/`scripts/scoring_tests.py`. ~259 of
+the original 378-book round-4 queue remain untagged (378 - 74 - 20 - 17
+tagged across sessions today - 8 flagged graphic novels), plus whatever
+new non-SFF leakage/omnibus/unpublished exceptions keep surfacing at
+tagging time.
+

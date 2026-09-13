@@ -698,6 +698,32 @@ worth deferring to a later session rather than batching in for
   graphic novels), plus whatever non-SFF leakage/omnibus/unpublished
   exceptions keep surfacing at tagging time (5 this batch, on top of
   the earlier batches' own finds).
+  **Batch 6 (2026-09-13, CLDA session): 17 more books tagged** -- The
+  Year of the Flood, MaddAddam, Waking Gods, Only Human, The Ballad of
+  Never After, The Faith of Beasts, The Hunger of the Gods, Wayward
+  Pines - Revolta, The Last Town, The Long Dark Tea-Time of the Soul,
+  The Reptile Room, The Wide Window, The Throne of Fire, The Vampire
+  Lestat, To Say Nothing of the Dog, The BFG, The Witches -- see
+  project-log.md's 2026-09-13 "catalog tagging batch (CLDA session)"
+  entry for full detail (density self-check, romance_tone evidence per
+  book, HIGH_RISK_FIELDS catches including a first-vs-third-person
+  catch on The Witches, and 3 author-contamination fixes verified
+  against Hardcover's own contributions data: The BFG/The Witches
+  losing illustrator Quentin Blake, The Reptile Room losing illustrator
+  Brett Helquist). **9 series completed**: MaddAddam, Themis Files,
+  Once Upon a Broken Heart, The Captive's War, Bloodsworn Saga, Wayward
+  Pines, Dirk Gently, The Kane Chronicles, The Vampire Chronicles,
+  Oxford Time Travel (plus The Roald Dahl Classic Collection grouping
+  and the 3-book ASOUE subset present in this catalog). Migration
+  `20260913270000_catalog_tagging_batch_17_books_9_series_completed.sql`,
+  applied directly to hosted and closed out via `supabase migration
+  repair` (no `supabase link` needed, per this session's own discovery).
+  **~259 of the 378 remain** (378 - 74 - 20 - 17 tagged - 8 flagged
+  graphic novels). A pre-existing duplicate migration timestamp
+  (`20260911110000_delete_old_romance_worldbuilding_tropes.sql`,
+  predates this batch) was flagged during this batch's routine
+  duplicate-timestamp check but not acted on -- out of scope, needs
+  CLDO to verify its hosted-applied status before any rename.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13 (124 of 484 series fixed
