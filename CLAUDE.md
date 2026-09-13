@@ -66,6 +66,27 @@ this repo runs from:
   permanent one: revisit once it's built a real track record, the same
   way CLDA's own scope grew over time.
 
+  **Runs from its own real clone, `~/Documents/bookspell-codex` (set up
+  2026-09-13), never inside the repo owner's own `~/Documents/bookspell`
+  or a subdirectory of it.** This isn't just tidiness — that clone has
+  `git config credential.helper ""` set locally specifically so it
+  can't reach the macOS Keychain's cached GitHub credential the repo
+  owner's own clone pushes with (confirmed the hard way: being in a
+  different FOLDER under the same macOS login would NOT alone have
+  prevented this, since Keychain credentials resolve by login account,
+  not directory). Verified directly: `git push` from that clone fails
+  with an auth error, `git pull`/local commits work fine (this repo is
+  public, so reads never needed a credential anyway). Reads hosted
+  Supabase data via the same public anon key `app/shared.js` already
+  ships client-side (real, RLS-enforced read-only — verified its write
+  policies are all `authenticated`-only, not just assumed) rather than
+  the `supabase db query --linked` CLI method CLDO uses, which is
+  full-access and NOT safe to hand it. See `AGENTS.md`'s "Your
+  environment"/"Reading hosted Supabase data"/"Handing off your work"
+  sections for the full mechanics, including the local-testing
+  limitation (this repo's own not-yet-bootstrapped local Supabase gap)
+  and how its output actually reaches CLDO with no push access.
+
 **Which one are you?** Check for `.claude/PERSONA.local` in the repo
 root (a plain local file, deliberately gitignored — see `.gitignore`'s
 comment on it — so each machine keeps its own value and one machine's
