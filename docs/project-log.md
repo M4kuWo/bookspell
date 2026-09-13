@@ -13273,3 +13273,67 @@ title-scoped-migration lesson. Tested in a rolled-back transaction
 first, then pushed via `supabase db push --linked`; verified
 post-push that all 28 target rows now have a non-null
 `runtime_minutes` (0 remaining null across the exact 28-title list).
+
+## 2026-09-13 (later still) -- CODX onboarding set up for real, catalog-wide trope-gap sweep planned and scoped for CLDA
+
+Two planning items, prompted directly by the repo owner: CODX's
+already-decided setup (deferred since 2026-09-11) actually built, and a
+real catalog-wide vocabulary sweep scoped for CLDA now that its token
+budget resets tomorrow -- both distinct from actually running either
+one, which happens next.
+
+**CODX setup -- DONE**, per `docs/TODO.md`'s original 2026-09-11 entry
+(nothing re-litigated, just executed): `AGENTS.md` written at the repo
+root, pointing back at `CLAUDE.md` for every shared convention rather
+than duplicating any of it, plus CODX-specific notes on its
+review-only starting scope and its already-decided concrete task list
+(independent review of `scripts/recommend.py`/tool scripts, auditing
+deferred experimental functions, a third-opinion QA pass on CLDA's
+migrations, mechanical/scriptable work -- explicitly NOT Book DNA
+tagging or scoring-algorithm design). `CLAUDE.md`'s persona system
+extended to a real third named entity: CODX gets a stricter version of
+the destructive-action gate than CLDA's -- approval needed before ANY
+hosted-DB write or unsupervised commit at all, not just destructive
+ones, since it hasn't built CLDA's own track record yet. Every CODX
+output is a proposal (review, diff, draft migration) for CLDO or the
+repo owner to apply, never something it applies itself.
+`docs/PENDING_APPROVALS.md` updated to name CODX alongside CLDA as a
+persona the gate applies to. **Not done, and deliberately not part of
+"setup"**: actually invoking Codex CLI against this repo for the first
+time -- that's the repo owner's own step (his ChatGPT Plus
+subscription/tool), not something a Claude Code session can do on his
+behalf. `docs/TODO.md`'s CODX entry updated to reflect setup being
+complete and what's still pending.
+
+**Catalog-wide trope/content-warning vocabulary gap sweep -- scoped and
+handed to CLDA**, prompted by the repo owner noting CLDA's token budget
+resets tomorrow and asking whether something "rather big" is worth
+planning for it. New skill file
+`.claude/skills/catalog-trope-gap-sweep/SKILL.md` written: distinct
+from today's earlier fix (the "Flagged single-occurrence vocabulary
+gaps" tracker in `docs/schema/book-dna.md`), which only catches a gap
+that happens to surface incidentally during ordinary per-book tagging.
+This is the deliberate, proactive half -- sized to be worth a real
+chunk of a fresh token budget, not a quick check. Three-part
+methodology: (1) check the tracker's 2 already-open gaps against the
+current catalog first (cheapest, already has named candidate
+second-occurrence books); (2) mine existing low-confidence
+`book_tropes`/`book_field_confidence` rows (41 low-confidence trope
+tags as of today -- confirmed via a live query, small enough to review
+directly) for a recurring "closest available fit, not clean" pattern
+across 2+ books; (3) a broader qualitative sweep by author/subgenre
+cluster, same method as the 2026-09-05 sweep that found 5 new tropes
+against a then-~700-book catalog (now 1250+ books, ~960+ tagged) --
+deliberately scoped as a recurring skill invocation ("cover a
+meaningful cross-section, report what's covered, don't try to force
+full completionist coverage in one pass"), not a one-shot task, given
+the catalog's real size now. Same vocabulary bar as everywhere else in
+this project ("does this change the recommendation," not "is this a
+real term"), same schema-change discipline (schema.yaml/book-dna.md/
+tag-catalog-batch's mandatory list all updated together, per CLAUDE.md).
+Added to `docs/TODO.md`'s P1 section, ready for CLDA to pick up
+directly.
+
+Not yet run -- both are setup/planning, ready for their respective next
+sessions (CODX once the repo owner starts it; the trope sweep whenever
+CLDA's budget is next available).

@@ -28,8 +28,9 @@ nothing.
 
 ## Persona system
 
-Two named, standing personas exist for this project (added 2026-09-10),
-one per machine/environment this repo runs from:
+Three named, standing personas exist for this project (CLDO/CLDA added
+2026-09-10, CODX added 2026-09-13), one per machine/environment/tool
+this repo runs from:
 
 - **CLDO** — the primary session, worked directly with the repo owner.
   Owns `scripts/recommend.py`/`scripts/scoring_tests.py` (all
@@ -43,6 +44,27 @@ one per machine/environment this repo runs from:
   `convert-romance-worldbuilding-fields`'s schema+backfill half).
   Requests approval per the gate below before anything destructive that
   isn't already spelled out step-by-step in the skill it's following.
+- **CODX** — Codex CLI (a different model/tool entirely, via the repo
+  owner's ChatGPT Plus subscription — a genuinely separate token/budget
+  pool from Claude usage, additive capacity rather than divided
+  capacity; see `docs/TODO.md`'s original CODX entry for the full
+  reasoning). Reads `AGENTS.md` at the repo root (its own tool's
+  convention file, the same role CLAUDE.md plays for Claude Code) —
+  that file points back here for every shared convention rather than
+  duplicating any of it. **Starts in review/propose-only scope, on
+  purpose, the same way CLDA had to earn broader trust before being
+  handed batch-tagging work**: no direct hosted-DB access and no
+  unsupervised commits AT ALL yet, not even non-destructive ones — see
+  `AGENTS.md` for its current concrete task list (independent code
+  review of `scripts/recommend.py`/tool scripts, auditing deferred
+  experimental functions, a third-opinion QA pass on CLDA's migrations,
+  mechanical/scriptable work) and what's deliberately NOT handed to it
+  (Book DNA tagging, scoring-algorithm design). Every finding or change
+  CODX produces is a proposal (a review comment, a diff, a suggested
+  migration file) for CLDO or the repo owner to actually apply — not
+  something it applies itself. This is a starting posture, not a
+  permanent one: revisit once it's built a real track record, the same
+  way CLDA's own scope grew over time.
 
 **Which one are you?** Check for `.claude/PERSONA.local` in the repo
 root (a plain local file, deliberately gitignored — see `.gitignore`'s
@@ -52,8 +74,13 @@ is your persona for this entire session, regardless of which terminal
 or how many times the conversation has been cleared — adopt it
 silently, don't re-ask. If it doesn't exist yet, this is a new
 environment: ask the user which persona applies, then write their
-answer to that file (just the bare word, `CLDO` or `CLDA`) so future
-sessions on this same machine never have to ask again.
+answer to that file (just the bare word, `CLDO`/`CLDA`/`CODX`) so
+future sessions on this same machine never have to ask again. (CODX
+specifically: if you're Codex CLI reading this via `AGENTS.md`, your
+persona is simply `CODX` — no need to check `.claude/PERSONA.local` at
+all, since that file's whole purpose is disambiguating between CLDO and
+CLDA on a shared Claude Code setup, a question that doesn't apply to a
+different tool entirely.)
 
 ## Cross-session destructive-action gate
 
@@ -68,6 +95,21 @@ anything CLDA improvises beyond that: an unexpected DELETE/DROP/
 TRUNCATE, a fix for a problem the skill didn't anticipate, rolling back
 a prior migration, or any other irreversible move that's genuinely a
 judgment call in the moment, not a pre-written instruction.
+
+**CODX's gate is stricter, per its review-only starting scope above:
+request approval before ANY hosted-DB write or unsupervised commit at
+all, not just destructive ones** — even a real, correct, non-destructive
+INSERT/UPDATE it's confident in still goes into
+`docs/PENDING_APPROVALS.md` (or is simply handed back as a proposed
+migration file/diff for CLDO to apply) rather than applied directly.
+This isn't a comment on trust so much as sequencing: CLDA earned
+broader write access by being right repeatedly on bounded, reviewed
+work first, and CODX hasn't had that track record built yet. Read-only
+research, review, and proposing changes (in a report, a diff, a draft
+migration file the repo owner or CLDO then applies) need no approval at
+all — this gate is specifically about CODX itself executing a write
+against hosted or pushing a commit, not about the work of finding
+something worth changing.
 
 There is no live channel between the two sessions/machines — this is a
 file-based, asynchronous gate, not a real-time one. When CLDA hits this

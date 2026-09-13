@@ -1,19 +1,23 @@
 # Pending approvals (cross-session destructive-action gate)
 
 See CLAUDE.md's "Cross-session destructive-action gate" section for the
-full rule this file supports. Short version: CLDA (the tagging/data
+full rule this file supports. Short version: **CLDA** (the tagging/data
 session) must stop and request approval here — not proceed — before any
 destructive or irreversible action that isn't already spelled out,
-step-by-step, in a skill file it's following. CLDO (the primary session)
-reviews and answers here. There is no live channel between the two
+step-by-step, in a skill file it's following. **CODX** (Codex CLI,
+added 2026-09-13, see AGENTS.md/CLAUDE.md's persona system) has a
+stricter version of the same gate: request approval here before ANY
+hosted-DB write or unsupervised commit, not just destructive ones —
+its starting scope is review/propose-only. CLDO (the primary session)
+reviews and answers here. There is no live channel between these
 sessions — this file, checked by CLDO at the start of every repo sync,
 is the actual mechanism.
 
-**CLDA**: when you hit a case like this, add a new entry under "Open"
-below with today's date, then stop — do not execute the action, do not
-work around this file (e.g. by deciding it's "probably fine" and
-proceeding anyway). Tell the user directly too, so they know to bring it
-to CLDO.
+**CLDA/CODX**: when you hit a case like this, add a new entry under
+"Open" below with today's date and which persona you are, then stop —
+do not execute the action, do not work around this file (e.g. by
+deciding it's "probably fine" and proceeding anyway). Tell the user
+directly too, so they know to bring it to CLDO.
 
 **CLDO**: check this file for anything under "Open" at the start of
 every sync. Move an answered entry to "Resolved" with your verdict and

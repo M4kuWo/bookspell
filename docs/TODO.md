@@ -128,6 +128,42 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
+- [ ] **Catalog-wide trope/content-warning vocabulary gap sweep --
+  READY for CLDA, planned 2026-09-13 for whenever CLDA's token budget
+  next resets.** Full methodology in the new
+  `.claude/skills/catalog-trope-gap-sweep/SKILL.md` -- don't re-derive
+  it here, read that file first. Prompted by the repo owner asking
+  directly whether new tropes are still surfacing as the catalog grows;
+  the answer was "the mechanism exists and has worked before, but
+  nothing was tracking flagged single-book gaps centrally" (fixed the
+  same day -- see `docs/schema/book-dna.md`'s new "Flagged
+  single-occurrence vocabulary gaps" tracker and the 2026-09-13
+  project-log entry). That fix only catches gaps that surface
+  incidentally during ordinary per-book tagging, though -- this item is
+  the other half: a genuinely proactive, deliberate sweep, sized for a
+  real chunk of a fresh token budget rather than a quick check.
+  **Scope, in order**: (1) check the tracker's 2 already-open gaps
+  against the current catalog first -- cheapest, already has named
+  candidate second-occurrence books to check directly; (2) mine
+  existing low-confidence `book_tropes`/`book_field_confidence` rows
+  (41 low-confidence trope tags as of 2026-09-13 -- a small, cheap-to-
+  review list) for a recurring "closest available fit, not a clean
+  match" pattern across 2+ books; (3) a broader qualitative sweep by
+  author/subgenre cluster, same method as the 2026-09-05 sweep that
+  found 5 new tropes against a then-~700-book catalog (now 1250+,
+  ~960+ tagged) -- look for a recognizable pattern across real books
+  with zero shared trope signal, verified against actual literary
+  knowledge, never genre pattern-matching. Same "does this change the
+  recommendation" bar as every other vocabulary decision in this
+  project -- a real pattern that doesn't discriminate between books a
+  reader would/wouldn't want isn't worth adding just because it's
+  real. Any addition needs `docs/schema/book-dna.schema.yaml`,
+  `docs/schema/book-dna.md`, AND `tag-catalog-batch/SKILL.md` updated
+  in the same session, same rule as any other schema change. Report
+  back with how much of the catalog was actually covered (by
+  author/cluster, not just a book count) so a follow-up sweep knows
+  where to pick up -- this is expected to be a recurring skill
+  invocation, not a one-shot completionist pass.
 - [ ] **CODX (Codex CLI, via the repo owner's ChatGPT Plus
   subscription) as a third working entity -- approach worked out
   2026-09-11, deliberately deferred, do later.** Persona name settled:
@@ -171,12 +207,24 @@ worth deferring to a later session rather than batching in for
   get 5x/20x more than Plus. Could not pin down an exact "X per week"
   number for Plus specifically from available sources -- check the
   account's own usage page rather than trust an estimate here.
-  **Setup, when this gets picked up**: write an `AGENTS.md` that
-  points back at `CLAUDE.md` for shared conventions (not a duplicate
-  copy, to avoid drift) plus CODX-specific notes on its review-only
-  starting scope; extend the persona system and
-  `docs/PENDING_APPROVALS.md` gate to include it as a third named
-  entity before giving it any write access.
+  **Setup — DONE 2026-09-13.** `AGENTS.md` written at the repo root
+  (points back at `CLAUDE.md` for every shared convention rather than
+  duplicating any of it, plus CODX-specific notes on its review-only
+  starting scope and its concrete task list, mirrored from this entry).
+  `CLAUDE.md`'s persona system extended to a real third named entity
+  (CODX), including a stricter version of the destructive-action gate
+  for it specifically (approval needed before ANY hosted-DB write or
+  unsupervised commit, not just destructive ones, since it hasn't
+  earned CLDA's broader write access yet). `docs/PENDING_APPROVALS.md`
+  updated to name CODX alongside CLDA as a persona that gate applies
+  to. **Not done yet, and not part of "setup" — actually running Codex
+  CLI against this repo for the first time**, which is a step only the
+  repo owner can take (it's his ChatGPT Plus subscription/tool, not
+  something a Claude Code session can invoke on his behalf). Once that
+  happens, whichever Claude session syncs next should confirm CODX
+  picked up `AGENTS.md` correctly and adjust anything that reads wrong
+  in practice, the same way any new convention gets refined after its
+  first real use.
 - [x] **Bulk-populate `audiobook_editions` standard-edition narrator
   data via Hardcover's API -- DONE 2026-09-11. Final: 1026 `standard`
   rows across 786 of 869 books with a `hardcover_id`.** Confirmed
