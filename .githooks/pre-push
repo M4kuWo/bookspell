@@ -1,0 +1,25 @@
+#!/bin/sh
+# CODX's push-blocking safeguard. Only active in a clone whose
+# `core.hooksPath` has been pointed here (`git config core.hooksPath
+# .githooks` -- done automatically by `scripts/setup-codx-clone.sh`).
+# Sitting in the tracked repo like this does NOTHING on its own: CLDO's
+# and CLDA's own clones use the default `.git/hooks` and never set
+# `core.hooksPath`, so this file is inert for them -- just an ordinary
+# tracked file. It only takes effect in a clone that explicitly opted
+# in, which is what "CODX's clone" means in practice.
+#
+# Why an unconditional block instead of relying on missing credentials:
+# verified directly 2026-09-13 that a repo-local `credential.helper`/
+# `core.askPass` override is NOT sufficient by itself -- an inherited
+# `GIT_ASKPASS` environment variable (e.g. from VS Code's own git
+# integration, present for the whole terminal session, not scoped to a
+# folder) bypasses both. This hook blocks at the git command itself,
+# before any credential of any kind is even consulted, so it doesn't
+# depend on environment hygiene at all. See AGENTS.md's "Your
+# environment" section and docs/project-log.md's 2026-09-13 entry for
+# the full incident this came from (a real test push landed on `main`
+# under the old config-only approach, caught and reverted the same
+# session).
+echo "BLOCKED: this clone must never push." >&2
+echo "Hand your work off per AGENTS.md's 'Handing off your work' section instead." >&2
+exit 1

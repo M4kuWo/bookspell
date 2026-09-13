@@ -78,12 +78,19 @@ this repo runs from:
   push credentials through a separate channel that overrides both of
   those settings regardless of what's configured in the repo itself.
   Being in a different folder under the same login isn't sufficient on
-  its own either, for the same reason. See `AGENTS.md`'s "Your
-  environment" section for the exact hook, why the two config-based
-  attempts failed (verified directly, including one real test push
-  that landed on `main` and was cleanly reverted the same session — see
-  `docs/project-log.md`'s 2026-09-13 entry), and why the hook is the
-  one approach that's actually reliable regardless of environment.
+  its own either, for the same reason. **Setup for a new CODX clone
+  (this machine or any other) is one command**, `bash
+  scripts/setup-codx-clone.sh [target-dir]`, run from any existing
+  checkout — the hook itself lives as a tracked file at
+  `.githooks/pre-push`, wired in via `git config core.hooksPath
+  .githooks`, so it travels with the repo and can't drift or need
+  manual recreation the way a plain `.git/hooks/` file would. See
+  `AGENTS.md`'s "Your environment" section for the exact mechanics, why
+  the two config-based attempts failed (verified directly, including
+  one real test push that landed on `main` and was cleanly reverted the
+  same session — see `docs/project-log.md`'s 2026-09-13 entries), and
+  why the hook is the one approach that's actually reliable regardless
+  of environment.
   Reads hosted
   Supabase data via the same public anon key `app/shared.js` already
   ships client-side (real, RLS-enforced read-only — verified its write

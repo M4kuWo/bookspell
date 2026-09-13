@@ -14749,3 +14749,36 @@ tagged across sessions today - 8 flagged graphic novels), plus whatever
 new non-SFF leakage/omnibus/unpublished exceptions keep surfacing at
 tagging time.
 
+
+## 2026-09-13 (later still) -- made CODX's push-block portable across machines
+
+Prompted by the repo owner asking what re-setting up CODX on a
+different PC would require, and whether it could be made a one-command
+thing. The hook itself (from the earlier incident this same day) lived
+only in `bookspell-codex/.git/hooks/pre-push` -- real, working, but
+`.git/hooks/` isn't part of the tracked repo, so every future clone
+(a new machine, or redoing this one from scratch) would have needed the
+exact hook content manually recreated from `AGENTS.md`'s documentation,
+by hand, with real risk of a typo silently producing a non-blocking
+hook.
+
+Fixed by moving the hook's actual content into the tracked repo:
+`.githooks/pre-push` (a real, git-tracked directory) plus `git config
+core.hooksPath .githooks` to point a clone at it instead of the default
+`.git/hooks/`. This file does nothing by itself -- CLDO's and CLDA's
+own clones never set `core.hooksPath`, so it just sits there inert for
+them, same as any other tracked file they don't happen to touch. Only
+a clone that's explicitly opted in is affected.
+
+Wrapped the whole setup into `scripts/setup-codx-clone.sh` -- clones
+fresh if the target doesn't exist, or just re-points `core.hooksPath`
+if it does (safe to re-run, never touches history), refuses to run
+against a clone of a different repo (checks `origin`'s URL first) as a
+guard against being run somewhere it shouldn't be. Migrated the
+existing `bookspell-codex` clone to the new mechanism and removed its
+old ad-hoc `.git/hooks/pre-push` file (no longer the source of truth,
+would only cause confusion left in place); re-verified with a real push
+attempt that it still blocks correctly.
+
+`AGENTS.md`/`CLAUDE.md` updated to describe the one-command setup
+instead of the manual "create and chmod this file" instructions.

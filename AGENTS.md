@@ -47,21 +47,34 @@ of it, for working-tree-collision reasons alone if nothing else. But
 the real, load-bearing safeguard against an accidental push is the one
 below, not the directory choice itself.
 
-**What actually blocks a push here, verified by really testing it, not
-assumed**: a `pre-push` git hook at `.git/hooks/pre-push` in this
-clone that unconditionally exits non-zero before any network/auth
-activity happens at all —
+**Setup is one command, and it's re-runnable on any machine**:
 
 ```sh
-#!/bin/sh
-echo "BLOCKED: this clone (bookspell-codex, CODX's environment) must never push." >&2
-echo "Hand your work off per AGENTS.md's 'Handing off your work' section instead." >&2
-exit 1
+bash scripts/setup-codx-clone.sh [target-directory]   # default: ~/Documents/bookspell-codex
 ```
 
-(must be executable — `chmod +x .git/hooks/pre-push` — and re-created
-if this clone is ever redone from scratch, since `.git/hooks/` isn't
-part of the tracked repo and a fresh `git clone` won't bring it along).
+Run this from any existing checkout of the repo (any CLDO/CLDA clone,
+or even a throwaway one) to set up a brand-new CODX clone elsewhere —
+this is what makes moving to a different PC simple: clone the main repo
+there once (however CLDO/CLDA would), then run this one script pointed
+at wherever CODX's clone should live. It clones fresh if the target
+doesn't exist yet, or just re-points an existing clone's hooks if it
+does (safe to re-run, never rewrites history).
+
+**What it actually sets up**: `git config core.hooksPath .githooks` —
+pointing this clone at `.githooks/` (a real directory tracked IN this
+repo, not the usual untracked `.git/hooks/`) as its hooks folder.
+`.githooks/pre-push` unconditionally exits non-zero before any
+network/auth activity happens at all, blocking any push from a clone
+configured this way. Because the hook's content lives in the tracked
+repo instead of copy-pasted into a clone's local, untracked
+`.git/hooks/`, it can never drift out of date and never needs
+recreating by hand — a plain `git pull` keeps it current the same way
+it keeps `CLAUDE.md`/schema files current. **This tracked file does
+nothing on its own** — CLDO's and CLDA's own clones never set
+`core.hooksPath`, so it just sits there as an ordinary file for them;
+only a clone that's explicitly been pointed at it (via the setup
+script) is actually affected.
 
 **Why this hook, and not just a git config override**: the first
 attempt at this (2026-09-13) was `git config credential.helper ""`,
