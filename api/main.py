@@ -178,6 +178,13 @@ def recommendations(genre: str = None, top_n: int = 10, authorization: str = Hea
             "mismatch_summary": detail["mismatch_summary"],
             "dealbreaker_summary": detail["dealbreaker_summary"],
             "series_note": detail["series_note"],
+            # Itemized detail behind the one-line summaries above -- the
+            # app's "why this recommendation" expansion renders these
+            # directly rather than re-deriving them, since explain_match()
+            # already computed the full breakdown for the summary sentence.
+            "matches": detail["matches"],
+            "mismatches": detail["mismatches"],
+            "dealbreaker_flags": detail["dealbreaker_flags"],
         })
     return {"results": out}
 

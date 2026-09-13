@@ -46,6 +46,21 @@ function escapeAttr(s) {
   return escapeHtml(s).replace(/"/g, '&quot;');
 }
 
+// Builds a Postgres ILIKE pattern that matches each typed word in
+// order but tolerant of whatever sits between them (a hyphen, extra
+// punctuation, nothing at all) -- e.g. "hard boiled wonderland" ->
+// "%hard%boiled%wonderland%", which matches the real stored title
+// "Hard-Boiled Wonderland and the End of the World" even though the
+// typed query has a space where the title has a hyphen. Plain
+// substring search (`%${q}%`) required an exact match for the whole
+// typed phrase and missed this class of title entirely. Escapes `%`/`_`
+// in each word first so a literal percent sign a user types can't be
+// misread as a wildcard.
+function ilikeWordPattern(q) {
+  const words = q.trim().split(/\s+/).filter(Boolean).map((w) => w.replace(/[%_]/g, '\\$&'));
+  return `%${words.join('%')}%`;
+}
+
 function showToast(msg) {
   const el = document.getElementById('toast');
   if (!el) return;
@@ -129,6 +144,13 @@ function formatRuntime(mins) {
   return mins ? `${(mins / 60).toFixed(1)}h` : null;
 }
 
+function matchClass(label) {
+  if (label === 'Strong match') return 'match-strong';
+  if (label === 'Good match') return 'match-good';
+  if (label === 'Mixed match') return 'match-mixed';
+  return 'match-poor';
+}
+
 // "3 months ago" / "2 years, 1 month ago" style relative phrasing for a
 // stored 'YYYY-MM-DD' rated_date -- readers rarely think in exact dates,
 // but the exact value is still the source of truth (shown as a title
@@ -178,7 +200,7 @@ async function showBookInfo(bookId) {
   overlay.hidden = false;
 
   const [{ data: book }, { data: dna }, { data: tropeRows }, { data: cwRows }, { data: editions }] = await Promise.all([
-    sb.from('books').select('title, author, synopsis, page_count, publication_year, cover_url, position_in_series, series(name), universe(name)').eq('id', bookId).maybeSingle(),
+    sb.from('books').select('title, author, synopsis, page_count, publication_year, cover_url, position_in_series, series(name, status), universe(name)').eq('id', bookId).maybeSingle(),
     sb.from('book_dna').select('*').eq('book_id', bookId).maybeSingle(),
     sb.from('book_tropes').select('trope_id').eq('book_id', bookId),
     sb.from('book_content_warnings').select('warning_id, severity').eq('book_id', bookId),
@@ -201,7 +223,7 @@ async function showBookInfo(bookId) {
   const tropes = (tropeRows || []).map((t) => titleCase(t.trope_id));
   const cws = (cwRows || []).map((c) => `${titleCase(c.warning_id)} (${titleCase(c.severity)})`);
   const membership = [
-    book.series ? `<span class="membership-badge">📚 ${escapeHtml(book.series.name)}${book.position_in_series ? ` #${book.position_in_series}` : ''}</span>` : null,
+    book.series ? `<span class="membership-badge">📚 ${escapeHtml(book.series.name)}${book.position_in_series ? ` #${book.position_in_series}` : ''} — ${book.series.status === 'completed' ? 'Completed' : 'Ongoing'}</span>` : null,
     book.universe ? `<span class="membership-badge">✦ ${escapeHtml(book.universe.name)} universe</span>` : null,
   ].filter(Boolean);
 
@@ -266,6 +288,53 @@ async function showBookInfo(bookId) {
       </details>
     `}
   `;
+  document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+}
+
+// "Why this recommendation?" -- reuses the exact same expand-a-window
+// modal as showBookInfo() above (same overlay/box elements), just with
+// a different render for a recommendation-result object `r` (whatever
+// shape /recommendations returned: title/author/match_label/summary/
+// mismatch_summary/dealbreaker_summary/series_note/matches/mismatches/
+// dealbreaker_flags). No network call needed -- the itemized detail
+// already came back with the recommendation itself.
+function showRecommendationExplanation(r) {
+  const overlay = ensureModalEl();
+  const box = document.getElementById('book-info-box');
+  const listHtml = (items, emptyText) => items && items.length > 0
+    ? `<ul class="dna-synopsis" style="margin:0; padding-left:1.2em;">${items.map((m) => `<li>${escapeHtml(m)}</li>`).join('')}</ul>`
+    : `<div class="empty-state" style="text-align:left; padding:4px 0;">${escapeHtml(emptyText)}</div>`;
+  box.innerHTML = `
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">${escapeHtml(r.title)}</div>
+        <div class="modal-author">${escapeHtml(r.author || '')}</div>
+      </div>
+      <button class="modal-close" id="modal-close-btn">✕</button>
+    </div>
+    <div class="membership-line"><span class="pill ${matchClass(r.match_label)}">${escapeHtml(r.match_label)}</span></div>
+    ${r.dealbreaker_flags && r.dealbreaker_flags.length > 0 ? `
+      <details open style="margin-top:10px;">
+        <summary class="dna-section-title" style="color:var(--disliked);">Dealbreakers</summary>
+        <div style="margin-top:8px;">${listHtml(r.dealbreaker_flags)}</div>
+      </details>
+    ` : ''}
+    <details open style="margin-top:10px;">
+      <summary class="dna-section-title">Why it matches</summary>
+      <div style="margin-top:8px;">${listHtml(r.matches, 'Nothing specific stood out -- this is more of a middling match.')}</div>
+    </details>
+    <details open style="margin-top:10px;">
+      <summary class="dna-section-title">Where it differs from your taste</summary>
+      <div style="margin-top:8px;">${listHtml(r.mismatches, 'No real mismatches found.')}</div>
+    </details>
+    ${r.series_note ? `
+      <details open style="margin-top:10px;">
+        <summary class="dna-section-title">Series note</summary>
+        <div class="dna-synopsis" style="margin-top:8px;">${escapeHtml(r.series_note)}</div>
+      </details>
+    ` : ''}
+  `;
+  overlay.hidden = false;
   document.getElementById('modal-close-btn').addEventListener('click', closeModal);
 }
 

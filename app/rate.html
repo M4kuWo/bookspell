@@ -130,11 +130,11 @@ async function searchBooks(query) {
     resultsEl.innerHTML = '';
     return;
   }
-  const q = query.trim();
+  const pattern = ilikeWordPattern(query);
   const [booksRes, seriesRes, universeRes] = await Promise.all([
-    sb.from('books').select('id,title,author,cover_url').or(`title.ilike.%${q}%,author.ilike.%${q}%`).order('title').limit(12),
-    sb.from('series').select('id,name').ilike('name', `%${q}%`).order('name').limit(5),
-    sb.from('universe').select('id,name').ilike('name', `%${q}%`).order('name').limit(3),
+    sb.from('books').select('id,title,author,cover_url').or(`title.ilike.${pattern},author.ilike.${pattern}`).order('title').limit(12),
+    sb.from('series').select('id,name').ilike('name', pattern).order('name').limit(5),
+    sb.from('universe').select('id,name').ilike('name', pattern).order('name').limit(3),
   ]);
   renderSearchResults(seriesRes.data || [], universeRes.data || [], booksRes.data || []);
 }

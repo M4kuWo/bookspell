@@ -14782,3 +14782,88 @@ attempt that it still blocks correctly.
 
 `AGENTS.md`/`CLAUDE.md` updated to describe the one-command setup
 instead of the manual "create and chmod this file" instructions.
+
+## 2026-09-14 -- naming sanity-check research, an author-contamination fix, partial-match search, a "why this recommendation" expansion, and a series-status indicator/filter
+
+Five items from the repo owner in one round: a naming confirmation
+request plus 4 real app/data asks.
+
+**Naming sanity-check (Daevabad, The Legend Universe)**: researched both
+independently before answering. Both underlying CONNECTIONS are
+well-confirmed (Amina al-Sirafi has an in-text incident plus a Daeva
+cameo confirming the same world as the Daevabad Trilogy; Marie Lu
+confirmed Legend/Warcross share a universe directly in a Reddit AMA).
+Neither NAME is an independently-verified pre-existing fan term, though
+-- "Daevabad" fits this project's established fallback pattern (a real
+in-world place name used directly, same as Westeros/Abeth/Middle-earth)
+so reads as solid; "The Legend Universe" doesn't have the same footing
+(no real fan community usage found, and "Legend" is the flagship
+series' own title rather than an in-world place, unlike every other
+name in this project chosen the same way) -- flagged back to the repo
+owner rather than decided unilaterally. Also surfaced in passing:
+Marie Lu's own AMA statement was broader than just Legend+Warcross
+("all her books are in the same universe") -- worth knowing if this
+universe's scope ever needs revisiting beyond the 2 series already
+linked.
+
+**Author-field contamination fixed**: *The Shadow of the Wind*'s stored
+author was `"Carlos Ruiz Zafón, Lucia Graves"` -- confirmed via
+multiple sources that Graves is the English translator of all 4 of
+Zafón's "Cemetery of Forgotten Books" novels, not a co-author. Checked
+the rest of the catalog for the same author first -- only this one
+book by Zafón exists here, no other rows affected. Migration
+`20260914000000_fix_shadow_of_the_wind_translator_contamination.sql`,
+tested in a rolled-back transaction, applied via `supabase db push`.
+
+**Search now tolerates punctuation differences between what's typed and
+what's stored**: `rate.html`'s book/series/universe search used a
+literal `%${q}%` substring match, so typing "hard boiled wonderland"
+(a space) found nothing for the real stored title "Hard-Boiled
+Wonderland and the End of the World" (a hyphen) -- the whole typed
+phrase had to appear as one contiguous substring. Added
+`ilikeWordPattern()` to `shared.js`: splits the typed query into words
+and joins them with `%` wildcards (`"hard boiled wonderland"` ->
+`"%hard%boiled%wonderland%"`), so each word still has to appear in
+order but whatever separates them (hyphen, extra punctuation, nothing)
+no longer breaks the match. Verified directly against the real hosted
+row before and after.
+
+**"Why this recommendation?" expansion, functioning like the existing
+book-info modal (click a button, a window expands)**: `api/main.py`'s
+`/recommendations` response now also includes `matches`/`mismatches`/
+`dealbreaker_flags` -- itemized detail `explain_match()` already
+computed for the one-line summary sentences already shown inline, just
+not previously exposed via the API. `dashboard.html` gained a "Why this
+recommendation?" button per card; `shared.js` gained
+`showRecommendationExplanation()`, reusing the exact same modal
+overlay/box `showBookInfo()` uses (no second modal element, no extra
+network call -- the itemized data already came back with the
+recommendation). Verified visually against mock data (dealbreakers,
+matches, mismatches, series note all render; close/reopen cycle works).
+
+**Series ended/ongoing indicator + a "completed series only" filter**:
+`series.status` already existed from the earlier `series.status`/
+`book_count` audit work -- this was a display + filter task, not a new
+schema field. Recommendation cards and the book-info modal's series
+membership badge both now show "— Ongoing"/"— Completed" (defaulting
+display to "Ongoing" for anything not exactly `'completed'`, matching
+this project's own documented `series.status` semantics). New
+dashboard filter, `completed_only`: keeps a book if it has no series at
+all (a standalone isn't "an ongoing series" in any sense this filter
+cares about) OR its series is completed. Needed no extra Supabase
+query -- `attachThumbnails()` already fetches each result's `book_id`
+by title, so extending that same query to also pull `series(name,
+status)` was enough; filtering happens entirely client-side against
+data already in hand. Folded into the existing "does any filter need a
+bigger `top_n` pool" check alongside the audiobook filters.
+
+Not yet addressed, left as an open design question for the repo owner
+per his own framing (not a bug fix, a "should we change this" ask): the
+static multi-page architecture means navigating from Recommendations to
+My Ratings and back is a full page reload, so the last-fetched
+recommendation results are gone rather than preserved. A caching fix
+(store the last fetch in `sessionStorage`, restore on page load) is the
+natural answer without rearchitecting into an SPA, but this wasn't
+implemented pending his call.
+
+All changes committed together; migration applied to hosted, verified.

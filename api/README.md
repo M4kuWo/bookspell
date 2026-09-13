@@ -17,7 +17,10 @@ and why this split was chosen, and `docs/project-log.md`'s 2026-09-12/13
   `top_n` capped at 100) — auth required
   (`Authorization: Bearer <supabase-jwt>`), returns this user's top-N
   recommendations (default 10) plus a human-readable why-summary per
-  book. `top_n` exists so a client-side post-filter (e.g. the app's
+  book, and the itemized `matches`/`mismatches`/`dealbreaker_flags`
+  lists behind that summary (same data `explain_match()` always
+  computed — the app's "why this recommendation" expansion renders
+  these directly). `top_n` exists so a client-side post-filter (e.g. the app's
   audiobook-availability filters, which can't be applied inside
   `recommend()` without a real scoring-engine change) can ask for a
   bigger ranked pool to filter down from, rather than only ever seeing
