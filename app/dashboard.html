@@ -91,12 +91,54 @@ let session, currentGenre = '', ruleTargets = [];
 // one fetch filtered 3 ways client-side).
 let resultsByGenre = {};
 
+// Item #5 -- switching to "My ratings" and back used to lose whatever
+// was just fetched, since this is a plain static multi-page site (a
+// nav click is a full page reload, not an SPA route change) -- nothing
+// in JS memory survives that. Recomputing is not free (a cold backend
+// can take up to a minute), so there's no reason a glance at My Ratings
+// should cost the reader that. sessionStorage survives a page reload
+// within the same browser tab/session (cleared when the tab/browser
+// actually closes, or on sign-out below) without needing to turn this
+// into a single-page app. Keyed by user id so switching accounts in the
+// same browser session/tab can't show one user's cached picks to
+// another.
+const RECS_CACHE_KEY = 'bookspell-cached-recs';
+function saveRecsCache() {
+  try {
+    sessionStorage.setItem(RECS_CACHE_KEY, JSON.stringify({
+      userId: session.user.id,
+      currentGenre,
+      audiobookMode: document.getElementById('audiobook-filter').value,
+      seriesStatusMode: document.getElementById('series-status-filter').value,
+      resultsByGenre,
+    }));
+  } catch (e) { /* private mode / storage unavailable -- just skip caching */ }
+}
+function loadRecsCache() {
+  try {
+    const raw = sessionStorage.getItem(RECS_CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    return cached && cached.userId === session.user.id ? cached : null;
+  } catch (e) { return null; }
+}
+
 (async () => {
   session = await requireAuth();
   if (!session) return;
   renderNav('dashboard.html', session);
   loadRuleTargets();
   loadCurrentRules();
+
+  const cached = loadRecsCache();
+  if (cached) {
+    resultsByGenre = cached.resultsByGenre || {};
+    currentGenre = cached.currentGenre || '';
+    document.getElementById('audiobook-filter').value = cached.audiobookMode || '';
+    document.getElementById('series-status-filter').value = cached.seriesStatusMode || '';
+    document.querySelectorAll('#genre-toggle button').forEach((b) => b.classList.toggle('active', b.dataset.genre === currentGenre));
+    if (resultsByGenre[currentGenre]) renderResults(resultsByGenre[currentGenre]);
+  }
 })();
 
 document.querySelectorAll('#genre-toggle button').forEach((btn) => {
@@ -106,6 +148,7 @@ document.querySelectorAll('#genre-toggle button').forEach((btn) => {
     currentGenre = btn.dataset.genre;
     if (resultsByGenre[currentGenre]) {
       renderResults(resultsByGenre[currentGenre]);
+      saveRecsCache();
     } else if (Object.keys(resultsByGenre).length > 0) {
       // A filter changed since the last fetch invalidated the cache, or
       // this tab just hasn't loaded yet for some other reason.
@@ -277,6 +320,7 @@ document.getElementById('get-recs-btn').addEventListener('click', async () => {
       if (resultsByGenre[g]) resultsByGenre[g] = resultsByGenre[g].slice(0, DISPLAY_COUNT);
     }
     renderResults(resultsByGenre[currentGenre]);
+    saveRecsCache();
   } catch (e) {
     resultsArea.innerHTML = `<div class="empty-state">Couldn't reach the recommendation service. It may still be waking up — try again in a moment.</div>`;
   } finally {

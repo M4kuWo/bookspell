@@ -392,6 +392,7 @@ function renderNav(active, session) {
   window.addEventListener('scroll', () => { dropdown.hidden = true; }, { passive: true });
   document.getElementById('sign-out-btn').addEventListener('click', async () => {
     await sb.auth.signOut();
+    try { sessionStorage.removeItem('bookspell-cached-recs'); } catch (e) { /* ignore */ }
     window.location.href = 'index.html';
   });
 }
