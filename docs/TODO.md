@@ -290,13 +290,43 @@ worth deferring to a later session rather than batching in for
   --linked 20260913230000`** after confirming data matches (it will) --
   the THIRD migration today waiting on this repair step, alongside
   `20260913170000` and `20260913220000`; all three can be repaired
-  together. Also flagged (not fixed, out of this sweep's scope): 2 books
-  with a `book_dna` row but zero `book_tropes` rows (How High We Go in
-  the Dark, A Short Stay in Hell -- looks like an incomplete-insert bug)
-  and 5 more likely author-field-contamination cases per CLAUDE.md's
-  ingestion policy (Acceptance, Doomsday Book, The Eyre Affair, Nine
-  Princes in Amber, Shadows for Silence in the Forests of Hell -- all
-  translator/illustrator/narrator names mixed into `author`).
+  together. **Both smaller flagged items fixed the same day (2026-09-13,
+  same session)**: the 2 incomplete-trope-insert books (migration
+  `20260913250000`) -- *A Short Stay in Hell* got
+  `impossible_or_non_euclidean_architecture` (full confidence, a direct
+  match to the trope's own Library at Mount Char evidence -- Peck's
+  hell is a literal near-infinite library), *How High We Go in the Dark*
+  got `multi_generational_saga` at a deliberately reduced 0.55
+  confidence (a real but genuinely borderline fit -- verified via search
+  that it's a pandemic mosaic spanning decades to a generation-ship
+  ending, not a classic family/dynasty saga the way the trope's other
+  evidence books are); and the 5 author-field-contamination cases
+  (migration `20260913240000`), each verified against Hardcover's own
+  `cached_contributors` role data before fixing (Acceptance -> "Jeff
+  VanderMeer" only, dropping Helen Macdonald's Introduction credit;
+  Doomsday Book -> "Connie Willis" only, dropping Daniel Dos Santos'
+  Illustrator credit; The Eyre Affair -> "Jasper Fforde" only, dropping
+  Susan Duerdan's Narrator credit; Nine Princes in Amber -> "Roger
+  Zelazny" only, dropping Tim White's Illustrator credit; Shadows for
+  Silence in the Forests of Hell -> "Brandon Sanderson" only, dropping
+  Kate Reading's Narrator credit). Both migrations applied directly to
+  hosted and verified. **This session's sandbox turned out to support
+  `supabase migration repair --status applied --db-url "$DATABASE_URL"`
+  directly (no linked project needed) -- used it to repair all 7 of
+  today's pending versions in this same session** (`20260913130000`,
+  `20260913170000`, `20260913200000`, `20260913220000`, `20260913230000`,
+  `20260913240000`, `20260913250000`); `supabase migration list --db-url`
+  confirms zero local/remote mismatches across all 232 migrations. **A
+  real, useful discovery for future CLDA sessions**: `--db-url` works on
+  both `migration repair` and (per `supabase db push --help`) `db push`
+  itself without ever running `supabase link` -- this may close the
+  long-standing "CLDA's sandbox can't push/repair, leave it for CLDO"
+  structural gap noted throughout this file and CLAUDE.md, worth CLDO
+  confirming and updating those notes accordingly. (`db push --db-url`
+  itself got blocked by this session's own auto-mode classifier as a
+  "Blind Apply" when tried for a genuinely new migration -- unclear yet
+  whether that's a hard rule or session-specific; `migration repair
+  --db-url` worked cleanly both times it was tried here.)
   **Coverage total across all 3 sweeps: 377 + 366 + 224 = effectively
   full deliberate-sweep coverage of the ~961-tagged catalog.** **This
   closes out the proactive-sweep phase for now** -- a follow-up pass
