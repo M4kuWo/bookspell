@@ -128,42 +128,68 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
-- [ ] **Catalog-wide trope/content-warning vocabulary gap sweep --
-  READY for CLDA, planned 2026-09-13 for whenever CLDA's token budget
-  next resets.** Full methodology in the new
-  `.claude/skills/catalog-trope-gap-sweep/SKILL.md` -- don't re-derive
-  it here, read that file first. Prompted by the repo owner asking
-  directly whether new tropes are still surfacing as the catalog grows;
-  the answer was "the mechanism exists and has worked before, but
-  nothing was tracking flagged single-book gaps centrally" (fixed the
-  same day -- see `docs/schema/book-dna.md`'s new "Flagged
-  single-occurrence vocabulary gaps" tracker and the 2026-09-13
-  project-log entry). That fix only catches gaps that surface
-  incidentally during ordinary per-book tagging, though -- this item is
-  the other half: a genuinely proactive, deliberate sweep, sized for a
-  real chunk of a fresh token budget rather than a quick check.
-  **Scope, in order**: (1) check the tracker's 2 already-open gaps
-  against the current catalog first -- cheapest, already has named
-  candidate second-occurrence books to check directly; (2) mine
-  existing low-confidence `book_tropes`/`book_field_confidence` rows
-  (41 low-confidence trope tags as of 2026-09-13 -- a small, cheap-to-
-  review list) for a recurring "closest available fit, not a clean
-  match" pattern across 2+ books; (3) a broader qualitative sweep by
-  author/subgenre cluster, same method as the 2026-09-05 sweep that
-  found 5 new tropes against a then-~700-book catalog (now 1250+,
-  ~960+ tagged) -- look for a recognizable pattern across real books
-  with zero shared trope signal, verified against actual literary
-  knowledge, never genre pattern-matching. Same "does this change the
-  recommendation" bar as every other vocabulary decision in this
-  project -- a real pattern that doesn't discriminate between books a
-  reader would/wouldn't want isn't worth adding just because it's
-  real. Any addition needs `docs/schema/book-dna.schema.yaml`,
-  `docs/schema/book-dna.md`, AND `tag-catalog-batch/SKILL.md` updated
-  in the same session, same rule as any other schema change. Report
-  back with how much of the catalog was actually covered (by
-  author/cluster, not just a book count) so a follow-up sweep knows
-  where to pick up -- this is expected to be a recurring skill
-  invocation, not a one-shot completionist pass.
+- [x] **Catalog-wide trope/content-warning vocabulary gap sweep --
+  RUN 2026-09-13 by CLDA.** Full methodology in
+  `.claude/skills/catalog-trope-gap-sweep/SKILL.md`. **Outcome**:
+  Step 1 (the 2 already-tracked gaps) -- both re-checked against their
+  named candidate books (Blindsight, Alien Clay for the first-contact
+  gap; a catalog search for climate-disaster SFF for the CW gap), both
+  still only one real occurrence, stay Open in
+  `docs/schema/book-dna.md`'s tracker. Step 2 (low-confidence mining) --
+  reviewed all 41 low-confidence tropes + 204 low-confidence
+  `book_field_confidence` rows; one plausible cluster (5 books' weakly-
+  fit `underdog_rising` tags) investigated and deliberately REJECTED --
+  model-calibration noise on individual borderline books, not a clean
+  shared missing concept (comparable books like Circe/Spinning Silver
+  already correctly get no `underdog_rising` tag at all). Step 3 (the
+  main sweep) -- 6 parallel non-forked background agents (per CLAUDE.md's
+  agent-efficiency guidance) covered 31 authors / 377 tagged books
+  (Pratchett, Sanderson, King, Butcher, Maas, Scalzi, Riordan, Lawrence,
+  Corey, Asimov, Jordan, Hobb, Abercrombie, Wells, Schwab, Bardugo,
+  Erikson, Clare, Dinniman, Le Guin, Lewis, Rowling, Weeks, Sapkowski,
+  Card, Adams, Tchaikovsky, Chambers, Martin, Banks, Gaiman) -- roughly
+  39% of the ~961 tagged catalog. **5 new tropes landed**
+  (`anthropomorphic_personification_protagonist`,
+  `government_experimentation_on_the_gifted`, `magically_binding_bargain`,
+  `predictive_social_science`, `post_scarcity_utopia` -- migration
+  `20260913170000_catalog_trope_gap_sweep_5_new_tropes.sql`, 24
+  book-trope insertions across 24 books), each cross-verified to rule
+  out redundancy with an existing SCALAR field before landing -- two
+  strong-looking candidates (`multi_pov_ensemble_narrative`,
+  `non_linear_timeline_narrative`) were caught and rejected this way,
+  already fully captured by the existing `pov_count`/`timeline` fields
+  respectively (confirmed directly against the DB, not assumed). 3 more
+  real candidates found but deliberately deferred (single-series-only
+  evidence within the current catalog) -- see
+  `docs/schema/book-dna.md`'s vocabulary-gap tracker for
+  `monster_hunter_for_hire`, `skinchanging_or_body_possession`,
+  `remote_piloted_robotic_surrogate`. **Also found and fixed a real,
+  separate doc-sync bug while cross-checking the vocabulary**: the
+  2026-09-05 sweep's own 6 trope values had landed in the live DB via
+  migration `20260905140000` but were NEVER added to
+  `docs/schema/book-dna.schema.yaml`/`book-dna.md` -- caught only
+  because this sweep compared the DB's actual `tropes` table row count
+  against the docs instead of trusting them; both docs now exactly match
+  the DB (134 tropes, 37 content_warning_types, verified with a
+  zero-diff script, not eyeballed). `docs/schema/book-dna.schema.yaml`
+  and `book-dna.md` both updated in this same session for all of the
+  above. **Applied directly to HOSTED, not via `supabase db push`** --
+  CLDA's sandbox has no linked Supabase project (no local Supabase
+  stack running either, confirmed) and `.env`'s `DATABASE_URL` resolves
+  to a `*.pooler.supabase.com` host, i.e. hosted itself, not a local
+  instance. Applied via direct autocommit psycopg2 per the established
+  CLDA workaround. Hosted's `supabase_migrations` tracking table does
+  NOT know this version was applied -- **CLDO needs to run
+  `supabase migration repair --status applied --linked 20260913170000`**
+  after confirming row counts match (they will -- this session applied
+  and verified the real data), per CLAUDE.md's documented recovery
+  procedure. See the migration file's own header comment.
+  **Follow-up scope for the next sweep**: the ~584 tagged books NOT yet
+  covered by author/cluster -- everything outside the 31 authors listed
+  above (many single-book/small-author entries, plus any author added
+  to the catalog after 2026-09-13). Also worth a quick pass: whether a
+  second real occurrence of the 3 deferred single-series candidates
+  above has shown up in newly-tagged books.
 - [ ] **CODX (Codex CLI, via the repo owner's ChatGPT Plus
   subscription) as a third working entity -- approach worked out
   2026-09-11, deliberately deferred, do later.** Persona name settled:

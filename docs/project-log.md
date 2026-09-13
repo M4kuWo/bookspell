@@ -13697,3 +13697,172 @@ candidates carry forward as live options for batch 9's first picks:
 Shannara (Chronological Order), World of the Five Gods (Publication),
 Capitaine Nemo -- plus Rivers of London and Vorkosigan Saga
 (Publication Order), seen but not settled this batch either.
+
+## 2026-09-13 (later still) -- catalog-wide trope-gap sweep #2 (CLDA): 5 new tropes landed, 3 deferred, a real doc-sync bug from the first sweep caught and fixed
+
+Ran `.claude/skills/catalog-trope-gap-sweep/SKILL.md` per its P1 slot in
+`docs/TODO.md`. Read CLAUDE.md, `docs/schema/book-dna.md` in full,
+`docs/schema/book-dna.schema.yaml`, and the tail of this log first, per
+the skill's own instructions.
+
+**Step 1 -- the two already-tracked gaps, re-checked, both stay Open.**
+Climate/natural-disaster mass-casualty content warning (first seen on
+*The Ministry for the Future*): searched tagged books carrying
+`sudden_apocalypse_event`/`post_apocalyptic`/`dying_earth` plus known
+cli-fi-adjacent titles. Real candidates exist in the catalog but aren't
+tagged yet (*American War*, *Termination Shock*, *The Year of the
+Flood*, *The Overstory* -- no `book_dna` row, out of this sweep's scope
+to tag). Closest tagged near-miss, *Parable of the Sower*, doesn't
+cleanly qualify -- its Robledo-community destruction is human-set arson/
+looting enabled by societal collapse, not itself a natural-disaster
+event the way Ministry's heat wave is. First-contact-via-natural-
+evolution trope (first seen on *The Mountain in the Sea*): both named
+candidates are in the catalog now. *Blindsight* is tagged, but its
+actual mechanism is contact with a genuine extraterrestrial
+intelligence (Rorschach/the scramblers) -- exactly the case this gap
+excludes, so its existing `first_contact` tag is correct and this isn't
+a second occurrence. *Alien Clay* is in the catalog but untagged (out of
+scope to tag here) -- its alien-biosphere-as-emergent-intelligence
+premise is a plausible near-miss but is still extraterrestrial contact,
+not a natural-evolution-on-Earth case; flagged for a real check once it
+gets tagged.
+
+**Step 2 -- low-confidence mining, one cluster investigated and
+rejected.** Queried all 41 low-confidence `book_tropes` rows and 204
+low-confidence `book_field_confidence` rows. Most were either isolated
+(no shared pattern) or systematic artifacts (the ~80 books each at flat
+0.2 confidence on `romance_tone`/`worldbuilding_delivery` read as a
+batch-calibration pattern, not per-book missing-concept signal). One
+real candidate cluster: 5 books (*The Very Secret Society of Irregular
+Witches*, *The Unmaking of June Farrow*, *The Measure*, *The Southern
+Book Club's Guide to Slaying Vampires*, *Weyward*) sharing a
+low-confidence `underdog_rising` tag, hypothesized as a "reclaiming
+agency from constraint" pattern distinct from classic action-adventure
+underdog arcs. Checked against comparable books already in the catalog
+(*Circe*, *The Invisible Life of Addie LaRue*, *Spinning Silver*, *The
+Bear and the Nightingale*) and against confidently-tagged similar books
+(*Nettle & Bone*, *A Sorceress Comes to Call*, *The Book Eaters*) --
+found the pattern doesn't hold up cleanly: when a book's arc has a clear
+external defeat/victory beat, `underdog_rising` is applied confidently;
+the low-confidence cases are model uncertainty on genuinely ambiguous
+individual books (Southern Book Club's Guide *does* have a real
+vampire-defeat plot; The Measure has no rising arc at all), not a shared
+missing concept. Rejected, per the "willing to talk yourself out of a
+candidate" standard.
+
+**Step 3 -- the main sweep, 6 parallel non-forked background agents.**
+Per CLAUDE.md's agent-efficiency guidance (large batch work, each agent
+given the DB access pattern and the full live trope/content-warning
+vocabulary inline so none had to re-read schema files from scratch).
+Split by author cluster, prioritizing authors with many tagged books:
+Pratchett+Sanderson (71 books); King+Butcher+Maas+Scalzi (69);
+Riordan+Lawrence+Corey+Asimov+Jordan (67);
+Hobb+Abercrombie+Wells+Schwab+Bardugo+Erikson (63);
+Clare+Dinniman+Le Guin+Lewis+Rowling+Weeks+Sapkowski (58);
+Card+Adams+Tchaikovsky+Chambers+Martin+Banks+Gaiman (49) -- 31 authors,
+377 tagged books total (~39% of the ~961-book tagged catalog), every
+book in each cluster fully reviewed, not sampled.
+
+Each agent reported candidates with real per-book textual justification
+plus what they considered and rejected. After collecting all 6 reports,
+cross-checked every candidate against the current schema for redundancy
+before accepting any -- this caught two real near-misses: **`multi_pov_
+ensemble_narrative`** (proposed from Wheel of Time/Percy Jackson
+sequels/The Expanse) and **`non_linear_timeline_narrative`** (proposed
+from *Vicious*/*Vengeful*/*Six of Crows*/*Crooked Kingdom*) are both
+already fully captured by existing SCALAR fields -- confirmed directly
+against the DB that every evidence book already carries the correct
+`pov_count: ensemble/several` or `timeline: nonlinear` value. Both
+rejected as redundant, not added.
+
+**5 new tropes landed** (migration
+`20260913170000_catalog_trope_gap_sweep_5_new_tropes.sql`, tested in a
+rolled-back transaction first including a re-run to confirm `on conflict
+do nothing` idempotency, then applied for real via autocommit psycopg2
+-- see the environment note below):
+- `anthropomorphic_personification_protagonist` (craft_devices) --
+  Terry Pratchett's Death sub-series (*Mort*, *Reaper Man*, *Hogfather*,
+  *Soul Music*), an abstract concept embodied as a literal character
+  with human problems/agency. Distinct from `mythological_pantheon_as_
+  characters` (requires an actual named mythology, which Death isn't
+  part of) and `immortal_or_ageless_character` (a trait, not this
+  mechanism).
+- `government_experimentation_on_the_gifted` (plot_devices) -- Stephen
+  King's *Firestarter* and *The Institute*, two independent standalone
+  novels decades apart. A clandestine agency abducts people with innate
+  powers to study/control/weaponize them.
+- `magically_binding_bargain` (plot_devices) -- cross-author: Jim
+  Butcher's Dresden Files (Harry's Winter Knight deal with Mab, made in
+  *Changes*, driving *Cold Days*/*Skin Game*/*Peace Talks*) and Sarah J.
+  Maas's *A Court of Thorns and Roses*/*A Court of Mist and Fury*
+  (Feyre's bargain with Rhysand).
+- `predictive_social_science` (scifi_specific) -- Asimov's *Foundation*/
+  *Second Foundation*/*Foundation's Edge* (psychohistory). Worth noting:
+  all three were already tagged `prophecy`, which conflates Foundation's
+  explicitly anti-mystical predictive-science premise with mystical
+  destiny -- a real instance of the pattern-matched-to-genre-convention
+  mistagging risk HIGH_RISK_FIELDS exists to catch. Left the existing
+  `prophecy` tags as-is (removing them is a `tag-catalog-batch`-scope
+  correction, not this sweep's vocabulary-backfill scope) and flagged it
+  in `book-dna.md` for a future tagging session.
+- `post_scarcity_utopia` (setting_worldbuilding) -- cross-author: Iain
+  M. Banks's Culture novels (7 tagged books) and Becky Chambers's Monk &
+  Robot duology. No prior "utopia"-valence setting value existed.
+
+24 book-trope insertions across 24 books total.
+
+**3 real candidates found but deliberately NOT added** -- each rests on
+a single series/work within the current catalog, held to the same
+discipline as the first sweep's Babel/Perdido Street Station exclusions.
+Added to `docs/schema/book-dna.md`'s "Flagged single-occurrence
+vocabulary gaps" tracker rather than discarded: `monster_hunter_for_hire`
+(Sapkowski's Witcher -- *The Last Wish*, *Sword of Destiny*; a Dresden
+Files comparison was considered but rejected, since most Dresden books
+are already tagged `noir_detective_structure` for a related-but-distinct
+structure), `skinchanging_or_body_possession` (ASOIAF's warging --
+Bran/Varamyr, all one series), `remote_piloted_robotic_surrogate`
+(Scalzi's *Lock In*/*Head On*, one duology).
+
+**A real, separate doc-sync bug found and fixed while cross-checking
+the vocabulary.** The 2026-09-05 sweep's own 6 trope values
+(`sapphic_romance`/`mlm_romance`, `infiltration_or_undercover_plot`,
+`alternate_history`, `multi_generational_saga`, `cosmic_horror`) landed
+in the live DB via migration `20260905140000` and were applied
+catalog-wide (confirmed still live and in active use: 4-16 books each)
+-- but neither `docs/schema/book-dna.schema.yaml` nor `book-dna.md` was
+ever updated to document them. Caught only because this sweep compared
+the DB's actual `tropes` table (129 rows at the time) against
+`schema.yaml`'s documented list (123) instead of trusting the docs, per
+CLAUDE.md's own standing instruction to cross-check against the schema
+file, not memory. Fixed: both docs now document all 6 with real
+per-book evidence (reconstructed from the terse original log entry plus
+fresh verification against the actual catalog data), and both files'
+stale vocabulary counts (schema.yaml's "99 values" prose, book-dna.md's
+several count references) corrected to the real current numbers.
+Verified zero-diff between the DB's `tropes`/`content_warning_types`
+tables and both docs with a script (134 tropes, 37 content warnings),
+not eyeballed.
+
+**Environment note, same as every other CLDA migration batch**: no
+linked Supabase project in this sandbox (`supabase migration list
+--linked` fails with `LegacyProjectNotLinkedError`, no project ref/
+access token). Applied the migration to the database this session's
+`.env` pointed at via a direct autocommit psycopg2 connection, per the
+established workaround. Hosted's `supabase_migrations` tracking table
+does NOT know this version was applied -- CLDO needs to confirm which
+database `.env` was actually pointing at, and if it's hosted, run
+`supabase migration repair --status applied --linked 20260913170000`
+after confirming row counts match on both sides, per CLAUDE.md's
+documented recovery procedure. Do not force through any resulting push
+error.
+
+**Coverage**: 31 authors / 377 tagged books swept this round (~39% of
+the ~961-book tagged catalog) -- see `docs/TODO.md`'s updated entry for
+the exact author list and what's left uncovered for a follow-up pass
+(everything outside these 31 authors -- many single-book/small-author
+entries).
+
+Did not touch `scripts/recommend.py`/`scripts/scoring_tests.py`. No
+individual book's full Book DNA was tagged -- this was vocabulary
+addition plus backfill onto already-tagged books only, per the skill's
+explicit scope.

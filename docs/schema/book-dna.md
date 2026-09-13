@@ -283,7 +283,7 @@ field.
 |---|---|
 | `magic_system_hardness` | hard, soft, none, na |
 | `scifi_hardness` | hard, soft, na |
-| `tropes` | multi-select controlled vocabulary, 99 values across 6 groups, see schema file |
+| `tropes` | multi-select controlled vocabulary, 134 values across 6 groups, see schema file |
 
 `magic_system_hardness`'s `none` vs. `na` distinction was never actually
 defined until the pilot forced an inference: `none` = a fantasy-genre book
@@ -520,6 +520,130 @@ tropes/content warnings, the four new scalar fields require every book
 in the catalog to get a value (not just an optional retroactive tag on
 the specific books that surfaced the gap) — see the project log for the
 retagging pass this triggered.
+
+**Fourth growth round (2026-09-05, first catalog-wide deliberate gap
+sweep)** — 6 trope values (5 distinct concepts; the queer-romance
+concept split into two values rather than one combined tag) added and
+applied catalog-wide (43 book-trope insertions across 42 books, migration
+`20260905140000_add_5_new_tropes_from_gap_sweep.sql`), each verified
+against 2+ real catalog books sharing ZERO trope-level signal despite
+being the same recognizable subgenre/device — the precedent this skill's
+2026-09-13 sweep (see below) followed. **Documented here for the first
+time 2026-09-13** — a real, already-happened instance of this project's
+own "docs must be updated in the same session as the schema change" rule
+being missed: the migration landed and was applied catalog-wide, but
+neither this file nor `book-dna.schema.yaml` was ever updated, so these
+6 values existed live in the database and in the tagging data for over a
+week with no documentation trail. Caught only because the 2026-09-13
+sweep cross-checked the DB's actual `tropes` table (129 rows) against
+`book-dna.schema.yaml` (123 documented at the time) rather than trusting
+the docs — see `docs/project-log.md`'s 2026-09-13 gap-sweep entry.
+- `sapphic_romance` / `mlm_romance` (romance_relationships) — a
+  female-female / male-male romantic relationship as a central or
+  significant thread. Split into two values rather than one combined
+  `queer_romance` tag per the sweep's own recommendation (different
+  reader-taste signals, not interchangeable). Evidence: Gideon the
+  Ninth, One Last Stop, The Once and Future Witches, The Priory of the
+  Orange Tree (sapphic); Carry On, The Song of Achilles, The House in
+  the Cerulean Sea, Under the Whispering Door (mlm).
+- `infiltration_or_undercover_plot` (plot_devices) — a character
+  deliberately adopts a false identity to infiltrate an enemy
+  organization/institution as the plot's driving mechanism. Evidence:
+  City of Stairs, Mistborn: The Final Empire, Red Rising, The Lies of
+  Locke Lamora, The Traitor Baru Cormorant. Distinct from `heist` (a
+  bounded job, not necessarily an assumed identity) — and distinct
+  enough from a merely-discovered hidden faction that Babel was
+  deliberately dropped from consideration (Robin uncovers an
+  already-embedded resistance cell rather than adopting a false
+  identity himself).
+- `alternate_history` (setting_worldbuilding) — a real historical era
+  diverging from actual history via a speculative premise woven into
+  that real history. Evidence: Babel, His Majesty's Dragon, Jonathan
+  Strange & Mr Norrell, The Man in the High Castle.
+- `multi_generational_saga` (plot_devices) — the story spans multiple
+  generations of a family/dynasty/civilization, following descendants
+  across decades or centuries. Evidence: the Foundation series, the
+  Jade City trilogy, One Hundred Years of Solitude, Fire & Blood.
+- `cosmic_horror` (craft_devices) — dread from vast, incomprehensible,
+  uncaring cosmic forces that human minds/morality cannot meaningfully
+  confront or defeat, not just fight and win against. Evidence: the
+  Southern Reach trilogy, House of Leaves, The Call of Cthulhu, Mexican
+  Gothic. The "confronting, not defeating" test is the key
+  discriminator — Perdido Street Station was deliberately dropped
+  because the Slake Moths, however alien, are eventually defeated by
+  human ingenuity.
+
+**Fifth growth round (2026-09-13, second catalog-wide deliberate gap
+sweep, `.claude/skills/catalog-trope-gap-sweep/SKILL.md`)** — 5 new
+trope values added and applied catalog-wide (24 book-trope insertions
+across 24 books, migration
+`20260913170000_catalog_trope_gap_sweep_5_new_tropes.sql`), same method
+as the fourth round: real per-book literary verification, "does this
+change the recommendation" bar, willingness to reject plausible
+candidates. Covered by author/cluster (6 parallel non-forked background
+agents per CLAUDE.md's agent-efficiency guidance): Terry Pratchett +
+Brandon Sanderson (71 books); Stephen King + Jim Butcher + Sarah J. Maas
++ John Scalzi (69); Rick Riordan + Mark Lawrence + James S. A. Corey +
+Isaac Asimov + Robert Jordan (67); Robin Hobb + Joe Abercrombie + Martha
+Wells + V. E. Schwab + Leigh Bardugo + Steven Erikson (63); Cassandra
+Clare + Matt Dinniman + Ursula K. Le Guin + C. S. Lewis + J.K. Rowling +
+Brent Weeks + Andrzej Sapkowski (58); Orson Scott Card + Douglas Adams +
+Adrian Tchaikovsky + Becky Chambers + George R.R. Martin + Iain M. Banks
++ Neil Gaiman (49) — 377 tagged books total, all fully reviewed.
+- `anthropomorphic_personification_protagonist` (craft_devices) — an
+  abstract force/concept (Death, Time, Music) embodied as a literal
+  character with human-like problems and agency. Evidence: Terry
+  Pratchett's Death sub-series — Mort, Reaper Man, Hogfather, Soul
+  Music. Distinct from `mythological_pantheon_as_characters` (requires
+  an actual named/worshipped mythology, which Death explicitly isn't —
+  he predates and exists outside the Discworld's own gods) and from
+  `immortal_or_ageless_character` (a trait, not the concept-made-literal
+  mechanism).
+- `government_experimentation_on_the_gifted` (plot_devices) — a
+  clandestine government agency abducts and holds captive people with
+  innate psychic/supernatural abilities to study, control, or weaponize
+  them. Evidence: Stephen King's Firestarter and The Institute (two
+  independent standalone novels decades apart, not a series).
+- `magically_binding_bargain` (plot_devices) — protagonist enters a
+  supernatural contract with a powerful entity, trading power/salvation
+  for costly, enforced ongoing obligations that drive later plot.
+  Evidence, cross-author: Jim Butcher's Dresden Files (Harry's deal with
+  Queen Mab to become her Winter Knight — made in Changes, driving Cold
+  Days/Skin Game/Peace Talks) and Sarah J. Maas's A Court of Thorns and
+  Roses/A Court of Mist and Fury (Feyre's bargain with Rhysand).
+- `predictive_social_science` (scifi_specific) — a non-mystical,
+  explicitly scientific model used to predict and steer a civilization's
+  future over generations, as opposed to fate or supernatural foresight.
+  Evidence: Asimov's Foundation/Second Foundation/Foundation's Edge
+  (psychohistory). Worth noting: all three were already tagged
+  `prophecy` before this addition — a real instance of the "confidently
+  pattern-matched to genre convention" mistagging risk CLAUDE.md's
+  HIGH_RISK_FIELDS section warns about (Foundation's whole premise is
+  explicitly anti-mystical), left as-is rather than removed since
+  correcting an existing tag is a `tag-catalog-batch`-scope edit, not
+  this sweep's vocabulary-backfill scope — flagged here for a future
+  tagging session to reconsider.
+- `post_scarcity_utopia` (setting_worldbuilding) — a society where
+  advanced (often AI-run) technology has eliminated material scarcity,
+  removing conventional economic/survival stakes from character
+  motivation. Evidence, cross-author: Iain M. Banks's Culture novels (7
+  tagged books) and Becky Chambers's Monk & Robot duology. No prior
+  "utopia"-valence setting value existed at all.
+
+Three real candidates found but deliberately NOT added this round —
+each rests on a single series/work within the current catalog rather
+than an independently-recurring pattern, so held to the same "talk
+yourself out of it" discipline as the fourth round's Babel/Perdido
+Street Station exclusions. Recorded in the "Flagged single-occurrence
+vocabulary gaps" tracker below rather than discarded, so a genuine
+second occurrence in a future sweep or tagging batch is recognizable:
+`monster_hunter_for_hire` (Andrzej Sapkowski's Witcher — The Last Wish,
+Sword of Destiny; a same-catalog Dresden Files comparison was considered
+but rejected as already substantially covered by Dresden's own
+`noir_detective_structure` tagging), `skinchanging_or_body_possession`
+(A Song of Ice and Fire's warging — Bran/Varamyr across 4 books, but all
+one series), and `remote_piloted_robotic_surrogate` (John Scalzi's Lock
+In/Head On — one duology, arguably one story told across two books).
 
 ## Known limitations — engine-level, not schema fixes
 
@@ -779,6 +903,21 @@ don't re-derive it from the log):
   `moderate` as the nearest fit). Watch for climate-disaster-driven SFF
   (flooding, ecological collapse, mass-casualty weather events as a
   book's inciting incident, not just background setting).
+  **CHECKED 2026-09-13 (catalog-trope-gap-sweep), still just one real
+  occurrence — stays Open.** Searched tagged books carrying
+  `sudden_apocalypse_event`/`post_apocalyptic`/`dying_earth` tropes plus
+  known cli-fi-adjacent titles for a second natural-disaster-driven mass
+  casualty event. Real candidates exist in the catalog but aren't
+  tagged yet (no `book_dna` row, out of this sweep's scope to tag):
+  *American War*, *Termination Shock*, *The Year of the Flood*, *The
+  Overstory*. Of the tagged books checked, the closest near-miss is
+  *Parable of the Sower* (Octavia Butler) — but its Robledo-community
+  destruction is human-perpetrated arson/looting enabled by societal
+  collapse, not itself a natural-disaster event the way Ministry for
+  the Future's heat wave is, so it doesn't cleanly hit this gap either
+  (already correctly tagged without this warning). Worth re-checking
+  the four untagged candidates above directly against this gap once
+  they're tagged.
 - **Trope**: no existing trope cleanly captures first-contact-with-a-
   non-human-non-alien-intelligence-via-natural-evolution (as opposed to
   genetic uplift, which has its own trope, or contact with an actual
@@ -791,8 +930,80 @@ don't re-derive it from the log):
   (Adrian Tchaikovsky) and *Blindsight* (Peter Watts) — check both
   against this exact gap before tagging either, since either one hitting
   it would be the second occurrence this list exists to catch.
+  **CHECKED 2026-09-13 (catalog-trope-gap-sweep), still just one real
+  occurrence — stays Open.** Both named candidates are in the catalog
+  now: *Blindsight* IS tagged (`first_contact` among its tropes), but
+  its actual mechanism is contact with a genuine extraterrestrial
+  intelligence (the Rorschach/scramblers) — precisely the case this gap
+  is defined to exclude ("as opposed to... contact with an actual
+  extraterrestrial"), so it's correctly tagged `first_contact` as-is and
+  isn't a second occurrence. *Alien Clay* is in the catalog but NOT yet
+  tagged (no `book_dna` row) — out of scope for this sweep to tag (that's
+  `tag-catalog-batch`'s job), but worth checking directly against this
+  gap when it does get tagged: its premise (an alien planet's biosphere
+  functioning as an emergent collective intelligence) is a plausible
+  near-miss, but note it's still contact with an *alien* (extraterrestrial)
+  ecology, not a natural-evolution-on-Earth case like The Mountain in the
+  Sea's octopuses — check the actual mechanism, don't assume it qualifies
+  just because it's evolution-flavored.
+- **Trope**: `monster_hunter_for_hire` — protagonist's defining
+  narrative structure is a paid, episodic profession, taking discrete
+  contracts to hunt/kill a specific named monster/threat for coin, town
+  to town, rather than one continuous journey or an investigative
+  mystery. Found 2026-09-13 (catalog-trope-gap-sweep) on Andrzej
+  Sapkowski's Witcher books (*The Last Wish*, *Sword of Destiny*) — real
+  and cleanly distinct from `epic_quest`/`survivalist_ingenuity`, but
+  only one series/author in the current catalog cleanly fits it; a
+  same-catalog Dresden Files comparison was considered but rejected
+  since most Dresden books are already tagged `noir_detective_structure`
+  for a similar-but-distinct investigation-driven structure. Watch for
+  another clean "monster-of-the-week paid contractor" book (Van
+  Helsing-style monster hunters, bounty-hunter urban fantasy) as the
+  real second occurrence.
+- **Trope**: `skinchanging_or_body_possession` — a character projects
+  their consciousness into and directly controls another living
+  creature's body (animal or human) while their own body remains
+  inert/vulnerable, distinct from transforming one's own body. Found
+  2026-09-13 (catalog-trope-gap-sweep) on A Song of Ice and Fire's
+  warging (Bran Stark/Varamyr Sixskins, recurring across *A Game of
+  Thrones* through *A Dance with Dragons*) — real and cleanly distinct
+  from `shapeshifters` (own-body transformation) and
+  `telepathic_animal_bond` (a two-way bond, not active possession), but
+  all evidence is one series. Watch for a second book/series with this
+  specific possession mechanic (not just "animal companion" or
+  "shapeshifting").
+- **Trope**: `remote_piloted_robotic_surrogate` — a person's
+  consciousness/neural signal controls a separate robotic body in real
+  time (telepresence) while their own body remains elsewhere, distinct
+  from digitizing consciousness or enhancing one's own biological body.
+  Found 2026-09-13 (catalog-trope-gap-sweep) on John Scalzi's *Lock In*/
+  *Head On* ("threeps" piloted by Haden's-syndrome sufferers) — real and
+  distinct from `cybernetic_enhancement`/`android_or_replicant_rights`/
+  `mind_uploading_or_digital_immortality`, but both evidence books are
+  one duology (arguably one story). Watch for a second, independent
+  telepresence/robotic-surrogate book.
 
-**Promoted / resolved**: none yet.
+**Promoted / resolved**:
+- **6 trope values** (5 concepts: `sapphic_romance`/`mlm_romance`,
+  `infiltration_or_undercover_plot`, `alternate_history`,
+  `multi_generational_saga`, `cosmic_horror`) — landed 2026-09-05 via
+  the first catalog-wide gap sweep (migration
+  `20260905140000_add_5_new_tropes_from_gap_sweep.sql`), but never
+  actually recorded in this tracker or documented in this file/
+  `book-dna.schema.yaml` until the 2026-09-13 sweep caught the gap by
+  cross-checking the live DB against the docs directly. See "Vocabulary
+  growth process" above ("Fourth growth round") for full detail.
+- **5 trope values** (`anthropomorphic_personification_protagonist`,
+  `government_experimentation_on_the_gifted`, `magically_binding_bargain`,
+  `predictive_social_science`, `post_scarcity_utopia`) — landed
+  2026-09-13 via the second catalog-wide gap sweep (migration
+  `20260913170000_catalog_trope_gap_sweep_5_new_tropes.sql`). See
+  "Vocabulary growth process" above ("Fifth growth round") for full
+  detail.
+- Both already-open gaps (climate/natural-disaster mass-casualty CW;
+  first-contact-via-natural-evolution trope) were re-checked 2026-09-13
+  and confirmed to still have only one real occurrence each — see their
+  own entries above for what was checked. They stay Open, not promoted.
 
 **Process note for whoever runs `tag-catalog-batch` next**: Step 1 of that
 skill already says to flag a suspected vocabulary gap instead of silently
@@ -1515,12 +1726,14 @@ Deliberately deferred, not in v0.1:
 
 ## Open for review
 
-Nothing outstanding. Both controlled vocabularies (`tropes` at 99 values,
-`content_warnings` at 33) have had both a researched pass against real
-external sources and a real-books pilot pass (30 books blind-tagged, see
-`docs/pilot/`), and both are still expected to keep growing as an ongoing
-practice once real books get tagged in step 04 — see "Vocabulary growth
-process" above.
+Nothing outstanding. Both controlled vocabularies (`tropes` at 134
+values, `content_warnings` at 37 — current as of the 2026-09-13
+catalog-wide gap sweep, cross-checked directly against the live DB
+tables rather than trusted from memory) have had both a researched pass
+against real external sources and a real-books pilot pass (30 books
+blind-tagged, see `docs/pilot/`), and both are still expected to keep
+growing as an ongoing practice once real books get tagged in step 04 —
+see "Vocabulary growth process" above.
 
 ## Next step
 
