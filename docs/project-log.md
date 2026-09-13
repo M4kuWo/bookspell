@@ -14322,3 +14322,62 @@ time.
 resolved and note the migration-repair discovery. Did not touch
 `scripts/recommend.py`/`scripts/scoring_tests.py`; no fresh full Book DNA
 tagging performed beyond the 2 targeted trope backfills above.
+
+## 2026-09-13 (later still) -- CODX's clone set up for real; a real accidental test push caught and fixed the hard way
+
+Set up `~/Documents/bookspell-codex` (a sibling clone to the repo
+owner's own `~/Documents/bookspell`) as CODX's actual working
+directory, and tried to verify its push-isolation by really testing it
+rather than trusting the config on paper -- which caught a real,
+already-happened gap before CODX itself ever ran.
+
+**First attempt, proven wrong by direct testing**: `git config
+credential.helper ""` set locally in the new clone, reasoning it would
+stop that clone from reaching the macOS Keychain's cached GitHub
+credential the repo owner's own clone uses to push. A real test push
+from the new clone succeeded anyway -- landing a harmless test commit
+on `main` for real. Investigated immediately: `GIT_ASKPASS` (an
+environment variable, in this case set by VS Code's own git
+integration, present in the shared terminal session both clones were
+being driven from) supplies push credentials through a completely
+separate channel than `credential.helper`, and environment variables
+of this kind take precedence over BOTH `credential.helper` AND
+`core.askPass` -- confirmed the second one too (`git config core.askPass
+/bin/false` locally in the clone also did not stop it). Neither git
+config option is sufficient in an environment where something else
+(VS Code here, could be anything else elsewhere) exports `GIT_ASKPASS`.
+
+**Real fix, verified by testing it too**: an unconditional `pre-push`
+git hook (`.git/hooks/pre-push`, `exit 1` before doing anything else)
+in the CODX clone -- this blocks at the git command itself, before any
+credential of any kind is consulted, so it doesn't depend on
+environment hygiene at all. Tested for real (a genuine `git push`, not
+a dry run): blocked immediately with the hook's own message, confirmed
+`origin/main` untouched. Documented in both `AGENTS.md` (the exact hook
+content, since `.git/hooks/` isn't tracked by git and needs recreating
+on any future re-clone) and `CLAUDE.md`'s persona entry.
+
+**The accidental push itself was cleanly reverted, not force-pushed
+away or hidden** -- a normal `git revert` commit, same discipline this
+project uses everywhere else for undoing a mistake. Nothing else was
+affected; the only content involved was a throwaway test file created
+and removed within minutes.
+
+**Also confirmed during the same session** (this part worked as
+designed, no surprises): `git fetch`/`git pull` succeed in the CODX
+clone with zero credential at all (this repo is public, reads never
+needed auth), and the Supabase anon key's write policies really are
+`authenticated`-only everywhere checked, so CODX's planned read path
+for hosted data holds up.
+
+**A separate, unrelated discovery made in passing while syncing**: a
+substantial amount of independent work had already landed on `origin`
+from another session before this one pushed its own changes --
+`series.status`/`book_count` fix batches 7-8, three rounds of the
+catalog-wide trope-gap sweep (this session's own freshly-written
+`.claude/skills/catalog-trope-gap-sweep/SKILL.md`, apparently already
+picked up and run, not waiting until "CLDA's tokens reset tomorrow" as
+planned), a 5-author-contamination fix, and a 2-book trope-insert
+backfill. Pulled in cleanly (fast-forward, no conflicts with this
+session's own `AGENTS.md`/`CLAUDE.md` work) -- full detail is in that
+session's own log entries above this one, not re-summarized here.

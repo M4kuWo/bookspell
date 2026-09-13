@@ -43,33 +43,59 @@ directly, rather than deciding it's fine and doing it anyway.
 You run from your own clone at `~/Documents/bookspell-codex` (a sibling
 of the repo owner's own `~/Documents/bookspell`, set up 2026-09-13) —
 **never** work inside `~/Documents/bookspell` itself or a subdirectory
-of it. Two independent reasons, not one:
+of it, for working-tree-collision reasons alone if nothing else. But
+the real, load-bearing safeguard against an accidental push is the one
+below, not the directory choice itself.
 
-1. **Avoiding working-tree collisions** with whatever the repo owner or
-   a Claude Code session (CLDO/CLDA) is doing in their own clone at the
-   same time.
-2. **Credential isolation, the more important one.** This clone has
-   `git config credential.helper ""` set locally (check with `git
-   config --get credential.helper` — it should print nothing/empty,
-   NOT `osxkeychain`), which stops it from reading the macOS Keychain's
-   cached GitHub credential that the repo owner's own clone uses to
-   push. Without this override, being in a different folder alone
-   would NOT have isolated you — macOS Keychain credentials are scoped
-   to the login account, not the directory, so a plain `git clone`
-   elsewhere under the same user would still have been able to
-   authenticate as the repo owner. **Never re-run `git config
-   credential.helper osxkeychain` (or unset this override) in this
-   clone for any reason**, including "just to test something quickly."
-   If a `git push` from here ever succeeds, something has gone wrong —
-   stop and tell the repo owner immediately rather than continuing.
+**What actually blocks a push here, verified by really testing it, not
+assumed**: a `pre-push` git hook at `.git/hooks/pre-push` in this
+clone that unconditionally exits non-zero before any network/auth
+activity happens at all —
 
-Confirmed 2026-09-13: this repo is public, so `git fetch`/`git pull`
-work here with zero credential at all (public reads never needed auth
-in the first place) — you can always stay current with `CLAUDE.md`/
-schema/skills. `git push` from this clone fails with an authentication
-error, verified directly. Local commits on your own branches work
-completely normally and need no credential either — commit freely,
-you just can't push those commits anywhere from here.
+```sh
+#!/bin/sh
+echo "BLOCKED: this clone (bookspell-codex, CODX's environment) must never push." >&2
+echo "Hand your work off per AGENTS.md's 'Handing off your work' section instead." >&2
+exit 1
+```
+
+(must be executable — `chmod +x .git/hooks/pre-push` — and re-created
+if this clone is ever redone from scratch, since `.git/hooks/` isn't
+part of the tracked repo and a fresh `git clone` won't bring it along).
+
+**Why this hook, and not just a git config override**: the first
+attempt at this (2026-09-13) was `git config credential.helper ""`,
+reasoning that it would stop this clone from reaching the macOS
+Keychain's cached GitHub credential the repo owner's own clone pushes
+with. Real, live testing immediately proved that wrong — a push from
+here still succeeded, because `GIT_ASKPASS` (an environment variable,
+in this case set by VS Code's own git integration in the same
+terminal/shell environment) supplies credentials through a completely
+different channel than `credential.helper`, and environment variables
+like `GIT_ASKPASS` take precedence over BOTH `credential.helper` and
+`core.askPass` even when the latter is set locally in this repo (also
+verified directly — setting `core.askPass /bin/false` here did NOT
+stop it either). Environment-variable hygiene can't be relied on
+either, since whatever launches you might set these regardless of
+anything configured in this repo. The `pre-push` hook is the one fix
+that's actually reliable, because it blocks at the git command itself,
+before any credential of any kind is even consulted — it doesn't
+matter what auth mechanism is available in the environment. (The
+accidental push this uncovered — a harmless test file — was found and
+reverted cleanly the same session; nothing else was affected.)
+
+Confirmed 2026-09-13, with the hook in place: `git fetch`/`git pull`
+still work with zero credential at all (this repo is public, reads
+never needed auth in the first place) — stay current with `CLAUDE.md`/
+schema/skills freely. Local commits on your own branches also work
+completely normally with no credential needed. **A real `git push`
+attempt from this clone now fails immediately with the hook's own
+message, verified directly** — if it ever behaves differently (the
+hook message doesn't appear, or a push actually succeeds), the hook is
+missing or was removed: stop and tell the repo owner immediately
+rather than continuing, and don't try to "fix" it yourself by
+re-authenticating or reaching for `credential.helper`/`core.askPass`
+again — those are the two approaches already proven insufficient here.
 
 ## Reading hosted Supabase data (real, safe, already-available access)
 

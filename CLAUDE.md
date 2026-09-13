@@ -68,15 +68,23 @@ this repo runs from:
 
   **Runs from its own real clone, `~/Documents/bookspell-codex` (set up
   2026-09-13), never inside the repo owner's own `~/Documents/bookspell`
-  or a subdirectory of it.** This isn't just tidiness — that clone has
-  `git config credential.helper ""` set locally specifically so it
-  can't reach the macOS Keychain's cached GitHub credential the repo
-  owner's own clone pushes with (confirmed the hard way: being in a
-  different FOLDER under the same macOS login would NOT alone have
-  prevented this, since Keychain credentials resolve by login account,
-  not directory). Verified directly: `git push` from that clone fails
-  with an auth error, `git pull`/local commits work fine (this repo is
-  public, so reads never needed a credential anyway). Reads hosted
+  or a subdirectory of it.** That clone's real safeguard against an
+  accidental push is a `pre-push` git hook that unconditionally blocks
+  before any auth is even attempted — **not** a `git config
+  credential.helper`/`core.askPass` override, which was the first thing
+  tried and, confirmed by actually testing it live, does NOT work: an
+  inherited `GIT_ASKPASS` environment variable (in this case, VS Code's
+  own git integration, present in the same terminal session) supplies
+  push credentials through a separate channel that overrides both of
+  those settings regardless of what's configured in the repo itself.
+  Being in a different folder under the same login isn't sufficient on
+  its own either, for the same reason. See `AGENTS.md`'s "Your
+  environment" section for the exact hook, why the two config-based
+  attempts failed (verified directly, including one real test push
+  that landed on `main` and was cleanly reverted the same session — see
+  `docs/project-log.md`'s 2026-09-13 entry), and why the hook is the
+  one approach that's actually reliable regardless of environment.
+  Reads hosted
   Supabase data via the same public anon key `app/shared.js` already
   ships client-side (real, RLS-enforced read-only — verified its write
   policies are all `authenticated`-only, not just assumed) rather than
