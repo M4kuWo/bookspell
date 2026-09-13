@@ -15027,3 +15027,29 @@ and an accurate batch-10 exclude pointer (189 checked names + 40
 still-unsettled flagged names). No `docs/PENDING_APPROVALS.md` entry
 needed -- this is CLDA's 9th successful run of this exact
 already-reviewed, step-by-step process.
+
+## 2026-09-14 (later) -- cache the last recommendation fetch across page navigations
+
+Item #5 from the prior round, implemented after the repo owner agreed
+with the recommendation: switching from Recommendations to My Ratings
+and back was losing the last-fetched results, since this is a plain
+static multi-page site -- a nav click is a full page reload, not an
+SPA route change, so nothing in JS memory survives it. Recomputing
+isn't free (a cold Render backend can take up to a minute), so there
+was no good reason a glance at My Ratings should cost that.
+
+Fix: `dashboard.html` now caches the last fetch (results by genre,
+which genre tab was active, both filter selections) in
+`sessionStorage` immediately after a successful "Get recommendations"
+fetch (and again on a genre-tab switch, so the active tab is part of
+what's restored too) and restores it on page load if present --
+survives a page reload/navigation within the same tab, cleared
+automatically when the tab/browser actually closes. Keyed by user id
+and checked on restore, so switching accounts in the same browser
+session/tab can't show one user's cached recommendations to another;
+also explicitly cleared on sign-out (`shared.js`). Verified the actual
+mechanism (save, real page reload, restore) in a throwaway local
+harness before wiring it into the real page, not just reasoned about
+it.
+
+No API/backend change needed -- purely client-side.
