@@ -14867,3 +14867,163 @@ natural answer without rearchitecting into an SPA, but this wasn't
 implemented pending his call.
 
 All changes committed together; migration applied to hosted, verified.
+
+## 2026-09-14: series.status/book_count fix, batch 9 (CLDA) -- 16 series fixed, 0 confirmed correct
+
+Continuing the P2 catalog-wide `series.status`/`book_count` fix (root
+cause: `status` defaults to 'ongoing' whenever Hardcover's
+`is_completed` isn't explicitly true; `book_count` is Hardcover's raw
+edition/omnibus/box-set count, not a curated mainline-installment
+count -- neither field is read by `scripts/recommend.py`, display-only
+bug in `tools/catalog-review/`).
+
+**Reconstructed the accurate 173-name "checked" list by name straight
+from batches 1-8's own project-log.md/TODO.md entries** (standard
+practice for this task, per batch 5's precedent of not trusting the
+running total alone): 15 (batch 1) + 30 (batch 2) + 17 (batch 3) + 38
+(batch 4) + 18 (batch 5) + 17 (batch 6) + 21 (batch 7) + 17 (batch 8) =
+173, plus the 24 still-unsettled flagged names carried from batch 8.
+Verified all 197 unique strings against the live `series` table before
+using them as an exclusion filter -- 195 matched exactly one row each.
+Two didn't, both minor naming-drift artifacts of the same bug class
+already known (Enderverse's double space, Mistborn Era Two's
+parenthetical): batch 2's "Imperial Radch" fixed-name entry has no
+matching row today -- the only "Imperial Radch"-named row in the live
+table is "Imperial Radch (publication order)" (still ongoing/6, still
+unfixed, already separately present in the flagged-24 list from batch
+5's duplicate-row note), so whatever second row batch 5 described
+apparently no longer exists as two separate rows; dropped the stale
+entry rather than dig further into history that predates this session.
+Batch 6's "The Giver Quartet" is stored simply as "The Giver" -- TODO's
+own parenthetical already flagged this, just corrected the exclude
+string. Neither miss affected candidate selection (both names' actual
+rows were already excluded via the flagged-24 list or matched fine
+under a different form).
+
+Re-ran the ranking query -- confirmed batch 8's saturation finding
+still holds, every remaining series sits at exactly 1 book linked in
+our own catalog, so kept using Hardcover's raw `book_count` descending
+as the secondary sort. Worked batch 8's 3 named unresearched leads
+(Shannara (Chronological Order), World of the Five Gods (Publication),
+Capitaine Nemo) plus the 2 seen-but-not-settled names (Rivers of
+London, Vorkosigan Saga (Publication Order)) first, then continued
+down the fresh ranked list (topped by The Horus Heresy at a raw 292).
+
+**16 needed a real fix, all verified via live web search before
+writing anything**:
+- **Status+book_count fixes** (10): The Horus Heresy (ongoing/292 ->
+  completed/54 -- raw count was a Hardcover edition artifact; the real
+  main series concluded Feb 2019 with "The Buried Dagger" as the 54th
+  novel, its continuation "Siege of Terra" is a separate series, not
+  more Horus Heresy books), Oz (ongoing/81 -> completed/14 -- our
+  catalog's linked book and author are Baum-only, so used his own
+  14-book run 1900-1920, not the wider multi-author "Famous Forty"),
+  The Plated Prisoner (ongoing/27 -> completed/6, confirmed-complete
+  Raven Kennedy series), Vampire Academy (ongoing/24 -> completed/6 --
+  Bloodlines is a separate 6-book spin-off, not more Vampire Academy),
+  Heechee Saga (ongoing/23 -> completed/5, Pohl died 2013 with no
+  further entries), Laundry Files (ongoing/21 -> completed/14 -- "The
+  Regicide Report", Jan 2026, explicitly confirmed by its own
+  publisher/marketing as the 14th and FINAL book, a strong completion
+  signal, not a guess), Magnus Chase and the Gods of Asgard (ongoing/15
+  -> completed/3), Howl's Moving Castle (ongoing/15 -> completed/3,
+  Jones died 2011), The Queen's Thief (ongoing/15 -> completed/6,
+  explicitly marketed as its 20-years-in-the-making conclusion),
+  Night's Dawn (ongoing/15 -> completed/3).
+- **book_count-only fixes** (6): Vorkosigan Saga (Publication Order)
+  (78 -> 16, left 'ongoing' -- Bujold hasn't announced the series
+  closed, only that nothing new has shipped since 2018, and absence of
+  a completion statement isn't itself evidence per the Old Kingdom
+  precedent from batch 3), Rivers of London (45 -> 10, left 'ongoing',
+  actively continuing as of the 2025 release), Expeditionary Force
+  (25 -> 19, left 'ongoing', most recent entry released this year),
+  Memory, Sorrow, and Thorn (24 -> 3 -- status was already correctly
+  'completed'; the "4-book" count some editions cite is just a
+  paperback-length split of "To Green Angel Tower" into two physical
+  volumes, not two separate novels, same print-split-vs-real-book
+  convention already applied elsewhere in this task), The Trials of
+  Apollo (16 -> 5, status was already correctly 'completed'), Graceling
+  Realm (15 -> 5, left 'ongoing' on absence of a completion statement --
+  no announced retirement or "final book" framing found for Cashore).
+
+**0 candidates checked this batch turned out already correct.**
+
+Migration `20260913280000_fix_series_status_book_count_batch9.sql` --
+tested in a rolled-back transaction first (all 16 names matched exactly
+once, post-update values verified inside the transaction before
+rollback), then applied for real to hosted via a normal autocommit
+psycopg2 connection, then closed the tracking loop with `npx supabase
+migration repair --status applied --db-url "$DATABASE_URL" --yes
+20260913280000` -- this session's newly-confirmed-working repair path
+for a Supabase project not `supabase link`-ed locally (per this task's
+own brief). `npx supabase migration list --db-url "$DATABASE_URL"`
+confirms `20260913280000` now has both a `local` and `remote` entry, no
+gap. `series` table total row count unchanged (484). Spot-checked The
+Horus Heresy, Laundry Files, and Oz directly on hosted after applying.
+
+**4 new names flagged as a DIFFERENT bug class (a `books.series_id`
+linkage/categorization problem, not a plain status/book_count value
+error), same shape as batch 7's Elantris flag and batch 8's Mistborn
+Saga flag -- not fixed here**: Heinlein's Juveniles -- its one linked
+book, "Starship Troopers", was actually *rejected* by Scribner and
+published by Putnam instead, so it isn't one of the 12 canonical
+Scribner juveniles this series row is meant to represent; a wrong-book
+linkage, not a count/status error, and fixing book_count to 12 while
+the wrong book stays linked would just paper over the real bug. The
+Cosmere, The Expanse (Chronological), First Law World -- all three are
+umbrella/duplicate rows with zero books linked in our catalog, the same
+parent-vs-leaf pattern as the already-flagged Mistborn/The Mistborn
+Saga pair (the real leaf rows, "The Expanse" and "The First Law", were
+already fixed in batches 2 and 4 respectively). Dark Adventure Radio
+Theatre -- its one linked "book", Lovecraft's "The Call of Cthulhu", is
+actually tied to an audio-drama adaptation series (HPLHS), not book
+editions -- flagged as a likely wrong-linkage/miscategorized-series
+case. Penguin Little Black Classics -- a Penguin publisher imprint of
+80 short-classic reprints by many different authors (the linked "book"
+sits at position 42 of that imprint, not a numbered entry in a single
+author's series), the same not-really-a-series shape as the
+already-flagged Hogwarts Library/Roald Dahl Classic Collection.
+
+**5 new names flagged as likely out-of-scope, not decided, same shape
+as the existing Robert Langdon/Kingsbridge/Walking Dead-class flags**:
+d'Artagnan Romances (Dumas -- historical adventure, not SFF), Fifty
+Shades (contemporary erotica, not SFF), Monstress and Y: The Last Man
+(both graphic novels/comics, out of v1 scope per the existing comics
+policy), The Cemetery of Forgotten Books (Zafon -- gothic/literary
+fiction with magical-realist elements, borderline at best, not core
+genre SFF -- noted in passing that this is the same author/series whose
+"Shadow of the Wind" row got its own author-field-contamination fix
+today in a separate migration, `20260914000000`, from a different
+session; unrelated to this flag, just the same book).
+
+**5 names carried forward still genuinely unresolved, not a different
+bug class, just not settled**: Shannara (Chronological Order) and
+Capitaine Nemo -- same open questions batch 8 already described
+(Shannara needs real sub-series-by-sub-series work; found "more than 30
+novels" this round but still no clean single number to write down;
+Capitaine Nemo's branding-as-an-official-series question remains open,
+different cataloging systems give different counts). World of the Five
+Gods (Publication) -- still genuinely mixed evidence (one source says
+"four novels" but only three are ever named anywhere found); left
+unresolved rather than guess the fourth. The Elric Saga (Michael
+Moorcock) -- book counts range from 6 "core" to 11 across different
+omnibus reorganizations with no clear canonical answer found this
+round; also noted in passing, a different bug class: the row's `author`
+field lists "Michael Moorcock, Alan Moore" -- Moore wrote an
+introduction to one edition, not a co-author of the fiction, likely the
+same author-field-contamination pattern CLAUDE.md's "Data quality /
+tagging" section already tracks -- left for a tagging/data-quality pass
+rather than fixed here, since that's a different task's scope. Let the
+Right One In -- a new unresolved name (Lindqvist), unclear whether this
+row represents a real multi-book series or one novel plus unrelated
+later works grouped together, and separately unresearched for the
+horror-vs-SFF scope question the way Blindness/The Divine Comedy
+already were.
+
+Running total: 140 of 484 series fixed across batches 1-9
+(14+14+17+17+15+14+16+17+16). `docs/TODO.md`'s
+`series.status`/`book_count` entry updated with this batch's summary
+and an accurate batch-10 exclude pointer (189 checked names + 40
+still-unsettled flagged names). No `docs/PENDING_APPROVALS.md` entry
+needed -- this is CLDA's 9th successful run of this exact
+already-reviewed, step-by-step process.
