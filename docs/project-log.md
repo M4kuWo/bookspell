@@ -14322,3 +14322,226 @@ time.
 resolved and note the migration-repair discovery. Did not touch
 `scripts/recommend.py`/`scripts/scoring_tests.py`; no fresh full Book DNA
 tagging performed beyond the 2 targeted trope backfills above.
+
+## 2026-09-13 (later still) -- shared-universe audit batch 9 -- 15 authors checked, 2 confirmed connected and built ("Daevabad", "The Legend Universe"), 12 confirmed NOT connected, 1 flagged ambiguous/thin
+
+Continuing `docs/TODO.md`'s P2 shared-universe linking audit (batch 9),
+run as the tagging/data (CLDA) session. Per the repo owner's own
+efficiency guidance for this kind of catalog-wide work, spawned 3
+parallel non-forked background research agents (5 authors each), each
+given the strict structural-connection bar and this audit's naming
+policy inline, doing web research only -- no DB or file writes from any
+research agent. All actual DB and doc writes done sequentially by this
+session afterward, avoiding concurrent-write conflicts on the same
+migration/docs, the same discipline the trope-gap-sweep used.
+
+Candidate pool for this batch was already fully specified by batch 8's
+own "untouched leftover pool" list (all 15 names never previously
+checked by this audit): Anthony Ryan, Carissa Broadbent, Danielle L.
+Jensen, Laini Taylor, Marie Lu, Mira Grant, Octavia E. Butler, Rachel
+Gillig, Rebecca Roanhorse, Rebecca Ross, S. A. Chakraborty, Samantha
+Shannon, Stephen Graham Jones, TJ Klune, Veronica Roth. Queried each
+author's specific unlinked series names/counts from the catalog first
+and handed those to the research agents directly, so no agent needed
+its own DB access.
+
+**Result: 2 confirmed connected and built, 12 confirmed NOT connected, 1
+flagged ambiguous/thin (not linked).**
+
+- **S. A. Chakraborty -- The Adventures of Amina al-Sirafi (+ its 2026
+  sequel The Tapestry of Fate) vs. The Daevabad Trilogy, confirmed
+  connected, built as "Daevabad."** Corroborated across multiple
+  independent review sources (NPR, Kirkus, Goodreads editorial
+  coverage) that Amina al-Sirafi is set in the same djinn/marid world
+  and cosmology as the Daevabad Trilogy, centuries before The City of
+  Brass, with intentional Easter eggs for Daevabad readers -- a real
+  structural same-world claim, not a vibes-only echo. Publisher/review
+  copy sometimes uses "Daevabad universe" as a term, but its exact scope
+  (whether it's meant to include the Amina sub-series, or just the
+  Trilogy + its companion story collection, River of Silver) wasn't
+  independently confirmed across sources -- named the universe directly
+  after the real in-world place/city itself instead ("Daevabad"),
+  matching the established place-name pattern (Westeros/Abeth/Elan) and
+  sidestepping that scope ambiguity entirely. No naming-policy flag
+  needed.
+- **Marie Lu -- Legend vs. Warcross, confirmed connected, built as "The
+  Legend Universe." NAMING FLAG for the repo owner, same shape as
+  Philip Pullman's Lyra's World.** Strongest single piece of evidence
+  found this batch: a direct, first-person, primary-sourced author
+  quote (Marie Lu, r/IAmA Reddit AMA, 2018): "I have this scheme in my
+  head where Legend and The Young Elites are actually set in the same
+  universe. Warcross is also part of that universe. Someday, I will
+  explain everything." Names Warcross alongside Legend explicitly --
+  comparable in directness to the Garber/Goodreads-Q&A precedent that
+  built Meridian Empire in batch 8. The Young Elites is also named in
+  that same quote but isn't in our catalog at all currently (checked
+  live -- no series or books under that name exist yet); a future
+  ingestion of The Young Elites should link it to this universe too, not
+  just Legend/Warcross. No official term and no widely-used multi-source
+  fan term exists for the combined universe (checked
+  "Legendverse"/"Luniverse"/"Marieverse" specifically, none
+  established); no single confirmed in-world place name spans all three
+  properties either (Legend's setting is "the Republic"; Warcross and
+  Young Elites each have their own distinct named settings) --
+  fan-documented Antarctica/flood parallels between Legend and Warcross
+  specifically exist but were flagged by the researching agent as
+  speculation, not canon-confirmed, so not used as the naming basis.
+  "The Legend Universe" (series-title + generic-suffix fallback, same
+  shape as "The Broken Empire World") is this session's own naming call
+  -- please sanity-check, easy to rename later.
+- **Anthony Ryan -- Covenant of Steel vs. Raven's Shadow, confirmed NOT
+  connected.** No author statement, FAQ, interview, or official book
+  copy found asserting a shared world; a 2015-era interview describes
+  Draconis Memoria and Covenant of Steel as "brand new worlds" (plural),
+  i.e. explicitly distinct from Raven's Shadow. An AI-search-synthesized
+  snippet claimed "same world" during research but could not be
+  substantiated against any actual source -- treated as unreliable, per
+  this audit's standing skepticism toward single unverifiable claims.
+- **Carissa Broadbent -- Crowns of Nyaxia vs. The War of Lost Hearts,
+  confirmed NOT connected.** Checked directly against the author's own
+  FAQ and Reading Orders pages (carissabroadbentbooks.com) -- neither
+  mentions any relationship between the two series, presented in fully
+  separate sections with no cross-reference; distinct magic systems
+  (vampire courts vs. a Wielder/Orders system). A separate AI-search
+  claim of shared characters could not be verified and is contradicted
+  by the author's own FAQ.
+- **Danielle L. Jensen -- Saga of the Unfated vs. The Bridge Kingdom,
+  confirmed NOT connected.** Consistently described across interviews
+  and publisher copy as separate, independent worlds (Saga of the
+  Unfated explicitly Norse-inspired, distinct from Bridge Kingdom's
+  setting); only thematic/tonal similarity (enemies-to-lovers, political
+  intrigue) found, which doesn't clear this audit's structural bar.
+- **Mira Grant -- Newsflesh vs. Rolling in the Deep, confirmed NOT
+  connected.** Rolling in the Deep is the prequel novella to Into the
+  Drowning Deep, a self-contained mermaid-horror duology entirely
+  separate from the zombie/journalism Newsflesh trilogy -- reviews
+  describe only a shared authorial style/atmosphere, not a shared
+  setting or characters.
+- **Octavia E. Butler -- Earthseed vs. Xenogenesis, confirmed NOT
+  connected.** Xenogenesis (also known as Lilith's Brood) is an
+  unrelated alien-genetic-crossbreeding trilogy with no character or
+  setting overlap with the near-future, dying-America Earthseed
+  (Parable) books; standard SF scholarship treats Butler's
+  Patternist/Xenogenesis/Parable cycles as three fully independent
+  bodies of work. Flagged, not fixed: the catalog's "Xenogenesis" series
+  row shows a `book_count` of 6, but the real trilogy is only 3 books --
+  looks like stale/wrong metadata, worth a look from whoever owns the
+  `series.book_count` data-quality task.
+- **Rachel Gillig -- The Shepherd King vs. The Stonewater Kingdom,
+  confirmed NOT connected.** The Shepherd King = One Dark Window + Two
+  Twisted Crowns (confirmed via official collector's-edition box-set
+  naming). The Stonewater Kingdom is a genuine, separate, newer duology
+  (The Knight and the Moth + The Knave and the Moon, a different
+  setting/magic system) -- Gillig herself, in a PureWow interview,
+  describes it as introducing "a new, more built-out world," explicitly
+  not a continuation of Shepherd King. Catalog's two series labels are
+  each legitimate and correctly distinct, not a same-series-fragmented-
+  into-two-rows bug.
+- **Rebecca Roanhorse -- Between Earth and Sky vs. The Sixth World,
+  confirmed NOT connected.** Between Earth and Sky draws on
+  Mesoamerican/Andean-inspired cultures (the Meridian world); The Sixth
+  World draws on Diné/Navajo lore (post-apocalyptic Dinétah). Different
+  settings, different casts, no crossover material found, no author
+  statement claiming a shared continuity.
+- **Rebecca Ross -- Elements of Cadence vs. Letters of Enchantment,
+  confirmed NOT connected.** Elements of Cadence = A River Enchanted + A
+  Fire Endless (Scottish-folklore-inspired isle of Cadence); Letters of
+  Enchantment = Divine Rivals + Ruthless Vows (an epistolary
+  war-of-the-gods romance). Completely different casts, settings, and
+  magic systems. Flagged, not fixed: "Elements of Cadence" shows a
+  `book_count` of 6, but the real duology is only 2 books -- likely a
+  mislabeled/merged series row, and a separate hypothesis this task
+  floated (that it might actually be Ross's Queen's Rising books) was
+  checked and is wrong -- Queen's Rising is a third, distinct Ross
+  duology unrelated to either series in scope here.
+- **Samantha Shannon -- The Bone Season vs. The Roots of Chaos,
+  confirmed NOT connected.** The Priory of the Orange Tree was
+  explicitly described as her "first novel outside of The Bone Season
+  series" -- no structural connection (no shared characters, no
+  crossover) found anywhere. Flagged, not fixed: "The Bone Season" shows
+  a `book_count` of 15, clearly wrong for a real planned 7-book saga.
+- **Stephen Graham Jones -- The Indian Lake Trilogy vs. The Only Good
+  Indians, confirmed NOT connected.** Different settings (Proofrock,
+  Idaho slasher-legacy vs. Blackfeet-reservation Montana revenge-spirit
+  story), different characters, no crossover or shared-universe
+  statement found in any source checked. Note: The Only Good Indians'
+  "2 books" in the catalog is real, not a data error -- Off the
+  Reservation (expected 2026) is a genuine confirmed second book in that
+  series.
+- **TJ Klune -- Cerulean Chronicles vs. In the Lives of Puppets,
+  confirmed NOT connected.** Cerulean Chronicles (The House in the
+  Cerulean Sea + Somewhere Beyond the Sea) is a real linked duology, but
+  shares no setting, characters, or continuity with In the Lives of
+  Puppets, a separate standalone in a different post-apocalyptic
+  robot-world setting -- sources describe it only as thematically/
+  stylistically "in a similar vein," never connected in-world.
+- **Veronica Roth -- Curse Bearer vs. Divergent, confirmed NOT
+  connected.** A review source explicitly separates Roth's full
+  bibliography into four unconnected buckets: the original Divergent
+  run, the Carve the Mark duology, the Curse Bearer pair, and a set of
+  standalones (Poster Girl, Arch-Conspirator, Chosen Ones). "Curse
+  Bearer" is confirmed as the real, correctly-labeled series name (When
+  Among Crows + To Clutch a Razor), not a mislabeled title.
+- **Laini Taylor -- Daughter of Smoke & Bone vs. Strange the Dreamer,
+  AMBIGUOUS/THIN, flagged, NOT linked.** Real textual evidence beyond
+  mere vibes: Muse of Nightmares (Strange the Dreamer's finale)
+  explicitly references seraphim and chimaera by name, and ends with
+  Sarai wondering whether someone "in all the worlds out there" could
+  help her -- widely read by fans as a deliberate wink toward Daughter
+  of Smoke & Bone's Eretz. But the strongest attributed author statement
+  found was a fan-paraphrased Q&A answer calling the two "the same
+  multiverse" that "may cross paths one day" -- adjacent/parallel worlds
+  with an authorial gesture toward a future connection, not a confirmed
+  merged continuity today. Same tier as the earlier Gaiman American
+  Gods/Neverwhere case ("real but too thin to model") -- deliberately
+  NOT linked; revisit if a firmer primary-source quote surfaces later.
+  Flagged, not fixed: "Daughter of Smoke & Bone" shows a `book_count` of
+  14, but the real bibliography is only 3 novels + 1 novella -- looks
+  like a stale/merged data-entry error.
+
+Migration `20260913260000_shared_universe_audit_batch9.sql`, tested in a
+rolled-back transaction with a genuine idempotency re-run (ran the whole
+file twice inside one transaction, confirmed no duplicate `universe`
+rows and correct links both times), then applied for real via a normal
+autocommit psycopg2 connection and verified live on hosted (`universe`
+went from 19 to 21 rows; both new pairs' `series.universe_id` confirmed
+set). This session then closed the migration-tracking loop itself --
+`npx supabase migration repair --status applied --db-url "$DATABASE_URL"
+--yes 20260913260000` succeeded (this sandbox's ability to do this
+without `supabase link`, discovered earlier today, worked again cleanly)
+-- confirmed via `supabase migration list --linked` afterward that every
+local migration timestamp now has a matching remote one, no gap left
+pending for CLDO this time.
+
+**Also flagged this batch, not acted on (out of this audit's scope, same
+shape as the Card Shadow Saga / R. A. Salvatore series-table-duplication
+notes from earlier batches)**: several more `series.book_count` values
+that look stale/wrong vs. real published totals surfaced incidentally
+during this batch's research (Raven's Shadow, Daughter of Smoke & Bone,
+Xenogenesis, Elements of Cadence, Amina al-Sirafi, The Bone Season --
+see per-author notes above for specifics). None of these affected the
+universe-linking verdicts (the structural-connection evidence was
+checked independently of these counts), but they're worth a pass from
+whoever picks up the existing `series.status`/`book_count` fix task.
+
+**Candidate pool status after this batch: fully exhausted for the first
+time since the audit's initial 51-author discovery.** Re-ran the
+candidate query after applying this batch's migration -- 53 authors
+now qualify (down from 55 pre-batch-9, reflecting Chakraborty and Lu
+dropping off now that their series are linked). Cross-referenced every
+one of those 53 names against this audit's full history across
+`docs/TODO.md` and found **all 53 have now been checked at least once**
+-- there is currently no unchecked leftover pool at all. This audit's
+real hit rate stands at 16 of 70 checked candidate-author-groupings
+confirmed genuinely connected (built or gap-fixed), 51 confirmed NOT
+connected, 2 flagged as series-table data-quality issues rather than
+true universe questions, 1 flagged ambiguous/thin and deliberately not
+linked. `docs/TODO.md`'s audit section updated with the full batch-9
+detail, the refreshed hit-rate tally, and a note that a future batch's
+starting point is simply re-running the candidate query fresh (only
+catalog growth or newly-ingested series will produce genuinely new
+candidates from here).
+
+Did not touch `scripts/recommend.py`/`scripts/scoring_tests.py`; no Book
+DNA tagging performed (universe-linking only, per this task's scope).
+

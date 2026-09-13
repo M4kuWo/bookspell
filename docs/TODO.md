@@ -1556,20 +1556,145 @@ worth deferring to a later session rather than batching in for
     Banished Lands; noted in passing, not acted on: Faithful and the
     Fallen's real in-continuity sequel is Of Blood and Bone, which isn't
     in our catalog and so didn't surface in this audit).
-  - **Everyone else from the refreshed candidate list**: not yet
-    checked. Full detail across ten 2026-09-11/2026-09-12/2026-09-13
-    project-log.md audit entries. This audit's real hit rate so far: 14
-    of 55 checked candidate-author-groupings confirmed genuinely
-    connected (built or gap-fixed), 39 confirmed NOT connected, 2
-    flagged as series-table data-quality issues rather than true
-    universe questions -- treat every remaining candidate as more
-    likely a false positive than not until checked. Re-running the
-    candidate query after batch 8 is the starting point for batch 9; the
-    untouched leftover pool (non-exhaustive) is now: Anthony Ryan,
-    Carissa Broadbent, Danielle L. Jensen, Laini Taylor, Marie Lu, Mira
-    Grant, Octavia E. Butler, Rachel Gillig, Rebecca Roanhorse, Rebecca
-    Ross, S. A. Chakraborty, Samantha Shannon, Stephen Graham Jones, TJ
-    Klune, Veronica Roth.
+  - **Batch 9 (2026-09-13, CLDA session, 3 parallel non-forked
+    background research agents, ~5 authors each)**: 15 authors checked
+    (the full "untouched leftover pool" listed at the end of batch 8),
+    2 confirmed connected and built, 12 confirmed NOT connected, 1
+    flagged ambiguous/thin (not linked). Full evidence trail in
+    docs/project-log.md's 2026-09-13 "shared-universe audit batch 9"
+    entry.
+    - **S. A. Chakraborty -- built as "Daevabad."** The Adventures of
+      Amina al-Sirafi (+ its 2026 sequel The Tapestry of Fate) is
+      confirmed set in the same djinn/marid world and cosmology as The
+      Daevabad Trilogy, centuries before The City of Brass, with
+      intentional Daevabad-reader Easter eggs -- corroborated across
+      multiple independent review sources (NPR, Kirkus, Goodreads
+      editorial coverage), not a single wiki page. Named directly after
+      the real in-world place/city itself (matching the
+      Westeros/Abeth/Elan pattern), sidestepping an ambiguity the
+      research turned up: publisher/review copy sometimes uses "Daevabad
+      universe" but it wasn't independently confirmed whether that
+      phrase's scope is meant to include the Amina sub-series
+      specifically (vs. just the Trilogy + its companion story
+      collection) -- the bare place name avoids that question entirely,
+      no naming-policy flag needed.
+    - **Marie Lu -- built as "The Legend Universe." NAMING FLAG for the
+      repo owner, same shape as Lyra's World.** Direct, first-person,
+      primary-sourced author confirmation (Marie Lu, r/IAmA Reddit AMA,
+      2018): "I have this scheme in my head where Legend and The Young
+      Elites are actually set in the same universe. Warcross is also
+      part of that universe. Someday, I will explain everything." Names
+      Warcross alongside Legend explicitly -- comparable in directness
+      to the Garber/Goodreads-Q&A precedent (Meridian Empire). The Young
+      Elites is also named in that same quote but isn't in our catalog
+      at all currently (checked live -- no series or books under that
+      name exist yet); a future ingestion of The Young Elites should
+      link it to this universe too. No official term and no widely-used
+      multi-source fan term exists ("Legendverse"/"Luniverse"/
+      "Marieverse" all checked, none established); no single confirmed
+      in-world place name spans Legend + Warcross + Young Elites either
+      (each has its own distinct named setting) -- fan-documented
+      Antarctica/flood parallels between Legend and Warcross specifically
+      exist but were flagged by the researching agent as speculation,
+      not canon-confirmed, so not used as the naming basis. "The Legend
+      Universe" (series-title + generic-suffix fallback, same shape as
+      "The Broken Empire World") is this session's own naming call --
+      please sanity-check, easy to rename later.
+    - **Confirmed NOT connected**: Anthony Ryan (Covenant of Steel vs.
+      Raven's Shadow -- no source asserts a shared world; a 2015
+      interview describes Draconis Memoria and Covenant of Steel as
+      "brand new worlds," i.e. explicitly distinct from Raven's Shadow).
+      Carissa Broadbent (Crowns of Nyaxia vs. The War of Lost Hearts --
+      checked directly against the author's own FAQ/Reading-Orders page,
+      no cross-reference given; distinct magic systems). Danielle L.
+      Jensen (Saga of the Unfated vs. The Bridge Kingdom -- consistently
+      described as separate, independent worlds; only thematic/tonal
+      similarity, which doesn't clear the bar). Mira Grant (Newsflesh
+      vs. Rolling in the Deep -- the latter is the prequel novella to
+      Into the Drowning Deep, a separate mermaid-horror duology entirely
+      unconnected to the zombie/journalism Newsflesh trilogy). Octavia
+      E. Butler (Earthseed vs. Xenogenesis -- Xenogenesis/Lilith's Brood
+      is an unrelated alien-genetic-crossbreeding trilogy with no
+      character/setting overlap with Earthseed; standard SF scholarship
+      treats Butler's Patternist/Xenogenesis/Parable cycles as three
+      fully independent bodies of work). Rachel Gillig (The Shepherd
+      King vs. The Stonewater Kingdom -- Stonewater Kingdom is a
+      genuine, separate, newer duology (The Knight and the Moth + The
+      Knave and the Moon); Gillig herself, in a PureWow interview,
+      describes it as introducing "a new, more built-out world,"
+      explicitly not a continuation of Shepherd King). Rebecca Roanhorse
+      (Between Earth and Sky vs. The Sixth World -- Mesoamerican/Andean-
+      inspired Meridian world vs. Diné/Navajo-inspired post-apocalyptic
+      Dinétah, different settings/casts, no crossover). Rebecca Ross
+      (Elements of Cadence vs. Letters of Enchantment -- Scottish-
+      folklore-inspired isle of Cadence vs. an epistolary war-of-the-gods
+      romance; completely different casts/settings/magic systems).
+      Samantha Shannon (The Bone Season vs. The Roots of Chaos --
+      Priory of the Orange Tree was explicitly her "first novel outside
+      of The Bone Season series," no structural connection found).
+      Stephen Graham Jones (The Indian Lake Trilogy vs. The Only Good
+      Indians -- different settings/characters, no crossover or shared-
+      universe statement found). TJ Klune (Cerulean Chronicles vs. In
+      the Lives of Puppets -- Puppets is a separate standalone in a
+      different post-apocalyptic robot-world setting; sources describe
+      it only as thematically/stylistically "in a similar vein," never
+      connected in-world). Veronica Roth (Curse Bearer vs. Divergent --
+      a review source explicitly separates her bibliography into four
+      unconnected buckets: the Divergent run, Carve the Mark, Curse
+      Bearer, and standalones).
+    - **Ambiguous/thin, flagged, NOT linked**: Laini Taylor (Daughter of
+      Smoke & Bone vs. Strange the Dreamer) -- real textual evidence
+      beyond mere vibes (Muse of Nightmares references seraphim/chimaera
+      by name and gestures toward "all the worlds out there"), and a
+      fan-paraphrased author Q&A answer calling them "the same
+      multiverse" that "may cross paths one day" -- but no firm, direct,
+      primary-sourced author quote confirming a currently-merged
+      continuity was found. Same tier as the earlier Gaiman American
+      Gods/Neverwhere case ("real but too thin to model") -- deliberately
+      NOT linked; revisit if a firmer primary-source quote surfaces.
+    - **New data-quality issues found and flagged this batch, NOT
+      fixed (needs repo-owner/separate-task judgment, same shape as the
+      Card Shadow Saga and R.A. Salvatore notes above -- likely more
+      instances of the already-tracked stale `series.book_count` P2
+      issue)**: several series' `book_count` values look stale/wrong
+      vs. their real published totals -- Anthony Ryan's "Raven's
+      Shadow" (10 vs. the real 3-book trilogy; may be conflating Raven's
+      Shadow + the separate Raven's Blade duology + novellas into one
+      row), Laini Taylor's "Daughter of Smoke & Bone" (14 vs. 3 novels +
+      1 novella), Octavia Butler's "Xenogenesis" (6 vs. the real 3-book
+      trilogy), Rebecca Ross's "Elements of Cadence" (6 vs. the real
+      2-book duology), S. A. Chakraborty's "Amina al-Sirafi" (3 vs. the
+      real 2-book duology), and Samantha Shannon's "The Bone Season" (15
+      vs. a much smaller real count). None of these affected the
+      universe-linking verdicts above (structural-connection evidence
+      was checked independently of these counts), but they're worth a
+      pass from whoever owns the `series.status`/`book_count` fix task.
+    - Migration `20260913260000_shared_universe_audit_batch9.sql`,
+      tested in a rolled-back transaction with a genuine idempotency
+      re-run, applied via a normal autocommit connection, verified live
+      on hosted, then `supabase migration repair --status applied`
+      closed the tracking gap in the same session (confirmed clean via
+      `supabase migration list --linked` afterward -- every local
+      timestamp has a matching remote one). `universe` now has 21 rows.
+  - **Candidate pool status after batch 9: fully exhausted for the
+    first time since the audit's initial 51-author discovery.**
+    Re-running the candidate query after this batch returns 53 authors
+    (down from 55 pre-batch-9, reflecting Chakraborty and Lu dropping
+    off the query now that their series are linked) -- and **every one
+    of those 53 has now been checked at least once across batches 1-9**
+    (cross-referenced name-by-name against this section's full history).
+    This audit's real hit rate: 16 of 70 checked candidate-author-
+    groupings confirmed genuinely connected (built or gap-fixed), 51
+    confirmed NOT connected, 2 flagged as series-table data-quality
+    issues rather than true universe questions (Card's Shadow Saga,
+    R. A. Salvatore), 1 flagged ambiguous/thin and deliberately not
+    linked (Laini Taylor) -- 16+51+2+1 = 70. **There is currently no
+    unchecked leftover pool** -- a future batch's starting point is
+    re-running the candidate query fresh (catalog growth and newly-
+    ingested series will be the only source of genuinely new candidates
+    from here; don't assume a name reappearing in that query later is
+    new without checking this section's history first, per the existing
+    "confirmed-negatives never shrink the query" tracking note above).
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 
