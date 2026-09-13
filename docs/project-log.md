@@ -11949,6 +11949,1395 @@ Travel, Elantris, Before the Coffee Gets Cold, Once Upon a Broken
 Heart, Sword of Truth, Kate Daniels, Threshold) -- don't reuse batch
 1-5's stale candidate lists.
 
+## 2026-09-12 — Bookspell v1 web app: architecture decided, build started
+
+Repo owner asked to start on the first real, scoped v1 of the actual
+product -- real accounts, login, per-genre recommendations, manual
+rating with edit, Goodreads/Fable import, persistent filters,
+responsive (a named fix for `tools/dogfood`'s confirmed mobile-display
+failure), live online without his PC running. Planned via Claude Code's
+plan-mode workflow (two parallel research passes first, not guessed):
+one mapped `scripts/recommend.py`'s full callable surface
+(`build_profile`/`recommend`/`explain_match`/`audit_book_score`, the
+`user_rules` "none of X"/"less of X" mechanism, genre scoping,
+`load_catalog()`'s cost), the other surveyed everything already built
+(`tools/catalog-review`, `tools/rate-books`, `tools/dogfood`,
+`rating_submissions`, the `books`/`series`/`universe`/`book_dna` schema,
+and confirmed Supabase Auth exists on the hosted project but has never
+actually been configured beyond CLI defaults).
+
+**Two real facts checked before committing to an import design (not
+assumed)**: Goodreads' developer API is closed to new access, but its
+own CSV library export still works today, unrestricted -- and this
+project already has a working, tested importer for that exact format
+(`scripts/import_goodreads.py`). Fable has no official API or export at
+all, but a popular unofficial browser extension exports a Fable library
+to a *Goodreads-compatible* CSV -- so the same importer covers both
+platforms with zero Fable-specific code.
+
+**Architecture (full detail in the approved plan,
+`~/.claude/plans/jaunty-chasing-eclipse.md`)**: a plain static
+multi-page frontend (no React/Next.js -- matches `catalog-review`/
+`rate-books`'s already-proven pattern, deploys via the same existing
+GitHub Pages setup, zero new hosting) using `supabase-js` via CDN (the
+one genuinely new piece of tooling) for auth and RLS-scoped per-user
+data; Supabase Auth + 3 new tables (`profiles`, `ratings`, `user_rules`)
+handle everything except live scoring, talked to directly from the
+frontend, no backend round-trip; a small new FastAPI service (`api/`)
+wraps `recommend.py` completely unmodified for the 3 things that
+genuinely need live Python (`/recommendations`, `/rule-targets`,
+`/import/goodreads`), deployed to Render's free tier. Repo owner chose
+Render's free tier (cold starts, ~30-60s after 15 min idle) over the
+$7/mo always-on tier when asked directly -- UI needs a real "waking up"
+loading state, not a silent hang.
+
+**Existing `data/ratings/*.json` raters deliberately NOT auto-migrated**
+into the new tables -- those stay `scripts/scoring_tests.py`'s fixture
+exactly as CLAUDE.md already documents; anyone who wants to use the real
+app signs up like any other rater.
+
+Build order (see TODO.md's new P0 entry for the full list): migration
+for the 3 tables first, then real Supabase Auth config (hosted
+project's site URL/redirects, not just local `config.toml`'s
+placeholders), then the backend endpoints, then frontend pages in the
+order a new rater would actually hit them, then a real mobile-viewport
+pass on every page before calling any of this done.
+
+## 2026-09-13 — Bookspell v1 web app: steps 1/3/4 built, step 2 half-done, 2 real bugs caught
+
+**Step 1 (migration) done.** `profiles`/`ratings`/`user_rules` tables,
+RLS scoped to `auth.uid()` on every policy, following the two existing
+precedents (public-read catalog tables, `rating_submissions`' own
+insert-only policy) rather than inventing a new pattern. Tested in a
+rolled-back transaction, applied to local and hosted, verified on both.
+Migration `20260913010000_v1_app_user_tables.sql`.
+
+**Step 2 (Supabase Auth config) half-done, deliberately stopped short.**
+Updated `supabase/config.toml`'s `site_url`/`additional_redirect_urls`
+to the real GitHub Pages app URL -- but did NOT run `supabase config
+push`, because that command pushes the ENTIRE local config file
+(db/storage/realtime/rate-limit sections included, not just `[auth]`)
+to the hosted project, and this session has no visibility into whether
+any of those other sections currently differ from hosted's real,
+already-tuned settings. Pushing blindly risked clobbering something
+unrelated to auth. Flagged for the repo owner to either apply the two
+auth fields via the dashboard directly, or explicitly confirm the
+full-file push is fine.
+
+**Step 3 (backend) built and smoke-tested.** New `api/` FastAPI service
+wrapping `recommend.py` unmodified: `GET /rule-targets` (no auth),
+`GET /recommendations` (auth'd, calls `recommend()`/`explain_match()`),
+`POST /import/goodreads` (auth'd, reuses `import_goodreads.py`'s
+matching logic unchanged, upserts into `ratings`). Catalog cached
+in-process (`load_catalog()` isn't request-cheap -- confirmed, not
+assumed, during the plan's research pass). Verified locally: catalog
+loads/caches, JWT auth correctly rejects missing/invalid tokens, genre
+validation, full recommendations pipeline runs end-to-end for a
+cold-start (zero-ratings) user. Not yet verified: a real ratings/import
+round-trip -- needs a genuine hosted `auth.users` row, which local
+Postgres has none of (not fakeable without either standing up local
+GoTrue or waiting for the hosted signup path in Step 2).
+
+**Step 4 (frontend) built.** `app/index.html` (auth: password + magic
+link), `app/rate.html` (manual rating with edit/delete), `app/
+dashboard.html` (genre toggle, persistent none-of/less-of filters,
+recommendations with a "waking up" loading state for Render's cold
+start), `app/import.html` (CSV upload). Same visual convention as
+`tools/rate-books` (palette, mobile-first layout) for product
+consistency. Auth/ratings/rules CRUD talk directly to Supabase via
+`supabase-js`; only recommendations and import go through `api/`.
+
+**A real, separate gap found and fixed while building the frontend, not
+part of the original plan**: `20260828040000_review_tool_read_grants.sql`
+granted catalog-table SELECT to the `anon` Postgres role only (for the
+two pre-existing anon-key-only tools) -- a signed-in user's requests
+run as the separate `authenticated` role, which had no such grant. The
+existing "public read access" RLS policies have no `to` clause so they
+already covered every role -- but a GRANT is a separate, prerequisite
+layer before RLS is even evaluated (the exact gotcha
+`rating_submissions`' own migration comment already flagged for
+INSERT), so `rate.html`'s catalog search/embed would have failed with
+permission-denied despite RLS allowing it. New migration
+`20260913020000_grant_catalog_select_to_authenticated.sql`, tested,
+applied to local and hosted, verified.
+
+**Two real bugs caught by manual code re-review** (planned browser-based
+interactive testing hit a persistent, unrelated Chrome-extension
+tooling error this session couldn't resolve after 3 attempts -- "Cannot
+access a chrome-extension:// URL of different extension" -- so a
+careful second read of the code substituted for it; noting this
+honestly rather than claiming a full click-through happened):
+1. The magic-link sign-in flow set `emailRedirectTo` to whatever page
+   the user came from (e.g. `rate.html`), but Supabase only validates a
+   redirect URL against its allow-list, which (per Step 2 above) only
+   lists `index.html` -- any other target would have been silently
+   rejected by Supabase, breaking the entire magic-link path. Fixed:
+   always redirect to `index.html` (with the intended destination
+   preserved as a `next` query param), which now auto-forwards once a
+   session exists.
+2. `GET /recommendations` had a stray, unused `user_id` query parameter
+   that shadowed the real one derived from the verified JWT -- dead,
+   confusing API surface, not a security issue (the shadowed value was
+   never actually used), but removed.
+
+**Confirmed correct, not just assumed**: `psycopg2-binary`'s version
+pin in `api/requirements.txt` needed dropping (2.9.9 has no Python 3.13
+wheel, tried to build from source and failed missing `pg_config`) --
+matches `scripts/requirements.txt`'s own existing unpinned convention,
+not a new pattern.
+
+**Still open before this is usable by a real rater**: the Step 2
+dashboard action above, deploying `api/` to Render (needs the repo
+owner's own Render account), and the real ratings/import round-trip +
+mobile-viewport verification the plan's own Verification section
+calls for -- none of these are fakeable without a live hosted session.
+
+## 2026-09-12 (later) — `api/` deployed to Render, actually live and verified
+
+Repo owner deployed `bookspell-api` on Render's free tier via the
+dashboard (Claude driving the browser directly). Two real bugs hit and
+fixed during this, neither fakeable in local testing since they only
+manifest against a genuine external network + hosted Auth:
+
+1. **Direct Postgres connection unreachable from Render.** First deploy
+   failed with `psycopg2.OperationalError: ... Network is unreachable`
+   against `db.<ref>.supabase.co:5432` -- that host resolves IPv6-only,
+   and Render's outbound network has no IPv6. Fixed by switching
+   `DATABASE_URL` to Supabase's transaction pooler
+   (`aws-0-ap-southeast-1.pooler.supabase.com:6543`, username
+   `postgres.<project-ref>`), which supports IPv4 and is Supabase's own
+   documented answer for exactly this platform-connectivity case.
+2. **A stray leading character in the pasted connection string broke
+   DSN parsing** (`psycopg2.ProgrammingError: invalid dsn: missing "="
+   after ")"`) -- a rendering/copy artifact (a `〉`-style character)
+   ended up prepended to the value when it was entered. Caught by
+   reading the value back and zooming in on it character-by-character
+   rather than assuming a re-paste would be clean; fixed by clearing
+   the field and retyping cleanly.
+
+**A real security correction mid-session**: this project's JWT
+verification (`api/main.py`) was originally written against an
+unverified assumption (Supabase's legacy shared HS256 secret). The repo
+owner, while getting the hosted connection string, surfaced a
+`SUPABASE_JWKS_URL` value that only exists under Supabase's newer
+asymmetric-key model -- confirmed directly (fetched the real JWKS
+endpoint, got back one real ES256 key) rather than assumed, and
+`api/main.py`/`api/README.md`/`api/requirements.txt` were fixed to use
+`PyJWKClient` before deployment, not after. See the corresponding commit
+for the full before/after and the tests run against the real JWKS
+endpoint (a garbage token rejected, a well-formed-but-forged-signature
+token correctly fetching the real key and failing verification).
+
+**A real credential-hygiene note, not a code issue**: the repo owner
+pasted a live `SUPABASE_SECRET_KEY` and (twice) a real database
+password directly into chat during this process. Neither was stored or
+reused by Claude beyond the one legitimate use (typing the connection
+string into Render's own field), but both are now sitting in
+conversation history -- the database password was already being
+rotated as part of fixing issue 2 above (a second, independent reason
+to have done so, not just hygiene), and the secret key rotation is
+still a repo-owner action item, not yet done as of this entry.
+
+**Verified live** (not just "deploy succeeded"): `GET
+https://bookspell-api.onrender.com/rule-targets` returns real catalog
+data (200), `GET /recommendations` with no token correctly 401s. Full
+ratings/import round-trip against a real signed-up user is still the
+next real verification step -- this confirms the service and its DB/
+auth wiring work, not that every endpoint's business logic is exercised
+end-to-end yet.
+
+`app/shared.js`'s `API_BASE` already matched the real assigned Render
+URL by construction (the service was named `bookspell-api`, Render's
+default URL pattern is `https://<service-name>.onrender.com`) -- no
+value change needed, just updated the comment that had called it a
+placeholder.
+
+## 2026-09-13 (later) — Catalog tagging batch, 18 books (CLDO session)
+
+Repo owner asked for a tagging batch while there was budget left before
+a token reset, before returning to the web app work. Followed
+`.claude/skills/tag-catalog-batch` directly (Step 1.5's schema-sync
+check passed clean, no drift). Worked the Step 2 priority query
+(partial-series-first) rather than picking arbitrarily.
+
+**21 candidates pulled from the priority list, 3 explicitly NOT
+tagged** -- all 3 real, none of them rushed past:
+- **The Foundation Trilogy** (Isaac Asimov) -- confirmed omnibus (752
+  pages vs. ~250-300 for a single Foundation novel; synopsis describes
+  the whole trilogy's arc), the same schema gap as the other known
+  omnibus duplicates (book-dna.md's "omnibus/compilation editions"
+  backlog entry).
+- **The Winds of Winter** (George R.R. Martin) -- unpublished, existing
+  permanent-skip precedent.
+- **Red God** (Pierce Brown) -- **caught before it became a real
+  tagging error, not after**: this book is NOT YET PUBLISHED. A quick
+  research pass (rather than trusting "I know this series, this is
+  obviously the next one") found Brown was still actively writing it as
+  of a March 2026 interview, no publisher-confirmed release date. The
+  catalog row itself has no `publication_year`/synopsis, consistent
+  with a speculative Hardcover pre-listing rather than a real book.
+  Confirming this BEFORE tagging is exactly the kind of check
+  `HIGH_RISK_FIELDS`/the standing "confidently wrong, not uncertain"
+  policy exists for -- pattern-matching "next book in a series I know
+  well" is precisely how past real tagging errors happened.
+
+**18 books tagged.** Full Book DNA + tropes + content warnings +
+`book_field_confidence` for genuinely uncertain calls, verified via a
+rolled-back-transaction test before applying for real, then local
+(psycopg2) and hosted (`supabase db push`), verified matching on both
+sides (885 `book_dna` rows). Migration
+`20260913030000_tag_catalog_batch_18_books.sql`.
+
+Books tagged, by series (partial-series-first as the skill prioritizes):
+Discworld -- A Hat Full of Sky, I Shall Wear Midnight, Wintersmith
+(Tiffany Aching sub-series), Raising Steam, The Last Hero, Unseen
+Academicals, Snuff, The Amazing Maurice and His Educated Rodents (31/39
+tagged before this batch, now 39/39 -- **Discworld is now fully
+complete**). The Dresden Files -- Cold Days, Peace Talks, Turn Coat.
+The Expanse -- Auberon. The Mortal Instruments -- City of Heavenly Fire
+(now complete, 6/6). Percy Jackson and the Olympians -- The Chalice of
+the Gods (now complete, 6/6). Ender's Saga -- Ender in Exile. The
+Twilight Saga -- Midnight Sun. Old Man's War -- The End of All Things,
+The Human Division.
+
+**Two real research-verified corrections, not guessed**: (1) Auberon's
+governor character is Biryar Rittenaur (an early planning note had the
+wrong name from memory) -- verified `person: third_limited` (medium
+confidence, reviews consistently use "he" but no direct excerpt access;
+recorded via `book_field_confidence`), and the ending is genuinely
+morally-compromising rather than a clean win or clean tragedy (he
+protects his wife by striking a corrupt deal with a crime boss,
+escaping consequence by becoming complicit) -- tagged
+`emotional_resolution: ambiguous`, tropes `morally_grey_protagonist`/
+`corruption_arc`. (2) The End of All Things is genuinely first-person
+throughout all 4 linked novellas (confirmed via a review that
+specifically critiques Scalzi for this choice, different POV
+characters sounding too similar) -- an earlier planning assumption of
+"mixed" person was wrong and corrected before tagging, not after.
+
+**Author-field contamination flagged, not fixed (out of this batch's
+scope)**: 3 books -- A Hat Full of Sky, The Last Hero, Wintersmith --
+carry `"Terry Pratchett, Paul Kidby"` as author. Kidby is Pratchett's
+longtime cover illustrator, not a co-author. Same recurring
+contamination pattern CLAUDE.md already documents catalog-wide; noted
+here rather than silently worked around, per that standing policy.
+
+**Density self-check run, honest result, not silently passed**:
+batch average 4.61 tropes/book (catalog average 5.45, ~15% below --
+acceptable) but only 1.11 content-warnings/book (catalog average 1.74,
+~36% below). Made a real second pass specifically to close this gap
+before finalizing (not skipped) -- pushed CWs from an initial 0.94/book
+up through honest, individually-justified additions (e.g. `animal_harm`
+for The Amazing Maurice's rat-poisoning plot, `torture`/
+`kidnapping_or_captivity` for City of Heavenly Fire's Sebastian arc,
+`war_trauma` for both Old Man's War entries). The remaining gap reads
+as a genuine content difference, not rushing: this batch is unusually
+concentrated in comedic Discworld satire and long-running
+urban-fantasy/space-opera franchise entries, which this vocabulary's
+content-warning list (skewed toward grimdark/dark-fantasy-style
+content) doesn't map onto as densely as, say, grimdark epic fantasy
+would. Flagging this transparently rather than forcing further
+CW tags past what the actual text supports, per the "don't force"
+policy taking precedence when the two policies are in real tension.
+
+**A separate, small, PRE-EXISTING data-drift finding, unrelated to this
+batch**: after applying and verifying this batch matched exactly on
+both local and hosted (confirmed via a per-book title query showing
+identical trope/CW counts on both sides), the catalog-wide totals
+still showed hosted running 4 tropes / 1 content warning / 1 confidence
+row ahead of local. `git fetch` showed no new commits and
+`supabase migration list --linked` showed zero tracking gaps (every
+local migration file has a matching remote entry) -- so this isn't the
+already-documented "someone pushed via raw psycopg2 instead of
+`supabase db push`" pattern. Source not identified within this batch's
+scope; flagging for the next full sync rather than spending further
+budget chasing a discrepancy this small (4/4811, 1/1527, 1/475 rows)
+that doesn't affect anything just tagged.
+
+## 2026-09-13 (later still) — Catalog tagging batch 2, 20 books (CLDO session)
+
+Second batch in the same sitting (repo owner asked for 4 in a row).
+Same process: Step 1.5 schema check clean, fresh Step 2 priority query
+(already-tagged books from batch 1 auto-excluded).
+
+**2 new permanent-skip candidates found, same documented patterns as
+before, not re-litigated**: The Doors of Stone (Patrick Rothfuss) --
+unpublished, same precedent as Winds of Winter; The Farseer Trilogy
+(Robin Hobb) -- confirmed omnibus, same schema gap as Foundation/
+Villains/Monk and Robot. Foundation Trilogy/Red God/Winds of Winter
+still reappear at the top of every query (expected, they never get a
+`book_dna` row) -- not tagged, not re-researched.
+
+**20 books tagged**: Malazan Book of the Fallen -- House of Chains,
+Midnight Tides, The Bonehunters, Reaper's Gale, Toll the Hounds, The
+Crippled God (all 6 remaining untagged Malazan books -- **series now
+fully tagged**). The Culture -- Excession, Look to Windward, Matter,
+Surface Detail. Robot -- Robots and Empire, The Robots of Dawn (**Robot
+series now fully tagged**). Imperial Radch -- Provenance, Translation
+State (**series now fully tagged**). Earthsea Cycle -- Tehanu. Shatter
+Me -- Restore Me. The Reckoners -- Mitosis. The Maze Runner -- The Kill
+Order. Sprawl -- Burning Chrome. Remembrance of Earth's Past -- The
+Redemption of Time.
+
+**Research-verified before tagging, not pattern-matched** (see this
+session's own research agent output): Malazan's ensemble third-person
+structure and "thrown in the deep end" exposition style (confirmed
+`worldbuilding_delivery: woven` is correct, not `exposition_dump`,
+despite the series' reputation for being confusing to newcomers --
+matches the skill's own Gideon the Ninth precedent exactly: confusing
+because nothing is explained is a woven signal, not an exposition-dump
+one); House of Chains' unusual front-loaded single-POV Karsa Orlong
+opening (`pace_shape: front_loaded`, a real structural feature, not
+guessed); The Redemption of Time's authorship (Baoshu/Li Jun, publisher-
+licensed continuation, Liu Cixin did not write it) and Ken Liu's
+translator-only role; Ann Leckie's pronoun-convention nuance --
+confirmed the core trilogy's blanket Radchaai "she" does NOT carry over
+identically to Provenance (Hwaean he/she/e-at-adulthood) or Translation
+State (multiple real nonbinary pronoun sets, individually chosen) --
+tagging both as continuing the *identical* device would have been
+wrong.
+
+**Author-field contamination flagged, not fixed (out of scope)**: The
+Redemption of Time's author field, `"Baoshu, Ken Liu"` -- Ken Liu is
+the English translator only, not a co-author. Same recurring pattern
+CLAUDE.md already documents.
+
+**Density self-check, same honest process as batch 1**: initial pass
+came in thin (3.45 tropes/book, ~37% below catalog average 5.45) --
+made a real second pass to close it through individually-justified
+additions (e.g. `cloning` for Mitosis's clone-Epic antagonist,
+`powerful_artifact_macguffin` for Provenance's stolen-vestiges plot,
+`redemption_arc` for several Malazan character arcs that genuinely
+resolve that way), landing at 4.5/book (~17% below, in line with batch
+1's final number). Content warnings landed at 1.35/book (catalog
+average 1.74, ~22% below) -- accepted without further forcing, same
+reasoning as batch 1: Culture/Robot/Imperial Radch skew toward
+cerebral/political sci-fi that doesn't map as densely onto this
+vocabulary's warning list as grimdark fantasy does (Malazan itself, by
+contrast, landed well above average on both axes, consistent with its
+genuinely brutal content).
+
+Migration `20260913040000_tag_catalog_batch2_20_books.sql`, tested in a
+rolled-back transaction, applied to local and hosted, verified matching
+(905 `book_dna` rows both sides).
+
+## 2026-09-13 (later still) — Catalog tagging batch 3, 18 books (CLDO session)
+
+Third batch in the same sitting. Same process: schema check clean,
+fresh Step 2 query.
+
+**3 new permanent-skip candidates, all confirmed omnibus editions (not
+assumed from title alone -- checked page count/synopsis against each)**:
+Monk and Robot (Becky Chambers, 304pp, synopsis explicitly says "two...
+stories...together"), Villains Duology (V.E. Schwab, 944pp, "boxed set
+along with a poster"), Heir of Novron (Michael J. Sullivan, 946pp --
+combines Wintertide + Percepliquis, the last 2 Riyria Revelations
+novels). Same schema gap as the already-known Foundation/Farseer cases.
+Foundation Trilogy/Red God/Winds of Winter/Doors of Stone/Farseer
+Trilogy still reappear at the top of every query as expected -- not
+re-tagged, not re-researched.
+
+**18 books tagged**: The Sun Eater -- Demon in White, Kingdoms of Death
+(**series now fully tagged, 4/4**). Red Queen -- King's Cage. Hogwarts
+Library -- Quidditch Through the Ages (an unusual case, a fake in-
+universe "textbook," not a normal narrative -- tagged as best fits the
+schema, flagged as a real format mismatch rather than forced to look
+like a normal novel). Hainish Cycle -- Rocannon's World, The Word for
+World Is Forest. The Scholomance -- The Golden Enclaves. Artemis Fowl
+-- The Lost Colony. The Liveship Traders -- The Mad Ship. The Magicians
+-- The Magician's Land. Space Odyssey -- 2010: Odyssey Two. Zones of
+Thought -- A Deepness in the Sky. Blood and Ash -- A Kingdom of Flesh
+and Fire. An Ember in the Ashes -- A Torch Against the Night. The Old
+Kingdom -- Abhorsen. Fitz and the Fool -- Assassin's Fate. Night Angel
+-- Beyond the Shadows. Cradle -- Blackflame.
+
+**Research-verified before tagging**: The Magician's Land confirmed
+third-person (not first, despite Quentin-narrated assumptions from the
+earlier books) and multi-POV in this specific installment (Janet/Eliot/
+Plum sections, not just Quentin) -- corrected before tagging, not after.
+The Sun Eater's retrospective-memoir narration structure confirmed (an
+elderly Hadrian Marlowe narrating his own past with deliberate
+foreshadowing of outcomes he already knows) -- tagged with the
+`retrospective_memoir_narration` trope specifically because of this
+confirmed structural detail, not just "it's first person."
+
+**Author-field contamination flagged, not fixed (out of scope)**:
+Rocannon's World (`"..., Stefan Rudnicki"`) and Blackflame
+(`"Travis Baldree, ..."`) both credit the audiobook narrator as a
+second author. Same recurring pattern.
+
+**A genuine format-mismatch case, handled transparently**: Quidditch
+Through the Ages is a fake in-universe "textbook," not a normal
+narrative -- most craft fields (POV, drive, pacing) don't really apply
+in their usual sense. Tagged with best-fit values and a
+`book_field_confidence` entry on `person` flagging the mismatch, rather
+than silently forcing it to read like an ordinary novel or skipping it
+entirely (it's a real, separately-published book, not an omnibus or
+unpublished work -- no principled reason to skip it the way those are
+skipped).
+
+**Density self-check, same honest process**: two full passes needed
+this time (thinner starting point than batches 1-2, this pool skewed
+toward shorter/older works) -- landed at 4.28 tropes/book (catalog
+average 5.45, ~21.5% below) and 1.28 CWs/book (average 1.74, ~26%
+below) after real, individually-justified additions each pass. Caught
+and fixed a real duplicate-trope bug during testing (added `prophecy`
+to Kingdoms of Death twice across two passes, caught by the rolled-back
+transaction test failing on a unique-constraint violation before
+anything was applied for real -- exactly what that test step is for).
+Remaining gap read as genuine: this pool included 2 short Le Guin
+novellas and one non-narrative reference book that can't honestly
+carry as many tropes/warnings as a doorstop epic fantasy without
+inventing content that isn't there.
+
+Migration `20260913050000_tag_catalog_batch3_18_books.sql`, tested in a
+rolled-back transaction (caught the duplicate-trope bug above before
+ever touching real data), applied to local and hosted, verified
+matching (923 `book_dna` rows both sides).
+
+## 2026-09-13 -- catalog expansion round 4 tagging batch 4/4, 13 series completed
+
+Fourth of four tagging batches requested in the same sitting (following
+batches 1-3 earlier the same day). Step 1.5 schema-sync check re-run,
+confirmed unchanged (42 `book_dna` columns). Step 2 priority query
+(partial-series-first) returned the now-expected recurring permanent-
+skips (Foundation Trilogy, Red God, Winds of Winter, Doors of Stone,
+Farseer Trilogy, Heir of Novron, Monk and Robot, Villains Duology --
+none re-reviewed) plus 18 new real candidates, all confirmed untagged
+and title-unique before drafting.
+
+**18 books tagged**: Fitz and the Fool -- Fool's Quest (**3/3,
+complete**). The Tawny Man -- Fool's Fate (2/3). The Old Kingdom --
+Lirael (**3/3, complete**). Night Angel -- Shadow's Edge (**3/3,
+complete**). Cradle -- Soulsmith (**3/3, complete**). Mars Trilogy --
+Blue Mars and Green Mars (both tagged this batch, **3/3, complete**).
+Takeshi Kovacs -- Broken Angels (2/3). Revelation Space -- Chasm City
+(**2/2, complete**). Star Wars: The Thrawn Trilogy -- Dark Force Rising
+(2/3). Wayward Children -- Down Among the Sticks and Bones (**2/2,
+complete**). Outlander -- Dragonfly in Amber (**2/2, complete**). The
+Final Architecture -- Eyes of the Void (**2/2, complete**). Daemon --
+Freedom (**2/2, complete**). The Giver -- Gathering Blue (**2/2,
+complete**). He Who Fights with Monsters -- He Who Fights with Monsters
+2 and 3 (both tagged this batch, **3/3, complete**). Lock In -- Head On
+(**2/2, complete**).
+
+13 series brought to full completion within this catalog's current
+scope (not necessarily the real-world series' full published length) --
+every completion claim re-verified via a direct `series`/`books`/
+`book_dna` join query run *after* applying the migration, not assumed
+from pre-batch arithmetic.
+
+**Author-field check**: "He Who Fights with Monsters 2"/"3" both credit
+`"Shirtaloon, Travis Deverell"`. Verified via web search before
+assuming contamination (per the standing mandatory-verification rule):
+Shirtaloon is Travis Deverell's own pen name -- one real author credited
+under both names, not a contributor slipping in as a co-author. Left
+as-is, no fix needed.
+
+**Density self-check**: first pass landed at 3.78 tropes/book, 1.06
+CWs/book against a freshly-queried catalog average of 5.41/2.07 --
+meaningfully below on both. One honest enrichment pass (real,
+individually-justified additions per book -- e.g. `court_intrigue`/
+`long_journey` for the two Fitz-and-the-Fool books once their actual
+Buckkeep-politics and search-for-the-Fool content was considered, a
+`suicide` content warning for Lirael reflecting a real, specific early
+plot point, `colonization_themes` for both Mars Trilogy books) raised it
+to 4.61 tropes/book, 1.78 CWs/book -- about 85% of average on both axes.
+The remaining gap is read as genuine, not under-tagging: the Mars
+Trilogy (Kim Stanley Robinson) and Cradle (Will Wight) both run
+authentically light on trope-vocabulary/content-warning-worthy material
+for their genres, and forcing the gap fully closed would mean inventing
+tags the books don't actually support.
+
+## 2026-09-13 -- v1 app: Supabase Auth site URL live, first real-user-testing UX batch
+
+Configured hosted Supabase Auth's real `site_url`/`additional_redirect_urls`
+(the GitHub Pages app URL) via `supabase config push`. Caught a real side
+effect of that command mid-flight: it pushes the WHOLE local `config.toml`,
+not just the auth section being changed -- it briefly flipped hosted's
+`enable_confirmations`/`otp_length`/`max_frequency`/MFA settings to this
+file's stock local-dev defaults (email confirmation off, an effectively
+unthrottled 1s email rate limit) as an unintended side effect. Caught from
+the diff `config push` printed before/after, restored to the prior
+production values in a second push within the same session, and documented
+in `config.toml`'s own comments so a future site_url tweak doesn't repeat
+this. Real window of exposure: a few minutes, no real users yet.
+
+Ran a full throwaway signup->login->backend smoke test against hosted
+(admin-API-created confirmed test user, password-grant login for a real
+JWT, hit the deployed Render backend's `/rule-targets` and
+`/recommendations` with it, confirmed 401 with no/garbage token, deleted
+the test user and verified no residual `profiles`/`ratings`/`user_rules`
+rows). Full chain verified working end to end.
+
+**First real-user testing pass** (14 pieces of feedback from actually
+using the deployed app): addressed 9 of 14 in this session --
+- Fixed a real bug: Supabase's default confirmation-email template links
+  to `{site_url}/auth/confirm?token_hash=...`, and nothing served that
+  route -- real users hit a 404 confirming their account. Added
+  `app/auth/confirm/index.html` to complete the exchange client-side via
+  `verifyOtp()`.
+- Sign-in/sign-up rebuilt as genuinely distinct modes (shared fields
+  were confusing) with password show/hide toggles, a confirm-password
+  field on signup, and a name field (stored in `auth.users` metadata,
+  copied into `profiles.display_name` on first real session via a new
+  `ensureProfile()` in shared.js, since signUp() has no session yet when
+  email confirmation is required).
+- Nav collapsed to 2 tabs (Recommendations, My ratings); Import moved
+  into rate.html as a link rather than its own tab; "Sign out" replaced
+  with an avatar/name dropdown menu (previously a bare link, a real
+  misclick risk); added a dark/light toggle (system-preference default,
+  explicit choice persisted per-browser via localStorage).
+- Dashboard's genre toggle moved below "Get recommendations" and now
+  fetches all 3 genre pools (both/fantasy/sci_fi) up front, caching
+  client-side -- switching tabs after that re-renders instantly instead
+  of silently doing nothing (the reported bug).
+- Thumbnails (`books.cover_url`, already in the schema) added to search
+  results, my-ratings, and recommendation cards; an optional "when did
+  you read it" date added to the rating flow (`ratings.rated_date`
+  already existed, just had no UI).
+- Answered two informational questions with real code references rather
+  than guessing: confirmed cold-start recommend() DOES use the
+  experience mechanic built earlier (`cold_start_weight()`/
+  `reader_experience_fraction()`, `scripts/recommend.py:280-332` --
+  assumes newbie by default, a single confirmed veteran_only-tier
+  rating zeroes it out regardless of list length); confirmed the
+  built-in Supabase mailer's rate limit is real (no custom SMTP
+  configured) and will need a provider before any real onboarding push.
+
+**Not yet done, deferred to a follow-up pass**: browsing the full
+field/trope vocabulary for filters (an "advanced" option), series-level
+search (find all books in a series at once rather than one at a time),
+a book-info modal surfacing full Book DNA on a card, and an optional
+structured why-liked/why-disliked field on ratings (a dropdown + free
+text) -- the last one needs a schema decision (new column vs. reusing
+`ratings.review`), the others are UI-only but larger.
+
+**Testing note**: this session's browser-automation tooling
+(click/JS-exec) errored consistently
+(`Cannot access a chrome-extension:// URL of different extension`) --
+an environment/tool malfunction, not related to these changes. Verified
+via `node --check` on every inline script, careful manual code review,
+and one confirmed live check (an unauthenticated hit on `dashboard.html`
+correctly redirects to `index.html?next=dashboard.html`). Not full
+interactive click-testing -- flagged to the repo owner, who is testing
+live directly.
+
+Committed as `585093c` (app UX batch) on top of `45a2a53` (auth config
+fix) and `894f0c5` (tagging batch 4), all pushed.
+
+**Follow-up same day**: the repo owner tested the first batch live and
+caught a real bug the code review missed -- the account dropdown was
+visually clipped inside the nav bar instead of floating above the page.
+Root cause: `nav.top`'s `overflow-x: auto` computes `overflow-y: auto`
+too per the CSS overflow spec (only one axis can stay `visible`), which
+silently turned the nav into a clipping container for the dropdown
+(`position: absolute` relative to a nav descendant). Fixed by switching
+the dropdown to `position: fixed`, positioned from the avatar button's
+own `getBoundingClientRect()` at open time, closed on scroll/resize
+since a fixed element doesn't track the page moving under it.
+
+Then completed the remaining 4 of the original 14 feedback items:
+- #9 (series/universe search): `rate.html`'s search now also matches
+  `series`/`universe` names; picking one drills into that series'/
+  universe's book list (ordered by `position_in_series`, showing each
+  book's existing rating status) instead of selecting a single book.
+- #11 (book info modal): a shared modal (`shared.js`'s `showBookInfo()`/
+  `ensureModalEl()`) surfacing full Book DNA -- craft fields, audiobook
+  fields (Tier B included when present), tropes, content warnings --
+  wired into recommendation cards, my-ratings rows, and the new series
+  drill-down list.
+- #8 (browsable filters): dashboard's Filters section gained a
+  "browse all options" toggle grouping the full `/rule-targets`
+  vocabulary (tropes by `group_name`, field-values by `field`) into
+  collapsible sections, for a reader who doesn't already know the
+  vocabulary to type.
+- #12 (rating reason): new `ratings.reason` column (migration
+  `20260913070000_add_rating_reason.sql`, tested in a rolled-back
+  transaction, applied to both local and hosted) plus an optional
+  sentiment-appropriate "why?" dropdown (+ free-text "Other") in the
+  rating flow -- fires a lightweight follow-up UPDATE, never blocks the
+  already-instant rating save.
+
+All 14 of the original real-user-testing feedback items are now
+addressed. Same testing caveat as the first batch: this session's
+browser click/JS-exec tooling kept erroring
+(`Cannot access a chrome-extension:// URL of different extension`) on
+every retry -- verified via `node --check` on every script plus
+thorough manual code review, not full interactive click-testing.
+Committed as `6a2236b`, pushed.
+
+Migration `20260913060000_tag_catalog_batch4_18_books.sql`, tested in a
+rolled-back transaction, applied to local and hosted via
+`supabase db push --linked`, verified matching (941 `book_dna` rows both
+sides). The pre-existing hosted/local drift on `book_tropes`/
+`book_content_warnings`/`book_field_confidence` first flagged during
+batch 1's verification (4/1/1 rows) is still present, unchanged by this
+batch -- still deferred to a future full sync, not investigated here.
+
+This was the last of the 4 explicitly requested tagging batches for
+this sitting.
+
+## 2026-09-13 -- v1 app: third real-user-testing feedback batch
+
+A third round of live testing on the deployed app turned up a real bug
+plus 8 more feature requests.
+
+**Real bug (#6), root-caused and fixed**: the book-info modal's close
+button silently did nothing. Cause: `.modal-overlay` set `display: flex`
+unconditionally in CSS, which per the HTML spec overrides the browser's
+own `[hidden] { display: none }` default -- an author-origin declaration
+always beats a user-agent-origin one for the same property, regardless
+of specificity, so toggling the element's `hidden` IDL property had zero
+visual effect the whole time. Fixed by scoping the rule to
+`.modal-overlay:not([hidden])` so the UA default can apply again.
+
+**Investigated and confirmed real (#8)**: a user reported audiobooks
+they'd personally listened to showed no narrator/cast info in the new
+book-info modal. Checked directly: 0 of 941 tagged books have any of
+the 5 Tier-4 "audiobook-native" `book_dna` fields set
+(`narrator_performance`, `narrator_cast`, `narration_pace_vs_prose`,
+`accent_authenticity`, `production_quality`) -- only `audiobook_length`,
+a separate field, is populated (864/941). `docs/schema/book-dna.md`
+already documented this as a deliberate "skipped for the pilot corpus"
+gap, and it's the same thing blocking the "medium" (text vs. audio)
+recommend() parameter idea in that doc's own backlog -- not something
+today's tagging batches broke, and not previously tracked in
+`docs/TODO.md` (added now). The book-info modal now explains this
+transparently in-product (an explicit note in the Audiobook section)
+rather than just showing an empty section.
+
+**Remaining 7 items addressed**:
+- #9: book-info modal restructured into collapsible `<details>` sections
+  (Audiobook, Book DNA nesting Fields/Tropes/Content warnings), plus new
+  series/universe membership display.
+- #1: "why" reasons converted from single-select to multi-select
+  checkboxes + free-text "Other" -- `ratings.reason` (text) replaced
+  with `ratings.reasons` (`text[]`); zero rows existed yet so no
+  backfill was needed.
+- #3: relative date quick-picks (last week/month/3 months/year) plus a
+  plain year-only input, computing a real date under the hood; the
+  exact date field stays available too.
+- #4: new `ratings.format` column (print/audiobook), defaulted per
+  browser via `localStorage` (a rating-level choice, not an
+  account-wide preference -- format can genuinely vary book to book).
+- #7: rating no longer auto-saves the instant a sentiment button is
+  clicked (it discouraged ever filling in the optional fields) --
+  everything (rating/format/date/reasons) now goes in one upsert on an
+  explicit "Submit rating" button, after which the whole picked-book
+  panel resets rather than sitting there half-done.
+- #2: new `book_suggestions` table + RLS (insert/select own rows only)
+  and a "can't find a book or series?" intake on rate.html, so tagging
+  work can prioritize real reader requests over only Hardcover
+  genre-search pulls.
+- #5: no image-generation tool available this session -- hand-coded an
+  SVG placeholder logo/favicon (`app/logo.svg`, an open book + spark in
+  the app's accent green) wired in as favicon and inline mark across
+  every page, with the repo owner pointed to real AI image tools for a
+  polished version later.
+
+Migration `20260913080000_ratings_reasons_array_format_and_suggestions.sql`
+(the `reason`->`reasons` conversion, `format`, `book_suggestions` + RLS),
+tested in a rolled-back transaction, applied to local and hosted. Also
+ran a direct schema-level smoke test (a throwaway `auth.users` row in a
+rolled-back local transaction) confirming the array-valued `reasons`
+insert, `format` insert, and `book_suggestions` insert all work at the
+database layer before touching any frontend code -- a genuine
+belt-and-suspenders check given this session's browser-automation
+tooling still can't click-test interactively (same
+`Cannot access a chrome-extension://...` error as the prior two
+batches). Committed as `883a4c5`, pushed.
+
+## 2026-09-13 -- v1 app: fourth feedback batch -- real audiobook edition data surfaces
+
+A user recalled that audiobook edition data (standard vs. graphic
+audio vs. BBC dramatization, narrators, full cast, parts) had actually
+been collected at some point, and asked why the book-info modal's
+Audiobook section only ever showed the "not tagged" message. Checked,
+and they were right: `audiobook_editions` exists with **1123 real rows**
+(795 distinct books), collected separately from the `book_dna` tagging
+batches, and was simply never checked or wired into the app when the
+modal was first built two batches ago.
+
+**A real bug caught before it shipped, not after**: before wiring the
+modal to this table, checked its grants -- `audiobook_editions` had RLS
+disabled AND no grant to `authenticated` at all. Querying it from the
+app would have silently returned nothing, which looks *identical* to
+the real "not tagged yet" case, meaning this could easily have shipped
+as a second copy of the exact same-looking bug. Fixed
+(`20260913100000_expose_audiobook_editions_to_app.sql`: enabled RLS +
+added a `public read access` policy + granted `authenticated` select,
+matching `books`/`book_dna`'s existing pattern exactly) and verified
+with a real authenticated REST call against hosted (not just a grants
+check) returning The Way of Kings' actual GraphicAudio and Macmillan
+Audio editions before trusting it.
+
+**The modal now shows real data**: each edition (type, narrators or
+full cast list, production company, runtime in hours, serialized
+parts/release status for ongoing GraphicAudio releases) instead of a
+blanket "not tagged" message. The still-true Tier B gap (narrator-
+performance/production-quality ratings) is now a small note shown
+*alongside* real edition data, not in its place.
+
+**Also explains the second complaint from this same round**: "The Way
+of Kings" showed no audiobook length despite that field supposedly
+being tagged catalog-wide -- true, it's tagged for 864/941 books, but
+this specific book personally had a null value. Backfilled 40 books'
+`book_dna.audiobook_length` mechanically from real
+`audiobook_editions.runtime_minutes`
+(`20260913090000_backfill_audiobook_length_from_editions.sql`), using
+docs/schema/book-dna.schema.yaml's own documented hour thresholds
+(short <8h, standard 8-15h, long 15-25h, epic 25h+) -- genuinely
+mechanical, not a tagging judgment call. Scoped conservatively to the
+40 books with exactly one unambiguous 'standard'-edition runtime; 18
+more books have multiple 'standard' rows with real, differing runtimes
+(different narrators/publishers) and were deliberately left null
+rather than guessed at -- noted in `docs/TODO.md` as a real, smaller
+remaining opportunity. Caught a real hand-transcription bug of my own
+while writing this migration: two titles use a curly apostrophe (’) in
+the actual stored data, not a straight one, and my first hand-typed
+draft used the wrong character for both -- caught by diffing against
+the already-tested generator-script output rather than trusting the
+retype, and fixed before applying anywhere.
+
+**A genuine data-quality issue noticed in passing, flagged not fixed**:
+some GraphicAudio full-cast dramatizations are mislabeled
+`edition_type = 'standard'` in `audiobook_editions` (e.g. "A Court of
+Frost and Starlight" has a 24-narrator GraphicAudio row tagged
+`standard`). Not fixed here -- a narrator-count heuristic risks
+misclassifying real 2-3-narrator standard editions, so this belongs to
+whoever owns that table's data collection, not a silent app-layer
+reclassification. Noted in `docs/TODO.md`.
+
+**Two smaller UI fixes from the same round**: series/universe
+membership restyled as gold badges (new `--gold`/`--gold-bg`/
+`--gold-border` tokens, defined for light, dark, and the toggle
+override -- caught myself almost wiring the dark variant as an
+unconditional override outside the `@media` guard before switching to
+the token pattern, which would have applied dark-gold to every viewer
+regardless of theme) separated from the description by a dashed rule.
+The description itself is now a collapsible `<details>` section
+matching every other part of the modal, rather than always-visible
+text.
+
+Both new migrations tested in a rolled-back transaction, applied to
+local and hosted, hosted verified matching (905 `audiobook_length`-
+populated rows, the same pre-existing 1-row drift from batch 1 still
+present and still deferred). Committed as `06fc1c8`, pushed.
+
+## 2026-09-13 -- v1 app: found and fixed catalog-review's own audiobook display was silently broken too; session wrap-up
+
+Two follow-up questions from the user after the fourth app batch led to
+a second real fix. First question: why does The Way of Kings show no
+`romance_tone`? Checked directly -- it's not an oversight, the book
+genuinely doesn't qualify as a candidate for the ongoing romance_tone
+backfill sweep (`drive: character_driven`, `romance_heat_frequency:
+rare`, no qualifying romance tropes) -- `null` here is the sweep's
+correct, documented output for a book with only minor secondary
+romantic content, not a book that's been skipped. 190/941 books have
+`romance_tone` set catalog-wide; 132 real candidates remain queued.
+
+Second question: is getting the cast for every BBC/GraphicAudio edition
+a big lift? Checked: of 97 `dramatized_full_cast` rows, 76 already have
+a full cast list stored; only 21 are missing one, and every row already
+has a `source_url` pointing at where to look. Added to `docs/TODO.md`
+as a small, bounded item -- not the large effort implied by "every
+edition."
+
+**While answering these, read `.claude/skills/tag-audiobook-editions/
+SKILL.md` for the first time this session** (should have been read
+before building the book-info modal two batches ago, not after --
+CLAUDE.md's top-level "before doing anything else" reading list now
+explicitly says to check `.claude/skills/` for this reason). It
+confirmed `audiobook_editions`'s real design (edition_type vocabulary,
+the flat-narrator-array shape, the documented character-role-mapping
+gap) and pointed at `docs/schema/book-dna.md`'s own design-rationale
+entry, which showed real collection history: 94 rows as of 2026-09-09,
+now 1123 (795 distinct books) -- meaning substantial additional
+collection happened after the 2026-09-11 P1->P3 demotion that hasn't
+been reconciled into that TODO entry's own history yet (flagged there
+for a future session, not chased down now).
+
+**A second real bug, same root cause as the one already fixed this
+session, caught by checking `tools/catalog-review/index.html`'s own
+audiobook display code rather than assuming the earlier fix covered
+everything**: that tool queries `audiobook_editions` using the anon key
+directly as its bearer token (no login flow), meaning it runs as
+Postgres's `anon` role -- but this session's earlier grant fix
+(`20260913100000`) only granted `authenticated`, matching the app's
+login flow but missing `anon` entirely. Cross-checked against
+`books`/`book_dna`'s existing grants (both roles) to find the mismatch,
+fixed with `20260913110000_grant_audiobook_editions_to_anon.sql`, and
+verified with the exact anon-key REST call `catalog-review` itself
+makes returning real data on hosted. **This means `tools/catalog-
+review`'s audiobook display has likely been silently empty since the
+table was created (2026-09-05)** -- a real, previously-invisible bug in
+a different, older tool, surfaced only because this session happened to
+build something else against the same table and thought to check its
+grants.
+
+### Session wrap-up
+
+Per the repo owner's request, this closes out a long single-terminal
+session covering: catalog tagging batch 4/4 (18 books, 13 series
+completions), Supabase Auth's real site_url/redirect config (plus
+catching and fixing `supabase config push`'s whole-file side effect),
+a full signup->login->backend smoke test, and four rounds of real-user
+app-testing feedback (36 total feedback items across UX polish, three
+real bugs self-caught or user-caught, two schema migrations for
+`ratings` fields, a new `book_suggestions` table, and the
+`audiobook_editions` grants fix covered above). `CLAUDE.md` updated
+with five durable lessons from today: checking `.claude/skills/` before
+building on an unfamiliar table, the new-table RLS+grant pairing rule,
+the Unicode-curly-quote migration-escaping gotcha, the `hidden`+
+unconditional-`display` CSS gotcha, and a new "v1 web app" section
+covering the `config push` whole-file behavior, the token-based
+dark-mode pattern, and `audiobook_editions`'s real shape.
+
+**Open threads for the next session** (also see `docs/TODO.md`'s P1-P3
+sections, unchanged in priority by today's work):
+- App: 4 rounds of live-testing feedback addressed; no 5th round
+  requested yet as of this entry -- the natural next step is simply
+  more live testing, or picking up whichever `docs/TODO.md` item the
+  repo owner prioritizes next (tagging, scoring, or more app work).
+- The 21 missing-cast `dramatized_full_cast` rows and the 18
+  ambiguous-runtime `audiobook_length` books are both small, well-scoped,
+  ready-to-pick-up items (see `docs/TODO.md`'s P3 section).
+- The GraphicAudio-mislabeled-as-`standard` data-quality issue and the
+  94->1123-row reconciliation gap in the P3 audiobook-editions entry are
+  both flagged, not investigated further -- genuine next-session
+  candidates if audiobook data quality becomes a priority.
+- This session's browser-automation tooling (click/JS-exec) errored
+  consistently all day (`Cannot access a chrome-extension:// URL of
+  different extension`) -- every app-code verification this session was
+  done via `node --check` + manual review + direct DB/REST checks, never
+  actual interactive clicking. If a fresh terminal's browser tooling
+  works again, a real interactive pass over the whole app (not just the
+  pieces the repo owner happened to test live) would be worth doing
+  once, to catch anything that slipped through code-review-only
+  verification.
+
+## 2026-09-13 -- confirmed audiobook-edition data model, backfilled missing GraphicAudio/BBC cast lists, made cast collapsible in the app
+
+Mathias asked two direct questions about the audiobook edition data: (1)
+do we store GraphicAudio/BBC full-cast lists, not just standard-edition
+narrators, and (2) when a book has genuinely multiple distinct
+narrations (his own example: Wheel of Time's classic Kramer/Reading
+narration vs. Rosamund Pike's later solo re-recording), are both stored
+rather than one overwriting the other. Checked both directly against
+hosted rather than trusting memory: (1) yes -- `narrators` is a flat
+array used for both standard narrators and full-cast lists (no
+character-role mapping, a known documented gap), and 76 of 97
+`dramatized_full_cast` rows already had one; (2) yes, confirmed on the
+exact book named -- The Eye of the World has two separate `standard`
+rows, one for Kramer/Reading and one for Pike, each with its own
+`runtime_minutes`, matching `scripts/backfill-standard-narrators.js`'s
+documented narrator-set-identity grouping.
+
+Asked to pull the remaining missing cast data since it looked cheap:
+of the 21 `dramatized_full_cast` rows still missing a cast list
+(flagged but not investigated in the prior session's entry), 12 were
+genuinely recoverable and are now backfilled; the other 9 are confirmed
+not a research gap (6 are the pre-existing deliberate Earthsea/
+Foundation BBC bundled-dramatization no-op; 3 -- Dresden Files 5: Death
+Masks, all 3 parts of Red Rising Saga 6: Light Bringer, and Throne of
+Glass -- genuinely have no cast published on GraphicAudio's site at
+all, checked across every alternate part-number/URL variant before
+concluding this). Full reasoning and the exact 12/9 breakdown now in
+`docs/TODO.md`.
+
+**A real tooling gotcha hit and worked around**: `WebFetch` returned "no
+cast information in the page content" for every GraphicAudio product
+page, even ones later confirmed to have a full cast -- its markdown
+conversion was silently dropping the `Director & Cast` tab's content,
+present in the raw HTML the whole time (`<div class="attribute-label">
+Starring</div>`). Caught by fetching the same URL directly via curl and
+diffing before concluding the data genuinely didn't exist -- avoided
+what would have been a false "not recoverable" conclusion across all 15
+GraphicAudio rows. `supabase db query --linked --file` (a real,
+previously-untried read path this session) was used for every hosted
+lookup instead of a raw psycopg2 connection, since hosted's local
+Supabase stack isn't bootstrapped in this sandbox -- confirmed it
+accepts single-statement read queries fine and doesn't touch hosted's
+migration-tracking table (only real schema/data changes go through
+`supabase db push`).
+
+Cast arrays for the 12 recovered rows were generated programmatically
+from a curated JSON file (never hand-typed into the SQL string), tested
+in a rolled-back transaction against hosted first (each `update` scoped
+by title subselect + `edition_type` + `source_url`, guarded to only
+touch still-`null` rows), then applied for real via `supabase db push`.
+Migration `20260913120000_backfill_missing_dramatized_cast_lists.sql`.
+Verified post-push: exactly 9 `dramatized_full_cast` rows still missing
+cast, matching the 9 confirmed-unavailable ones above.
+
+**App change**: the book-info modal's per-edition narrator/cast chips
+(`app/shared.js`) are now inside their own `<details>` element, closed
+by default, labeled "Narrator(s) (N)" for standard editions or "Cast
+(N)" for full-cast dramatizations -- each edition's cast collapses
+independently or the WoT-style multi-edition case would show two
+different actors' names at once with no way to tell which edition they
+belong to. Verified visually (not just `node --check`) against a
+throwaway local static-file harness rendering the exact same template
+with mock multi-edition data (this session's browser automation worked
+fine against `127.0.0.1`, unlike the last two sessions' `chrome-
+extension://` failures against the real Supabase-authenticated app --
+didn't attempt a real login-gated pass since the harness already proved
+the actual markup/CSS/collapse behavior). Harness file deleted after
+use, not committed.
+
+Committed as `6a19e67`, pushed. Next: another catalog-tagging batch and
+the next shared-universe-audit batch, per the repo owner's request.
+
+## 2026-09-13 (later still) -- shared-universe audit batch 8 -- 8 authors checked, 1 confirmed connected and built ("Meridian Empire"), 7 confirmed NOT connected
+
+Continuing `docs/TODO.md`'s P2 shared-universe linking audit (batch 8),
+run as the primary (CLDO) session. Re-ran the candidate query (grouping
+`books` by `author` joined to `series`, filtering to series with
+`universe_id is null`, requiring 2+ distinct such series per author,
+ordered by total book count descending). Filtered out every author
+already checked across batches 1-7 (both the "confirmed connected" and
+"confirmed NOT connected" lists in `docs/TODO.md`), leaving the same
+"untouched leftover pool" batch 7 left behind, still current -- the
+catalog hadn't changed meaningfully for any of those 23 authors since
+batch 7 wrote that list. Picked the top 8 by book count: Brent Weeks
+(8 books), Becky Chambers (7), Tahereh Mafi (5), James Islington (5),
+Marissa Meyer (5), Jennifer Lynn Barnes (4), Stephanie Garber (4), and
+John Gwynne (4).
+
+**Result: 1 confirmed connected and built, 7 confirmed NOT connected.**
+Verified each against real, specific evidence (author statements,
+official/publisher pages, multiple independent corroborating sources),
+not a vague "feels connected" or "feels separate" impression:
+
+- **Stephanie Garber -- Caraval + Once Upon a Broken Heart, confirmed
+  connected, built as "Meridian Empire."** Confirmed directly by the
+  author herself in a Goodreads Q&A: asked whether a 4th Caraval book
+  was coming, she said no, but Once Upon a Broken Heart was -- "the
+  start of a new series... set in [the] same Universe as Caraval." This
+  clears the audit's structural-connection bar, not just a shared-vibe
+  claim: Jacks, Caraval's antagonist, is the male lead and viewpoint
+  character of Once Upon a Broken Heart, and Caraval's own protagonists
+  (Scarlett and Tella) make a direct in-story appearance in it. No
+  official or widely-used fan umbrella term was found for the combined
+  universe (checked specifically, per this audit's naming policy) --
+  but the setting itself has a real in-world name, "Meridian Empire,"
+  used consistently across both series (Flatiron's official "The World
+  of Caraval" companion site, and the "Spectacular" novella both use it
+  directly), matching the established place-name pattern this audit
+  already uses (Westeros/Abeth/Middle-earth/Elan) rather than inventing
+  a "-verse" coinage. Migration
+  `20260913140000_shared_universe_audit_batch8.sql`, tested in a
+  rolled-back transaction with a genuine idempotency re-run first, then
+  applied for real via `supabase db push --linked` and verified live on
+  hosted. `universe` now has 19 rows.
+- **Brent Weeks -- Night Angel Trilogy vs. Lightbringer, confirmed NOT
+  connected.** Asked directly on Goodreads whether Lightbringer connects
+  to Night Angel, Weeks answered plainly: "No, it's a different world,
+  different magic, etc."
+- **Becky Chambers -- Wayfarers vs. Monk & Robot, confirmed NOT
+  connected.** Wayfarers is set in the Galactic Commons, a space-opera
+  setting; Monk & Robot is set on Panga, a solarpunk far-future Earth-
+  moon setting with no shared characters, history, or technology base
+  between the two.
+- **Tahereh Mafi -- Shatter Me vs. This Woven Kingdom, confirmed NOT
+  connected.** This Woven Kingdom was explicitly designed and marketed
+  as a wholly separate project from Shatter Me -- a new Persian-
+  mythology-inspired fantasy world, unconnected cast and setting.
+- **James Islington -- Hierarchy (The Will of the Many) vs. The Licanius
+  Trilogy, confirmed NOT connected.** Licanius is set in the world of
+  Andarra; Hierarchy is set under the Catenan Republic. Multiple sources
+  (publisher pages, fan wikis) independently confirm distinct
+  characters, histories, and magic systems between the two -- no
+  crossover of any kind.
+- **Marissa Meyer -- Renegades vs. The Lunar Chronicles, confirmed NOT
+  connected.** Renegades is a superhero-genre trilogy set in Gatlon
+  City; The Lunar Chronicles is a sci-fi fairytale-retelling series set
+  across Earth and Luna. Different genre, cast, and setting with no
+  identified crossover.
+- **Jennifer Lynn Barnes -- The Inheritance Games vs. The Naturals,
+  confirmed NOT connected.** The Inheritance Games (the Hawthorne
+  family mystery) and The Naturals (an FBI teen-profiler program) are
+  both contemporary-set YA by the same author but have distinct casts
+  and settings; the Inheritance Games' own confirmed expanded universe
+  is with The Grandest Game/The Brothers Hawthorne, not The Naturals --
+  no source treats the two as connected.
+- **John Gwynne -- The Bloodsworn Saga vs. The Faithful and the Fallen,
+  confirmed NOT connected.** The Bloodsworn Saga is an explicitly new,
+  separate Norse/Beowulf-inspired world (Vigrið); The Faithful and the
+  Fallen is set in the Banished Lands. (Worth noting for context, not
+  action: The Faithful and the Fallen's real in-continuity sequel is Of
+  Blood and Bone, which IS the same Banished Lands world -- but that
+  series isn't in our catalog, so it didn't surface in this audit's
+  candidate query and isn't part of this finding.)
+
+**Naming policy**: invoked once this batch (Meridian Empire, per above)
+-- searched specifically for an existing fan-coined umbrella term before
+falling back to the real in-world place name, consistent with how
+Westeros/Abeth/Middle-earth/Elan were each named.
+
+**No new data-quality issues found this batch.** The already-flagged
+Card Shadow Saga and R.A. Salvatore Dark Elf Trilogy/Legend of Drizzt
+series-splitting issues were not re-encountered (neither author
+resurfaced in this batch's candidate set).
+
+**Next (batch 9)**: re-rank remaining series excluding all authors now
+checked across batches 1-8 (add this batch's 8: Brent Weeks, Becky
+Chambers, Tahereh Mafi, James Islington, Marissa Meyer, Jennifer Lynn
+Barnes, Stephanie Garber, John Gwynne). Untouched leftover pool as of
+this batch (non-exhaustive, from the batch-7 list minus this batch's 8):
+Anthony Ryan, Carissa Broadbent, Danielle L. Jensen, Laini Taylor, Marie
+Lu, Mira Grant, Octavia E. Butler, Rachel Gillig, Rebecca Roanhorse,
+Rebecca Ross, S. A. Chakraborty, Samantha Shannon, Stephen Graham Jones,
+TJ Klune, Veronica Roth.
+
+## 2026-09-13 (later still) -- catalog tagging batch 5: 20 books, 19 series completions, one author-contamination fix, one prior-log correction found
+
+Ran `.claude/skills/tag-catalog-batch/SKILL.md` (CLDO session). Step 1.5
+schema-drift check run fresh first: live `book_dna` has exactly the 33
+mandatory columns plus `book_id`/`genre` plus the 5 columns the skill
+already treats as excluded (`narrator_performance`, `narrator_cast`,
+`narration_pace_vs_prose`, `accent_authenticity`, `production_quality`)
+-- no drift, nothing to fix.
+
+**20 books tagged**, all pulled from Step 2's partial-series-first query
+(top 40 candidates, run against hosted via `supabase db query --linked
+--file` per this session's environment): The Golden Fool (Robin Hobb),
+The Last Command (Timothy Zahn), Woken Furies (Richard K. Morgan),
+Hollow City (Ransom Riggs), Judas Unchained (Peter F. Hamilton),
+Legendary (Stephanie Garber), Pretties (Scott Westerfeld), Prodigy
+(Marie Lu), Rule of Wolves (Leigh Bardugo), Shadow & Claw (Gene Wolfe),
+Shadow of Night + The Book of Life (Deborah Harkness), Shadow of the
+Giant (Orson Scott Card), Shorefall (Robert Jackson Bennett),
+Silverthorn (Raymond E. Feist), Stone of Tears (Terry Goodkind), Tales
+from the Cafe (Toshikazu Kawaguchi), The Ashes and the Star-Cursed King
+(Carissa Broadbent), Heir of Novron (Michael J. Sullivan), The Atlas
+Paradox (Olivie Blake).
+
+**19 series completions** (all now show tagged=total in `books`):
+Tawny Man, Star Wars: The Thrawn Trilogy, Takeshi Kovacs, Miss
+Peregrine's Peculiar Children, Commonwealth Saga, Caraval, Uglies,
+Legend, King of Scars, The Book of the New Sun, All Souls (via the two
+Harkness books together), Enderverse: Publication Order, The Founders
+Trilogy, The Riftwar Saga, Sword of Truth, Before the Coffee Gets Cold,
+Crowns of Nyaxia, The Riyria Revelations (Omnibus), The Atlas -- all
+verified live post-migration, not assumed.
+
+**Author-field contamination caught and fixed before insertion, not
+after**: `Judas Unchained`'s stored author was `"Peter F. Hamilton,
+Marta García Martínez"` -- confirmed via web search that García
+Martínez is the Spanish translator of Hamilton's Commonwealth Saga (she
+translated "La estrella de Pandora"/Pandora's Star), not a co-author.
+Fixed with a title-scoped `update books set author = ...` in the same
+migration, matching the exact contamination pattern this project keeps
+catching in newly-ingested books.
+
+**HIGH_RISK_FIELDS given real research, not pattern-matched from genre
+reputation**: caught `Pretties` (Scott Westerfeld) needs
+`narrator_reliability: unreliable`, not the `reliable` a dystopian-YA
+default would suggest -- the book's own plot mechanism (surgery-induced
+"pretty" brain lesions dulling Tally's critical thinking) makes her a
+textually-grounded unreliable narrator, tagged with a
+`book_field_confidence` entry (0.6) since it's a real judgment call
+about what counts as narratorial unreliability vs. an in-story
+cognitive effect. `Shadow & Claw` (Gene Wolfe) confirmed `unreliable`
+with high confidence -- Severian is the textbook unreliable narrator.
+Multi-POV ensemble books (The Last Command, Silverthorn, Judas
+Unchained, Heir of Novron, Rule of Wolves, Shorefall, Shadow of the
+Giant, The Atlas Paradox) were all tagged `third_limited` rather than
+defaulted to `third_omniscient`, matching this catalog's established
+convention for chapter-rotating-POV epics.
+
+**`romance_tone` tagged only where real, presentation-specific evidence
+was found via web search (reader reviews describing actual scene-level
+tone), never from genre reputation** -- 9 of the 20 books: `Legendary`
+and `Stone of Tears` melodramatic (confirmed via quoted "ultraviolet
+prose"/dramatic declarations and explicit "soap opera"/"melodramatic"
+reviewer language, respectively); `Rule of Wolves`, `Shadow of Night`,
+`The Book of Life`, `The Ashes and the Star-Cursed King`, and `The Atlas
+Paradox` understated (each confirmed via reviews explicitly contrasting
+the romance with melodrama -- "restraint... not a dramatic, passionate
+affair," "tender," "grounded... rather than melodramatic," "restrained
+approach"); `Prodigy` (Marie Lu) tagged `mixed` at confidence 0.2 -- a
+genuine case of disputed reader consensus, some reviews calling it
+"melodramatic," others praising its restraint, a real tie rather than a
+default. The other 11 books were left `null` (too little clean
+romantic-presentation evidence, or too little romantic content at all
+to judge) rather than guessed -- `worldbuilding_delivery` similarly left
+null everywhere except two `woven` tags (The Golden Fool, Hollow City,
+both confidence 0.6) where real evidence was on hand; no
+`exposition_dump` calls this batch given time constraints on research
+depth, flagged rather than guessed.
+
+**Density self-check**: fresh catalog average queried at time of
+tagging (941 books, before this batch) was 5.38 tropes/book, 1.71
+content-warnings/book. This batch: 100 tropes / 20 books = 5.00/book
+(7% below catalog average, well inside the ~20% tolerance), 38 CWs / 20
+books = 1.90/book (above catalog average). No enrichment pass needed.
+
+**Omnibus/duplicate and scope skips, each verified against live data
+before excluding, not assumed from memory**:
+- Confirmed genuine omnibus duplicates (left untagged, matching the
+  existing `books` rows' individually-tagged volumes): *The Foundation
+  Trilogy* (Asimov -- Foundation/Foundation and Empire/Second Foundation
+  all individually tagged already), *The Farseer Trilogy* (title-named
+  row duplicating Assassin's Apprentice/Royal Assassin/Assassin's
+  Quest), *Monk and Robot* (title-named row duplicating A Psalm for the
+  Wild-Built/A Prayer for the Crown-Shy), *Villains Duology* (title-named
+  row duplicating Vicious/Vengeful), *The Hobbit & The Lord of the Rings*
+  (Middle Earth series -- duplicates individually-tagged The
+  Hobbit/Fellowship/Two Towers/Return of the King rows).
+- **A real correction to a prior session's log entry**: batch 3's
+  2026-09-13 entry listed "Heir of Novron" as a confirmed omnibus
+  duplicate alongside Monk and Robot/Villains Duology. Checked directly
+  against live data before trusting that -- it is NOT a duplicate. The
+  Riyria Revelations (Omnibus) series legitimately represents its
+  6 original novels as 3 omnibus volumes (Theft of Swords = books 1-2,
+  Rise of Empire = books 3-4, Heir of Novron = books 5-6, the same
+  2-omnibus-for-4-books pattern already established for Book of the New
+  Sun's Shadow & Claw/Sword & Citadel) -- no individually-cataloged
+  books 5/6 exist to duplicate. Tagged it for real this batch, completing
+  the series. Flagging the discrepancy here rather than silently
+  correcting it without a trace.
+- Confirmed unpublished, left untagged (already-known permanent-skip
+  cases, re-confirmed still true): *Red God* (Pierce Brown, Red Rising
+  Saga #7), *The Winds of Winter* (GRRM), *The Doors of Stone* (Patrick
+  Rothfuss).
+- **Scope question left open, not decided**: *Holly* (Stephen King,
+  Holly Gibney #3) surfaced as a candidate. Its series was already
+  flagged in the shared-universe audit as a possible non-SFF scope issue
+  (crime/thriller, same family as Kingsbridge/Robert Langdon/The
+  Inheritance Games). Its immediate predecessor, *If It Bleeds*, is
+  already tagged, and *Holly* itself does carry a real supernatural
+  element (the antagonists' unnaturally extended lifespans), so this
+  isn't a clean non-SFF case either way -- left untagged and flagged
+  for the repo owner's scope call rather than guessed at, consistent
+  with the standing flag.
+
+Migration `20260913150000_tag_catalog_batch5_20_books.sql` (renamed from
+an initial `20260913130000` slot after `supabase db push` reported an
+out-of-order-insert error against a concurrent same-day migration
+[`20260913140000`, the shared-universe-audit-batch-8 session] that had
+already landed on hosted between this session's schema check and its
+push -- confirmed via `supabase migration list --linked` that
+`20260913130000` had no `remote` entry yet, so renaming to the next free
+slot after `140000` was safe per CLAUDE.md's own renaming rule, and
+avoided needing `--include-all`). Tested in a rolled-back transaction
+first (verified 20 `book_dna` rows, 100 `book_tropes` rows, 38
+`book_content_warnings` rows, 12 `book_field_confidence` rows, and the
+author fix, all before the real push). Applied via `supabase db push
+--linked`; verified post-push: catalog `book_dna` count 941 -> 961,
+all 20 titles present, `Judas Unchained`'s author field corrected.
+
+~276 of the 378-book 2026-09-12 expansion round remain untagged (378 -
+74 tagged as of the prior 4-batch sitting - 20 this batch - 8 flagged
+graphic novels), plus whatever additional omnibus/unpublished/scope
+exceptions keep surfacing at the same rate as this batch (5 this time).
+
+## 2026-09-13 (later still) -- v1 app: relative rating dates, clearer year-only input, audiobook-availability recommendation filters; a real process gap fixed in the tagging vocabulary-growth pipeline
+
+Four more items from a live-testing round.
+
+**Relative rating dates**: `app/shared.js` gained `formatRelativeDate()`
+("3 months ago", "2 years, 1 month ago" for longer spans, "today"/
+"yesterday" for the near term) -- `rate.html`'s "My ratings" list now
+shows this instead of the raw `rated_date`, with the exact stored date
+as a hover tooltip so nothing is actually hidden, just made easier to
+skim. Verified against a spread of test dates in a throwaway local
+harness (today back through ~2 years) before wiring it in.
+
+**The unlabeled box under the date picker (the year-only input) was
+genuinely unclear, as flagged**: added a plain "— or, if you only
+remember the year —" divider between the date field and the year
+field in `rate.html`, and fixed a real, previously-unnoticed styling
+gap in `shared.css` -- `input[type="number"]` was never included in the
+shared full-width input rule, so the year box rendered at the browser's
+tiny default width (its placeholder text didn't even fully fit) right
+next to the new divider text, which would have made the "clarity" fix
+worse, not better, if left alone. Both fixed together, verified
+visually.
+
+**Audiobook-availability recommendation filters**: three-way filter
+(no filter / has any audiobook edition / has a GraphicAudio-or-BBC-
+style full-cast dramatization / full cast with 3+ narrators) added to
+`dashboard.html`, next to the existing "none of/less of" filters.
+Deliberately implemented as a client-side post-filter over the engine's
+own ranking, NOT a change to `recommend()`'s scoring logic -- giving
+the scoring engine a notion of audiobook editions would be a real
+scoring-engine change (CLDO-only territory per CLAUDE.md, with its own
+test-protocol/two-failure-scenario bar), when this is really just a
+candidate-pool restriction. `recommend()` already scores the entire
+catalog on every call regardless of `top_n` (only the final truncation
+differs), so `api/main.py`'s `/recommendations` endpoint just got a new
+optional, bounded `top_n` query param (default 10, capped at 100) --
+the frontend requests a bigger pool (50) only when a filter is active,
+filters it down using a single `audiobook_editions` query scoped to the
+candidate book_ids already in hand from `attachThumbnails()`, then
+slices back down to 10 for display. No `recommend.py` changes at all.
+`api/README.md` updated to document the new param. Requires the Render
+deploy to pick up `api/main.py`'s change before the filters actually
+take effect in production -- confirm after the next deploy.
+
+**A real process gap found and fixed in the trope/content-warning
+vocabulary-growth pipeline** (the repo owner asked directly whether new
+tropes are still surfacing as the catalog grows, or whether nobody's
+looking anymore). Checked rather than guessed: `tag-catalog-batch`'s
+Step 1 always told taggers to flag a suspected vocabulary gap instead
+of silently working around it, and that mechanism genuinely has been
+used -- two real "Vocabulary gap noted, not acted on" entries exist in
+this log from 2026-09-09 (a climate/natural-disaster mass-casualty
+content-warning gap on *The Ministry for the Future*, and a first-
+contact-via-natural-evolution trope gap on *The Mountain in the Sea*),
+each correctly deferred per this project's own bar ("does this change
+the recommendation," not "is this a real term") pending a second book
+hitting the same gap. **But nothing tracked those flagged gaps
+centrally** -- each lived only in that day's own log entry, meaning a
+second book hitting the exact same gap in a later batch (today's batch
+5 tagged 20 more books, itself flagging zero gaps) had no real way to
+be recognized as a second occurrence short of someone remembering or
+re-reading a 12,800+-line log by hand. That's a real, structural gap in
+the process, not a sign the catalog stopped needing new vocabulary.
+
+Fixed: `docs/schema/book-dna.md`'s "Future fields backlog" now opens
+with a running **"Flagged single-occurrence vocabulary gaps"** tracker,
+seeded with both of the above (including the two specific titles their
+own log entries already named as plausible next occurrences to watch
+for -- *Alien Clay*/*Blindsight* for the first-contact gap). `.claude/
+skills/tag-catalog-batch/SKILL.md`'s Step 1 now points at it as an
+active per-batch check (cross-check every book against the "Open" list;
+a match is the second occurrence the whole tracker exists to catch;
+add any new single-book gap there too, not just to that day's log
+entry) rather than the old passive "note it in your report" phrasing,
+which had no way of ever producing a second-occurrence catch on its
+own.
+
+Not committed/pushed yet in this entry -- see the immediately following
+commit for all of the above together.
+
+## 2026-09-13 (later still) -- backfilled total runtime_minutes for 28 multi-part GraphicAudio editions
+
+The book-info modal's `formatRuntime()` already displays
+`audiobook_editions.runtime_minutes` correctly when set; 28
+`dramatized_full_cast` rows were a pure data gap, not a UI bug -- each
+is a multi-part GraphicAudio release (e.g. "The Way of Kings" as parts
+1-5) whose per-part pages were never summed into one total.
+
+**Technique**: each part's real product page lives at
+`graphicaudiointernational.net` (`graphicaudio.net` 302-redirects
+there); fetched with `curl` + a browser User-Agent (WebFetch's markdown
+conversion silently drops the runtime div, confirmed again this
+session -- same failure mode as the cast-list backfill two sessions
+ago) and parsed the `<div class="product-runningtime">` text
+("Approximate Running Time: X Hours" or "X.X Hours", the latter a
+decimal-hour form, e.g. "10.5 Hours" = 10h30m -- caught and fixed a bug
+in the parsing script where a naive `\d+\s*Hours?` regex matched only
+the digits after the decimal point on these, undercounting by up to 10
+hours per part, before it reached any SQL). Sibling part URLs were
+derived by incrementing `N` in each `source_url`'s `-N-of-M-.html`
+suffix.
+
+**All 28 of 28 titles resolved** -- no rows left unresolved, so no
+`docs/TODO.md` entry needed for this batch. The 3 rows whose recorded
+`source_url` wasn't a graphicaudio.net page (no real GraphicAudio URL
+had been captured for them):
+- **A Court of Mist and Fury** (source_url was audible.com) -- found via
+  GraphicAudio's own site search:
+  `a-court-of-thorns-and-roses-2-a-court-of-mist-and-fury-{1,2}-of-2.html`,
+  confirmed by the page's own `<title>` naming the exact book/series.
+- **The Skull Throne** (source_url was amazon.com) -- same site search,
+  found `demon-cycle-4-the-skull-throne-{1,2,3}-of-3.html`, confirmed the
+  same way (Demon Cycle book 4, as expected).
+- **Dark Age** (source_url was amazon.com) -- GraphicAudio's site search
+  only surfaced an unrelated "Second Dark Ages" genre page; resolved by
+  guessing the slug from the established Red Rising Saga naming
+  convention (`red-rising-saga-5-dark-age-1-of-3.html`, HTTP 200) and
+  confirming via the page's own `<title>` before using it.
+
+Per-book totals for a few notable ones (full list of all 28 sums is in
+migration `20260913160000_backfill_graphicaudio_multipart_runtimes.sql`):
+- The Way of Kings: 37.0h (5 parts: 7+7+8+7+8h)
+- Oathbringer: 41.0h (6 parts, 7+7+7+6+7+7h)
+- Rhythm of War: 45.0h (6 parts, 7+7+7+8+8+8h)
+- Wind and Truth: 51.5h (5 parts: 10+10+10.5+11+10h) -- the longest of
+  the 28, as expected for the series' longest volume
+- Dark Age: 33.5h (3 parts, 11.5+11+11h) -- one of the 3 special-case
+  resolutions above
+- A Court of Mist and Fury: 16.0h (2 parts, 8+8h)
+- The Skull Throne: 19.0h (3 parts, 6+7+6h)
+
+Migration `20260913160000_backfill_graphicaudio_multipart_runtimes.sql`,
+generated programmatically from a small Python script (title -> summed
+minutes -> `update ... where runtime_minutes is null` per row, guarded
+so a rerun is a no-op) rather than hand-typed, per this project's own
+title-scoped-migration lesson. Tested in a rolled-back transaction
+first, then pushed via `supabase db push --linked`; verified
+post-push that all 28 target rows now have a non-null
+`runtime_minutes` (0 remaining null across the exact 28-title list).
+
+## 2026-09-13 (later still) -- CODX onboarding set up for real, catalog-wide trope-gap sweep planned and scoped for CLDA
+
+Two planning items, prompted directly by the repo owner: CODX's
+already-decided setup (deferred since 2026-09-11) actually built, and a
+real catalog-wide vocabulary sweep scoped for CLDA now that its token
+budget resets tomorrow -- both distinct from actually running either
+one, which happens next.
+
+**CODX setup -- DONE**, per `docs/TODO.md`'s original 2026-09-11 entry
+(nothing re-litigated, just executed): `AGENTS.md` written at the repo
+root, pointing back at `CLAUDE.md` for every shared convention rather
+than duplicating any of it, plus CODX-specific notes on its
+review-only starting scope and its already-decided concrete task list
+(independent review of `scripts/recommend.py`/tool scripts, auditing
+deferred experimental functions, a third-opinion QA pass on CLDA's
+migrations, mechanical/scriptable work -- explicitly NOT Book DNA
+tagging or scoring-algorithm design). `CLAUDE.md`'s persona system
+extended to a real third named entity: CODX gets a stricter version of
+the destructive-action gate than CLDA's -- approval needed before ANY
+hosted-DB write or unsupervised commit at all, not just destructive
+ones, since it hasn't built CLDA's own track record yet. Every CODX
+output is a proposal (review, diff, draft migration) for CLDO or the
+repo owner to apply, never something it applies itself.
+`docs/PENDING_APPROVALS.md` updated to name CODX alongside CLDA as a
+persona the gate applies to. **Not done, and deliberately not part of
+"setup"**: actually invoking Codex CLI against this repo for the first
+time -- that's the repo owner's own step (his ChatGPT Plus
+subscription/tool), not something a Claude Code session can do on his
+behalf. `docs/TODO.md`'s CODX entry updated to reflect setup being
+complete and what's still pending.
+
+**Catalog-wide trope/content-warning vocabulary gap sweep -- scoped and
+handed to CLDA**, prompted by the repo owner noting CLDA's token budget
+resets tomorrow and asking whether something "rather big" is worth
+planning for it. New skill file
+`.claude/skills/catalog-trope-gap-sweep/SKILL.md` written: distinct
+from today's earlier fix (the "Flagged single-occurrence vocabulary
+gaps" tracker in `docs/schema/book-dna.md`), which only catches a gap
+that happens to surface incidentally during ordinary per-book tagging.
+This is the deliberate, proactive half -- sized to be worth a real
+chunk of a fresh token budget, not a quick check. Three-part
+methodology: (1) check the tracker's 2 already-open gaps against the
+current catalog first (cheapest, already has named candidate
+second-occurrence books); (2) mine existing low-confidence
+`book_tropes`/`book_field_confidence` rows (41 low-confidence trope
+tags as of today -- confirmed via a live query, small enough to review
+directly) for a recurring "closest available fit, not clean" pattern
+across 2+ books; (3) a broader qualitative sweep by author/subgenre
+cluster, same method as the 2026-09-05 sweep that found 5 new tropes
+against a then-~700-book catalog (now 1250+ books, ~960+ tagged) --
+deliberately scoped as a recurring skill invocation ("cover a
+meaningful cross-section, report what's covered, don't try to force
+full completionist coverage in one pass"), not a one-shot task, given
+the catalog's real size now. Same vocabulary bar as everywhere else in
+this project ("does this change the recommendation," not "is this a
+real term"), same schema-change discipline (schema.yaml/book-dna.md/
+tag-catalog-batch's mandatory list all updated together, per CLAUDE.md).
+Added to `docs/TODO.md`'s P1 section, ready for CLDA to pick up
+directly.
+
+Not yet run -- both are setup/planning, ready for their respective next
+sessions (CODX once the repo owner starts it; the trope sweep whenever
+CLDA's budget is next available).
+
 ## 2026-09-13: series.status/book_count fix, batch 7 -- 16 series fixed, 5 confirmed correct
 
 Continuing the P2 catalog-wide `series.status`/`book_count` fix as a

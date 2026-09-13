@@ -749,6 +749,60 @@ belong in frozen per-book tag data at all.
 
 ## Future fields backlog
 
+### Flagged single-occurrence vocabulary gaps (pending a second occurrence)
+
+**A running tracker, not a one-off list — update it every time `tag-catalog-batch`
+flags a real vocabulary gap it didn't act on, and check it BEFORE deferring
+a new one.** This project's vocabulary bar is deliberately "does this change
+what gets recommended," not "is this a real term" (see CLAUDE.md's "Data
+quality / tagging" section) — a real gap seen on exactly one book is
+correctly deferred rather than turned into vocabulary on the spot. The gap
+in that process (raised by the repo owner 2026-09-13): several single-book
+gaps *were* being flagged in `docs/project-log.md` batch reports as the
+catalog was tagged, but nothing tracked them centrally, so a second book
+hitting the same gap in a later batch had no way to be recognized as a
+second occurrence — the only way to notice would be remembering (or
+re-reading) every prior batch's report by hand, which doesn't scale past a
+few thousand log lines. This list is the fix: every flagged gap goes here
+the moment it's noted (not just in that day's log entry), and gets removed
+(with a note on where it landed) once a second real occurrence promotes it
+to an actual schema/vocabulary proposal.
+
+**Open** (seed list, backfilled 2026-09-13 from `docs/project-log.md`'s
+existing "Vocabulary gap noted, not acted on" entries — check this list,
+don't re-derive it from the log):
+- **Content warning**: no `content_warnings` value cleanly covers
+  "climate/natural-disaster mass casualty" (distinct from `war_trauma`,
+  which is the closest existing fit but an imperfect one). First seen
+  2026-09-09 tagging *The Ministry for the Future* (Kim Stanley
+  Robinson's opening heat-wave mass-death event, tagged `war_trauma` at
+  `moderate` as the nearest fit). Watch for climate-disaster-driven SFF
+  (flooding, ecological collapse, mass-casualty weather events as a
+  book's inciting incident, not just background setting).
+- **Trope**: no existing trope cleanly captures first-contact-with-a-
+  non-human-non-alien-intelligence-via-natural-evolution (as opposed to
+  genetic uplift, which has its own trope, or contact with an actual
+  extraterrestrial). First seen 2026-09-09 tagging *The Mountain in the
+  Sea* (Ray Nayler — octopus intelligence arising through ordinary
+  evolution), tagged as the closest real fits (`first_contact` at 0.6,
+  `uplift` at 0.5) rather than proposing a new value off one book. The
+  log entry that first flagged this named two plausible next
+  occurrences worth checking if/when they're tagged: *Alien Clay*
+  (Adrian Tchaikovsky) and *Blindsight* (Peter Watts) — check both
+  against this exact gap before tagging either, since either one hitting
+  it would be the second occurrence this list exists to catch.
+
+**Promoted / resolved**: none yet.
+
+**Process note for whoever runs `tag-catalog-batch` next**: Step 1 of that
+skill already says to flag a suspected vocabulary gap instead of silently
+working around it — read this section as part of that step (both to check
+an already-open gap against the book you're tagging, and to add any new
+single-occurrence gap you find), not just as something to write in that
+day's `project-log.md` entry. The log entry is still the right place for
+the narrative/reasoning; this list is what makes a *second* occurrence
+actually recognizable later.
+
 Deliberately deferred, not in v0.1:
 
 - **`humor_flavor`** — witty_banter, slapstick, dark_comedy, satire,

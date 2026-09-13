@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookspell</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="stylesheet" href="shared.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="wrap">
+  <h1><img src="logo.svg" alt="" width="28" height="28" style="vertical-align:-6px; margin-right:6px;">Bookspell</h1>
+  <p class="sub">Sci-fi/fantasy recommendations built from real book DNA, not star averages.</p>
+
+  <div class="auth-mode-toggle">
+    <button data-mode="signin" class="active" id="mode-signin-btn" type="button">Sign in</button>
+    <button data-mode="signup" id="mode-signup-btn" type="button">Create account</button>
+  </div>
+
+  <div id="auth-view">
+    <div class="field" id="name-field" hidden>
+      <label for="display-name">Name</label>
+      <input type="text" id="display-name" autocomplete="name" placeholder="What should we call you?">
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" autocomplete="email" placeholder="you@example.com">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="pw-field">
+        <input type="password" id="password" autocomplete="current-password" placeholder="At least 6 characters">
+        <button type="button" class="pw-toggle" data-toggle-for="password">Show</button>
+      </div>
+    </div>
+    <div class="field" id="confirm-password-field" hidden>
+      <label for="confirm-password">Confirm password</label>
+      <div class="pw-field">
+        <input type="password" id="confirm-password" autocomplete="new-password" placeholder="Type it again">
+        <button type="button" class="pw-toggle" data-toggle-for="confirm-password">Show</button>
+      </div>
+    </div>
+    <button class="btn-primary" id="submit-btn">Sign in</button>
+
+    <div style="text-align:center; margin:18px 0; color:var(--ink-soft); font-size:0.85rem;">or</div>
+
+    <button class="btn-secondary" id="magic-link-btn" style="width:100%;">Email me a sign-in link instead</button>
+    <p id="status-msg" class="sub" style="margin-top:14px;"></p>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const next = params.get('next') || 'dashboard.html';
+
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    // Covers both a returning signed-in visitor AND a magic-link
+    // click landing back here (see magic-link-btn below for why the
+    // redirect always targets this page, never `next` directly) --
+    // auto-forward once a session exists, rather than making the
+    // magic-link path a dead end.
+    window.location.href = next;
+    return;
+  }
+})();
+
+function status(msg, isError) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--danger)' : 'var(--ink-soft)';
+}
+
+// Sign in / sign up are kept as genuinely distinct modes (not one shared
+// form guessed apart by which button was clicked) -- switching mode
+// clears every field so nothing typed for one carries over into the
+// other by accident.
+let mode = 'signin';
+const nameField = document.getElementById('name-field');
+const confirmField = document.getElementById('confirm-password-field');
+const submitBtn = document.getElementById('submit-btn');
+const allFields = ['display-name', 'email', 'password', 'confirm-password'];
+
+function setMode(next) {
+  mode = next;
+  document.getElementById('mode-signin-btn').classList.toggle('active', mode === 'signin');
+  document.getElementById('mode-signup-btn').classList.toggle('active', mode === 'signup');
+  nameField.hidden = mode !== 'signup';
+  confirmField.hidden = mode !== 'signup';
+  submitBtn.textContent = mode === 'signup' ? 'Create account' : 'Sign in';
+  allFields.forEach((id) => { document.getElementById(id).value = ''; });
+  status('');
+}
+document.getElementById('mode-signin-btn').addEventListener('click', () => setMode('signin'));
+document.getElementById('mode-signup-btn').addEventListener('click', () => setMode('signup'));
+
+document.querySelectorAll('.pw-toggle').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const input = document.getElementById(btn.dataset.toggleFor);
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    btn.textContent = showing ? 'Show' : 'Hide';
+  });
+});
+
+submitBtn.addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  if (!email || !password) return status('Enter both email and password.', true);
+
+  if (mode === 'signin') {
+    status('Signing in…');
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) return status(error.message, true);
+    window.location.href = next;
+    return;
+  }
+
+  // signup
+  const name = document.getElementById('display-name').value.trim();
+  const confirmPassword = document.getElementById('confirm-password').value;
+  if (password.length < 6) return status('Password needs to be at least 6 characters.', true);
+  if (password !== confirmPassword) return status('Passwords don\'t match.', true);
+  status('Creating your account…');
+  const { error } = await sb.auth.signUp({
+    email, password,
+    options: { data: { display_name: name || null } },
+  });
+  if (error) return status(error.message, true);
+  setMode('signin');
+  document.getElementById('email').value = email;
+  status('Account created — check your email to confirm, then sign in above.');
+});
+
+document.getElementById('magic-link-btn').addEventListener('click', async () => {
+  const email = document.getElementById('email').value.trim();
+  if (!email) return status('Enter your email first.', true);
+  status('Sending link…');
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    // Always redirects back to THIS page (with `next` preserved in the
+    // query string) rather than straight to `next` itself -- Supabase
+    // validates emailRedirectTo against the project's redirect-URL
+    // allow-list, which only lists this page, not every page in the
+    // app. The on-load check above then forwards to `next` once the
+    // session from the magic-link click is live.
+    options: { emailRedirectTo: `${location.origin}${location.pathname}${location.search}` },
+  });
+  if (error) return status(error.message, true);
+  status('Check your email for a sign-in link.');
+});
+</script>
+</body>
+</html>

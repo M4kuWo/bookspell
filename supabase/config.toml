@@ -156,11 +156,23 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://127.0.0.1:3000"
+# Set to the real v1 web app's GitHub Pages URL (2026-09-13, see
+# docs/project-log.md's "Bookspell v1 web app" entry) -- this repo has
+# no separate hosted-vs-local auth config, so `supabase config push`
+# applies this to the HOSTED project's real Auth settings. Local dev
+# (`supabase start`) still works fine pointed at this same value; local
+# auth testing isn't this plan's verification path anyway (see the
+# approved plan's Verification section -- auth is tested against the
+# hosted project directly, since Supabase Auth only really exists there).
+site_url = "https://m4kuwo.github.io/bookspell/app/"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+additional_redirect_urls = [
+  "https://m4kuwo.github.io/bookspell/app/",
+  "https://m4kuwo.github.io/bookspell/app/index.html",
+  "http://127.0.0.1:3000",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -223,13 +235,19 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+# Restored to the hosted project's actual prior value (2026-09-13) --
+# `supabase config push` had briefly overwritten this along with
+# max_frequency/otp_length/mfa below to this file's stock local-dev
+# defaults as a side effect of pushing the whole file just to change
+# site_url/additional_redirect_urls. Keep this true on hosted; disabling
+# it means new signups skip email verification entirely.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
-max_frequency = "1s"
+max_frequency = "1m0s"
 # Number of characters used in the email OTP.
-otp_length = 6
+otp_length = 8
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
@@ -299,9 +317,11 @@ auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 max_enrolled_factors = 10
 
 # Control MFA via App Authenticator (TOTP)
+# Restored to hosted's prior value (2026-09-13) -- see auth.email's
+# enable_confirmations comment above, same unintended-push side effect.
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]

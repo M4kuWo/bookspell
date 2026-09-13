@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookspell — Recommendations</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="stylesheet" href="shared.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .genre-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+  .genre-toggle button { flex: 1; background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
+  .genre-toggle button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .rec-card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px; margin-bottom: 12px; }
+  .rec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .rec-title { font-weight: 700; }
+  .rec-author { color: var(--ink-soft); font-size: 0.85rem; }
+  .rec-summary { font-size: 0.9rem; margin-top: 6px; }
+  .rec-summary.mismatch { color: var(--ink-soft); }
+  .rec-summary.dealbreaker { color: var(--disliked); font-weight: 600; }
+  details.filters { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 14px; margin-bottom: 18px; }
+  details.filters summary { cursor: pointer; font-weight: 600; }
+  .rule-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+  .rule-row:last-child { border-bottom: none; }
+  .rule-add-row { display: flex; gap: 6px; margin-top: 6px; }
+  .rule-add-row button { flex: 1; font-size: 0.82rem; padding: 8px 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top" id="top-nav"></nav>
+  <h1>Recommendations</h1>
+  <p class="sub">Based on everything you've rated so far.</p>
+
+  <details class="filters">
+    <summary>Filters — none of / less of…</summary>
+    <div class="field" style="margin-top:10px;">
+      <input type="text" id="rule-search" placeholder="Search a trope or field value…" autocomplete="off">
+    </div>
+    <div id="rule-search-results" class="results-box" style="display:none;"></div>
+    <button type="button" class="icon-link" id="browse-filters-btn" style="margin:8px 0;">Not sure what to type? Browse all options →</button>
+    <div id="rule-browse" style="display:none;"></div>
+    <div id="current-rules"><div class="empty-state">No filters yet.</div></div>
+  </details>
+
+  <details class="filters">
+    <summary>Filters — audiobook availability</summary>
+    <div class="field" style="margin-top:10px; margin-bottom:0;">
+      <select id="audiobook-filter">
+        <option value="">No audiobook filter</option>
+        <option value="any">Has an audiobook edition</option>
+        <option value="dramatized">Has a full-cast dramatization (GraphicAudio/BBC)</option>
+        <option value="full_cast">Full cast, 3+ narrators</option>
+      </select>
+    </div>
+  </details>
+
+  <button class="btn-primary" id="get-recs-btn">Get recommendations</button>
+
+  <div class="genre-toggle" id="genre-toggle" style="margin-top:16px;">
+    <button data-genre="" class="active">Both</button>
+    <button data-genre="fantasy">Fantasy</button>
+    <button data-genre="sci_fi">Sci-Fi</button>
+  </div>
+
+  <div id="loading" style="display:none; margin-top:14px;" class="waking">
+    <div class="spinner"></div>
+    <span>Waking up the recommendation engine — this can take up to a minute the first time. Hang tight…</span>
+  </div>
+  <div id="results-area" style="margin-top:16px;"></div>
+</div>
+<div id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+let session, currentGenre = '', ruleTargets = [];
+// Keyed by genre ('' = Both, 'fantasy', 'sci_fi') -- populated once per
+// "Get recommendations" click, then switching genre tabs just re-renders
+// from here instead of re-fetching (each pool is scored against a
+// genre-scoped catalog/threshold, so it's 3 real fetches up front, not
+// one fetch filtered 3 ways client-side).
+let resultsByGenre = {};
+
+(async () => {
+  session = await requireAuth();
+  if (!session) return;
+  renderNav('dashboard.html', session);
+  loadRuleTargets();
+  loadCurrentRules();
+})();
+
+document.querySelectorAll('#genre-toggle button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#genre-toggle button').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentGenre = btn.dataset.genre;
+    if (resultsByGenre[currentGenre]) {
+      renderResults(resultsByGenre[currentGenre]);
+    } else if (Object.keys(resultsByGenre).length > 0) {
+      // A filter changed since the last fetch invalidated the cache, or
+      // this tab just hasn't loaded yet for some other reason.
+      document.getElementById('results-area').innerHTML = '<div class="empty-state">Click "Get recommendations" to load this view.</div>';
+    }
+  });
+});
+
+async function loadRuleTargets() {
+  try {
+    const res = await apiFetch('/rule-targets');
+    ruleTargets = await res.json();
+  } catch (e) {
+    ruleTargets = [];
+  }
+}
+
+const ruleSearch = document.getElementById('rule-search');
+const ruleResultsEl = document.getElementById('rule-search-results');
+let ruleDebounce = null;
+ruleSearch.addEventListener('input', () => {
+  clearTimeout(ruleDebounce);
+  ruleDebounce = setTimeout(() => renderRuleSearchResults(ruleSearch.value), 200);
+});
+
+function ruleOptionRowHtml(t) {
+  return `
+    <div class="result-row" style="flex-direction:column; align-items:stretch; cursor:default;">
+      <span class="result-title" style="margin-bottom:6px;">${escapeHtml(t.label)}</span>
+      <div class="rule-add-row">
+        <button class="btn-secondary" data-exclude="${escapeAttr(t.key)}">None of this</button>
+        <button class="btn-secondary" data-reduce="${escapeAttr(t.key)}">Less of this</button>
+      </div>
+    </div>
+  `;
+}
+function wireRuleOptionButtons(container) {
+  container.querySelectorAll('[data-exclude]').forEach((b) => b.addEventListener('click', () => addRule(b.dataset.exclude, 'exclude')));
+  container.querySelectorAll('[data-reduce]').forEach((b) => b.addEventListener('click', () => addRule(b.dataset.reduce, 'reduce', 0.6)));
+}
+
+function renderRuleSearchResults(query) {
+  if (!query || query.trim().length < 2) {
+    ruleResultsEl.style.display = 'none';
+    return;
+  }
+  const q = query.trim().toLowerCase();
+  const matches = ruleTargets.filter((t) => t.label.toLowerCase().includes(q) || t.key.toLowerCase().includes(q)).slice(0, 15);
+  if (matches.length === 0) {
+    ruleResultsEl.innerHTML = '<div class="empty-state">No matches.</div>';
+    ruleResultsEl.style.display = 'block';
+    return;
+  }
+  ruleResultsEl.innerHTML = matches.map(ruleOptionRowHtml).join('');
+  ruleResultsEl.style.display = 'block';
+  wireRuleOptionButtons(ruleResultsEl);
+}
+
+// Item #8: for a reader who doesn't already know the vocabulary, let
+// them browse everything groupable (tropes by their existing
+// group_name, field values by their field) instead of only searching.
+const browseEl = document.getElementById('rule-browse');
+const browseBtn = document.getElementById('browse-filters-btn');
+let browseOpen = false;
+browseBtn.addEventListener('click', () => {
+  browseOpen = !browseOpen;
+  browseBtn.textContent = browseOpen ? 'Hide the full list ↑' : 'Not sure what to type? Browse all options →';
+  browseEl.style.display = browseOpen ? 'block' : 'none';
+  if (browseOpen && !browseEl.dataset.rendered) renderRuleBrowse();
+});
+function renderRuleBrowse() {
+  const groups = new Map();
+  for (const t of ruleTargets) {
+    const groupKey = t.kind === 'trope' ? (t.group_name || 'Other tropes') : t.field;
+    if (!groups.has(groupKey)) groups.set(groupKey, []);
+    groups.get(groupKey).push(t);
+  }
+  const sortedGroups = [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  browseEl.innerHTML = sortedGroups.map(([groupKey, targets]) => `
+    <details style="margin-top:8px; border:1px solid var(--line); border-radius:8px; padding:8px 10px;">
+      <summary style="cursor:pointer; font-size:0.88rem;">${escapeHtml(titleCase(groupKey))} <span style="color:var(--ink-soft);">(${targets.length})</span></summary>
+      <div style="margin-top:8px;">${targets.map(ruleOptionRowHtml).join('')}</div>
+    </details>
+  `).join('');
+  wireRuleOptionButtons(browseEl);
+  browseEl.dataset.rendered = '1';
+}
+
+async function addRule(ruleKey, ruleType, strength) {
+  const { error } = await sb.from('user_rules').upsert(
+    { user_id: session.user.id, rule_key: ruleKey, rule_type: ruleType, strength: strength ?? null },
+    { onConflict: 'user_id,rule_key' }
+  );
+  if (error) return showToast(`Couldn't add filter: ${error.message}`);
+  showToast('Filter added.');
+  ruleSearch.value = '';
+  ruleResultsEl.style.display = 'none';
+  resultsByGenre = {}; // stale until "Get recommendations" is clicked again
+  loadCurrentRules();
+}
+
+async function loadCurrentRules() {
+  const container = document.getElementById('current-rules');
+  const { data, error } = await sb.from('user_rules').select('id, rule_key, rule_type').order('created_at');
+  if (error || !data || data.length === 0) {
+    container.innerHTML = '<div class="empty-state">No filters yet.</div>';
+    return;
+  }
+  container.innerHTML = data.map((r) => {
+    const target = ruleTargets.find((t) => t.key === r.rule_key);
+    const label = target ? target.label : r.rule_key;
+    return `
+      <div class="rule-row">
+        <span>${r.rule_type === 'exclude' ? 'None of' : 'Less of'}: ${escapeHtml(label)}</span>
+        <button class="icon-btn" style="color:var(--ink-soft); background:none; border:none; cursor:pointer;" data-remove="${r.id}">✕</button>
+      </div>
+    `;
+  }).join('');
+  container.querySelectorAll('[data-remove]').forEach((b) => b.addEventListener('click', async () => {
+    await sb.from('user_rules').delete().eq('id', b.dataset.remove);
+    resultsByGenre = {};
+    loadCurrentRules();
+  }));
+}
+
+// Audiobook-availability filtering happens client-side, after the
+// engine's own ranking -- recommend() has no notion of audiobook
+// editions at all, and giving it one would be a real scoring-engine
+// change (CLDO-only territory, see CLAUDE.md) for what's really just a
+// candidate-pool restriction. Instead: ask the API for a bigger ranked
+// pool (top_n) whenever a filter is active, then filter that pool down
+// to DISPLAY_COUNT client-side -- order is preserved either way since
+// recommend() already returns its pool best-first.
+const DISPLAY_COUNT = 10;
+const FILTERED_POOL_SIZE = 50;
+
+document.getElementById('get-recs-btn').addEventListener('click', async () => {
+  const loading = document.getElementById('loading');
+  const resultsArea = document.getElementById('results-area');
+  const audiobookMode = document.getElementById('audiobook-filter').value;
+  loading.style.display = 'flex';
+  resultsArea.innerHTML = '';
+  resultsByGenre = {};
+  try {
+    const genres = ['', 'fantasy', 'sci_fi'];
+    const topN = audiobookMode ? FILTERED_POOL_SIZE : DISPLAY_COUNT;
+    const responses = await Promise.all(genres.map((g) => {
+      const params = new URLSearchParams();
+      if (g) params.set('genre', g);
+      params.set('top_n', topN);
+      return apiFetch(`/recommendations?${params}`);
+    }));
+    for (let i = 0; i < genres.length; i++) {
+      const res = responses[i];
+      if (!res.ok) continue;
+      const { results } = await res.json();
+      resultsByGenre[genres[i]] = results;
+    }
+    if (!resultsByGenre[currentGenre]) {
+      resultsArea.innerHTML = `<div class="empty-state">Couldn't get recommendations. Try again in a moment.</div>`;
+      return;
+    }
+    await attachThumbnails(resultsByGenre);
+    if (audiobookMode) await applyAudiobookFilter(resultsByGenre, audiobookMode);
+    for (const g of genres) {
+      if (resultsByGenre[g]) resultsByGenre[g] = resultsByGenre[g].slice(0, DISPLAY_COUNT);
+    }
+    renderResults(resultsByGenre[currentGenre]);
+  } catch (e) {
+    resultsArea.innerHTML = `<div class="empty-state">Couldn't reach the recommendation service. It may still be waking up — try again in a moment.</div>`;
+  } finally {
+    loading.style.display = 'none';
+  }
+});
+
+// The recommend API returns title/author only (no id/cover) -- fetched
+// client-side against `books` directly (RLS already grants authenticated
+// select) rather than changing the deployed backend's response shape for
+// what's otherwise a cosmetic addition. The id doubles as what the new
+// "Book info" button (feedback #11) needs to open the DNA modal.
+async function attachThumbnails(byGenre) {
+  const allTitles = [...new Set(Object.values(byGenre).flat().map((r) => r.title))];
+  if (allTitles.length === 0) return;
+  const { data } = await sb.from('books').select('id, title, cover_url').in('title', allTitles);
+  const byTitle = new Map((data || []).map((b) => [b.title, b]));
+  Object.values(byGenre).forEach((list) => list.forEach((r) => {
+    const match = byTitle.get(r.title);
+    r.cover_url = match?.cover_url || null;
+    r.book_id = match?.id || null;
+  }));
+}
+
+// mode: 'any' (has at least one audiobook_editions row), 'dramatized'
+// (has a GraphicAudio/BBC-style full-cast row), or 'full_cast' (a
+// dramatized row with more than two credited narrators -- "full cast"
+// as distinct from a 1-2-narrator standard edition). One query covers
+// all three modes since they're increasingly narrow subsets of the
+// same rows.
+async function applyAudiobookFilter(byGenre, mode) {
+  const ids = [...new Set(Object.values(byGenre).flat().map((r) => r.book_id).filter(Boolean))];
+  if (ids.length === 0) return;
+  const { data } = await sb.from('audiobook_editions').select('book_id, edition_type, narrators').in('book_id', ids);
+  const qualifying = new Set();
+  (data || []).forEach((e) => {
+    if (mode === 'any') { qualifying.add(e.book_id); return; }
+    if (e.edition_type !== 'dramatized_full_cast') return;
+    if (mode === 'dramatized') { qualifying.add(e.book_id); return; }
+    if (mode === 'full_cast' && e.narrators && e.narrators.length > 2) qualifying.add(e.book_id);
+  });
+  Object.keys(byGenre).forEach((g) => {
+    byGenre[g] = (byGenre[g] || []).filter((r) => r.book_id && qualifying.has(r.book_id));
+  });
+}
+
+function matchClass(label) {
+  if (label === 'Strong match') return 'match-strong';
+  if (label === 'Good match') return 'match-good';
+  if (label === 'Mixed match') return 'match-mixed';
+  return 'match-poor';
+}
+
+function renderResults(results) {
+  const resultsArea = document.getElementById('results-area');
+  if (!results || results.length === 0) {
+    resultsArea.innerHTML = '<div class="empty-state">No recommendations yet — rate a few books first.</div>';
+    return;
+  }
+  resultsArea.innerHTML = results.map((r) => `
+    <div class="rec-card">
+      <div class="rec-head with-thumb">
+        ${r.cover_url ? `<img class="thumb" src="${escapeAttr(r.cover_url)}" alt="" loading="lazy">` : ''}
+        <div style="flex:1 1 auto;">
+          <div class="rec-title">${escapeHtml(r.title)}</div>
+          <div class="rec-author">${escapeHtml(r.author)}</div>
+        </div>
+        <span class="pill ${matchClass(r.match_label)}">${escapeHtml(r.match_label)}</span>
+      </div>
+      ${r.summary ? `<div class="rec-summary">${escapeHtml(r.summary)}</div>` : ''}
+      ${r.dealbreaker_summary ? `<div class="rec-summary dealbreaker">${escapeHtml(r.dealbreaker_summary)}</div>` : ''}
+      ${r.mismatch_summary ? `<div class="rec-summary mismatch">${escapeHtml(r.mismatch_summary)}</div>` : ''}
+      ${r.series_note ? `<div class="rec-summary mismatch">${escapeHtml(r.series_note)}</div>` : ''}
+      ${r.book_id ? `<button type="button" class="icon-link" style="margin-top:8px;" data-info="${r.book_id}">Book info</button>` : ''}
+    </div>
+  `).join('');
+  resultsArea.querySelectorAll('[data-info]').forEach((b) => b.addEventListener('click', () => showBookInfo(b.dataset.info)));
+}
+</script>
+</body>
+</html>
