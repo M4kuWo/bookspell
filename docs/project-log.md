@@ -14012,3 +14012,208 @@ Did not touch `scripts/recommend.py`/`scripts/scoring_tests.py`. No
 individual book's full Book DNA was tagged -- vocabulary addition plus
 backfill onto already-tagged books only, per the skill's explicit
 scope.
+
+## 2026-09-13 -- Catalog-wide trope-gap sweep #3 (CLDA, final regular pass for now)
+
+Third and, per the user's own framing, likely final regular pass of
+`.claude/skills/catalog-trope-gap-sweep/SKILL.md`, per the user's explicit
+ask to keep going and cover the rest of the catalog. Sweeps #1
+(31 authors/377 books) and #2 (117 authors/366 books) together covered
+743 of ~961 tagged books (~77%). This round's remaining pool: 221
+authors/224 books -- almost entirely single-tagged-book authors (only
+P. Djeli Clark, "Shirtaloon, Travis Deverell", and China Mieville have 2
+books each), so no meaningful within-author cluster existed for most of
+it.
+
+**Step 1** (light-touch, per the task's own instruction): confirmed
+*Alien Clay* is still untagged (no `book_dna` row) -- the one required
+check, nothing else re-run.
+
+**Step 3 (the main sweep, different method from sweeps #1-2)**: since
+this pool couldn't be clustered by author, clustered by subgenre/
+narrative-mechanism/theme instead -- the cross-author pattern-hunting
+Step 3 always describes as its core method, just needing to carry a
+higher share of the work this round. Verified the full 224-book list
+against the pool before dispatch (no omissions/duplicates, checked with
+a script, not eyeballed). 7 parallel non-forked background agents (per
+CLAUDE.md's agent-efficiency guidance), each given the DB connection
+string and the full current 141-trope/38-CW vocabulary inline:
+Classic/Golden Age & translated SF (24 books); Literary dystopia/
+eco-collapse/post-apocalyptic + Horror/Gothic/psychological (38 books);
+YA dystopia/competition + LitRPG/progression fantasy (21 books); Portal/
+fairy-tale/cozy fantasy + children's classics (24 books); Time travel/
+loop/multiverse/nonlinear structure (19 books); Epic/grimdark
+secondary-world fantasy (35 books); Romantasy/paranormal romance/vampire
+fiction (23 books); Hard SF/space opera/near-future SF + Literary/
+magical-realism/myth-retellings/satire (40 books) -- 224 books, all 7
+clusters reported real coverage.
+
+**11 new trope values landed** (migration
+`20260913230000_catalog_trope_gap_sweep_3_11_new_tropes.sql`, tested in
+a rolled-back transaction first including a re-run to confirm `on
+conflict do nothing` idempotency, then applied for real via autocommit
+psycopg2 -- see the environment note below; 28 book-trope insertions
+across 24 books):
+- `forced_psychological_reconditioning` (plot_devices) -- 1984/Animal
+  Farm, A Clockwork Orange, We (3 books, cross-author): a totalitarian
+  state captures a dissenting protagonist and subjects them to a named
+  procedure engineered to strip independent thought and force ideological
+  conformity, succeeding by the end.
+- `incomprehensible_alien_contact` (scifi_specific) -- Solaris, Roadside
+  Picnic: contact with an alien intelligence that remains permanently
+  unknowable despite genuine effort, the FAILURE of comprehension itself
+  being the point. Confirmed distinct from `cosmic_horror` by direct DB
+  check -- neither evidence book carries that tag.
+- `impossible_or_non_euclidean_architecture` (setting_worldbuilding) --
+  House of Leaves, The Library at Mount Char, Acceptance (3 books): a
+  structure whose interior physically defies its exterior geometry, a
+  central plot/horror engine.
+- `mass_unexplained_sensory_or_memory_loss` (plot_devices) -- Blindness,
+  The Memory Police: an inexplicable, population-wide loss of a human
+  faculty with no physical cause, itself the book's central engine.
+- `animated_construct_companion` (character_archetypes) -- The Wonderful
+  Wizard of Oz, Howl's Moving Castle, The Neverending Story (3 books):
+  a significant character made of inanimate, non-biological material
+  with full personhood and agency.
+- `institutional_time_travel_bureaucracy` (scifi_specific) -- The
+  Ministry of Time, Doomsday Book: a formal agency administers time
+  travel via handlers/permits/clearances, the procedural apparatus itself
+  load-bearing.
+- `secret_magical_bureaucracy` (setting_worldbuilding) -- Rivers of
+  London, The Rook: protagonist works within a hidden, institutionalized
+  government agency managing the supernatural, complete with rank and
+  procedure.
+- `old_faith_displaced_by_new_religion` (setting_worldbuilding) -- The
+  Bear and the Nightingale, The Mists of Avalon: an old folk religion
+  visibly loses power as an organized religion spreads, directly driving
+  the plot.
+- `state_mandated_body_harvesting_or_modification` (setting_worldbuilding)
+  -- The Bone Shard Daughter, Perdido Street Station: the ruling power
+  practices forced bodily harvesting/alteration of its subjects as a
+  routine instrument of governance.
+- `modern_knowledge_as_power_source` (plot_devices) -- Off to Be the
+  Wizard, The Wandering Inn: protagonist's real-world mundane, learned
+  knowledge (not innate talent, not a granted stat) is the literal
+  mechanism of their advantage in a new world.
+- `caste_or_faction_stratified_society` (setting_worldbuilding) --
+  PROMOTED from sweep #2's single-occurrence tracker: a genuine new
+  confirming instance (Brave New World's Alpha-Epsilon castes) plus real
+  discriminating counter-evidence resolving sweep #2's self-flagged
+  co-occurrence-with-`dystopia` risk (Battle Royale and The Knife of
+  Never Letting Go are both dystopia-tagged with no caste-sorting
+  mechanism at all). All 5 evidence books (the 4 original sweep-#2 books
+  plus Brave New World) backfilled in this migration.
+
+**1 candidate investigated and REJECTED as redundant** (not deferred):
+`fragmented_nonlinear_structure` (Infinite Jest, Gravity's Rainbow) --
+direct DB query confirmed both evidence books already carry `timeline:
+nonlinear`, the exact same redundancy trap sweep #1 caught with
+`non_linear_timeline_narrative`. This is exactly the kind of check the
+skill exists to enforce -- a plausible-looking candidate from a
+literarily strong cluster, caught before landing.
+
+**1 content-warning candidate re-surfaced but deliberately NOT added,
+flagged for repo-owner reconsideration rather than unilaterally
+overridden**: `cannibalism` -- re-proposed independently with real
+cross-author evidence (Tender Is the Flesh's entire legalized-human-meat
+premise, The Road's marauder/captive-harvesting scenes), stronger than
+the single-book inference that led to its original rejection during the
+30-book pilot. Left as a flagged reconsideration item in
+`docs/schema/book-dna.md` rather than added or reopened unilaterally --
+this reopens an explicit, already-reasoned prior decision, a different
+kind of call than filling a previously-unexamined gap.
+
+**Other real candidates found but deliberately deferred to the tracker**
+(2-book evidence, held to a more cautious bar than the 11 promoted
+above): `magical_archive_guardian` (The Spellshop, Sorcery of Thorns --
+protagonist's vocation is custodian of a magical book collection, often
+having fled/been expelled from the official institution; the reviewing
+agent flagged its own uncertainty about whether the surface-setting
+difference between a cozy shop and a gothic academy undercuts the
+pattern, so held back rather than forced in).
+
+**Two already-open tracker gaps re-checked**: first-contact-via-
+natural-evolution (Alien Clay still untagged; Blindsight re-confirmed
+correctly excluded) and `skinchanging_or_body_possession` (checked
+against the epic-fantasy cluster's telepathic-bond candidates --
+Dragonflight, Towers of Midnight -- both correctly two-way bonds, not a
+match). Both stay Open. `remote_piloted_robotic_surrogate` was not
+specifically re-checked this round (no matching book type in the pool).
+
+**Real candidates considered and rejected** (per-cluster, not
+exhaustive): a "multi-era nested narrative structure" (Cloud Atlas,
+unique in its cluster); "object/place as time-travel mechanism" (The
+Book of Doors/Mr. Penumbra/The Cartographers -- didn't hold up on the
+actual texts, only one book genuinely combines an object with time
+travel); "Zodiac/house-sorting academic competition" (Zodiac Academy,
+single-book, already covered by `magic_school`); "monster bride"
+arranged-marriage pattern across 5 romantasy books -- checked each
+individually and only 1 of 5 actually fit on inspection, the rest
+misread from surface similarity; several already-existing-trope misses
+flagged as tagging-completeness issues rather than vocabulary gaps
+(Lincoln in the Bardo/The Divine Comedy both plausibly missing
+`underworld_descent_journey`; Interview with the Vampire/A Dowry of
+Blood both plausibly missing `retrospective_memoir_narration`). Full
+per-cluster lists in each agent's report; not repeated here.
+
+**A real, separate data-quality finding, flagged not fixed (out of this
+sweep's scope, which is vocabulary-backfill only, not per-book
+corrections)**: two books (*How High We Go in the Dark*, *A Short Stay
+in Hell*) have a `book_dna` row but zero `book_tropes` rows -- looks like
+an incomplete-insert bug from an earlier tagging pass, not a scope/skip
+case, worth a backfill check. Also, per CLAUDE.md's mandatory
+author-field verification policy, five more likely author-contamination
+cases surfaced incidentally while querying (none touched, all
+analysis-only): *Acceptance* ("Jeff VanderMeer, Helen Macdonald" --
+Macdonald isn't Acceptance's co-author), *Doomsday Book* ("Connie
+Willis, Daniel Dos Santos" -- Dos Santos is a cover illustrator),
+*The Eyre Affair* ("Jasper Fforde, Susan Duerdan" -- likely "Susan
+Duerden," an audiobook narrator), *Nine Princes in Amber* ("Roger
+Zelazny, Tim White" -- White is a cover illustrator), and *Shadows for
+Silence in the Forests of Hell* ("Brandon Sanderson, Kate Reading" --
+Reading is the audiobook narrator). Worth a dedicated ingestion-hygiene
+fix pass.
+
+Both docs (`docs/schema/book-dna.schema.yaml`, `docs/schema/book-dna.md`)
+updated in this same session, including the "Seventh growth round"
+writeup and all tracker updates above (the stale "134 tropes/37 CWs"
+count in book-dna.md's "Open for review" section, left over from before
+sweep #2 even landed, was also corrected to the real current numbers
+while in there). Verified zero-diff between the DB's live
+`tropes`/`content_warning_types` tables and both docs with a script
+(152 tropes, 38 content warnings on both sides), not eyeballed.
+
+**Environment note, same as every other CLDA migration batch today**: no
+linked Supabase project, no local Supabase stack in this sandbox. Tested
+in a rolled-back transaction first (insert, re-run once more in the same
+transaction to confirm idempotency, rollback), then applied for real via
+a direct autocommit psycopg2 connection, per the established CLDA
+workaround. Hosted's `supabase_migrations` tracking table does NOT know
+this version was applied -- CLDO needs `supabase migration repair
+--status applied --linked 20260913230000` after confirming data matches
+(it will -- this session applied and verified the real data), per
+CLAUDE.md's documented recovery procedure. This is now the THIRD
+migration today (alongside `20260913170000` and `20260913220000`)
+waiting on this same repair step -- all three can be repaired in the
+same CLDO session.
+
+**Coverage total across all 3 sweeps**: sweep #1 (377 books/31 authors)
++ sweep #2 (366 books/117 authors) + sweep #3 (224 books/221 authors) =
+967 book-cluster-reviews across the ~961-tagged catalog -- effectively
+full coverage of the tagged catalog as of this session (some books
+appear in more than one sweep's evidence lists via co-author/illustrator
+credit variants counted once per sweep's own pool, so this is a coverage
+measure of deliberate-sweep review passes, not a literal distinct-book
+count, but the practical result is the same: every tagged book has now
+been through at least one deliberate cross-author/cross-cluster gap-sweep
+pass). **This closes out the proactive-sweep phase for now, per the
+user's own framing of this as the third and likely final regular pass**
+-- future vocabulary gaps should mostly surface reactively, through
+ordinary per-book tagging's own single-occurrence tracker (see
+book-dna.md), or from newly-tagged books as the untagged queue gets
+worked, rather than another dedicated full-catalog sweep in the near
+term.
+
+Did not touch `scripts/recommend.py`/`scripts/scoring_tests.py`. No
+individual book's full Book DNA was tagged -- vocabulary addition plus
+backfill onto already-tagged books only, per the skill's explicit scope.

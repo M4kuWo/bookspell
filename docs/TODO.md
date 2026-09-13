@@ -242,6 +242,75 @@ worth deferring to a later session rather than batching in for
   catalog-wide query, and whether the Bone Season "dreamwalking" lead
   for `skinchanging_or_body_possession` firms up with closer knowledge
   of the later books in that series.
+- [x] **Catalog-wide trope/content-warning vocabulary gap sweep #3 --
+  RUN 2026-09-13 by CLDA, same day as sweeps #1-2, the third and (per the
+  user's own framing) likely final regular pass for now.** Covered the
+  remaining ~224-book pool (221 authors, almost entirely single-
+  tagged-book authors -- only P. Djeli Clark, "Shirtaloon, Travis
+  Deverell", China Mieville have 2 books each), so Step 3 clustered by
+  subgenre/narrative-mechanism/theme instead of by author: 7 parallel
+  non-forked background agents, full per-cluster lists and findings in
+  `docs/project-log.md`'s 2026-09-13 "sweep #3" entry. Step 1: confirmed
+  Alien Clay still untagged (the one required check). **11 new trope
+  values landed** (migration
+  `20260913230000_catalog_trope_gap_sweep_3_11_new_tropes.sql`, 28
+  book-trope insertions across 24 books): `forced_psychological_
+  reconditioning` (1984/A Clockwork Orange/We), `incomprehensible_alien_
+  contact` (Solaris/Roadside Picnic), `impossible_or_non_euclidean_
+  architecture` (House of Leaves/Library at Mount Char/Acceptance),
+  `mass_unexplained_sensory_or_memory_loss` (Blindness/Memory Police),
+  `animated_construct_companion` (Wizard of Oz/Howl's Moving Castle/
+  Neverending Story), `institutional_time_travel_bureaucracy` (Ministry
+  of Time/Doomsday Book), `secret_magical_bureaucracy` (Rivers of
+  London/The Rook), `old_faith_displaced_by_new_religion` (Bear and the
+  Nightingale/Mists of Avalon), `state_mandated_body_harvesting_or_
+  modification` (Bone Shard Daughter/Perdido Street Station),
+  `modern_knowledge_as_power_source` (Off to Be the Wizard/Wandering
+  Inn), and `caste_or_faction_stratified_society` -- **promoted from
+  sweep #2's tracker**, resolving its self-flagged dystopia-overlap risk
+  with a genuine new confirming book (Brave New World) plus real
+  discriminating counter-evidence (Battle Royale/Knife of Never Letting
+  Go are dystopia-tagged with no caste mechanism at all). **1 candidate
+  investigated and REJECTED as redundant** (`fragmented_nonlinear_
+  structure` -- Infinite Jest/Gravity's Rainbow, both already tagged
+  `timeline: nonlinear`, confirmed via direct DB query -- the same trap
+  sweep #1 caught with `non_linear_timeline_narrative`). **1 content
+  warning (`cannibalism`) re-surfaced with stronger cross-author evidence
+  but deliberately left flagged for repo-owner reconsideration rather
+  than unilaterally reopening its documented 30-book-pilot rejection.**
+  1 more candidate deferred to the tracker (`magical_archive_guardian`
+  -- Spellshop/Sorcery of Thorns, only 2 books with self-flagged
+  reviewer uncertainty). Both schema docs updated in this same session,
+  including correcting a stale trope/CW count left in book-dna.md's
+  "Open for review" section since before sweep #2 landed. **Verified
+  zero-diff between the DB's live tables and both docs with a script**
+  (152 tropes, 38 content warnings, exact match). **Applied directly to
+  HOSTED, not via `supabase db push`** -- same environment constraint as
+  sweeps #1-2. **CLDO needs `supabase migration repair --status applied
+  --linked 20260913230000`** after confirming data matches (it will) --
+  the THIRD migration today waiting on this repair step, alongside
+  `20260913170000` and `20260913220000`; all three can be repaired
+  together. Also flagged (not fixed, out of this sweep's scope): 2 books
+  with a `book_dna` row but zero `book_tropes` rows (How High We Go in
+  the Dark, A Short Stay in Hell -- looks like an incomplete-insert bug)
+  and 5 more likely author-field-contamination cases per CLAUDE.md's
+  ingestion policy (Acceptance, Doomsday Book, The Eyre Affair, Nine
+  Princes in Amber, Shadows for Silence in the Forests of Hell -- all
+  translator/illustrator/narrator names mixed into `author`).
+  **Coverage total across all 3 sweeps: 377 + 366 + 224 = effectively
+  full deliberate-sweep coverage of the ~961-tagged catalog.** **This
+  closes out the proactive-sweep phase for now** -- a follow-up pass
+  isn't queued; future gaps should mostly surface reactively through
+  ordinary per-book tagging's own single-occurrence tracker in
+  `docs/schema/book-dna.md`, or from newly-tagged books as the untagged
+  queue gets worked, rather than another dedicated full-catalog sweep in
+  the near term. If a future session does want to pick this back up, the
+  tracker's remaining Open items are the natural starting point (the two
+  original 2026-09-09 gaps, `magical_archive_guardian`, and the several
+  single-occurrence sweep-#2 leads), not a fresh full-catalog re-sweep.
+  Also worth a real (separate, not sweep-scoped) pass: the 2
+  incomplete-trope-insert books and 5 author-contamination cases flagged
+  above.
 - [ ] **CODX (Codex CLI, via the repo owner's ChatGPT Plus
   subscription) as a third working entity -- approach worked out
   2026-09-11, deliberately deferred, do later.** Persona name settled:

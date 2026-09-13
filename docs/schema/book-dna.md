@@ -760,6 +760,136 @@ Bone Season* "dreamwalking" — the reviewing agent's own confidence in
 the exact mechanic, host-body control vs. astral travel/communication
 only, wasn't solid enough to assert).
 
+**Seventh growth round (2026-09-13, fourth and — for now — final catalog-wide
+deliberate gap sweep, "sweep #3" of
+`.claude/skills/catalog-trope-gap-sweep/SKILL.md`)** — 11 new trope values
+added and applied catalog-wide (migration
+`20260913230000_catalog_trope_gap_sweep_3_11_new_tropes.sql`, 28
+book-trope insertions across 24 books), same method as prior rounds: real
+per-book literary verification, "does this change the recommendation" bar,
+willingness to reject plausible candidates. Unlike sweeps #1-2 (author
+clusters), this round's pool was ~99% single-tagged-book authors (221
+authors, 224 books), so Step 3 clustered by subgenre/narrative-mechanism/
+theme instead of by author (7 parallel non-forked background agents) — see
+`docs/project-log.md`'s 2026-09-13 "sweep #3" entry for the exact
+per-cluster book lists.
+- `forced_psychological_reconditioning` (plot_devices) — a totalitarian
+  state captures a protagonist who has committed an act of individual
+  dissent/rebellion and subjects them to a deliberate, named medical or
+  psychological procedure engineered to strip their capacity for
+  independent thought and force ideological conformity — succeeding by
+  the narrative's end. Evidence, cross-author: 1984 (Room 101), A
+  Clockwork Orange (the Ludovico Technique), We (the Great Operation/
+  fantasiectomy). Distinct from `dystopia` (generic setting tag) and
+  `corruption_arc` (a protagonist's own gradual choices, not an
+  externally imposed procedure).
+- `incomprehensible_alien_contact` (scifi_specific) — contact with an
+  alien intelligence/phenomenon that remains fundamentally unknowable
+  and uncommunicative despite sustained effort — the narrative's point
+  is the FAILURE of comprehension itself. Evidence: Solaris, Roadside
+  Picnic. Confirmed distinct from `cosmic_horror` (neither evidence book
+  carries that tag — philosophical/melancholic register, not
+  horror-dread) and from `first_contact` (too neutral/broad to
+  discriminate this specific permanent-incomprehension subset).
+- `impossible_or_non_euclidean_architecture` (setting_worldbuilding) — a
+  structure whose interior physically defies its exterior
+  dimensions/ordinary geometry, itself a central plot/horror engine.
+  Evidence: House of Leaves, The Library at Mount Char, Acceptance (the
+  Southern Reach's Tower/Tunnel). Distinct from `new_weird_setting`
+  (atmosphere, not this specific mechanism) and `cosmic_horror` (dread
+  from scale, not spatial impossibility).
+- `mass_unexplained_sensory_or_memory_loss` (plot_devices) — an
+  inexplicable, population-wide loss of a specific human faculty (sight,
+  memory) with no clear physical cause, itself the book's central
+  speculative engine. Evidence: Blindness, The Memory Police. Distinct
+  from `sudden_apocalypse_event` (a catch-all for any sudden catastrophe,
+  doesn't name the specific mechanism) and `pandemic_or_epidemic` CW
+  (implies a transmissible illness, neither book frames it that way).
+- `animated_construct_companion` (character_archetypes) — a significant
+  character is an animate being made of inanimate, non-biological
+  material, with full personhood and agency. Evidence, cross-author: The
+  Wonderful Wizard of Oz (the Scarecrow, the Tin Woodman), Howl's Moving
+  Castle (Calcifer; Turnip-head), The Neverending Story (the
+  Rockbiter). Distinct from `shapeshifters` (own-body transformation, not
+  this) and `multiple_fantasy_species` (broad diversity tag, not this
+  specific mechanism).
+- `institutional_time_travel_bureaucracy` (scifi_specific) — a formal
+  agency administers time travel via assigned handlers, permits, and
+  clearances, foregrounding the procedural apparatus as a load-bearing
+  element. Evidence: The Ministry of Time, Doomsday Book. Distinct from
+  plain `time_travel` (says nothing about who administers it) and
+  `dark_academia_setting` (atmosphere, not this apparatus).
+- `secret_magical_bureaucracy` (setting_worldbuilding) — the protagonist
+  works within a hidden, institutionalized government agency/police
+  branch — rank, hierarchy, procedure, payroll — whose job is managing
+  the supernatural within an otherwise mundane world. Evidence: Rivers
+  of London (the Folly), The Rook (the Checquy Group). Distinct from
+  `urban_fantasy_setting` (general setting tag, doesn't capture the
+  institutional employment structure) and
+  `infiltration_or_undercover_plot` (these protagonists operate openly
+  as members, not undercover).
+- `old_faith_displaced_by_new_religion` (setting_worldbuilding) — an old,
+  animistic folk religion visibly loses power as an organized religion
+  spreads through the same population, and this shift drives the plot.
+  Evidence: The Bear and the Nightingale, The Mists of Avalon. Distinct
+  from `colonization_themes` CW (literal external conquest — this is an
+  internal religious shift) and `mythological_pantheon_as_characters`
+  (the shared device is the decline mechanism, not gods-as-characters).
+- `state_mandated_body_harvesting_or_modification`
+  (setting_worldbuilding) — the ruling power practices forced,
+  magically-enabled harvesting/alteration of its subjects' bodies as
+  tribute, tax, or punishment, as a routine instrument of governance.
+  Evidence: The Bone Shard Daughter (bone-shard tribute from children),
+  Perdido Street Station (judicial "Remaking"). Distinct from
+  `body_horror` CW (generic grotesque-transformation warning, doesn't
+  capture the state-as-harvester angle) and `slavery` CW (Bone Shard's
+  tribute-children keep their freedom — a tax system, not ownership).
+- `modern_knowledge_as_power_source` (plot_devices) — the protagonist's
+  real-world, mundane, learned knowledge (not innate talent, not a
+  system-granted stat) is the literal mechanism by which they gain an
+  edge in a new/fantastical world. Evidence: Off to Be the Wizard
+  (Martin's IT troubleshooting skills let him "hack" reality), The
+  Wandering Inn (Erin's modern recipes/business sense). Distinct from
+  `isekai` (transportation mechanism only) and `hidden_talent_prodigy`
+  (an innate gift, the opposite of learned mundane knowledge).
+- `caste_or_faction_stratified_society` (setting_worldbuilding) —
+  **promoted from sweep #2's single-occurrence tracker.** Sweep #2 had
+  real cross-author evidence (Divergent, Red Rising, The Selection,
+  Empire of Silence) but held back on a self-flagged risk that it would
+  just co-occur with `dystopia` catalog-wide rather than discriminating
+  a real subset of it. This round resolved that concern two ways: a
+  genuine new confirming instance (*Brave New World*'s Alpha/Beta/Gamma/
+  Delta/Epsilon castes, assigned via the Bokanovsky Process) AND real
+  discriminating counter-evidence — *Battle Royale* and *The Knife of
+  Never Letting Go* are both `dystopia`-tagged with NO caste/faction-
+  sorting mechanism at all, directly proving the trope does not simply
+  shadow `dystopia` catalog-wide. All 5 evidence books backfilled in one
+  migration (the 4 original sweep-#2 evidence books had never actually
+  been tagged with it, since the trope didn't exist yet).
+
+One candidate seriously investigated and **deliberately rejected as
+redundant**: `fragmented_nonlinear_structure` (a deliberately
+out-of-chronological-order/digression-heavy narrative structure —
+Infinite Jest, Gravity's Rainbow). Direct DB check confirmed both
+evidence books already carry `timeline: nonlinear` — the exact same
+redundancy trap sweep #1 caught with `non_linear_timeline_narrative`
+(Vicious/Vengeful/Six of Crows/Crooked Kingdom, also already captured by
+the `timeline` scalar). Not added.
+
+One content-warning candidate considered and **deliberately NOT
+added, flagged for repo-owner reconsideration rather than
+unilaterally overridden**: `cannibalism` — re-surfaced this round with
+real cross-author evidence (Tender Is the Flesh's entire legalized-
+human-meat-industry premise; The Road's marauder gangs and captive-
+harvesting basement scene) stronger than the single-book evidence that
+led to its original rejection during the 30-book pilot (see "Deliberately
+deferred, not in v0.1" below). The original rejection reasoning — that
+it reads as a specific flavor of `body_horror` + `violence_intensity:
+graphic` rather than a distinct category — may or may not still hold
+given this stronger cross-author case; recorded here rather than
+re-litigated unilaterally, since it reopens an explicit, already-reasoned
+prior decision rather than filling a previously-unexamined gap.
+
 ## Known limitations — engine-level, not schema fixes
 
 Surfaced during the 30-book pilot's reveal-and-score round, when the user
@@ -1061,6 +1191,12 @@ don't re-derive it from the log):
   ecology, not a natural-evolution-on-Earth case like The Mountain in the
   Sea's octopuses — check the actual mechanism, don't assume it qualifies
   just because it's evolution-flavored.
+  **CHECKED again 2026-09-13 (sweep #3)**, still just one real
+  occurrence — stays Open. *Alien Clay* confirmed still untagged (no
+  `book_dna` row) — Step 1's required light-touch check. *Blindsight*
+  re-confirmed correctly excluded (genuine extraterrestrial contact, not
+  natural-Earth-evolution). No other book across all 7 sweep-#3 clusters
+  hit this specific mechanism.
 - **Trope**: `skinchanging_or_body_possession` — a character projects
   their consciousness into and directly controls another living
   creature's body (animal or human) while their own body remains
@@ -1084,6 +1220,15 @@ don't re-derive it from the log):
   firmer check by someone with closer knowledge of books 2-4. Stephenie
   Meyer's *The Host* was also considered and correctly ruled a different
   concept, not this one — see its own new entry below.
+  **CHECKED again 2026-09-13 (sweep #3)**, still no confirmed second
+  occurrence — stays Open. Checked closely against the epic/grimdark
+  fantasy cluster's telepathic-bond candidates (Anne McCaffrey's
+  *Dragonflight* dragon-rider bond, Robert Jordan/Sanderson's wolf-dream
+  bond in *Towers of Midnight*) — both are explicitly TWO-WAY telepathic
+  links that leave neither party's body inert/vulnerable, already
+  correctly captured by `telepathic_animal_bond`, not a match. The Bone
+  Season lead from sweep #2 remains unverified (not re-checked this
+  round — out of this round's book pool).
 - **Trope**: `remote_piloted_robotic_surrogate` — a person's
   consciousness/neural signal controls a separate robotic body in real
   time (telepresence) while their own body remains elsewhere, distinct
@@ -1096,25 +1241,27 @@ don't re-derive it from the log):
   telepresence/robotic-surrogate book. **CHECKED again 2026-09-13
   (sweep #2)**, no matches found across ~366 books/6 author clusters —
   stays Open.
-- **Trope**: `caste_or_faction_stratified_society` — a society openly
-  organized around a small number of rigid, named castes/factions that
-  determine identity/role/resources, typically introduced via a formal
-  sorting/testing/assignment mechanism (a Choosing Ceremony, an aptitude
-  test), distinct from generic authoritarian oppression with no such
-  formalized stratification. Found 2026-09-13 (sweep #2) with real
-  cross-author evidence — Veronica Roth's *Divergent* (five named
-  factions, Choosing Ceremony), Pierce Brown's *Red Rising* (Color caste
-  system), Kiera Cass's *The Selection* (numbered castes One-Eight),
-  Christopher Ruocchio's *Empire of Silence* (Palatine/Plebeian/
-  Extrasolarian genetic castes) — but deliberately NOT promoted this
-  round on a genuine, self-flagged risk: it may just co-occur with the
-  existing `dystopia` tag across most of the catalog rather than
-  discriminating a real subset of it (several `dystopia`-tagged books in
-  the reviewing cluster, e.g. Fahrenheit 451, Klara and the Sun, have no
-  such formalized caste/faction structure at all, which is a point in
-  its favor, but a full catalog-wide check wasn't done this round).
-  Needs that broader check before promotion, not just more evidence
-  books.
+- **Trope**: `magical_archive_guardian` — protagonist's central
+  vocation/identity is steward or keeper of a repository of magical
+  books/spells (a library, archive, or shop built from one), often
+  having fled or been expelled from the official institution while still
+  carrying that custodial duty forward. Found 2026-09-13 (sweep #3) on
+  Sarah Beth Durst's *The Spellshop* (Kiela flees the destroyed Great
+  Library with a wagon of illegal spellbooks, becomes a covert
+  spell-dispensing shopkeeper) and Margaret Rogerson's *Sorcery of
+  Thorns* (Elisabeth Scrivener trains as a Warden protecting the Great
+  Library of Summershall's sentient grimoires, later framed/expelled but
+  still fighting to protect them) — real cross-mechanism match (a cozy
+  cottage-shop vs. a gothic library-academy look different on the
+  surface, but the underlying "entrusted-with/fleeing-with a magical
+  book collection one must protect" mechanism is the same specific,
+  checkable plot fact in both). Deliberately NOT promoted this round —
+  only 2 books, and the reviewing agent flagged its own uncertainty about
+  whether the surface-setting difference undercuts the pattern; held to
+  the more cautious bar rather than forced in. Distinct from
+  `dark_academia_setting` (atmosphere tag, only fits one of the two
+  evidence books) and `magic_school` (neither book is a school-attendance
+  narrative).
 - **Trope**: serial body-hopping time-loop mystery — protagonist's
   consciousness wakes in a different host's body each day within a
   repeating time loop, the host's own will suppressed, but with no
@@ -1170,6 +1317,13 @@ don't re-derive it from the log):
   of the existing entry. One occurrence only.
 
 **Promoted / resolved**:
+- **`caste_or_faction_stratified_society`** — promoted 2026-09-13 (sweep
+  #3) on a genuine new confirming instance (*Brave New World*) plus real
+  discriminating counter-evidence resolving sweep #2's self-flagged
+  co-occurrence-with-`dystopia` risk (*Battle Royale*/*The Knife of Never
+  Letting Go* are both `dystopia`-tagged with no caste-sorting mechanism
+  at all). See "Vocabulary growth process" above ("Seventh growth
+  round").
 - **`monster_hunter_for_hire`** — promoted 2026-09-13 (sweep #2) on a
   genuine second, cross-genre occurrence (Ilona Andrews's Kate Daniels —
   Magic Bites, Magic Burns) alongside the original Witcher evidence. See
@@ -1196,10 +1350,35 @@ don't re-derive it from the log):
   `20260913170000_catalog_trope_gap_sweep_5_new_tropes.sql`). See
   "Vocabulary growth process" above ("Fifth growth round") for full
   detail.
+- **10 more trope values** (`forced_psychological_reconditioning`,
+  `incomprehensible_alien_contact`, `impossible_or_non_euclidean_architecture`,
+  `mass_unexplained_sensory_or_memory_loss`, `animated_construct_companion`,
+  `institutional_time_travel_bureaucracy`, `secret_magical_bureaucracy`,
+  `old_faith_displaced_by_new_religion`,
+  `state_mandated_body_harvesting_or_modification`,
+  `modern_knowledge_as_power_source`) — landed 2026-09-13 via the third
+  catalog-wide gap sweep (migration
+  `20260913230000_catalog_trope_gap_sweep_3_11_new_tropes.sql`, alongside
+  the `caste_or_faction_stratified_society` promotion above — 11 new
+  values total in that migration). See "Vocabulary growth process" above
+  ("Seventh growth round") for full detail.
 - Both already-open gaps (climate/natural-disaster mass-casualty CW;
   first-contact-via-natural-evolution trope) were re-checked 2026-09-13
   and confirmed to still have only one real occurrence each — see their
   own entries above for what was checked. They stay Open, not promoted.
+- `remote_piloted_robotic_surrogate` and `skinchanging_or_body_possession`
+  were also re-checked against sweep #3's book pool where relevant
+  (telepathic-bond candidates in the epic-fantasy cluster) — no second
+  occurrence found; both stay Open. `fragmented_nonlinear_structure`
+  (Infinite Jest/Gravity's Rainbow) was investigated as a new candidate
+  and REJECTED, not deferred — both evidence books already carry
+  `timeline: nonlinear`, confirmed via direct DB query, so it's fully
+  redundant rather than a real gap. `cannibalism` (content warning) was
+  re-surfaced with stronger cross-author evidence (Tender Is the Flesh,
+  The Road) than its original single-book pilot-era rejection, but
+  deliberately left as a flagged-for-reconsideration item rather than
+  added or formally reopened unilaterally — see "Seventh growth round"
+  above and the "Deliberately deferred" cannibalism entry below.
 
 **Process note for whoever runs `tag-catalog-batch` next**: Step 1 of that
 skill already says to flag a suspected vocabulary gap instead of silently
@@ -1370,6 +1549,19 @@ Deliberately deferred, not in v0.1:
   reads as a specific flavor of `body_horror` + `violence_intensity:
   graphic` rather than a distinct category, same reasoning that excluded
   gore/blood/injury earlier. Not added.
+  **UPDATE (2026-09-13, sweep #3)**: re-surfaced independently by a
+  different reviewing agent, with real cross-author evidence this time
+  (Tender Is the Flesh's entire legalized-human-meat-industry premise,
+  not just incidental content; The Road's marauder gangs and
+  captive-harvesting basement scene) — stronger than the single in-the-
+  moment inference that led to the original rejection. Deliberately NOT
+  added this round either: reopening an explicit, already-reasoned prior
+  decision is a different kind of call than filling a previously-
+  unexamined gap, and isn't something to flip unilaterally mid-sweep.
+  Flagged here for the repo owner to weigh in on whether the stronger
+  cross-author case changes the original "same as gore/blood/injury,
+  not a distinct category" reasoning — still Not added, pending that
+  call.
 - **`work_type` (novella/novel) on `books` — built 2026-08-29.** User's
   idea, prompted by decimal `position_in_series` values (e.g. 2.5) not
   clearly signaling "this is a short-form entry" to a newcomer, plus
@@ -1922,8 +2114,8 @@ Deliberately deferred, not in v0.1:
 
 ## Open for review
 
-Nothing outstanding. Both controlled vocabularies (`tropes` at 134
-values, `content_warnings` at 37 — current as of the 2026-09-13
+Nothing outstanding. Both controlled vocabularies (`tropes` at 152
+values, `content_warnings` at 38 — current as of the 2026-09-13 sweep #3
 catalog-wide gap sweep, cross-checked directly against the live DB
 tables rather than trusted from memory) have had both a researched pass
 against real external sources and a real-books pilot pass (30 books
