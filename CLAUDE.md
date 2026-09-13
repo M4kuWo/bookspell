@@ -66,6 +66,35 @@ this repo runs from:
   permanent one: revisit once it's built a real track record, the same
   way CLDA's own scope grew over time.
 
+  **Runs from its own real clone, `~/Documents/bookspell-codex` (set up
+  2026-09-13), never inside the repo owner's own `~/Documents/bookspell`
+  or a subdirectory of it.** That clone's real safeguard against an
+  accidental push is a `pre-push` git hook that unconditionally blocks
+  before any auth is even attempted — **not** a `git config
+  credential.helper`/`core.askPass` override, which was the first thing
+  tried and, confirmed by actually testing it live, does NOT work: an
+  inherited `GIT_ASKPASS` environment variable (in this case, VS Code's
+  own git integration, present in the same terminal session) supplies
+  push credentials through a separate channel that overrides both of
+  those settings regardless of what's configured in the repo itself.
+  Being in a different folder under the same login isn't sufficient on
+  its own either, for the same reason. See `AGENTS.md`'s "Your
+  environment" section for the exact hook, why the two config-based
+  attempts failed (verified directly, including one real test push
+  that landed on `main` and was cleanly reverted the same session — see
+  `docs/project-log.md`'s 2026-09-13 entry), and why the hook is the
+  one approach that's actually reliable regardless of environment.
+  Reads hosted
+  Supabase data via the same public anon key `app/shared.js` already
+  ships client-side (real, RLS-enforced read-only — verified its write
+  policies are all `authenticated`-only, not just assumed) rather than
+  the `supabase db query --linked` CLI method CLDO uses, which is
+  full-access and NOT safe to hand it. See `AGENTS.md`'s "Your
+  environment"/"Reading hosted Supabase data"/"Handing off your work"
+  sections for the full mechanics, including the local-testing
+  limitation (this repo's own not-yet-bootstrapped local Supabase gap)
+  and how its output actually reaches CLDO with no push access.
+
 **Which one are you?** Check for `.claude/PERSONA.local` in the repo
 root (a plain local file, deliberately gitignored — see `.gitignore`'s
 comment on it — so each machine keeps its own value and one machine's

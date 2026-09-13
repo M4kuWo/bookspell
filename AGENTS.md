@@ -38,6 +38,133 @@ file/process CLDA uses for its own, narrower gate — see `CLAUDE.md`'s
 "Cross-session destructive-action gate" section) and tell the user
 directly, rather than deciding it's fine and doing it anyway.
 
+## Your environment — a real, separate clone, not a folder inside CLDO's
+
+You run from your own clone at `~/Documents/bookspell-codex` (a sibling
+of the repo owner's own `~/Documents/bookspell`, set up 2026-09-13) —
+**never** work inside `~/Documents/bookspell` itself or a subdirectory
+of it, for working-tree-collision reasons alone if nothing else. But
+the real, load-bearing safeguard against an accidental push is the one
+below, not the directory choice itself.
+
+**What actually blocks a push here, verified by really testing it, not
+assumed**: a `pre-push` git hook at `.git/hooks/pre-push` in this
+clone that unconditionally exits non-zero before any network/auth
+activity happens at all —
+
+```sh
+#!/bin/sh
+echo "BLOCKED: this clone (bookspell-codex, CODX's environment) must never push." >&2
+echo "Hand your work off per AGENTS.md's 'Handing off your work' section instead." >&2
+exit 1
+```
+
+(must be executable — `chmod +x .git/hooks/pre-push` — and re-created
+if this clone is ever redone from scratch, since `.git/hooks/` isn't
+part of the tracked repo and a fresh `git clone` won't bring it along).
+
+**Why this hook, and not just a git config override**: the first
+attempt at this (2026-09-13) was `git config credential.helper ""`,
+reasoning that it would stop this clone from reaching the macOS
+Keychain's cached GitHub credential the repo owner's own clone pushes
+with. Real, live testing immediately proved that wrong — a push from
+here still succeeded, because `GIT_ASKPASS` (an environment variable,
+in this case set by VS Code's own git integration in the same
+terminal/shell environment) supplies credentials through a completely
+different channel than `credential.helper`, and environment variables
+like `GIT_ASKPASS` take precedence over BOTH `credential.helper` and
+`core.askPass` even when the latter is set locally in this repo (also
+verified directly — setting `core.askPass /bin/false` here did NOT
+stop it either). Environment-variable hygiene can't be relied on
+either, since whatever launches you might set these regardless of
+anything configured in this repo. The `pre-push` hook is the one fix
+that's actually reliable, because it blocks at the git command itself,
+before any credential of any kind is even consulted — it doesn't
+matter what auth mechanism is available in the environment. (The
+accidental push this uncovered — a harmless test file — was found and
+reverted cleanly the same session; nothing else was affected.)
+
+Confirmed 2026-09-13, with the hook in place: `git fetch`/`git pull`
+still work with zero credential at all (this repo is public, reads
+never needed auth in the first place) — stay current with `CLAUDE.md`/
+schema/skills freely. Local commits on your own branches also work
+completely normally with no credential needed. **A real `git push`
+attempt from this clone now fails immediately with the hook's own
+message, verified directly** — if it ever behaves differently (the
+hook message doesn't appear, or a push actually succeeds), the hook is
+missing or was removed: stop and tell the repo owner immediately
+rather than continuing, and don't try to "fix" it yourself by
+re-authenticating or reaching for `credential.helper`/`core.askPass`
+again — those are the two approaches already proven insufficient here.
+
+## Reading hosted Supabase data (real, safe, already-available access)
+
+Use the **same public anon/publishable key already embedded in
+`app/shared.js`** (`SUPABASE_URL`/`SUPABASE_ANON_KEY` near the top of
+that file) via Supabase's REST API (`https://<SUPABASE_URL>/rest/v1/
+<table>?select=...` with `apikey`/`Authorization` headers set to that
+key, or the `@supabase/supabase-js` client the same way the app itself
+uses it). This is genuinely safe and already public — it's shipped
+client-side in the deployed app. **Verified directly 2026-09-13**: even
+though Supabase's default table grants look broad at the SQL level
+(`anon` technically holds INSERT/UPDATE/DELETE grants on most tables —
+a Supabase default, not a misconfiguration by itself), every actual
+write-capable Row Level Security policy on the tables that matter
+(`ratings`, `user_rules`, `profiles`, `book_suggestions`, etc.) is
+scoped to the `authenticated` role with an `auth.uid() = user_id`
+check — `anon` has no permissive write policy anywhere, so this key is
+real, database-enforced read-only for your purposes, not just a polite
+convention. Use it to verify a candidate book exists, check current
+live data/schema, cross-reference a narrator count, etc.
+
+**Do not use `supabase db query --linked` (the CLI method CLDO uses in
+its own sessions) — it is NOT equivalent to the anon key above.** It
+authenticates via the Supabase CLI's own project-linked login (full
+project/owner access) and can run arbitrary SQL, writes included — you
+weren't given this access, and you shouldn't have the CLI linked to
+this project at all in your environment. If `supabase status`/`supabase
+db query` here shows a linked project, tell the repo owner rather than
+using it.
+
+## Testing a migration or schema idea
+
+The project's own standing convention — local Supabase (`supabase
+start`, migrations applied there, see CLAUDE.md's "Database &
+migrations" section) — needs zero hosted credentials, so you can do
+this fully within your own clone. **One real, pre-existing limitation
+to know about, not something specific to your setup**: this repo's
+local Supabase stack has never been fully bootstrapped with the
+complete real catalog (only a partial/pilot seed exists locally as of
+2026-09-13 — see the "still-open local-bootstrap gap" in your own task
+list below, which is exactly this problem). So you can validate a
+migration's syntax and structure against local's live schema, and
+cross-check real data via the anon-key path above, but a genuine
+rolled-back-transaction test against the *exact* full live hosted
+state isn't fully reproducible in your environment yet. That's fine —
+it's naturally the kind of thing CLDO does as the last step before
+applying your proposal for real, and fixing the local-bootstrap gap
+(already on your task list) would remove this limitation for good.
+
+## Handing off your work — there's no live channel, same as CLDA/CLDO
+
+You can't push, so your output needs to actually reach someone. Three
+ways, in order of convenience:
+
+1. **The repo owner adds your clone as a local git remote** from his
+   own `~/Documents/bookspell` and fetches your branch (`git remote add
+   codex-work ~/Documents/bookspell-codex && git fetch codex-work`) —
+   ordinary git, no GitHub involved, works because your clone is just a
+   normal repo sitting on the same disk. He or CLDO can then review
+   your branch's diff and merge/cherry-pick it locally before pushing
+   to origin.
+2. He pastes your diff/report/draft migration file directly into a
+   message to CLDO.
+3. For a destructive/irreversible action, or anything you think
+   genuinely needs an immediate write (not just "would be nice soon"):
+   add an entry to `docs/PENDING_APPROVALS.md` (in his `bookspell`
+   clone, or tell him what to add) and say so directly — see "Your
+   starting scope" above.
+
 ## Concrete tasks (decided 2026-09-11, see docs/TODO.md's original CODX
 entry for the full reasoning behind this split)
 
