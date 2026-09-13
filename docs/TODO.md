@@ -778,7 +778,12 @@ worth deferring to a later session rather than batching in for
   per Wikipedia, "Ana and Din Mysteries" looks like a Goodreads-style fan
   label, noted but not renamed here), Six of Crows, Ready Player One,
   Earthseed, Jurassic Park. Migration
-  `20260913100000_fix_series_status_book_count_batch7.sql` -- tested in
+  `20260913130000_fix_series_status_book_count_batch7.sql` (renamed from
+  its original `20260913100000` timestamp during the 2026-09-13 sync
+  merge -- collided with CLDO's `20260913100000_expose_audiobook_
+  editions_to_app.sql`; safe to rename since this one was confirmed not
+  yet pushed via `supabase db push`, per CLAUDE.md's collision-handling
+  rule) -- tested in
   a rolled-back transaction first (all 16 names matched exactly once,
   post-update values verified), then applied for real to hosted via a
   normal autocommit connection; **not yet pushed via `supabase db push`

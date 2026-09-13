@@ -13481,7 +13481,12 @@ book-count convention was being misapplied. Left completely untouched;
 added to docs/TODO.md's flagged-name list so future batches' ranking
 queries stop re-surfacing it as a plain value error.
 
-Migration `20260913100000_fix_series_status_book_count_batch7.sql` --
+Migration `20260913130000_fix_series_status_book_count_batch7.sql`
+(renamed from its original `20260913100000` timestamp during the
+2026-09-13 sync merge -- collided with CLDO's own same-timestamp
+`20260913100000_expose_audiobook_editions_to_app.sql`; safe to rename
+since this one was confirmed not yet pushed via `supabase db push`,
+per CLAUDE.md's duplicate-timestamp rule) --
 tested in a rolled-back transaction first (all 16 names verified to
 match exactly one row, before/after values checked explicitly), then
 applied for real to hosted via a normal autocommit psycopg2 connection.
