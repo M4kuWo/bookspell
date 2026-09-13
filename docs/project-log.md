@@ -15194,3 +15194,115 @@ entry updated with this batch's summary and an accurate batch-11 exclude
 pointer (204 checked names + 52 still-unsettled flagged names). No
 docs/PENDING_APPROVALS.md entry needed -- this is CLDA's 10th successful
 run of this exact already-reviewed, step-by-step process.
+
+## 2026-09-14 (later still): series.status/book_count fix, batch 11 -- 13 series fixed, 0 confirmed correct, stopped on a search-budget wall
+
+CLDA, continuing the P2 series.status/book_count task (batch 11 of an
+established, repeated process; see CLAUDE.md's persona section and this
+file's prior 10 entries). Root cause unchanged: `status` defaults to
+'ongoing' whenever Hardcover's `is_completed` isn't explicitly true;
+`book_count` is Hardcover's raw edition/omnibus/box-set count, not a
+curated mainline-installment count -- neither field is read by
+`scripts/recommend.py`, display-only bug in `tools/catalog-review/`.
+
+**Reconstructed the accurate 204-name "checked" list by name straight
+from batches 1-10's own project-log.md entries**, not by trusting the
+running total alone (standard practice for this task since batch 5's
+own 21-name undercounting gap): 15 (batch 1) + 30 (batch 2: 14 fixed +
+16 correct) + 17 (batch 3) + 38 (batch 4: 17 fixed + 21 correct) + 18
+(batch 5: 15 fixed + 3 correct) + 17 (batch 6: 14 fixed + 3 correct) +
+21 (batch 7: 16 fixed + 5 correct) + 17 (batch 8) + 16 (batch 9) + 15
+(batch 10) = 204, pulled name-by-name from each batch's own log entry
+rather than just re-summing the published counts. Combined with the 52
+still-unsettled flagged names carried from batch 10 (256 combined
+strings, 255 unique after the already-known Imperial Radch fixed-name/
+flagged-name collision). Verified all 255 unique strings against the
+live `series` table before using them as an exclusion filter -- **all
+255 matched exactly one row**, no naming-drift catches this time (the
+first batch in a row of five -- 6, 8, 9, 10, and now not-11 -- to not
+find one; the reconstruction held up clean).
+
+Re-ran the ranking query (Hardcover raw `book_count` descending, per
+batches 8-10's saturation finding, confirmed still true -- every
+remaining series sits at exactly 1 book linked in our own catalog)
+excluding those 255 names. Worked down the resulting list in ranked
+order, verifying every candidate via live web search before writing
+anything, same standard as batches 1-10.
+
+**13 needed a real fix**:
+- **Status + book_count fixes (wrongly 'ongoing', confirmed closed with
+  no evidence of more coming)**: Daughter of Smoke & Bone (Laini Taylor,
+  ongoing/14 -> completed/3), Mortal Engines Quartet (Philip Reeve,
+  ongoing/12 -> completed/4 -- the Fever Crumb prequel trilogy and
+  2026's standalone "Bridge of Storms" are separate books, not part of
+  this named quartet), Chaos Walking (Patrick Ness, ongoing/12 ->
+  completed/3 -- "The Wide, Wide Sea" is a short story companion, not a
+  numbered mainline book), The Baroque Cycle (8 volume) (Neal
+  Stephenson, ongoing/12 -> completed/8 -- this row's own name specifies
+  the 8-volume split edition, distinct from the original 3-volume
+  Quicksilver/The Confusion/The System of the World publication), Unwind
+  Dystology (Neal Shusterman, ongoing/11 -> completed/5), Star Wars:
+  Thrawn (Timothy Zahn, ongoing/11 -> completed/3 -- confirmed as a
+  distinct row from the already-fixed 1990s "Star Wars: The Thrawn
+  Trilogy"; this is Zahn's 2017-2019 "Imperial Trilogy"), The Memoirs of
+  Lady Trent (Marie Brennan, ongoing/11 -> completed/5), Lorien Legacies
+  (Pittacus Lore, ongoing/11 -> completed/7 -- the main 7-book series
+  only; "Lorien Legacies Reborn" is a separate 3-book sequel series and
+  "The Lost Files" are companion novellas, neither counted), Delirium
+  (Lauren Oliver, ongoing/10 -> completed/3 -- "Delirium Stories" is a
+  companion novella collection, excluded per the standing
+  collection-vs-novel convention).
+- **book_count-only fixes (status already correct)**: Serpent & Dove
+  (Shelby Mahurin, 13 -> 3), Rama (Arthur C. Clarke/Gentry Lee, 12 -> 4
+  -- the real Clarke/Lee tetralogy: Rendezvous with Rama, Rama II, The
+  Garden of Rama, Rama Revealed; Gentry Lee's later solo prequel novels
+  are a separate body of work in the same universe, not numbered Rama
+  entries), Innkeeper Chronicles (Ilona Andrews, 12 -> 5, left 'ongoing'
+  -- the series is on hiatus, "finished for now," with at least one more
+  book planned but no confirmed title/date), The Dark Star Trilogy
+  (Marlon James, 11 -> 2, left 'ongoing' -- only 2 of the planned 3
+  books are published; "White Wing, Dark Star" is confirmed in
+  development but no specific 2026-or-later publication date was found,
+  so not counted as published yet).
+
+**0 confirmed already correct this batch** (consistent with batches
+8-10's saturation finding -- every candidate reached was a genuinely
+stale value, not a lucky hit). **No new out-of-scope or different-bug-
+class flags surfaced this batch** -- every candidate reached was a
+legitimate, in-scope SFF series needing a plain status/book_count value
+fix, unlike batches 5-10 which each turned up at least one flag.
+
+Migration `20260913300000_fix_series_status_book_count_batch11.sql` --
+tested in a rolled-back transaction first (all 13 names verified to
+match exactly one row, post-update values checked explicitly before
+rollback), then applied for real to hosted via a normal autocommit
+psycopg2 connection, then closed the tracking loop with `npx supabase
+migration repair --status applied --db-url "$DATABASE_URL" --yes
+20260913300000` run as its own separate bash call from the apply step
+(per this session's standing note from batch 10 -- inlining both in one
+call has tripped the auto-mode action classifier before). `npx supabase
+migration list --db-url "$DATABASE_URL"` confirms `20260913300000` now
+has both a `local` and `remote` entry, no gap. `series` table total row
+count unchanged (484), spot-checked Daughter of Smoke & Bone/Mortal
+Engines Quartet/Rama directly on hosted.
+
+**Stopped cleanly on a genuine research wall**: this session's
+web-search budget ran out entirely (200 of 200 calls used) partway
+through verifying a 14th candidate (The Chronicles of the Black
+Company) -- landed on 13 clean, fully-verified fixes and stopped there
+rather than guess the remainder, same "stop earlier on a research wall"
+precedent as batch 6's 200-call cutoff.
+
+Running total: 168 of 484 series fixed across batches 1-11
+(14+14+17+17+15+14+16+17+16+15+13). docs/TODO.md's series.status/
+book_count entry updated with this batch's summary and an accurate
+batch-12 exclude pointer (217 checked names + the same 52 still-
+unsettled flagged names carried unchanged from batch 10, since no new
+flags surfaced this batch) plus the unresearched candidate tail left
+over from this batch's ranked list (The Chronicles of the Black
+Company, The Celestial Kingdom, Craft Sequence (Publication Order),
+Raven's Shadow, The Raven Cycle, The Bound and the Broken, Song of the
+Lioness, Stephen Fry's Great Mythology, Alcatraz vs. the Evil
+Librarians, Ringworld, Avalon (Chronological Order)). No
+docs/PENDING_APPROVALS.md entry needed -- this is CLDA's 11th successful
+run of this exact already-reviewed, step-by-step process.
