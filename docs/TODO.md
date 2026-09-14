@@ -128,6 +128,173 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
+- [ ] **External AI consultation, first real precedent -- the repo
+  owner had ChatGPT (its "Astra" model) do a full, independent
+  repository review in parallel with CODX's code-level one
+  (2026-09-14).** Worth keeping as a precedent, not just a one-off:
+  this is the first time an AI OUTSIDE this project's own Claude/Codex
+  personas reviewed the repo, and the result was genuinely useful --
+  see below. Full original document at
+  `docs/codx-reviews/` sibling location was not committed (it's a
+  strategic review, not a code-level report like CODX's, and stayed as
+  a local .docx) -- this TODO entry and the discussion in
+  `docs/project-log.md`'s 2026-09-14 entries are the durable record.
+  Every point below was independently re-verified by CLDO against the
+  actual codebase before being trusted (grepped for the claimed gaps,
+  confirmed or corrected each one) -- same discipline as verifying
+  CODX's findings, applied to a strategic/architectural review instead
+  of a line-level one.
+
+  **Already done -- do NOT re-implement, the review didn't know about
+  recent work**:
+  - Reading-history import (its 7.1): already built,
+    `scripts/import_goodreads.py` wired into `POST /import/goodreads`,
+    live in `app/import.html`.
+  - Explanations as a product feature (its 8): already built the same
+    session this review landed -- the "Why this recommendation?"
+    modal in `dashboard.html`/`shared.js`.
+
+  **Confirmed real, worth doing**:
+  - **Top-K rejection rate metric** (its 5.2) -- genuinely not
+    redundant with `scoring_tests.py`'s existing `recall_and_rejection()`,
+    which measures accuracy on a fixed held-out test set, not what a
+    real `recommend()` call's actual top-10 output would look like.
+    Add an NDCG@5/10/20 metric alongside it (its 5.1) -- confirmed
+    zero NDCG implementation exists anywhere in `scoring_tests.py`
+    today.
+  - **Spoiler safety made structural** (its 9) -- confirmed real via
+    direct grep: `book_content_warnings.reveals_spoiler` is written at
+    ingestion time (`scripts/insert-tagged-batch.py`) but never once
+    read by any consumer (`app/`, `api/`, or scoring code) -- the
+    column exists and is completely inert. A real, live gap, not
+    hypothetical.
+  - **Active-learning onboarding** (its 7.2) -- confirmed real: `rate.html`
+    has zero guided/suggested-books onboarding today, pure free-text
+    search only, despite `recommend.py` already having a
+    `cold_start_weight` mechanism that assumes early ratings exist.
+    Real gap between what the engine expects and what the UI provides.
+  - **CI** (its 12) -- confirmed real (no `.github/workflows` exists at
+    all). Rate this HIGHER priority than the review itself implied,
+    for a reason it couldn't have known: this project now has multiple
+    semi-autonomous sessions (CLDA's batches, CODX's reviews) pushing
+    real changes without a live human reviewing every one in real
+    time -- even a minimal check (does `recommend.py` still import
+    cleanly, are there duplicate migration timestamps, does
+    `scoring_tests.py`'s scorecard still run) would automate work
+    that's currently done by hand every session.
+
+  **Confirmed real, correctly lower priority / conditional**:
+  - **Decompose `genre_accessibility`** (its 6.3) into
+    prose-accessibility/narrative-complexity/worldbuilding-entry-cost/
+    genre-knowledge sub-signals -- confirmed the current formula really
+    is one blended scalar averaging 5 craft fields, so the critique is
+    accurate. Correctly gated behind real evidence of cold-start
+    weaknesses first, per the review's own framing -- not actionable
+    on its own yet.
+  - **Freeze a gold evaluation set never touched during scoring design**
+    (its 5.4) -- a real, valid methodological concern (the same rater
+    data currently gets used both to iterate on scoring changes AND to
+    justify landing them), but its own gate is right: "once enough
+    readers exist." With effectively one real rater today, walling off
+    part of that already-scarce data would cost more than it protects
+    right now -- sequenced behind the reader-count item below, not
+    independently actionable.
+  - **`scripts/` folder reorganization into research/engine/backend/
+    frontend boundaries** (its 10) -- real but overstated: `api/main.py`
+    already treats `recommend.py` as a clean dependency (imports it,
+    never reaches into internals), so the practical product/research
+    boundary already exists. What's actually true is narrower:
+    `scripts/` is a flat folder mixing the engine
+    (`recommend.py`/`scoring_tests.py`) with one-off ingestion/backfill
+    scripts, with nothing visually distinguishing "the engine" from "a
+    Tuesday's one-off script." Real, lower priority than presented.
+
+  **Reframed, not a new idea**: latent/derived scoring dimensions to
+  reduce correlated-field double-counting (its 6.1) -- this project
+  already has a working precedent for exactly this problem:
+  `REDUNDANCY_DISCOUNTS` (per-book conditional discount between
+  correlated fields, already tested and landed) and
+  `genre_accessibility` itself (already a derived scalar blending 5
+  craft fields). Worth keeping as a research idea, but log it as "a
+  more general version of something already validated here," not a
+  foreign concept -- avoids re-deriving from scratch later.
+
+  **Not a task, a guardrail worth naming as such**: its point 11 (don't
+  rush ML/collaborative filtering) isn't proposing anything -- it's
+  confirming this project's existing explicit-DNA-plus-statistics
+  direction is already correct. Reassurance, not a gap to fill.
+
+  **Reader-count bottleneck** (its point 4) restates something this
+  project already knows (see the romance_tone/worldbuilding_delivery
+  backlog note about needing real user data), but its concrete staged
+  milestones are new and worth adopting as an actual framework instead
+  of a vague "wait for more data": ~10 readers x 30 ratings (surface
+  broken assumptions) -> ~25 readers x 30-50 ratings (start measuring
+  whether mechanisms generalize) -> ~100 readers (real comparative
+  experiments). Not actionable by engineering work -- actionable by
+  recruiting readers, whenever that becomes a priority.
+
+- [ ] **`recommend.py` structural refactor -- proposed by the same GPT
+  review (2026-09-14), not yet started, needs a real scoping decision
+  before any work begins.** The diagnosis is correct and, notably,
+  independently corroborated by this project's own very recent history,
+  not just a generic "big file is bad" complaint: CODX's first review
+  (also 2026-09-14, see `docs/scoring-test-protocol.md`'s entry) found
+  4 real bugs, and all 4 were exactly this failure shape -- an
+  audit/experimental code path reimplementing a stage of the scoring
+  pipeline slightly differently than production instead of calling the
+  same shared logic, so a fix landed in one place silently never
+  reached the others. That's real, first-party evidence the
+  architectural risk this proposal names is already causing bugs, not
+  a hypothetical.
+
+  **The proposal, as given**: split `recommend.py` (currently ~3,895
+  lines, 66 top-level functions) into a `scoring/` package --
+  `profile.py`, `similarities.py`, `field_weights.py`, `tropes.py`,
+  `prevalence.py`, `dealbreakers.py`, `series.py`, `cold_start.py`,
+  `calibration.py`, `explanations.py`, and a `pipeline.py` holding ONE
+  canonical scoring entry point that `recommend()`, `explain_match()`,
+  `audit_book_score()`, and `scoring_tests.py`'s benchmarks would all
+  call identically, returning a rich `ScoreResult`-shaped object
+  (raw score, adjusted score, confidence, label, contributions,
+  penalties, dealbreakers) instead of a bare float -- so a test
+  exercises that object directly instead of each caller re-deriving its
+  own view of "what happened during scoring."
+
+  **CLDO's own read on scope/risk, before doing any of this**:
+  - The exact `bookspell/scoring/...` package path in the proposal
+    doesn't match this repo's real layout (`scripts/`, `api/`, `app/`,
+    no top-level `bookspell/` package) -- treat the file LIST as the
+    useful part, not the literal path; a real version would likely live
+    at `scripts/scoring/` and need `api/main.py`'s
+    `sys.path.insert(...); import recommend as R` and
+    `scoring_tests.py`'s equivalent import updated -- exactly 2 real
+    external consumers today, which is a manageable, boundable blast
+    radius, not an unknown one.
+  - **Two genuinely separable pieces of value here, worth sequencing,
+    not doing as one big-bang change**: (1) the `pipeline.py` +
+    `ScoreResult` consolidation -- higher value, directly closes the
+    exact bug class CODX's review just found real instances of; (2) the
+    full 10-file module split -- real organizational value, but lower
+    urgency, pure reshuffling with no behavior change and less to gain
+    from doing it fast. Recommend scoping (1) first as its own bounded
+    piece of work, independent of whether/when (2) happens.
+  - This is CLDO-only territory per this file's/CLAUDE.md's persona
+    rules (`scripts/recommend.py`/`scripts/scoring_tests.py` changes
+    never delegated) and touches nearly the entire file by sheer
+    surface area even as a NO-BEHAVIOR-CHANGE refactor -- real risk is
+    transcription error across a ~3,900-line move, not logic error.
+    Any real attempt needs the same discipline this project already
+    uses for algorithm experiments: run `scoring_tests.py`'s full
+    scorecard before and after and confirm byte-identical results
+    across every rater, not just "it still imports."
+  - **Not started. Needs the repo owner's explicit go-ahead on scope**
+    (just the pipeline/ScoreResult piece, or the full module split too)
+    before any code moves -- this is exactly the kind of large,
+    hard-to-partially-revert change this project's own safety
+    conventions ask to confirm first, not something to just start on
+    the strength of a good diagnosis.
+
 - [x] **Catalog-wide trope/content-warning vocabulary gap sweep --
   RUN 2026-09-13 by CLDA.** Full methodology in
   `.claude/skills/catalog-trope-gap-sweep/SKILL.md`. **Outcome**:

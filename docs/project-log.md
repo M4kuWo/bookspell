@@ -15761,3 +15761,85 @@ This is a strong first outing for CODX under the review/propose-only
 model: real bugs, precisely located, honestly scoped, correctly
 declined to re-litigate settled decisions, and correctly left the
 actual fix and its verification to CLDO.
+
+## 2026-09-14 (later still) -- GPT/Astra repository review: verified point-by-point, logged to docs/TODO.md; recommend.py refactor proposal scoped but not started
+
+The repo owner ran a full, independent repository review through
+ChatGPT ("Astra" model, given only the public GitHub URL) in parallel
+with CODX's code-level review the same day -- a real first precedent
+for this project of consulting an AI outside its own Claude/Codex
+personas, worth keeping as a data point on when that's useful (a
+strategic/architectural outside view here; CODX's own review was a
+precise, line-level one -- different kinds of value from different
+kinds of review, not competing).
+
+Went through it point by point rather than accepting the summary at
+face value -- same discipline as verifying CODX's report. Two items
+were already fully implemented and the review had no way to know
+(Goodreads import via `scripts/import_goodreads.py`; the "why this
+recommendation" explanation modal, built the same day). Of the
+remaining discussed points (5.2, 5.4, 6.1, 6.3, 7.2, 9, 10, 11, 12,
+plus its point 4 on reader count): every claimed gap was independently
+re-checked against the actual codebase, not trusted --
+
+- **Confirmed real and worth doing now**: Top-K rejection rate + NDCG
+  (5.1/5.2, genuinely absent, genuinely not redundant with the existing
+  `recall_and_rejection()`), spoiler safety (9, confirmed
+  `book_content_warnings.reveals_spoiler` is written but never once
+  read by any consumer), active-learning onboarding (7.2, confirmed
+  `rate.html` has zero guided onboarding despite `cold_start_weight`
+  assuming early ratings exist), and CI (12, confirmed zero
+  `.github/workflows` exist) -- rated CI as higher-priority than the
+  review itself implied, for a reason it couldn't have known: this
+  project now runs multiple semi-autonomous sessions (CLDA, CODX)
+  pushing real changes without a human reviewing every one live.
+- **Confirmed real but correctly gated/lower-priority**: decomposing
+  `genre_accessibility` (6.3, accurate critique of the current
+  single-scalar formula, but correctly conditional on real cold-start
+  evidence first), a frozen gold evaluation set (5.4, a real
+  methodological concern but explicitly gated behind having enough
+  readers, which this project doesn't yet), and a `scripts/`
+  research/engine folder reorg (10 -- real, since `scripts/` genuinely
+  mixes the engine with one-off ingestion scripts with no visual
+  separation, but overstated as an architectural risk since
+  `api/main.py` already treats `recommend.py` as a clean dependency in
+  practice).
+- **Reframed rather than accepted as-is**: latent/derived scoring
+  dimensions to reduce correlated-field double-counting (6.1) --
+  pointed out this project already has a working precedent for exactly
+  this (`REDUNDANCY_DISCOUNTS`, plus `genre_accessibility` itself
+  already being a derived scalar), so it's a generalization of
+  something already validated here, not a new idea to evaluate from
+  scratch.
+- **Not a task**: its caution against rushing ML/collaborative
+  filtering (11) is reassurance that the existing explicit-DNA
+  direction is correct, not a gap to fill.
+- **Reader-count bottleneck** (point 4) restates something already
+  known, but its concrete staged milestones (~10 readers x 30 ratings
+  -> ~25 x 30-50 -> ~100 readers, each unlocking a different kind of
+  claim) are a genuinely useful framework to adopt going forward
+  instead of a vague "need more data."
+
+All of the above logged into `docs/TODO.md`'s P1 section with the
+verification detail preserved, not just a summary -- so a future
+session can see what was actually checked, not just trust that it was.
+
+**The recommend.py structural refactor the same review proposed
+separately** (splitting the ~3,895-line/66-function file into a
+`scoring/` package with one canonical `pipeline.py` and a rich
+`ScoreResult` return type) was scoped, not started. The diagnosis
+checks out for a concrete, first-party reason the review couldn't have
+cited: CODX's own review the same day found 4 real bugs, all of them
+exactly this failure shape -- an audit or experimental code path
+quietly reimplementing a pipeline stage instead of calling shared
+logic, so a fix in one place never reached the others. Real evidence
+the architectural risk is already live, not hypothetical. Recommended
+splitting the work into two separable pieces (the pipeline/ScoreResult
+consolidation, which directly closes that exact bug class; the full
+10-file module split, lower urgency, pure reorganization) rather than
+one big-bang change, and flagged this as needing the repo owner's
+explicit scope decision before any code moves -- a ~3,900-line
+refactor's real risk is transcription error across the move, not logic
+error, and this project's own conventions already ask for exactly this
+kind of confirm-before-starting pause on a change this size and this
+hard to partially revert. Full detail in `docs/TODO.md`.
