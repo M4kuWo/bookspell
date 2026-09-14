@@ -15688,3 +15688,76 @@ Kingdoms, Fae & Alchemy, Todd Family [likely out-of-scope], Elements
 of Cadence). No docs/PENDING_APPROVALS.md entry needed -- this is
 CLDA's 13th successful run of this exact already-reviewed, step-by-
 step process.
+
+## 2026-09-14 (later) -- CODX's first real task: 4 bugs found, all verified and fixed
+
+CODX's first substantive task (after its environment/workflow test
+passed end to end -- see the prior entry) was an independent review of
+`scripts/recommend.py`. It came back with a genuinely rigorous report
+(`docs/codx-reviews/codx-recommend-review-2026-09-14.md`, copied here
+from its own clone since it can't push) -- 4 real findings, each with
+exact line numbers, a concrete reproduction, and an honest scope
+statement (synthetic reproduction only, no live-DB scorecard run,
+explicitly not claiming a validated scoring change). It also correctly
+caught and flagged that its own environment-check documentation
+overclaimed: the pre-push hook doesn't block "all network activity,"
+only the actual push/data-transfer step -- `AGENTS.md`/`CLAUDE.md`
+already corrected for this in the prior entry.
+
+All 4 findings were independently re-verified by CLDO before touching
+anything -- read every cited line directly, reproduced every failure
+scenario, and for the two that touch real production scoring paths,
+cross-checked against Mathias's actual rated data (the only rater with
+enough volume to matter here) rather than trusting synthetic
+reproduction alone. Full detail and the real-data numbers are in
+`docs/scoring-test-protocol.md`'s new entry; short version:
+
+1. **`_audit_attribute_ordinal()` ZeroDivisionError** (the score-audit
+   tool) -- a neutral rating could pass the disliked-side filter at
+   zero weight, emptying the denominator. Fixed with an explicit
+   `mag == 0` exclusion plus a direct `total_w <= 0` guard.
+2. **Dealbreaker validation ignoring the confidence floor** -- the
+   ordinal/nominal/trope separation helpers that feed
+   `validated_dealbreaker_fields()` never consulted
+   `scoring_confidence()`, so a confidence-zeroed tag could still help
+   validate a field the production profile itself ignores. Fixed to
+   exclude below-floor evidence from both the statistic and its
+   sample-size gate. Real exposure confirmed: 62 `romance_tone`/32
+   `worldbuilding_delivery` rows currently sit below the floor
+   catalog-wide; re-running old-vs-new logic against Mathias's real
+   143-book rated set showed the underlying separation statistic
+   genuinely changes (0.289->0.636 for `romance_tone`, 0.033->`None`
+   for `worldbuilding_delivery`) but neither crosses the validation
+   threshold either way for his specific profile today -- zero observed
+   regression on the one real rater, mechanism confirmed fixed for
+   whenever it does matter.
+3. **Series-trajectory penalty from a confidence-zeroed endpoint** --
+   `compute_series_dna()` built trajectories from tagged values
+   regardless of confidence. Fixed both its ORDINAL and NOMINAL loops
+   to skip a confidence-zeroed endpoint. Reproduced CODX's exact
+   numeric example: before the fix, a confidence-0.2 endpoint tag
+   dragged an incoming 0.800 score down to 0.560 (the full 30% max
+   penalty); after the fix, no trajectory gets built from that endpoint
+   at all, and 0.800 passes through unchanged -- exact match to CODX's
+   own predicted corrected value.
+4. **4 experimental (not production-wired) profile builders** still had
+   the pre-2026-09-11 version of the nominal zero-weight bug --
+   forked from `build_profile()` before that fix landed, never
+   backported. Fixed identically in all 4; reproduced all 8
+   liked/disliked-zeroed combinations, all now match production
+   `build_profile()`'s documented behavior exactly. Zero production
+   impact either way (not called from `recommend()`), fixed for
+   correctness and future comparison-run safety.
+
+Not run: the full multi-rater A/B scorecard `docs/scoring-test-protocol.md`
+requires for a new HEURISTIC -- these are confidence-floor consistency
+fixes (enforcing already-accepted semantics somewhere they were
+missed), not a new weighting policy, and the targeted real-data check
+above already demonstrates zero regression where it could plausibly
+matter. Worth a full scorecard pass later if confidence-floor
+incidence grows enough to flip a validated field for someone.
+
+This is a strong first outing for CODX under the review/propose-only
+model: real bugs, precisely located, honestly scoped, correctly
+declined to re-litigate settled decisions, and correctly left the
+actual fix and its verification to CLDO.

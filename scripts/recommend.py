@@ -628,8 +628,20 @@ def compute_series_dna(catalog):
 
         trajectories = {}
         for field in ORDINAL_FIELDS:
-            positions = [ordinal_position(field, b.get(field)) for b in books]
-            valid = [(i, p[0] / p[1]) for i, p in enumerate(positions) if p is not None]
+            # A confidence-zeroed tag (below MIN_CONFIDENCE_TO_COUNT) is
+            # excluded here the same way scoring_confidence() excludes it
+            # everywhere else evidence feeds into scoring -- otherwise an
+            # endpoint we don't actually trust could still anchor the
+            # start/end comparison and trigger the trajectory penalty
+            # below on evidence too uncertain to count (found by CODX's
+            # 2026-09-14 review).
+            valid = []
+            for i, b in enumerate(books):
+                if scoring_confidence(b, field) <= 0:
+                    continue
+                pos = ordinal_position(field, b.get(field))
+                if pos is not None:
+                    valid.append((i, pos[0] / pos[1]))
             if len(valid) < 2:
                 continue
             start_i, start_val = valid[0]
@@ -643,7 +655,7 @@ def compute_series_dna(catalog):
             }
 
         for field in NOMINAL_FIELDS:
-            valid = [(i, b.get(field)) for i, b in enumerate(books) if b.get(field)]
+            valid = [(i, b.get(field)) for i, b in enumerate(books) if b.get(field) and scoring_confidence(b, field) > 0]
             if len(valid) < 2:
                 continue
             start_i, start_val = valid[0]
@@ -1223,7 +1235,16 @@ def build_profile_trope_shrinkage(catalog, ratings, full_ratings=None, k=TROPE_S
     for field in NOMINAL_FIELDS:
         pool_liked = full_liked if field in STRUCTURAL_NOMINAL_FIELDS else liked
         pool_disliked = full_disliked if field in STRUCTURAL_NOMINAL_FIELDS else disliked
+        # Same guard as production build_profile()'s NOMINAL_FIELDS loop
+        # (fixed there 2026-09-11): a confidence-zeroed tag survives the
+        # `if b.get(field)` filter (it HAS a value) but its weight is 0,
+        # so a list of only such entries stayed non-empty while
+        # total_m/total_dm summed to 0 -- ZeroDivisionError below. These
+        # experimental variants never got the same fix (found by CODX's
+        # 2026-09-14 review); filtering zero-weight entries out here
+        # brings them in line with production.
         liked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_liked if b.get(field)]
+        liked_vals = [(v, m) for v, m in liked_vals if m > 0]
         if not liked_vals:
             continue
         counts = {}
@@ -1234,6 +1255,7 @@ def build_profile_trope_shrinkage(catalog, ratings, full_ratings=None, k=TROPE_S
         mode_val = max(counts, key=counts.get)
         liked_share = counts[mode_val] / total_m
         disliked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_disliked if b.get(field)]
+        disliked_vals = [(v, m) for v, m in disliked_vals if m > 0]
         if disliked_vals:
             total_dm = sum(m for _, m in disliked_vals)
             disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
@@ -1345,7 +1367,16 @@ def build_profile_trope_backoff(catalog, ratings, full_ratings=None, k=TROPE_BAC
     for field in NOMINAL_FIELDS:
         pool_liked = full_liked if field in STRUCTURAL_NOMINAL_FIELDS else liked
         pool_disliked = full_disliked if field in STRUCTURAL_NOMINAL_FIELDS else disliked
+        # Same guard as production build_profile()'s NOMINAL_FIELDS loop
+        # (fixed there 2026-09-11): a confidence-zeroed tag survives the
+        # `if b.get(field)` filter (it HAS a value) but its weight is 0,
+        # so a list of only such entries stayed non-empty while
+        # total_m/total_dm summed to 0 -- ZeroDivisionError below. These
+        # experimental variants never got the same fix (found by CODX's
+        # 2026-09-14 review); filtering zero-weight entries out here
+        # brings them in line with production.
         liked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_liked if b.get(field)]
+        liked_vals = [(v, m) for v, m in liked_vals if m > 0]
         if not liked_vals:
             continue
         counts = {}
@@ -1356,6 +1387,7 @@ def build_profile_trope_backoff(catalog, ratings, full_ratings=None, k=TROPE_BAC
         mode_val = max(counts, key=counts.get)
         liked_share = counts[mode_val] / total_m
         disliked_vals = [(b.get(field), m * scoring_confidence(b, field)) for b, m in pool_disliked if b.get(field)]
+        disliked_vals = [(v, m) for v, m in disliked_vals if m > 0]
         if disliked_vals:
             total_dm = sum(m for _, m in disliked_vals)
             disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
@@ -1517,10 +1549,15 @@ def build_profile_series_field_dedup(catalog, ratings, full_ratings=None):
         pool_disliked = full_disliked_raw if field in STRUCTURAL_NOMINAL_FIELDS else disliked_raw
         liked_div = _dedup_factor_for_field(pool_liked, field)
         disliked_div = _dedup_factor_for_field(pool_disliked, field)
+        # Same zero-weight guard as the other build_profile* variants
+        # above (production build_profile() fixed 2026-09-11; these
+        # series-dedup experimental variants never got it -- found by
+        # CODX's 2026-09-14 review).
         liked_vals = [
             (b.get(field), (m / liked_div[b["id"]]) * scoring_confidence(b, field))
             for b, m in pool_liked if b.get(field)
         ]
+        liked_vals = [(v, m) for v, m in liked_vals if m > 0]
         if not liked_vals:
             continue
         counts = {}
@@ -1534,6 +1571,7 @@ def build_profile_series_field_dedup(catalog, ratings, full_ratings=None):
             (b.get(field), (m / disliked_div[b["id"]]) * scoring_confidence(b, field))
             for b, m in pool_disliked if b.get(field)
         ]
+        disliked_vals = [(v, m) for v, m in disliked_vals if m > 0]
         if disliked_vals:
             total_dm = sum(m for _, m in disliked_vals)
             disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
@@ -1662,10 +1700,15 @@ def build_profile_series_field_dedup_protected(catalog, ratings, full_ratings=No
         else:
             liked_div = _dedup_factor_for_field(pool_liked, field)
             disliked_div = _dedup_factor_for_field(pool_disliked, field)
+        # Same zero-weight guard as the other build_profile* variants
+        # above (production build_profile() fixed 2026-09-11; these
+        # series-dedup experimental variants never got it -- found by
+        # CODX's 2026-09-14 review).
         liked_vals = [
             (b.get(field), (m / liked_div[b["id"]]) * scoring_confidence(b, field))
             for b, m in pool_liked if b.get(field)
         ]
+        liked_vals = [(v, m) for v, m in liked_vals if m > 0]
         if not liked_vals:
             continue
         counts = {}
@@ -1679,6 +1722,7 @@ def build_profile_series_field_dedup_protected(catalog, ratings, full_ratings=No
             (b.get(field), (m / disliked_div[b["id"]]) * scoring_confidence(b, field))
             for b, m in pool_disliked if b.get(field)
         ]
+        disliked_vals = [(v, m) for v, m in disliked_vals if m > 0]
         if disliked_vals:
             total_dm = sum(m for _, m in disliked_vals)
             disliked_share = sum(m for v, m in disliked_vals if v == mode_val) / total_dm
@@ -2381,13 +2425,23 @@ def _ordinal_field_separation(catalog, id_to_magnitude, field):
     liked=1, disliked/hated=0; it_was_okay excluded, same split
     build_profile() uses) and this ORDINAL field's position, for THIS
     user's own rated books. None if fewer than MIN_DEALBREAKER_SAMPLE
-    observations exist in either group."""
+    observations exist in either group.
+
+    A confidence-zeroed tag (scoring_confidence() below
+    MIN_CONFIDENCE_TO_COUNT) is excluded from both the statistic AND the
+    sample-size gate -- build_profile() already treats this evidence as
+    too uncertain to count at all; this validation path has to enforce
+    the same floor or it can validate a field (and let the veto fire)
+    on evidence the profile itself ignored (found by CODX's 2026-09-14
+    review)."""
     liked, disliked = [], []
     for bid, mag in id_to_magnitude.items():
         if mag == 0:
             continue
         book = catalog.get(bid)
         if book is None:
+            continue
+        if scoring_confidence(book, field) <= 0:
             continue
         pos = ordinal_position(field, book.get(field))
         if pos is None:
@@ -2416,13 +2470,17 @@ def _nominal_field_separation(catalog, id_to_magnitude, field):
     statistic build_profile() already computes as a nominal field's raw
     weight, isolated here for gating rather than feeding the score
     directly. None if fewer than MIN_DEALBREAKER_SAMPLE observations
-    exist in either group."""
+    exist in either group. Same confidence-floor exclusion as
+    _ordinal_field_separation() above (found by CODX's 2026-09-14
+    review) -- see its docstring."""
     liked_vals, disliked_vals = [], []
     for bid, mag in id_to_magnitude.items():
         if mag == 0:
             continue
         book = catalog.get(bid)
         if book is None:
+            continue
+        if scoring_confidence(book, field) <= 0:
             continue
         val = book.get(field)
         if not val:
@@ -2446,13 +2504,20 @@ def _trope_separation(catalog, id_to_magnitude, trope_id):
     liked/disliked books rated (the frequency denominators), not just
     books that happen to have this trope -- a trope's absence is exactly
     as informative as its presence. None if fewer than
-    MIN_DEALBREAKER_SAMPLE liked or disliked books exist at all."""
+    MIN_DEALBREAKER_SAMPLE liked or disliked books exist at all. A book
+    where THIS trope is tagged below MIN_CONFIDENCE_TO_COUNT is excluded
+    from both the hit count and the sample gate -- we don't actually
+    trust whether it's present or absent, so it can't count as evidence
+    either way (same confidence-floor gap as the ordinal/nominal
+    versions above, found by CODX's 2026-09-14 review)."""
     liked_n = disliked_n = liked_hits = disliked_hits = 0
     for bid, mag in id_to_magnitude.items():
         if mag == 0:
             continue
         book = catalog.get(bid)
         if book is None:
+            continue
+        if scoring_confidence(book, trope_id) <= 0:
             continue
         has = trope_id in (book.get("tropes") or [])
         if mag > 0:
@@ -3528,11 +3593,23 @@ def _audit_attribute_nominal_or_trope(catalog, id_to_magnitude, id_to_title, fie
 def _audit_attribute_ordinal(catalog, id_to_magnitude, field):
     """Summary form for an ordinal field -- see module note above for why
     this isn't a book list. Returns magnitude-weighted mean position and
-    sample size for each side."""
+    sample size for each side.
+
+    `mag == 0` (a neutral "it_was_okay" rating) is excluded from BOTH
+    sides -- the old `(mag > 0) != (sign > 0)` filter let a neutral
+    rating pass through on the disliked side (mag > 0 is False there
+    too), contributing a real position at weight abs(0) == 0. That made
+    `positions` non-empty while `total_w` stayed exactly 0, raising
+    ZeroDivisionError below whenever the disliked side's only evidence
+    was neutral ratings, and inflated the reported `n` with entries that
+    carried zero actual weight either way (found by CODX's 2026-09-14
+    review). `total_w <= 0` is also guarded directly as a second layer,
+    since this function is a display/audit tool, not a hot scoring path
+    -- a defensive return here costs nothing."""
     def summarize(sign):
         positions = []
         for bid, mag in id_to_magnitude.items():
-            if (mag > 0) != (sign > 0):
+            if mag == 0 or (mag > 0) != (sign > 0):
                 continue
             pos = ordinal_position(field, catalog[bid].get(field))
             if pos is not None:
@@ -3540,6 +3617,8 @@ def _audit_attribute_ordinal(catalog, id_to_magnitude, field):
         if not positions:
             return None
         total_w = sum(w for _, w in positions)
+        if total_w <= 0:
+            return None
         mean = sum(p * w for p, w in positions) / total_w
         return {"n": len(positions), "mean_position": round(mean, 3)}
     return {"liked": summarize(1), "disliked": summarize(-1)}

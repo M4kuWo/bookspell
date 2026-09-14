@@ -2556,3 +2556,107 @@ this will self-correct as more books get `romance_tone`/
 `worldbuilding_delivery` tags (the tagging sweep is ongoing), not
 something more code can fix. Revisit if the same instability still
 shows up once coverage is meaningfully larger.
+
+## 4 real bugs found by CODX's first review session, all fixed -- LANDED (2026-09-14)
+
+CODX's first real task (an independent review of `scripts/recommend.py`,
+per its review/propose-only scope) surfaced 4 real bugs, all confirmed
+by CLDO independently before fixing -- not applied on CODX's word alone
+(re-read every cited line, reproduced every failure scenario against a
+synthetic catalog, and cross-checked the two production-path findings
+against Mathias's real rated data). All 4 are the same underlying
+class: code that treats a confidence-zeroed tag (`scoring_confidence()`
+below `MIN_CONFIDENCE_TO_COUNT`) as if it were real evidence, either
+crashing on it or letting it count when it shouldn't -- the exact bug
+class the 2026-09-11 `build_profile()` NOMINAL_FIELDS fix addressed,
+just in code paths that fix never reached.
+
+**1. `_audit_attribute_ordinal()` (the score-audit/explain tool) --
+ZeroDivisionError.** The old `(mag > 0) != (sign > 0)` filter let a
+neutral (`mag == 0`) rating through on the "disliked" side, contributing
+a real position at weight `abs(0) == 0` -- non-empty `positions` list,
+`total_w == 0`, crash. Fixed: exclude `mag == 0` explicitly from both
+sides (matching the loved/liked-vs-disliked/hated split used everywhere
+else), plus a direct `total_w <= 0` guard as a second layer since this
+is a display tool, not a hot path. Reproduced CODX's exact scenario
+(six standalone books, `{'Loved': 'loved', 'Neutral': 'it_was_okay'}`
+against `'Candidate'`) against the unfixed code (crashed) and the fixed
+code (returns cleanly).
+
+**2. `_ordinal_field_separation()`/`_nominal_field_separation()`/
+`_trope_separation()` (feed `validated_dealbreaker_fields()`, which
+gates the real production dealbreaker veto) -- never consulted
+`scoring_confidence()` at all.** A field/trope tagged below the
+confidence floor could still satisfy the 3-observations-per-side
+sample gate and get validated, even though `build_profile()` correctly
+ignores that same tag when learning the centroid/weight -- a real
+inconsistency between what counts as "evidence" for learning a
+preference vs. validating a dealbreaker on it. Fixed: all three now
+exclude a book from a field/trope's evidence (and its sample-size gate)
+when `scoring_confidence(book, field_or_trope) <= 0`.
+- Reproduced CODX's exact nominal-field numeric example (3 liked
+  `understated`/3 disliked `melodramatic`, only 1 real (1.0-confidence)
+  observation per side, the other 2 per side at confidence 0.2):
+  `validated_dealbreaker_fields()` returned `{'romance_tone'}` before
+  the equivalent unguarded logic, `set()` after -- correct, since only 1
+  confident observation per side is well under `MIN_DEALBREAKER_SAMPLE`
+  (3).
+- **Checked against real data, not just synthetic**: 62 `romance_tone`
+  and 32 `worldbuilding_delivery` rows currently sit below the
+  confidence floor catalog-wide (from the 2026-09-11/12 backfill's
+  confidence-0.2 "disputed" tags) -- genuinely live exposure, not a
+  theoretical case. Re-ran `_nominal_field_separation()` old-vs-new
+  logic against Mathias's real 143-book rated set (the only rater with
+  enough volume to matter here): `romance_tone`'s separation statistic
+  changed from 0.289 to 0.636 and `worldbuilding_delivery`'s from 0.033
+  to `None` (sample dropped below the gate once low-confidence entries
+  were excluded) -- the fix is doing real, non-trivial work, not a
+  no-op -- but neither field crosses `STAT_SEPARATION_THRESHOLD` (0.65)
+  either before or after for his specific profile, so
+  **`validated_dealbreaker_fields()`'s actual output for Mathias is
+  unchanged today** -- zero observed regression on the one real rater
+  this project has, while the underlying mechanism is confirmed fixed
+  for whenever it does cross that line.
+
+**3. `compute_series_dna()` (feeds the real production series-trajectory
+penalty) -- endpoint tags used regardless of confidence.** A series'
+first/last tagged book could anchor the start/end trajectory comparison
+even if that specific tag was confidence-zeroed, letting the 30% max
+penalty apply on evidence too uncertain to count. Fixed: both the
+ORDINAL_FIELDS and NOMINAL_FIELDS loops now skip a book for a given
+field's trajectory when `scoring_confidence(book, field) <= 0`.
+Reproduced CODX's exact numeric example (2-book series, book 2's
+`romance_tone` at confidence 0.2): before the equivalent unguarded
+logic, an incoming score of 0.800 was reduced to 0.560 (the full 30%
+penalty); after the fix, `compute_series_dna()` builds no
+`romance_tone` trajectory for this series at all (confidence-zeroed
+endpoint correctly excluded, leaving only 1 valid entry, below the
+2-entry minimum), and the incoming 0.800 passes through unchanged --
+exact match to CODX's own predicted "corrected" value.
+
+**4. Four experimental, NOT-production-wired profile builders
+(`build_profile_trope_shrinkage`, `build_profile_trope_backoff`,
+`build_profile_series_field_dedup`, `build_profile_series_field_dedup_protected`)
+still had the pre-2026-09-11 version of the NOMINAL_FIELDS bug** --
+they were forked from `build_profile()` before that fix landed and
+never got it applied retroactively. Fixed identically (filter
+zero-weight entries after computing `m * scoring_confidence(...)`,
+before the emptiness check). Reproduced all 8 combinations (4 functions
+x liked-side-zeroed / disliked-side-zeroed) against a 2-book synthetic
+catalog: all 8 crashed before the fix, all 8 now return cleanly with
+results matching production `build_profile()`'s own documented
+behavior exactly (`None`/no centroid when liked evidence is zeroed,
+weight `0.3` when only disliked evidence is zeroed). Zero production
+impact either way -- these functions aren't called from `recommend()`
+-- landed for correctness/future-comparison-run safety, not urgency.
+
+**Not done as part of this pass**: the full multi-rater A/B scorecard
+(Osnat/Dandan/Gabriel, held-out accuracy) that a new SCORING HEURISTIC
+would need per this file's own standard -- these are confidence-floor
+CONSISTENCY fixes (making already-established, already-accepted
+semantics apply where they were missed), not a new weighting policy,
+and the targeted real-data check above already shows zero regression
+on the one rater with enough affected data to matter. Worth a full
+scorecard pass once/if `romance_tone`/`worldbuilding_delivery` coverage
+or confidence-floor incidence grows enough to plausibly flip a
+validated field for someone.
