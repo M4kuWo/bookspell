@@ -271,14 +271,66 @@ worth deferring to a later session rather than batching in for
     `scoring_tests.py`'s equivalent import updated -- exactly 2 real
     external consumers today, which is a manageable, boundable blast
     radius, not an unknown one.
-  - **Two genuinely separable pieces of value here, worth sequencing,
-    not doing as one big-bang change**: (1) the `pipeline.py` +
-    `ScoreResult` consolidation -- higher value, directly closes the
-    exact bug class CODX's review just found real instances of; (2) the
-    full 10-file module split -- real organizational value, but lower
-    urgency, pure reshuffling with no behavior change and less to gain
-    from doing it fast. Recommend scoping (1) first as its own bounded
-    piece of work, independent of whether/when (2) happens.
+  - **Broken into two phases, each independently verifiable, not one
+    big-bang change (added 2026-09-14 once the repo owner asked for a
+    real step-by-step breakdown)**:
+
+    **Phase A -- consolidate the pipeline logic FIRST, in place, no file
+    moves yet.** Pure logic consolidation before any code movement, so
+    a regression can only mean "the consolidation changed something,"
+    never "something got lost in the shuffle."
+    - A1. Enumerate every current call site that assembles a score for
+      a book (`recommend()`'s loop, `explain_match()`,
+      `audit_book_score()`, `scoring_tests.py`'s `_full_score()`, and
+      any other reimplementation) and table out exactly which stage
+      functions each one calls, in what order. (This is close to a
+      byproduct of Phase 1 of the audit prompt below -- worth doing
+      together, not twice.)
+    - A2. Define ONE canonical function covering the full stage
+      sequence `audit_book_score()` already proves out today (raw
+      score -> series-repeat -> dealbreaker veto -> series trajectory
+      -> cold-start blend), returning a rich result (raw score,
+      per-stage intermediate scores, final score, label, contributions,
+      mismatches, dealbreaker flags, series note) instead of a bare
+      float.
+    - A3. Migrate `recommend()`'s own loop to call it (lowest-risk
+      migration first, since `audit_book_score()` already proves the
+      sequence works identically). Full scorecard, byte-identical
+      check before moving on.
+    - A4. Migrate `explain_match()`/`explain_book()` to build on the
+      same function/result instead of separately re-deriving matches/
+      mismatches/summaries. Scorecard check again.
+    - A5. Migrate `scoring_tests.py`'s `_full_score()` (and any other
+      test-side reimplementation) onto the SAME canonical function --
+      this is the single highest-value step for preventing the exact
+      CODX-found bug class, since test/audit code silently drifting
+      from production is precisely what happened there.
+    - A6. Full scorecard regression check across every rater as the
+      close-out gate for the whole phase, not just per-step spot
+      checks.
+
+    **Phase B -- extract into `scripts/scoring/` submodules, only after
+    Phase A is stable.** Pure code movement, no logic change, each step
+    independently `git`-diffable.
+    - B1. Move self-contained function groups into separate files
+      (`prevalence.py`, `dealbreakers.py`, `series.py`, `cold_start.py`,
+      `tropes.py`, `calibration.py`, `explanations.py`, the new
+      `pipeline.py` from Phase A) -- pure `git mv` + import-path fixes.
+    - B2. Keep `scripts/recommend.py` itself as a thin compatibility
+      shim re-exporting the public API (`recommend`, `explain_match`,
+      `explain_book`, `audit_book_score`, any constants tests import
+      directly) so `api/main.py`'s `import recommend as R` and
+      `scoring_tests.py`'s equivalent import need NO changes yet --
+      isolates "did the move break anything" from "did updating the
+      2 real consumers break anything."
+    - B3. Full scorecard + a plain import/syntax check as the gate.
+    - B4. Only later, as its own separate, purely cosmetic step: update
+      the 2 real consumers to import from the new submodule paths
+      directly and drop the shim.
+
+    Recommend scoping and starting Phase A alone first; Phase B's real
+    organizational value doesn't expire, and doing it after Phase A is
+    proven stable is strictly less risky than doing both at once.
   - This is CLDO-only territory per this file's/CLAUDE.md's persona
     rules (`scripts/recommend.py`/`scripts/scoring_tests.py` changes
     never delegated) and touches nearly the entire file by sheer
