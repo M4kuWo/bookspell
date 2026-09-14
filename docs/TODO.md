@@ -1370,42 +1370,146 @@ worth deferring to a later session rather than batching in for
   class flags surfaced this batch -- every candidate reached was a
   legitimate SFF series needing a plain value fix.
 
-  Running total: 168 of 484 series fixed across batches 1-11
-  (14+14+17+17+15+14+16+17+16+15+13).
+  Running total after batch 11: 168 of 484 series fixed across batches
+  1-11 (14+14+17+17+15+14+16+17+16+15+13).
 
-  **Next (batch 12)**: re-rank remaining series, excluding all **217**
-  now-checked names across batches 1-11 (204 from batches 1-10 + this
-  batch's 13 fixed, 0 confirmed-correct) plus the same **52**
-  still-unsettled flagged names carried unchanged from batch 10 (the
-  pre-existing 40 -- Hogwarts Library, The Roald Dahl Classic Collection,
-  The Riyria Revelations (Omnibus), Robert Langdon, The Inheritance
-  Games, Imperial Radch (publication order), Enderverse:  Publication
-  Order (DB name has a double space -- match the real string), The
-  Shadow Series, Middle Earth, American Gods, Forward Collection, Saga,
-  Kingsbridge, Holly Gibney, Elantris, The Walking Dead, Watchmen, The
-  Divine Comedy, Asian Saga: Chronological Order, Blindness, The Legend
-  of Drizzt, The Dark Elf Trilogy, The Mistborn Saga, Mistborn, Heinlein's
-  Juveniles, The Cosmere, The Expanse (Chronological), First Law World,
-  Dark Adventure Radio Theatre, Penguin Little Black Classics, "The
-  d'Artagnan Romances" (DB name has "The " prefix and a curly Unicode
-  apostrophe, U+2019 -- match the real string), Fifty Shades, Monstress,
-  Y: The Last Man, The Cemetery of Forgotten Books, Shannara
-  (Chronological Order), Capitaine Nemo, World of the Five Gods
-  (Publication), The Elric Saga, Let the Right One In -- plus batch 10's
-  12: The Wandering Inn, Brave New World, Graphic Horror, Alice's
-  Adventures in Wonderland, The Godfather (Chronological), Wonder, The
-  Five People You Meet in Heaven, Cat and Mouse, The Naturals, The
-  Sandman TPBs, Paper Girls, Pride and Prejudice and Zombies) -- no new
-  flags added this batch, don't reuse this batch's candidate list (all
-  now stale). Also available as an unresearched candidate tail from this
-  batch's ranked list (not reached, search budget ran out): The
-  Chronicles of the Black Company, The Celestial Kingdom, Craft Sequence
-  (Publication Order), Raven's Shadow, The Raven Cycle, The Bound and the
-  Broken, Song of the Lioness, Stephen Fry's Great Mythology, Alcatraz
-  vs. the Evil Librarians, Ringworld, Avalon (Chronological Order). The
-  "count(b.id) currently linked" primary ranking signal remains saturated
-  at 1 book/series for the whole remaining catalog -- keep using
-  Hardcover's raw `book_count` descending as the secondary sort.
+  **Batch 12 (2026-09-14, CLDA)**: reconstructed the exact 217-name
+  "checked" list by name straight from batches 1-11's own
+  project-log.md entries (15 + 30 + 17 + 38 + 18 + 17 + 21 + 17 + 16 +
+  15 + 13 = 217), plus the 52 still-unsettled flagged names carried from
+  batch 10/11. All 268 unique combined strings (269 total, 1 known
+  collision -- "Imperial Radch (publication order)" appears in both the
+  fixed list and the flagged list, same stale-duplicate case batch 9
+  already documented) verified against the live `series` table -- all
+  268 matched exactly one row, no new naming-drift catches. Worked batch
+  11's own unresearched tail first, per that batch's pointer, then
+  continued down the fresh ranked list (still Hardcover raw `book_count`
+  descending -- the "count(b.id) currently linked" signal remains
+  saturated at 1 book/series catalog-wide). **This session's WebSearch
+  tool budget was already at 200/200 from the start** (inherited from
+  batch 11 in the same session) -- verified every candidate instead via
+  `WebFetch` against Wikipedia and related pages (a distinct tool/quota,
+  still live web content, not a guess), cross-checking a second source
+  where the first was ambiguous or unreachable.
+
+  **16 needed a real fix, all verified via live WebFetch before
+  writing**: The Celestial Kingdom (ongoing/10 -> completed/2 -- Sue Lynn
+  Tan's Daughter of the Moon Goddess duology; "Tales of the Celestial
+  Kingdom" is a companion novella collection, not a third novel), Craft
+  Sequence (Publication Order) (ongoing/10 -> completed/6 -- the
+  original Three Parts Dead-to-Ruin of Angels run; "The Craft Wars" is a
+  separate follow-up series in the same universe), Raven's Shadow
+  (ongoing/10 -> completed/3 -- "Raven's Blade" is a distinct
+  continuation series, not more Raven's Shadow books), The Raven Cycle
+  (ongoing/10 -> completed/4 -- the Dreamer Trilogy is a separate sequel
+  series), Song of the Lioness (ongoing/9 -> completed/4, a closed
+  1983-1988 quartet), The Machineries of Empire (ongoing/9 ->
+  completed/3 -- Hexarchate Stories is a short-story collection, not a
+  4th novel), Leviathan (ongoing/8 -> completed/3), The Space Trilogy
+  (ongoing/9 -> completed/3, C.S. Lewis's closed 1938-1945 Ransom
+  trilogy); plus 9 book_count-only fixes (status already correct):
+  Stephen Fry's Great Mythology (9 -> 4, left 'ongoing' -- Mythos,
+  Heroes, Troy, Odyssey, no completion statement found), Alcatraz vs.
+  the Evil Librarians (9 -> 6, left 'completed'), Ringworld (9 -> 4 --
+  Fleet of Worlds is a separate Known Space prequel/sequel series, left
+  'completed'), Avalon (Chronological Order) (9 -> 7 -- Mists of Avalon
+  plus Paxson's 6 solo-and-co-written continuations, left 'ongoing' on
+  absence of a completion statement from Paxson), Little Brother (9 ->
+  3, left 'ongoing'), The Mysterious Benedict Society (9 -> 5 -- the
+  4-book main series plus the real prequel novel "The Extraordinary
+  Education of Nicholas Benedict", counted the same way batch 7's Port
+  of Shadows precedent counts a real prequel/interquel; the puzzle-book
+  companion excluded; left 'ongoing'), Spin (9 -> 3, left 'completed'),
+  The Legends of the First Empire (8 -> 6, left 'completed'), Truly
+  Devious (8 -> 5 -- the original trilogy plus the same-sleuth follow-on
+  mysteries The Box in the Woods/Nine Liars, all listed under this
+  series' own bibliography; "The Velvet Knife" is scheduled for
+  2026-10-13 but not yet published as of this migration, excluded; left
+  'ongoing'). **1 confirmed already correct**: The Chronicles of the
+  Black Company (Glen Cook) -- status 'completed'/book_count 10 both
+  verified right (3 Books of the North + Port of Shadows interquel + 2
+  Books of the South + 4 Books of Glittering Stone = 10; The Silver
+  Spike is a differently-narrated spin-off, excluded; "A Pitiless Rain"
+  -- Lies Weeping (2025), They Cry (2026) -- is explicitly labeled a
+  distinct "New Series" on Glen Cook's own Wikipedia bibliography page,
+  not more Black Company books).
+
+  Migration `20260913310000_fix_series_status_book_count_batch12.sql`
+  -- tested in a rolled-back transaction first (all 17 UPDATE statements
+  matched exactly one row each, post-update values verified before
+  rollback), then applied for real to hosted via a normal autocommit
+  psycopg2 connection, then closed the tracking loop with `npx supabase
+  migration repair --status applied --db-url "$DATABASE_URL" --yes
+  20260913310000` run as its own separate bash call from the apply step
+  (this session's `export DATABASE_URL=...` in one bash call didn't
+  carry into the next call's shell -- Bash tool shell state doesn't
+  persist across calls -- so the repair call instead read `.env` inline
+  within its own single command; still a separate tool call from the
+  apply step, satisfying the actual constraint). `npx supabase migration
+  list --db-url "$DATABASE_URL"` confirms `20260913310000` now has both
+  a `local` and `remote` entry, no gap. `series` table total row count
+  unchanged (484).
+
+  **1 new name flagged as a DIFFERENT bug class, not fixed here** (a
+  wrong-linkage/miscategorization problem, same shape as batch 7's
+  Elantris and batch 8's Mistborn Saga flags): **Sarantine Universe** --
+  its one linked book is "The Lions of Al-Rassan" (position 4), not
+  either of the actual 2-book "Sarantine Mosaic" (Sailing to Sarantium,
+  Lord of Emperors) -- this row appears to be an attempt at a broader
+  Guy Gavriel Kay "shared historical-fantasy universe" grouping rather
+  than the real 2-book Sarantine Mosaic duology, needs a scope/linkage
+  decision before any status/book_count value can be trusted.
+
+  **1 new name flagged as likely out-of-scope, same shape as the
+  existing Fifty Shades-class flags**: **Twisted** -- its linked book is
+  "Twisted Love" by Ana Huang, a contemporary New Adult romance series
+  with no speculative content, not sci-fi/fantasy.
+
+  **1 candidate seen but left unresearched, not a different bug class,
+  just no accessible source found this batch** (available for batch
+  13): **The Bound and the Broken** (Ryan Cahill) -- an
+  indie/self-published epic fantasy series with no Wikipedia page or
+  other WebFetch-reachable bibliography found this session; worth a
+  retry once WebSearch quota is available again rather than guessing
+  from an unverified source.
+
+  Running total: **184** of 484 series fixed across batches 1-12
+  (14+14+17+17+15+14+16+17+16+15+13+16).
+
+  **Next (batch 13)**: re-rank remaining series, excluding all **234**
+  now-checked names across batches 1-12 (217 from batches 1-11 + this
+  batch's 16 fixed + 1 confirmed-correct) plus **54** still-unsettled
+  flagged names (the pre-existing 52 carried unchanged since batch 10 --
+  Hogwarts Library, The Roald Dahl Classic Collection, The Riyria
+  Revelations (Omnibus), Robert Langdon, The Inheritance Games, Imperial
+  Radch (publication order), Enderverse:  Publication Order (DB name has
+  a double space -- match the real string), The Shadow Series, Middle
+  Earth, American Gods, Forward Collection, Saga, Kingsbridge, Holly
+  Gibney, Elantris, The Walking Dead, Watchmen, The Divine Comedy, Asian
+  Saga: Chronological Order, Blindness, The Legend of Drizzt, The Dark
+  Elf Trilogy, The Mistborn Saga, Mistborn, Heinlein's Juveniles, The
+  Cosmere, The Expanse (Chronological), First Law World, Dark Adventure
+  Radio Theatre, Penguin Little Black Classics, "The d'Artagnan
+  Romances" (DB name has "The " prefix and a curly Unicode apostrophe,
+  U+2019 -- match the real string), Fifty Shades, Monstress, Y: The Last
+  Man, The Cemetery of Forgotten Books, Shannara (Chronological Order),
+  Capitaine Nemo, World of the Five Gods (Publication), The Elric Saga,
+  Let the Right One In, The Wandering Inn, Brave New World, Graphic
+  Horror, Alice's Adventures in Wonderland, The Godfather
+  (Chronological), Wonder, The Five People You Meet in Heaven, Cat and
+  Mouse, The Naturals, The Sandman TPBs, Paper Girls, Pride and
+  Prejudice and Zombies -- plus this batch's 2 new: Sarantine Universe,
+  Twisted). **The Bound and the Broken remains an open, unresearched
+  candidate (not flagged/excluded) -- worth trying again first, before
+  the fresh ranked list, once WebSearch quota allows a real check.**
+  Also available as an unresearched candidate tail from this batch's
+  ranked list (not reached): Twisted [now flagged, skip], Metro, The
+  Space Trilogy [now fixed, skip], Never After, Lightlark, The Checquy
+  Files, The Library Trilogy, Book of Ember, Wanderers, The Singing
+  Hills Cycle, The Windup Universe, The Green Mile. The "count(b.id)
+  currently linked" primary ranking signal remains saturated at 1
+  book/series for the whole remaining catalog -- keep using Hardcover's
+  raw `book_count` descending as the secondary sort.
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also

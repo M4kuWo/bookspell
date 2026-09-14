@@ -15306,3 +15306,176 @@ Lioness, Stephen Fry's Great Mythology, Alcatraz vs. the Evil
 Librarians, Ringworld, Avalon (Chronological Order)). No
 docs/PENDING_APPROVALS.md entry needed -- this is CLDA's 11th successful
 run of this exact already-reviewed, step-by-step process.
+
+## 2026-09-14 (later still): series.status/book_count fix, batch 12 -- 16 series fixed, 1 confirmed correct, 1 wrong-linkage flag, 1 out-of-scope flag
+
+Continuing the P2 catalog-wide `series.status`/`book_count` fix (root
+cause unchanged: `status` defaults to 'ongoing' whenever Hardcover's
+`is_completed` isn't explicitly true; `book_count` is Hardcover's raw
+edition/omnibus/box-set count, not a curated mainline-installment
+count -- neither field is read by `scripts/recommend.py`, display-only
+bug in `tools/catalog-review/`).
+
+Reconstructed the exact 217-name "checked" list by name straight from
+batches 1-11's own project-log.md entries (15 + 30 + 17 + 38 + 18 + 17
++ 21 + 17 + 16 + 15 + 13 = 217, standard practice for this task per
+CLAUDE.md and batch 5's own precedent of a running-total-only approach
+once undercounting by 21), plus the 52 still-unsettled flagged names
+carried from batch 10/11. All 268 unique combined strings (of 269
+total -- the known "Imperial Radch (publication order)"
+fixed-list/flagged-list collision batch 9 already documented) verified
+against the live `series` table before use as an exclusion filter --
+all 268 matched exactly one row, no new naming-drift catches this
+round.
+
+**This session's own `WebSearch` tool budget was already exhausted
+(200/200) at the very start of this batch** -- inherited from batch
+11's own session, which had used the same budget down to zero by its
+own stopping point. Rather than stop before starting, verified every
+candidate via `WebFetch` instead (a distinct tool with its own quota,
+still fetching real live web content -- primarily Wikipedia and
+Wikipedia-linked bibliography pages -- not a guess or a recollection).
+Several guessed URLs 404'd (Goodreads series pages, an indie author's
+own site, a Fandom wiki behind a paywall-like 402) and were abandoned
+in favor of a working Wikipedia article; one candidate (The Bound and
+the Broken, an indie-published series with no Wikipedia presence
+found) couldn't be reached via any guessed URL and was left
+unresearched rather than guessed.
+
+Worked batch 11's own explicitly-provided unresearched tail first (The
+Chronicles of the Black Company, The Celestial Kingdom, Craft Sequence
+(Publication Order), Raven's Shadow, The Raven Cycle, The Bound and the
+Broken, Song of the Lioness, Stephen Fry's Great Mythology, Alcatraz
+vs. the Evil Librarians, Ringworld, Avalon (Chronological Order)), then
+continued into a freshly re-run ranking query (still saturated at 1
+book linked per series catalog-wide, per batches 8-11's finding --
+confirmed still true -- so still sorted by Hardcover's raw `book_count`
+descending).
+
+**16 fixed**: The Celestial Kingdom (Sue Lynn Tan: ongoing/10 ->
+completed/2 -- a real duology, Daughter of the Moon Goddess/Heart of
+the Sun Warrior; "Tales of the Celestial Kingdom" is a companion
+novella collection, not a third novel), Craft Sequence (Publication
+Order) (Max Gladstone: ongoing/10 -> completed/6 -- the original Three
+Parts Dead-to-Ruin of Angels run; "The Craft Wars" -- Dead Country,
+Wicked Problems, Dead Hand Rule -- is a separate follow-up series in
+the same universe, same shape as the already-distinguished Star Wars:
+Thrawn/Star Wars: The Thrawn Trilogy pair), Raven's Shadow (Anthony
+Ryan: ongoing/10 -> completed/3, Blood Song/Tower Lord/Queen of Fire;
+"Raven's Blade" -- The Wolf's Call/The Black Song -- is a distinct
+continuation series in the same universe, not more Raven's Shadow
+books), The Raven Cycle (Maggie Stiefvater: ongoing/10 -> completed/4,
+The Raven Boys/The Dream Thieves/Blue Lily Lily Blue/The Raven King;
+the Dreamer Trilogy is a separate sequel series), Song of the Lioness
+(Tamora Pierce: ongoing/9 -> completed/4, a closed 1983-1988 quartet;
+Pierce's later Tortall series are separate), The Machineries of Empire
+(Yoon Ha Lee: ongoing/9 -> completed/3, Ninefox Gambit/Raven
+Stratagem/Revenant Gun; Hexarchate Stories is a short-story collection,
+not a 4th novel), Leviathan (Scott Westerfeld: ongoing/8 ->
+completed/3, Leviathan/Behemoth/Goliath), The Space Trilogy (C.S.
+Lewis: ongoing/9 -> completed/3, Out of the Silent Planet/
+Perelandra/That Hideous Strength, a closed 1938-1945 trilogy); plus 9
+book_count-only fixes (status already correct): Stephen Fry's Great
+Mythology (9 -> 4 -- Mythos/Heroes/Troy/Odyssey, left 'ongoing', no
+completion statement found for this tetralogy), Alcatraz vs. the Evil
+Librarians (9 -> 6, left 'completed' -- no source found explicitly
+contradicting completion, and the lead-character/title shift in book 6
+is consistent with a deliberate closer, though this one is a genuine
+judgment call flagged below), Ringworld (9 -> 4 -- Ringworld/The
+Ringworld Engineers/The Ringworld Throne/Ringworld's Children; Fleet of
+Worlds, co-written with Edward M. Lerner, is a separate Known Space
+prequel/sequel series), Avalon (Chronological Order) (9 -> 7 -- The
+Mists of Avalon plus Diana L. Paxson's 6 solo-and-co-written Avalon
+novels, left 'ongoing' on absence of a completion statement from
+Paxson, who continued solo after Bradley's 1999 death), Little Brother
+(Cory Doctorow: 9 -> 3, Little Brother/Homeland/Attack Surface, left
+'ongoing'), The Mysterious Benedict Society (9 -> 5 -- the 4-book main
+series plus the real prequel novel "The Extraordinary Education of
+Nicholas Benedict", counted the same way batch 7's Port of Shadows
+precedent counts a genuine prequel/interquel rather than a companion
+piece; "Mr. Benedict's Book of Perplexing Puzzles..." is a puzzle book,
+excluded; left 'ongoing'), Spin (Robert Charles Wilson: 9 -> 3,
+Spin/Axis/Vortex, left 'completed'), The Legends of the First Empire
+(Michael J. Sullivan: 8 -> 6, Age of Myth through Age of Empyre, left
+'completed'), Truly Devious (Maureen Johnson: 8 -> 5 -- the original
+trilogy plus the same-sleuth follow-on mysteries The Box in the
+Woods/Nine Liars, all listed under this series' own Wikipedia
+bibliography as one series; "The Velvet Knife" is scheduled for
+2026-10-13 but not yet published as of this migration, excluded; left
+'ongoing').
+
+**1 confirmed already correct**: The Chronicles of the Black Company
+(Glen Cook) -- status 'completed'/book_count 10 both verified right via
+Glen Cook's own Wikipedia bibliography page (3 Books of the North +
+Port of Shadows interquel (2018) + 2 Books of the South + 4 Books of
+Glittering Stone = 10; The Silver Spike is explicitly labeled a
+differently-narrated spin-off, excluded per the established
+spin-off-exclusion convention). **A real search-reliability catch
+mid-research, worth noting for future batches**: an earlier WebFetch of
+the general "The Black Company" Wikipedia article implied "A Pitiless
+Rain" (Lies Weeping (2025), They Cry (2026), plus more TBA) continued
+the main series' own numbering as books 12+ -- which would have meant
+flipping status back to 'ongoing'. A second WebFetch of the dedicated
+Glen Cook bibliography page corrected this: it explicitly headers that
+block "A Pitiless Rain (New Series)", confirming it's a separate series
+in the same universe, not a continuation of this one -- the same "don't
+trust a single ambiguous/contradictory search result, re-verify with a
+cleaner query" lesson batch 1's original Ender's Saga catch already
+established.
+
+**1 new name flagged as a DIFFERENT bug class, not fixed here** (a
+wrong-linkage/miscategorization problem, same shape as batch 7's
+Elantris flag and batch 8's Mistborn Saga flag): **Sarantine Universe**
+-- its one linked book is "The Lions of Al-Rassan" (position_in_series
+4), not either of the two real "Sarantine Mosaic" novels (Sailing to
+Sarantium, Lord of Emperors). This row looks like an attempt at a
+broader Guy Gavriel Kay "shared historical-fantasy universe" grouping
+(Sarantine Mosaic plus the loosely-connected Lions of Al-Rassan/Last
+Light of the Sun/Children of Earth and Sky/etc.) rather than the real
+2-book duology its name suggests -- needs a scope/linkage decision, not
+a plain value fix.
+
+**1 new name flagged as likely out-of-scope, same shape as the existing
+Fifty Shades-class flags**: **Twisted** -- its linked book is "Twisted
+Love" by Ana Huang, a contemporary New Adult romance series with no
+speculative content, not sci-fi/fantasy. Likely another Hardcover
+genre-search false positive.
+
+**1 candidate left genuinely unresearched, not a different bug class**:
+The Bound and the Broken (Ryan Cahill) -- an indie/self-published epic
+fantasy series; no Wikipedia page or other WebFetch-reachable
+bibliography page found via several guessed URLs this session. Left for
+batch 13 to retry, ideally once `WebSearch` quota is available again
+rather than continuing to guess URLs blind.
+
+Migration `20260913310000_fix_series_status_book_count_batch12.sql` --
+tested in a rolled-back transaction first (all 17 UPDATE statements
+matched exactly one row each, post-update values verified before
+rollback), then applied for real to hosted via a normal autocommit
+psycopg2 connection, then closed the tracking loop with `npx supabase
+migration repair --status applied --db-url "$DATABASE_URL" --yes
+20260913310000` run as its own separate bash call from the apply step.
+One wrinkle this session, noted for future batches: exporting
+`DATABASE_URL` in one bash call and expecting it in a later call didn't
+work -- this tool's shell state doesn't persist across separate bash
+calls, only the working directory does -- so the repair call instead
+read `.env` inline within its own single command; still a genuinely
+separate tool call from the apply step, which is what the actual
+"don't combine them" constraint is about. `npx supabase migration list
+--db-url "$DATABASE_URL"` confirms `20260913310000` now has both a
+`local` and `remote` entry, no gap. `series` table total row count
+unchanged (484), spot-checked The Celestial Kingdom/Ringworld/The
+Legends of the First Empire directly on hosted.
+
+Running total: 184 of 484 series fixed across batches 1-12
+(14+14+17+17+15+14+16+17+16+15+13+16). docs/TODO.md's
+series.status/book_count entry updated with this batch's summary and
+an accurate batch-13 exclude pointer (234 checked names + 54
+still-unsettled flagged names -- the pre-existing 52 plus this batch's
+2 new: Sarantine Universe, Twisted) plus the unresearched candidate
+tail (The Bound and the Broken as a priority re-try, then Metro, Never
+After, Lightlark, The Checquy Files, The Library Trilogy, Book of
+Ember, Wanderers, The Singing Hills Cycle, The Windup Universe, The
+Green Mile). No docs/PENDING_APPROVALS.md entry needed -- this is
+CLDA's 12th successful run of this exact already-reviewed, step-by-step
+process.
