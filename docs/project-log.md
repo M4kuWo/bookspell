@@ -15479,3 +15479,212 @@ Ember, Wanderers, The Singing Hills Cycle, The Windup Universe, The
 Green Mile). No docs/PENDING_APPROVALS.md entry needed -- this is
 CLDA's 12th successful run of this exact already-reviewed, step-by-step
 process.
+
+## 2026-09-14 (later still): series.status/book_count fix, batch 13 -- 16 series fixed, 0 confirmed already correct, 10 new names flagged, plus a one-series correction to the batch-12 running total
+
+Continuing the P2 catalog-wide series.status/book_count fix as a
+background agent (CLDA persona). Root cause unchanged: status defaults
+to 'ongoing' whenever Hardcover's is_completed isn't explicitly true;
+book_count is Hardcover's raw edition/omnibus/box-set count, not a
+curated mainline-installment count -- neither field is read by
+scripts/recommend.py, display-only bug in tools/catalog-review/.
+
+Reconstructed the exclude list from primary sources, not prose -- per
+this task's own standing caution (batch 5's original 21-name gap is
+exactly why, and batch 12's own header count turned out to have the
+same class of bug, caught this batch). Rather than re-read every prior
+project-log entry, grepped all 12 prior
+fix_series_status_book_count_batch*.sql migration files directly for
+their actual "where name = '...'" UPDATE targets -- ground truth,
+immune to prose-summary drift. This surfaced a real, already-happened
+discrepancy: batch 12's own file
+(20260913310000_fix_series_status_book_count_batch12.sql) contains 17
+update statements, not the 16 its own TODO.md/project-log header
+claimed (Truly Devious was present in the fixed-name list text but
+never folded into the summary count). Corrected total: 185 unique
+fixed names across batches 1-12 (not 184). Combined with each batch's
+"confirmed already correct" names (pulled from project-log.md, since
+those never produced an UPDATE statement to grep for): 1 (batch 1, A
+Court of Thorns and Roses) + 16 (batch 2) + 0 (batch 3) + 21 (batch 4)
++ 3 (batch 5) + 3 (batch 6) + 5 (batch 7) + 0 (batch 8) + 0 (batch 9)
++ 0 (batch 10) + 0 (batch 11) + 1 (batch 12, The Chronicles of the
+Black Company) = 50. 235 total checked names, not the previously-
+stated 234 -- the two batch-12 errors (17 fixes undercounted as 16,
+offset by nothing on the confirmed-correct side) account for exactly
+the one-name gap. Combined with the 54 still-unsettled flagged names
+from batch 12's pointer, 288 unique exclude strings after dedup (the
+known Imperial Radch fixed-name/flagged-name collision persists). All
+288 verified against the live series table via direct query -- every
+one matched exactly one row, no naming-drift catches this batch (a
+second time now, after batch 11's first clean pass).
+
+Tried The Bound and the Broken again first, per batch 12's pointer
+(left unresearched last time -- no reachable bibliography source
+found). Found it this time via the author's own site
+(ryancahillauthor.com/books), whose "Published Books (In Order)"
+section cleanly separates 4 published mainline novels from an
+"Upcoming Books" section listing Book V (due 2026, still being
+written) -- exactly the kind of first-party primary source this task
+prefers.
+
+Re-ran the ranking query (Hardcover raw book_count descending, per
+batch 8's saturation finding, confirmed still true -- every remaining
+series sits at exactly 1 book linked in our own catalog) excluding the
+288 names, then worked down it. This session's WebSearch tool budget
+was already exhausted (200/200) at the very start -- same carryover
+situation batch 12 hit -- so every candidate was verified via WebFetch
+against Wikipedia, publisher, and author-owned-site pages instead
+(real, live, citable content, never a guess), with a second source
+pulled whenever the first felt ambiguous or the finding was
+surprising (see the Checquy Files and Bridge Kingdom notes below).
+
+16 needed a real fix, all verified via live WebFetch before writing:
+
+- The Bound and the Broken (Ryan Cahill): book_count only, 10 -> 4.
+  4 published mainline novels (Of Blood and Fire, Of Darkness and
+  Light, Of War and Ruin, Of Empires and Dust); 3 interstitial
+  novellas (The Fall, The Exile, The Ice) excluded per the standing
+  companion-work convention; status 'ongoing' already correct (Book V
+  still being written).
+- Legacy of Orisha (Tomi Adeyemi): ongoing/8 -> completed/3. Children
+  of Blood and Bone (2018), Children of Virtue and Vengeance (2019),
+  Children of Anguish and Anarchy (June 2024, debuted #1 NYT) --
+  confirmed complete trilogy via Wikipedia; "Awaken the Magic" is a
+  companion journal, not a 4th novel.
+- The Singing Hills Cycle (Nghi Vo): book_count only, 8 -> 7.
+  Wikipedia lists 7 published novellas through "A Long and Speaking
+  Silence" (May 2026). A second source (Reactor/Tor.com's series page)
+  wasn't reachable to corroborate a completion statement, so status
+  left 'ongoing' on absence of evidence rather than guess.
+- Wanderers (Chuck Wendig): book_count only, 8 -> 2. Wanderers (2019),
+  Wayward (2022), no third book found announced; status left 'ongoing'.
+- Lightlark (Alex Aster): book_count only, 8 -> 5. 5 mainline novels
+  (Lightlark, Nightbane, Skyshade, Grim and Oro, Crowntide); the
+  Lightlark Holiday Novella excluded; status left 'ongoing'.
+- The Checquy Files (Daniel O'Malley): book_count only, 8 -> 4.
+  Wikipedia's author page lists 4 full novels (The Rook 2012, Stiletto
+  2016, Blitz 2022, Royal Gambit 2025) -- cross-checked with a second
+  source (The Rook's own Wikipedia page) since 4 books was more than
+  this series' usual "duology" reputation, which independently calls
+  Blitz "the third novel of the series," confirming it's a full entry
+  not a novella; status left 'ongoing'.
+- Book of Ember (Jeanne DuPrau): ongoing/8 -> completed/4. The City of
+  Ember (2003) through The Diamond of Darkhold (2008), Wikipedia
+  confirms no further mainline entries.
+- The Bridge Kingdom (Danielle L. Jensen): completed/8 -> ongoing/5, a
+  reversal in the same direction as batch 4's Locked Tomb case. No
+  dedicated Wikipedia page exists, so relied on the author's own
+  official series page (danielleljensen.com/bridge-kingdom-series),
+  fetched twice independently for consistency (surprising finding --
+  reversing a 'completed' status warrants real corroboration): 5
+  published full-length novels (The Bridge Kingdom, The Traitor Queen,
+  The Endless War, The Twisted Throne, The Tempest Blade) plus a 6th,
+  "The Inadequate Heir," explicitly marked PREORDER on both fetches --
+  not yet published as of this migration. Hardcover's data had
+  apparently marked the series complete and/or counted the unreleased
+  6th book.
+- The Library Trilogy (Mark Lawrence): ongoing/8 -> completed/3. The
+  Book That Wouldn't Burn (2023), The Book That Broke the World
+  (2024), The Book That Held Her Heart (2025) -- Wikipedia confirms
+  all 3 planned installments published.
+- Metro (Dmitry Glukhovsky): ongoing/9 -> completed/3. Glukhovsky's
+  own core trilogy (Metro 2033, Metro 2034, Metro 2035) -- Wikipedia
+  explicitly calls 2035 "the final novel of the main Metro trilogy."
+  The much larger multi-author "Metro 2033 Universe" spin-off novels
+  by other writers are a separate body of work, same shared-universe
+  convention this task has applied throughout (Rama, Ringworld, etc.).
+- The Long Earth (Terry Pratchett & Stephen Baxter): ongoing/7 ->
+  completed/5. The Long Earth (2012) through The Long Cosmos (2016) --
+  Pratchett died in 2015 during the series but the collaboration was
+  completed and released in 2016, concluding it.
+- Binti (Nnedi Okorafor): ongoing/7 -> completed/3. Binti (2015),
+  Binti: Home (2017), Binti: The Night Masquerade (2018) -- Wikipedia
+  confirms a complete trilogy.
+
+Plus 4 book_count-only fixes (status already correct):
+
+- Empire of the Vampire (Jay Kristoff): 7 -> 3. Trilogy explicitly
+  concluded with Empire of the Dawn (October 2025), "the third and
+  final installment."
+- The Books of Babel (Josiah Bancroft): 7 -> 4. Senlin Ascends through
+  The Fall of Babel (2021), explicitly "the finale of the series."
+- Moties (Larry Niven & Jerry Pournelle): 6 -> 3. The Mote in God's
+  Eye (1974), The Gripping Hand (1993), and Outies (2010, an
+  authorized sequel by Pournelle's daughter Jennifer). No completion
+  statement found -- status left 'ongoing', same convention as other
+  deceased/inactive-author cases (Old Kingdom, Elric Saga).
+- Gone (Michael Grant): ongoing/7 -> completed/6. The main 6-book
+  series (Gone through Light, 2008-2013) is complete; the separate
+  "Monster Trilogy"/"Season Two" (Monster, Villain, Hero, 2017-2019)
+  is an explicitly distinct continuation, not part of this numbered
+  sequence.
+
+0 confirmed already correct this batch.
+
+Migration 20260913320000_fix_series_status_book_count_batch13.sql --
+tested in a rolled-back transaction first (all 16 update statements
+matched exactly one row each, post-update values verified before
+rollback), then applied for real to hosted via a normal autocommit
+psycopg2 connection, then closed the tracking loop with npx supabase
+migration repair --status applied --db-url "$DATABASE_URL" --yes
+20260913320000 run as its own separate bash call from the apply step,
+per this task's standing constraint. npx supabase migration list
+--db-url "$DATABASE_URL" confirms 20260913320000 now has both a local
+and remote entry, no gap. series table total row count unchanged
+(484), spot-checked The Bridge Kingdom / Gone / Metro / Binti / The
+Bound and the Broken directly on hosted.
+
+One naming note: "Legacy of Orisha" is stored in the DB with a Unicode
+"i with diaeresis" (U+00EF, codepoint 239) in "Or[i-with-diaeresis]sha"
+-- the migration's WHERE clause uses 'Legacy of Or' || chr(239) ||
+'sha' to match the exact stored string rather than typing the literal
+character, avoiding any encoding-transcription risk through the
+migration file/terminal pipeline.
+
+10 new names flagged as a DIFFERENT bug class or likely out-of-scope,
+not fixed here: The Green Mile -- confirmed via Wikipedia this is a
+single Stephen King novel, originally serialized in 6 monthly
+paperback installments in 1996 and explicitly "not considered separate
+books in a series," later republished as one volume -- same
+not-really-a-series shape as the already-flagged Alice's Adventures in
+Wonderland/Brave New World cases. Shepherd's Notes and Bloom's Modern
+Critical Interpretations -- both publisher study-guide/literary-
+criticism imprints (the linked "books" are their guides to Mere
+Christianity and Gulliver's Travels respectively, not numbered entries
+in an author's own series), same shape as the already-flagged Penguin
+Little Black Classics/Roald Dahl Classic Collection. The Windup
+Universe (Paolo Bacigalupi) -- Wikipedia confirms only one real novel,
+The Windup Girl (2009); the "universe" grouping bundles it with
+unrelated short fiction rather than a real second novel -- a
+not-really-a-multi-book-series case, not a plain miscount. White Sand
+-- confirmed a Brandon Sanderson graphic novel (comic), out of v1
+scope per the existing comics policy (surfaced in passing while
+checking Bridge Kingdom-area candidates). Never After (Emily McIntire)
+-- the author's own site describes it as "6 complete standalone
+novels" of contemporary dark fairy-tale-retelling romance, "grounded
+in a modern context rather than a fantasy world with literal magic
+systems" -- not SFF, likely another Hardcover genre-search false
+positive, same shape as the existing Fifty Shades/Twisted-class flags.
+Millennium (Stieg Larsson, linked to The Girl with the Dragon Tattoo)
+-- crime thriller, not SFF, same shape. 1Q84 (Haruki Murakami) and
+Involuntary trilogy (linked to Isabel Allende's The House of the
+Spirits) -- both magical-realism literary fiction, borderline at
+best, not core genre SFF, same shape as the existing Cemetery of
+Forgotten Books/Blindness borderline flags. Voice from the Edge
+(linked to Harlan Ellison's "I Have No Mouth and I Must Scream") --
+this is Blackstone Audio's audio-collection brand for Ellison's short
+fiction, not a real book series, same wrong-category shape as the
+already-flagged Dark Adventure Radio Theatre.
+
+Running total: 200 of 484 series fixed across batches 1-13 (185
+correctly-reconstructed fixes through batch 12 + 16 this batch).
+docs/TODO.md's series.status/book_count entry updated with this
+batch's summary, the batch-12 off-by-one correction, and an accurate
+batch-14 exclude pointer (251 checked names + 64 still-unsettled
+flagged names -- the pre-existing 54 plus this batch's 10 new) plus
+the unresearched candidate tail (The Band, The Crimson Moth, Matched,
+Inheritance Trilogy [N.K. Jemisin], The Last Unicorn, Hundred
+Kingdoms, Fae & Alchemy, Todd Family [likely out-of-scope], Elements
+of Cadence). No docs/PENDING_APPROVALS.md entry needed -- this is
+CLDA's 13th successful run of this exact already-reviewed, step-by-
+step process.

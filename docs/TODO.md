@@ -726,10 +726,11 @@ worth deferring to a later session rather than batching in for
   CLDO to verify its hosted-applied status before any rename.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
-  done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-10 done
+  done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done
   2026-09-14
-  (155 of 484 series fixed so far:
-  14+14+17+17+15+14+16+17+16+15 across batches 1-10 -- the denominator
+  (200 of 484 series fixed so far, verified by direct migration-file
+  reconstruction as of batch 13 -- see that batch's entry below for a
+  one-series correction to the batch-12 running total. The denominator
   grew a lot from the 2026-09-12 378-book/118-series ingestion round,
   this isn't the catalog shrinking work).** `status` defaults to
   `'ongoing'` whenever Hardcover's `is_completed` flag isn't explicitly
@@ -1473,43 +1474,166 @@ worth deferring to a later session rather than batching in for
   retry once WebSearch quota is available again rather than guessing
   from an unverified source.
 
-  Running total: **184** of 484 series fixed across batches 1-12
-  (14+14+17+17+15+14+16+17+16+15+13+16).
+  Running total after batch 12: 184 of 484 series fixed across batches
+  1-12 (14+14+17+17+15+14+16+17+16+15+13+16) -- **this total turned out
+  to be off by one, caught during batch 13's reconstruction (see
+  below)**: batch 12's own migration file
+  (`20260913310000_fix_series_status_book_count_batch12.sql`) actually
+  contains 17 `update` statements, not 16 -- its own TODO/project-log
+  prose undercounted by one series (Truly Devious was the 17th, present
+  in the fixed list text but not folded into the "16 needed a real fix"
+  header count). The real batch-12 total was 17 fixed + 1
+  confirmed-correct = 18 checked, not 17.
 
-  **Next (batch 13)**: re-rank remaining series, excluding all **234**
-  now-checked names across batches 1-12 (217 from batches 1-11 + this
-  batch's 16 fixed + 1 confirmed-correct) plus **54** still-unsettled
-  flagged names (the pre-existing 52 carried unchanged since batch 10 --
-  Hogwarts Library, The Roald Dahl Classic Collection, The Riyria
-  Revelations (Omnibus), Robert Langdon, The Inheritance Games, Imperial
-  Radch (publication order), Enderverse:  Publication Order (DB name has
-  a double space -- match the real string), The Shadow Series, Middle
-  Earth, American Gods, Forward Collection, Saga, Kingsbridge, Holly
-  Gibney, Elantris, The Walking Dead, Watchmen, The Divine Comedy, Asian
-  Saga: Chronological Order, Blindness, The Legend of Drizzt, The Dark
-  Elf Trilogy, The Mistborn Saga, Mistborn, Heinlein's Juveniles, The
-  Cosmere, The Expanse (Chronological), First Law World, Dark Adventure
-  Radio Theatre, Penguin Little Black Classics, "The d'Artagnan
-  Romances" (DB name has "The " prefix and a curly Unicode apostrophe,
-  U+2019 -- match the real string), Fifty Shades, Monstress, Y: The Last
-  Man, The Cemetery of Forgotten Books, Shannara (Chronological Order),
-  Capitaine Nemo, World of the Five Gods (Publication), The Elric Saga,
-  Let the Right One In, The Wandering Inn, Brave New World, Graphic
-  Horror, Alice's Adventures in Wonderland, The Godfather
-  (Chronological), Wonder, The Five People You Meet in Heaven, Cat and
-  Mouse, The Naturals, The Sandman TPBs, Paper Girls, Pride and
-  Prejudice and Zombies -- plus this batch's 2 new: Sarantine Universe,
-  Twisted). **The Bound and the Broken remains an open, unresearched
-  candidate (not flagged/excluded) -- worth trying again first, before
-  the fresh ranked list, once WebSearch quota allows a real check.**
-  Also available as an unresearched candidate tail from this batch's
-  ranked list (not reached): Twisted [now flagged, skip], Metro, The
-  Space Trilogy [now fixed, skip], Never After, Lightlark, The Checquy
-  Files, The Library Trilogy, Book of Ember, Wanderers, The Singing
-  Hills Cycle, The Windup Universe, The Green Mile. The "count(b.id)
-  currently linked" primary ranking signal remains saturated at 1
-  book/series for the whole remaining catalog -- keep using Hardcover's
-  raw `book_count` descending as the secondary sort.
+  **Batch 13 (2026-09-14, CLDA)**: per this task's standing instruction
+  to reconstruct the exclude list by name rather than trust a running
+  total (batch 5's original 21-name gap is exactly why), rebuilt it from
+  primary sources instead of prose: grepped every
+  `fix_series_status_book_count_batch*.sql` migration file directly for
+  its actual `where name = '...'` fixed names (ground truth, immune to
+  prose-summary drift) -- **185 unique fixed names across batches 1-12**,
+  one more than the previously-stated 184, exactly the batch-12
+  off-by-one above. Combined with each batch's "confirmed already
+  correct" names pulled from project-log.md (1 + 16 + 0 + 21 + 3 + 3 + 5
+  + 0 + 0 + 0 + 0 + 1 = **50** across batches 1-12) for **235** total
+  checked names (not 234), plus the 54 flagged names given in this
+  batch's pointer. All 288 combined unique strings (after the known
+  Imperial Radch fixed/flagged collision) verified against the live
+  `series` table -- all 288 matched exactly one row, no naming-drift
+  catches this time.
+
+  Tried **The Bound and the Broken** again first, per batch 12's
+  pointer -- found this time via the author's own site
+  (ryancahillauthor.com/books), which explicitly separates "Published
+  Books (In Order)" (4 mainline novels) from "Upcoming Books" (Book V,
+  due 2026, still being written). Re-ran the ranking query (Hardcover
+  raw `book_count` descending, secondary sort still needed -- the
+  `count(b.id) currently linked` signal remains saturated at 1
+  book/series catalog-wide) excluding the 288 names, and worked down
+  it. **This session's `WebSearch` budget was already exhausted
+  (200/200) at the start**, same carryover situation as batch 12 --
+  verified every candidate via `WebFetch` against Wikipedia, publisher,
+  and author-own-site pages instead (real live content, not a guess).
+
+  **16 needed a real fix**: The Bound and the Broken (book_count only,
+  10 -> 4), Legacy of Orisha (Tomi Adeyemi: ongoing/8 -> completed/3),
+  The Singing Hills Cycle (Nghi Vo: book_count only, 8 -> 7, left
+  'ongoing' -- no explicit completion statement found for the 7-book
+  run), Wanderers (Chuck Wendig: book_count only, 8 -> 2), Lightlark
+  (Alex Aster: book_count only, 8 -> 5), The Checquy Files (Daniel
+  O'Malley: book_count only, 8 -> 4 -- Blitz independently confirmed as
+  "the third novel of the series" via The Rook's own Wikipedia page, not
+  a novella), Book of Ember (Jeanne DuPrau: ongoing/8 -> completed/4),
+  **The Bridge Kingdom (Danielle L. Jensen: completed/8 -> ongoing/5, a
+  reversal -- the author's own official series page lists 5 published
+  novels plus a 6th, "The Inadequate Heir," explicitly marked
+  PREORDER/not yet published)**, The Library Trilogy (Mark Lawrence:
+  ongoing/8 -> completed/3), Metro (Dmitry Glukhovsky: ongoing/9 ->
+  completed/3 -- his own core trilogy only; the much larger multi-author
+  "Metro 2033 Universe" spin-offs are a separate body of work, same
+  shared-universe convention as every prior case), The Long Earth
+  (Pratchett & Baxter: ongoing/7 -> completed/5 -- Pratchett died in
+  2015 but the collaboration was completed and concluded in 2016), Binti
+  (Nnedi Okorafor: ongoing/7 -> completed/3); plus 4 book_count-only
+  fixes (status already correct): Empire of the Vampire (7 -> 3, Jay
+  Kristoff's own trilogy explicitly concluded Oct 2025), The Books of
+  Babel (Josiah Bancroft: 7 -> 4, "the finale of the series"), Moties
+  (Niven & Pournelle: 6 -> 3, left 'ongoing' on absence of a completion
+  statement), Gone (Michael Grant: ongoing/7 -> completed/6 -- the
+  6-book main series only; the "Monster Trilogy"/"Season Two" is an
+  explicitly distinct continuation, not part of this numbered sequence).
+  **0 confirmed already correct this batch.**
+
+  Migration `20260913320000_fix_series_status_book_count_batch13.sql`
+  -- tested in a rolled-back transaction first (all 16 `update`
+  statements matched exactly one row each, post-update values verified
+  before rollback), then applied for real to hosted via a normal
+  autocommit psycopg2 connection, then closed the tracking loop with
+  `npx supabase migration repair --status applied --db-url
+  "$DATABASE_URL" --yes 20260913320000` run as its own separate bash
+  call from the apply step. `npx supabase migration list --db-url
+  "$DATABASE_URL"` confirms `20260913320000` now has both a `local` and
+  `remote` entry, no gap. `series` table total row count unchanged
+  (484), spot-checked The Bridge Kingdom / Gone / Metro / Binti / The
+  Bound and the Broken directly on hosted.
+
+  **10 new names flagged, not fixed here** (mostly not-really-a-series
+  or out-of-scope calls, same shape as prior batches' flags): **The
+  Green Mile** -- confirmed via Wikipedia this is a single Stephen King
+  novel originally serialized in 6 monthly paperback installments
+  (1996), explicitly "not considered separate books in a series," later
+  republished as one volume -- same not-really-a-series shape as the
+  already-flagged Alice's Adventures in Wonderland/Brave New World
+  cases. **Shepherd's Notes** and **Bloom's Modern Critical
+  Interpretations** -- both publisher study-guide/literary-criticism
+  imprints (the linked "books" are their guides to Mere Christianity and
+  Gulliver's Travels respectively, not numbered entries in an author's
+  own series), same shape as the already-flagged Penguin Little Black
+  Classics/Roald Dahl Classic Collection. **The Windup Universe**
+  (Paolo Bacigalupi) -- Wikipedia confirms only one real novel, The
+  Windup Girl (2009); the "universe" grouping bundles it with unrelated
+  short fiction, not a real second novel -- a not-really-a-multi-book-
+  series case, not a plain miscount. **White Sand** -- confirmed a
+  Brandon Sanderson graphic novel (comic), out of v1 scope per the
+  existing comics policy. **Never After** (Emily McIntire) -- the
+  author's own site describes it as "6 complete standalone novels" of
+  contemporary dark fairy-tale-retelling romance "grounded in a modern
+  context rather than a fantasy world with literal magic systems," not
+  SFF -- likely another Hardcover genre-search false positive, same
+  shape as the existing Fifty Shades/Twisted-class flags. **Millennium**
+  (Stieg Larsson, linked to The Girl with the Dragon Tattoo) -- crime
+  thriller, not SFF, same shape. **1Q84** (Haruki Murakami) and
+  **Involuntary trilogy** (linked to Isabel Allende's The House of the
+  Spirits) -- both magical-realism literary fiction, borderline at best,
+  not core genre SFF, same shape as the existing Cemetery of Forgotten
+  Books/Blindness borderline flags. **Voice from the Edge** (linked to
+  Harlan Ellison's "I Have No Mouth and I Must Scream") -- this is
+  Blackstone Audio's audio-collection brand for Ellison's short fiction,
+  not a real book series, same wrong-category shape as the already-
+  flagged Dark Adventure Radio Theatre.
+
+  Running total: **200** of 484 series fixed across batches 1-13
+  (185 + 16 -- corrected for the batch-12 off-by-one found above; the
+  previously-reported "184+16=200" arithmetic happens to land on the
+  same number by coincidence of the two errors cancelling, but this
+  total is now verified correct by direct migration-file reconstruction,
+  not by carrying the old arithmetic forward).
+
+  **Next (batch 14)**: re-rank remaining series, excluding **251** now-
+  checked names across batches 1-13 (235 checked through batch 12 + this
+  batch's 16 fixed) plus **64** still-unsettled flagged names (the
+  pre-existing 54 -- Hogwarts Library, The Roald Dahl Classic
+  Collection, The Riyria Revelations (Omnibus), Robert Langdon, The
+  Inheritance Games, Imperial Radch (publication order), Enderverse:
+  Publication Order (DB name has a double space -- match the real
+  string), The Shadow Series, Middle Earth, American Gods, Forward
+  Collection, Saga, Kingsbridge, Holly Gibney, Elantris, The Walking
+  Dead, Watchmen, The Divine Comedy, Asian Saga: Chronological Order,
+  Blindness, The Legend of Drizzt, The Dark Elf Trilogy, The Mistborn
+  Saga, Mistborn, Heinlein's Juveniles, The Cosmere, The Expanse
+  (Chronological), First Law World, Dark Adventure Radio Theatre,
+  Penguin Little Black Classics, "The d'Artagnan Romances" (DB name has
+  "The " prefix and a curly Unicode apostrophe, U+2019 -- match the real
+  string), Fifty Shades, Monstress, Y: The Last Man, The Cemetery of
+  Forgotten Books, Shannara (Chronological Order), Capitaine Nemo, World
+  of the Five Gods (Publication), The Elric Saga, Let the Right One In,
+  The Wandering Inn, Brave New World, Graphic Horror, Alice's Adventures
+  in Wonderland, The Godfather (Chronological), Wonder, The Five People
+  You Meet in Heaven, Cat and Mouse, The Naturals, The Sandman TPBs,
+  Paper Girls, Pride and Prejudice and Zombies, Sarantine Universe,
+  Twisted -- plus this batch's 10 new: The Green Mile, Shepherd's Notes,
+  Bloom's Modern Critical Interpretations, The Windup Universe, White
+  Sand, Never After, Millennium, 1Q84, Involuntary trilogy, Voice from
+  the Edge). Unresearched candidate tail from this batch's ranked list
+  (not reached, available for batch 14): The Band (Kings of the Wyld),
+  The Crimson Moth (Heartless Hunter), Matched, Inheritance Trilogy
+  (N.K. Jemisin), The Last Unicorn, Hundred Kingdoms (To Kill a
+  Kingdom), Fae & Alchemy (Quicksilver), Todd Family (Life After Life --
+  likely out-of-scope, literary fiction with a time-loop, not decided),
+  Elements of Cadence (A River Enchanted). The "count(b.id) currently
+  linked" primary ranking signal remains saturated at 1 book/series for
+  the whole remaining catalog -- keep using Hardcover's raw `book_count`
+  descending as the secondary sort.
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing
   "The Cosmere" universe row (a duplicate "Cosmere" *series* row also
