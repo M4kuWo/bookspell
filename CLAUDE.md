@@ -96,8 +96,17 @@ this repo runs from:
   ships client-side (real, RLS-enforced read-only — verified its write
   policies are all `authenticated`-only, not just assumed) rather than
   the `supabase db query --linked` CLI method CLDO uses, which is
-  full-access and NOT safe to hand it. See `AGENTS.md`'s "Your
-  environment"/"Reading hosted Supabase data"/"Handing off your work"
+  full-access and NOT safe to hand it. For running the real
+  `scripts/scoring_tests.py` suite specifically (needs a direct
+  Postgres connection the anon key can't provide), it instead has a
+  genuinely read-only Postgres role, `codx_readonly` (added
+  2026-09-15) — `SELECT`-only on exactly the 5 tables
+  `load_catalog()` needs, verified directly (a real `UPDATE`/a
+  `SELECT` on a user-data table both fail with permission denied), no
+  access to any user-data table at all. Its connection string lives
+  only in CODX's own gitignored `.env`, never in a tracked file. See
+  `AGENTS.md`'s "Your environment"/"Reading hosted Supabase data"/
+  "Running the real scoring test suite"/"Handing off your work"
   sections for the full mechanics, including the local-testing
   limitation (this repo's own not-yet-bootstrapped local Supabase gap)
   and how its output actually reaches CLDO with no push access.

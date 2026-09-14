@@ -139,6 +139,41 @@ this project at all in your environment. If `supabase status`/`supabase
 db query` here shows a linked project, tell the repo owner rather than
 using it.
 
+## Running the real scoring test suite (added 2026-09-15)
+
+`scripts/scoring_tests.py` needs a real Postgres connection (it calls
+`load_catalog()`, not the REST API), which the anon key above can't
+provide. Rather than leave this permanently out of reach, you have a
+**genuinely read-only Postgres role**, `codx_readonly`, created
+specifically for this: `.env` in your own clone has
+`CODX_READONLY_DATABASE_URL` set to its connection string. To run the
+real suite:
+
+```sh
+DATABASE_URL="$CODX_READONLY_DATABASE_URL" python3 scripts/scoring_tests.py
+```
+
+**This is real technical enforcement, not a policy promise** — same
+principle as your push-blocking hook. `codx_readonly` is scoped to
+`SELECT` on exactly the 5 tables `load_catalog()` needs (`books`,
+`book_dna`, `book_tropes`, `book_field_confidence`, `series`) — nothing
+else, no user-data tables (`ratings`/`user_rules`/`profiles`/
+`book_suggestions`), no write privilege on anything. Verified directly
+before this was ever handed to you: a real `UPDATE` on `books` and a
+real `SELECT` on `ratings` both fail with "permission denied" using
+this exact role, and `load_catalog()` genuinely loads the full real
+catalog through it. Rater data for `scoring_tests.py` comes from local
+`data/ratings/*.json` files, not the `ratings` table, so this role
+never needs (and never gets) access to real user data at all.
+
+**Never set plain `DATABASE_URL` to this or any other real connection
+string yourself, and never ask for the project's actual write-capable
+`DATABASE_URL`** — that one is exactly the credential your review/
+propose-only scope exists to keep you away from. If `CODX_READONLY_DATABASE_URL`
+is ever missing from `.env`, or a query through it succeeds at
+something other than a plain `SELECT` on those 5 tables, stop and tell
+the repo owner rather than working around it.
+
 ## Testing a migration or schema idea
 
 The project's own standing convention — local Supabase (`supabase
@@ -151,12 +186,14 @@ complete real catalog (only a partial/pilot seed exists locally as of
 2026-09-13 — see the "still-open local-bootstrap gap" in your own task
 list below, which is exactly this problem). So you can validate a
 migration's syntax and structure against local's live schema, and
-cross-check real data via the anon-key path above, but a genuine
-rolled-back-transaction test against the *exact* full live hosted
-state isn't fully reproducible in your environment yet. That's fine —
-it's naturally the kind of thing CLDO does as the last step before
-applying your proposal for real, and fixing the local-bootstrap gap
-(already on your task list) would remove this limitation for good.
+cross-check real data via the anon-key path above (or the read-only DB
+role above, for anything the anon key's RLS-scoped reads can't reach),
+but a genuine rolled-back-transaction test against the *exact* full
+live hosted state isn't fully reproducible in your environment yet.
+That's fine — it's naturally the kind of thing CLDO does as the last
+step before applying your proposal for real, and fixing the
+local-bootstrap gap (already on your task list) would remove this
+limitation for good.
 
 ## Handing off your work — there's no live channel, same as CLDA/CLDO
 

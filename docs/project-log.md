@@ -15843,3 +15843,45 @@ refactor's real risk is transcription error across the move, not logic
 error, and this project's own conventions already ask for exactly this
 kind of confirm-before-starting pause on a change this size and this
 hard to partially revert. Full detail in `docs/TODO.md`.
+
+## 2026-09-15 -- a genuinely read-only Postgres role for CODX
+
+Set up `codx_readonly`, a real Postgres role scoped to `SELECT` on
+exactly the 5 tables `scripts/recommend.py`'s `load_catalog()` needs
+(`books`, `book_dna`, `book_tropes`, `book_field_confidence`,
+`series`) -- nothing else, no user-data table
+(`ratings`/`user_rules`/`profiles`/`book_suggestions`) grant at all.
+Prompted by wanting to hand CODX a GPT-drafted audit task whose Phase 2
+("run the real test suite, record a baseline") assumed a live DB
+connection CODX didn't have -- only the public anon key, which can't
+run `scripts/scoring_tests.py` (it needs a direct Postgres connection
+via `load_catalog()`, not REST). Same principle as the push-blocking
+`pre-push` hook: real technical enforcement over a policy promise.
+
+Migration `20260915000000_create_codx_readonly_role.sql` creates the
+role SHELL only (`nologin`, no password) plus the grants -- safe to
+commit, contains no secret. The actual `ALTER ROLE ... WITH LOGIN
+PASSWORD` step ran separately, directly via `supabase db query
+--linked`, generated fresh and never written to any file that gets
+committed, per this project's standing rule never to commit a hosted
+credential. Verified for real before handing it to CODX, not assumed:
+connected as `codx_readonly` and confirmed (1) `SELECT` on the 5
+granted tables works (1256 books, 978 book_dna rows read), (2) an
+`UPDATE` on `books` fails with "permission denied", (3) a `SELECT` on
+`ratings` (a real user-data table, deliberately not granted) also fails
+with "permission denied", and (4) `recommend.py`'s own `load_catalog()`
+genuinely loads the full real catalog through this role end-to-end --
+the actual intended use case, not just a permissions check in the
+abstract.
+
+Connection string written to CODX's own `~/Documents/bookspell-codex/.env`
+as `CODX_READONLY_DATABASE_URL` (that clone's `.env` is gitignored,
+confirmed) -- named deliberately differently from plain `DATABASE_URL`
+so nothing could mistake it for, or accidentally get pointed at, the
+project's real write-capable connection string. `AGENTS.md`/`CLAUDE.md`
+updated with the new capability and its exact scope.
+
+With this in place, the GPT-drafted audit prompt (adjusted to point at
+this project's actual conventions, prior findings, and the Phase A/B
+refactor plan already in `docs/TODO.md`) was handed to CODX for its
+next task.
