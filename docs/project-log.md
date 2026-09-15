@@ -16107,3 +16107,26 @@ lower-level factor evaluator both `score_book()`/`explain_book()`
 should consume, per the recursion-avoiding boundary already decided)
 by actually building and testing it in its own clone -- see the
 instructions handed to the repo owner to paste to CODX.
+
+## 2026-09-16 (later) -- fresh database backup taken
+
+Last snapshot was 2026-09-11, 5 days stale against real schema changes
+(migrations landed 09-12 through 09-15, including the `codx_readonly`
+role). Took a new pair via `supabase db dump --linked` (schema) and
+`--data-only` (data), committed to `bookspell-backups` as
+`full-backup-2026-09-16.sql`/`data-backup-2026-09-16.sql` (pushed,
+commit `90c5e43`). Row counts at snapshot time: 1,256 `books`, 978
+`book_dna`, 5,323 `book_tropes`, 1,123 `audiobook_editions`.
+
+**Real finding while scanning for secrets before committing (routine
+practice per the backups repo's own README)**: this is the FIRST
+snapshot to include any `auth.users` rows -- a real bcrypt password
+hash for a test account (`kurinman+test@gmail.com`, created
+2026-09-12; confirmed absent from the 2026-09-11 dump, which predates
+that account). Flagged to the repo owner before pushing rather than
+assuming it was fine. **Decision: push as-is for now** -- private
+repo, one test account's hashed (not plaintext) password, not enough
+volume yet to be a real exposure. Repo owner noted this should be
+revisited ("different measures") if this kind of data grows more
+numerous in future dumps -- worth checking for again at the next
+snapshot, not assumed resolved by this one decision.
