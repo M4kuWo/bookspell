@@ -613,7 +613,51 @@ worth deferring to a later session rather than batching in for
   unsupervised commit, not just destructive ones, since it hasn't
   earned CLDA's broader write access yet). `docs/PENDING_APPROVALS.md`
   updated to name CODX alongside CLDA as a persona that gate applies
-  to. **Not done yet, and not part of "setup" — actually running Codex
+  to.
+
+  **UPDATE (2026-09-14/15): CODX is now real, active, and has run
+  twice — this item has moved well past "setup."** Environment: a real
+  separate clone at `~/Documents/bookspell-codex`, push genuinely
+  blocked via a tracked `.githooks/pre-push` hook + `core.hooksPath`
+  (not a git-config-only approach, which was tried first and proven
+  insufficient by a real accidental test push — see
+  `docs/project-log.md`'s 2026-09-13 entries), a genuinely read-only
+  Postgres role (`codx_readonly`, 2026-09-15) so it can run
+  `scripts/scoring_tests.py` for real, and the public anon key for
+  everything else. Every task now ends with a written report at
+  `docs/codx-reports/<date>-<slug>.md` in its own clone (formalized
+  2026-09-15 after the first review's report had to be found and read
+  ad hoc).
+
+  **Task 1 (2026-09-14)**: independent review of `scripts/recommend.py`
+  — found 4 real bugs (all confidence-floor consistency issues), all
+  independently re-verified and fixed by CLDO, see
+  `docs/scoring-test-protocol.md`'s entry and
+  `docs/codx-reviews/codx-recommend-review-2026-09-14.md`. A genuinely
+  strong first outing.
+
+  **Task 2 (2026-09-15)**: the GPT/Astra-review-prompted structural
+  audit of `recommend.py` (Phase 1 audit / Phase 2 baseline via the new
+  read-only role / Phase 3 propose-max-3, feeding into this file's own
+  Phase A/B refactor plan above) — **run, but NOT YET REVIEWED by
+  CLDO**, blocked by a real filesystem-access issue (see the
+  2026-09-15 project-log entries): CLDO's shell lost the ability to
+  read `~/Documents/bookspell-codex` at all mid-session (Finder and a
+  sibling directory both unaffected — looks like a stuck macOS TCC
+  grant specific to CLDO's own process; the repo owner confirmed both
+  relevant toggles in System Settings are already ON, and access was
+  still blocked after that check and a retry — a fresh terminal/
+  session is the next thing to try, not yet confirmed to fix it).
+  **Next session: retry reading
+  `~/Documents/bookspell-codex/docs/codx-reports/` (or wherever CODX
+  actually left its Task 2 report — check both the new convention's
+  path and the repo root, since the convention was formalized only
+  after this task started) as the first thing to check** — if access
+  works again, review Task 2's findings the same way Task 1's were
+  verified before acting on any of them.
+
+  Old note, superseded by the above but kept for history: **Not done
+  yet, and not part of "setup" — actually running Codex
   CLI against this repo for the first time**, which is a step only the
   repo owner can take (it's his ChatGPT Plus subscription/tool, not
   something a Claude Code session can invoke on his behalf). Once that

@@ -15933,3 +15933,46 @@ aren't something CLDO can act on directly.
 CODX's second-task report has not yet been read as a result -- the repo
 owner will paste it directly in the meantime per the new convention's
 own documented fallback.
+
+## 2026-09-15 (later still) -- session wrap-up
+
+Confirmed both relevant Documents-folder toggles (the CLI's own
+`claude` identity and the desktop `Claude` app) are already ON in
+System Settings -- the filesystem-access problem isn't a straightforward
+missing grant. Re-tested access to `~/Documents/bookspell-codex` once
+more after that confirmation: still blocked. This is consistent with a
+macOS TCC grant that's cached per-process at launch and won't take
+effect for an already-running process until it restarts -- the repo
+owner's own plan (start a fresh terminal) is the right next thing to
+try, not yet confirmed to work.
+
+**Closing this long session cleanly given its length, per the repo
+owner's request, rather than letting it run until an automatic
+compaction decides where the cut falls.** Everything material from
+this session is already logged in its own dated entries above (search
+this file for "2026-09-13" through today for the full detail -- not
+re-summarized here to avoid drift between two descriptions of the same
+work). Session covered, roughly in order: a batch of live app-feedback
+fixes (relative rating dates, partial-match search, a "why this
+recommendation" expansion, series ongoing/completed indicator +
+filter, cached recommendation results across page navigations), CODX's
+full onboarding from a bare idea into a working third persona (a real
+separate clone, a push-block that needed a genuine fix after its first
+attempt was proven insufficient by an actual accidental push, a
+read-only DB role, a standard report-file convention), two real CODX
+tasks (a `recommend.py` bug-hunt that found and fixed 4 real
+confidence-floor bugs, and a structural-refactor audit not yet
+reviewed), and a GPT/Astra strategic repository review that was fact-
+checked point by point rather than trusted at face value, feeding a
+concrete phased refactor plan.
+
+**Single open thread for the next session, already flagged in
+`docs/TODO.md`'s CODX entry too**: CODX's Task 2 report (the
+`recommend.py` structural audit) has not been reviewed yet -- read it
+from `~/Documents/bookspell-codex` once filesystem access is confirmed
+working again (try a plain `ls` first before assuming), verify its
+findings the same way Task 1's 4 bugs were independently re-checked
+before acting on any of it, same discipline as always. Everything else
+from this session is either fully landed and verified, or already
+captured as a properly scoped, prioritized `docs/TODO.md` item with no
+information only living in this conversation's own history.
