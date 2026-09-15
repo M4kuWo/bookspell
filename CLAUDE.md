@@ -62,9 +62,22 @@ this repo runs from:
   (Book DNA tagging, scoring-algorithm design). Every finding or change
   CODX produces is a proposal (a review comment, a diff, a suggested
   migration file) for CLDO or the repo owner to actually apply — not
-  something it applies itself. This is a starting posture, not a
-  permanent one: revisit once it's built a real track record, the same
-  way CLDA's own scope grew over time.
+  something it applies itself. **"Applies itself" specifically means
+  landing something in the shared repo or hosted DB (a commit, a push,
+  a hosted write) — it does NOT mean CODX must hand-write an unrun diff
+  and never execute it** (clarified 2026-09-16, after the repo owner
+  asked directly whether this distinction held): implementing a
+  proposed scoring-engine change and actually running it — editing
+  `scripts/recommend.py` in its own clone, uncommitted, and running
+  `scripts/scoring_tests.py` against it via its read-only role — is
+  real verification work squarely in scope, since none of that touches
+  a hosted write or a commit/push. The design judgment for WHAT the
+  change should be still comes from CLDO (a scoring-engine change is
+  never delegated in that sense), but CODX implementing and validating
+  a CLDO-specified design, in its own sandbox, uncommitted, is
+  execution of a proposal, not a bypass of "never delegated." This is a
+  starting posture, not a permanent one: revisit once it's built a real
+  track record, the same way CLDA's own scope grew over time.
 
   **Runs from its own real clone, `~/Documents/bookspell-codex` (set up
   2026-09-13), never inside the repo owner's own `~/Documents/bookspell`

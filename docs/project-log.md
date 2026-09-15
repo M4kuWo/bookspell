@@ -16075,3 +16075,35 @@ byte-identical.
 Updated `docs/TODO.md`'s CODX entry to reflect all 7 decisions resolved
 and A1 landed; next real step is A2 (the shared base-factor
 extraction), not Phase B file movement.
+
+## 2026-09-16 -- clarified what "never delegated"/"CODX proposes, never applies" actually means, before assigning Task 3
+
+Committed A1 (`cc56ac9`). Before assigning CODX its Task 3 (propose an
+A2 implementation), the repo owner asked directly: since CODX runs from
+its own isolated, no-push, no-hosted-write clone, isn't there room for
+it to actually implement and run a proposed scoring-engine change
+locally (uncommitted) rather than only hand-writing an unrun diff --
+test it there, then decide whether to land it for real afterward?
+
+Confirmed yes, this doesn't relax anything: CLAUDE.md's "CODX
+proposes, doesn't apply itself" language and the destructive-action
+gate are both specifically about landing something in the SHARED repo
+or HOSTED database (a commit, a push, a hosted write) -- neither says
+anything about running code locally in its own uncommitted clone. The
+gate's own text already says read-only research and "proposing
+changes (in a report, a diff, ...)" need no approval at all; editing
+`scripts/recommend.py` in its own clone to prototype an extraction and
+running `scripts/scoring_tests.py` against it via its already-approved
+read-only role is exactly that category of work, not a hosted write or
+a commit/push. The actual thing "never delegated" protects is the
+DESIGN judgment (what the change should be) and the final landing
+decision, both of which stay with CLDO -- CODX implementing and
+validating a CLDO-specified design in its own sandbox is executing a
+proposal, not bypassing that. Added this clarification directly to
+`CLAUDE.md`'s CODX section so it doesn't need re-litigating.
+
+CODX's Task 3: propose a concrete A2 implementation (the shared
+lower-level factor evaluator both `score_book()`/`explain_book()`
+should consume, per the recursion-avoiding boundary already decided)
+by actually building and testing it in its own clone -- see the
+instructions handed to the repo owner to paste to CODX.
