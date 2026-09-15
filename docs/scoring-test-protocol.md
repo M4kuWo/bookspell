@@ -2660,3 +2660,86 @@ on the one rater with enough affected data to matter. Worth a full
 scorecard pass once/if `romance_tone`/`worldbuilding_delivery` coverage
 or confidence-floor incidence grows enough to plausibly flip a
 validated field for someone.
+
+## A1 kickoff: 4 confidence-floor bugs made permanent regressions, tie-order determinism, benchmark format_preference fix -- LANDED (2026-09-15)
+
+First real implementation against the Phase A/B refactor plan, following
+CLDO's independent verification of CODX's Task 2 structural audit (see
+`docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md` and the
+same date's project-log entries) and 7 decisions recorded there. Three
+behavior-preserving-except-display-order changes, all re-run against
+the real canonical suite before/after (twice each, diffed byte-for-byte
+where determinism was the point) rather than trusted on inspection alone:
+
+**1. The 4 confidence-floor bugs CODX's Task 1 found and CLDO fixed
+2026-09-14 (see that date's entry above) were previously verified by
+hand and described in prose only -- nothing would have caught a
+regression if the same bug class reappeared.** Added
+`run_confidence_floor_regression_tests()` (Scenario 14) to
+`scripts/scoring_tests.py`: synthetic-fixture regression checks for
+`_audit_attribute_ordinal()`'s neutral-rating ZeroDivisionError,
+`_nominal_field_separation()`/`_trope_separation()`'s confidence-gate
+exclusion, `compute_series_dna()`'s confidence-zeroed-endpoint
+exclusion, and an AST scan (reusing CODX's own working check) asserting
+the 4 dormant experimental profile builders still have zero live
+callers. All 6 pass against current code.
+
+**2. Tie-order nondeterminism (CODX F10) -- fixed, not just
+characterized.** `explain_book()`'s and `score_book()`'s `sorted()`/
+`.sort()` calls only keyed on `-magnitude`; ties (genuinely common,
+since `book_tropes = set(...)` feeding them inherits Python's
+per-process string-hash-randomized iteration order) broke differently
+across runs -- CODX's own two canonical-suite runs actually differed on
+Golden Son's flag ordering. Added a secondary sort key (field/trope
+name, alphabetical) to both. Verified: ran the full suite twice before
+the fix (would have needed many runs to reliably catch a diff -- ties
+don't always land on a printed row) and twice after; `diff`'d output
+was byte-identical after the fix. Scores and ranks are provably
+unaffected -- the key change only reorders entries that were already
+exactly tied on magnitude. `score_book_per_value`'s equivalent sort
+(the dormant experimental fork) was deliberately left untouched, per
+F9's "don't touch dormant experiments in this batch."
+
+**3. Benchmark ignored raters' real `format_preference` (CODX F3) --
+fixed.** `load_rater()` in `scoring_tests.py` only ever returned the
+`ratings` dict, dropping `_meta` (and therefore
+`format_preference`) entirely -- every existing scenario silently
+benchmarked the print-profile shape (excludes `audiobook_length`, keeps
+`book_length`) even for Mathias, whose real `_meta.format_preference`
+is `audiobook` (the mirror image). Added `load_rater_format_preference()`
+and a `format_preference` param on `run_held_out_test()` (passed
+through to `R._resolve_profile()`, default `None` -- byte-identical to
+every existing caller). Added Scenario 1b, a new explicitly-named
+`held-out, format_preference=audiobook` run alongside (not replacing)
+Scenario 1's existing print-default baseline. Confirmed this is a real,
+non-trivial difference, not a no-op: same 8/11 held-out accuracy, but
+"Interview with the Vampire" flips from Good match to Mixed match
+between the two profiles -- genuinely different math, not just a
+relabeled identical run. The existing benchmark scorecard's own quality
+targets are untouched; this is a new, separate diagnostic.
+
+**Also fixed, per F5 (exit 0 wasn't a real test gate)**: `run_all()`
+discarded `run_user_rules_tests()`'s returned failure list entirely --
+a genuine correctness assertion failure there would have printed a
+`** N FAILURE(S)` line but still exited 0. Now `run_all()` collects
+`run_user_rules_tests()`'s and the new Scenario 14's failures and calls
+`sys.exit(1)` if either is non-empty, verified directly (a synthetic
+non-empty failure list does exit 1). Deliberately scoped narrowly: the
+accuracy scorecard's unmet quality targets (Osnat/Gabriel's known-below-
+target metrics, etc.) do NOT gate exit status -- those are aspirational
+benchmarks, not correctness assertions, per the report's own
+"characterization checks, not turning every quality target into a
+failing test" framing.
+
+**Decided but NOT YET implemented (belongs to A2/A3/A4, not A1)**: per
+CODX F1, the recommendation card's match label should describe
+`recommend()`'s actual ranked score (which includes the cold-start
+blend and user rules), not `explain_match()`'s narrower base+veto+
+trajectory-only score as today -- a cold-start book can currently score
+1.0 for ranking while `explain_match()` calls the identical book a "Poor
+match" (0.0), a real, reproduced divergence. This requires the shared
+result/view contract A2 is supposed to build, so it waits for that
+work, not implemented today. See
+`docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md` section
+8 for the full decision list; all 7 are now resolved (recorded there
+and in `docs/TODO.md`'s CODX entry).

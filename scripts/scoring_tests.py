@@ -16,6 +16,8 @@ import os
 import json
 import random
 import statistics
+import ast
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 import recommend as R
@@ -34,6 +36,18 @@ def load_rater(name):
     path = os.path.join(DATA_DIR, f"{name}.json")
     with open(path) as f:
         return json.load(f)["ratings"]
+
+
+def load_rater_format_preference(name):
+    """A rater's _meta.format_preference (2026-09-15, added per CODX's
+    structural-audit F3) -- load_rater() above deliberately keeps
+    returning just the ratings dict for every existing caller, so this
+    is a separate accessor rather than a load_rater() signature change.
+    Returns None (== 'print' semantics) if _meta or the field is
+    missing, matching build_profile()'s own default."""
+    path = os.path.join(DATA_DIR, f"{name}.json")
+    with open(path) as f:
+        return json.load(f).get("_meta", {}).get("format_preference")
 
 
 # --- Scenario 1: the repo owner's real ratings, combined across both
@@ -263,7 +277,8 @@ def verdict(true_label, predicted_label):
     return "OK" if predicted_label == "Mixed match" else "SOFT-MISS"
 
 
-def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_ratings=None, summary=True):
+def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_ratings=None, summary=True,
+                       format_preference=None):
     """Trains on all_ratings minus held_out (or on train_ratings directly,
     if given -- for a fixed smaller training set like SPARSE_RATINGS,
     where all_ratings is only used to look up held-out titles' true
@@ -272,6 +287,18 @@ def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_
     summary=False also suppresses the trailing "N/M correct" line, for
     callers (e.g. build_scorecard) collecting rows into their own report
     rather than printing this test's output directly.
+
+    format_preference (2026-09-15, added per CODX's structural-audit F3):
+    passed straight through to R._resolve_profile()/build_profile(),
+    default None ('print' semantics) -- matches every existing caller's
+    behavior unchanged. Before this parameter existed, EVERY scenario in
+    this file silently benchmarked the print-profile shape regardless of
+    a rater's real data/ratings/{name}.json _meta.format_preference (see
+    load_rater_meta() below), which is wrong for any audiobook/mixed
+    rater: it's testing a profile production never actually serves them.
+    See docs/scoring-test-protocol.md's 2026-09-15 entry for the
+    reproduction and why the existing default-print scenarios are kept
+    as their own named baseline rather than silently changed.
 
     Uses R.user_calibrated_poor_threshold() (2026-09-02 landed fix) for
     the Poor/Mixed boundary rather than the flat 0.35 default -- this is
@@ -284,7 +311,7 @@ def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_
     train = train_ratings if train_ratings is not None else {
         t: r for t, r in all_ratings.items() if t not in held_out
     }
-    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
+    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train, format_preference=format_preference)
     field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
     poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
                                                        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
@@ -1011,11 +1038,141 @@ def run_user_rules_tests(catalog):
     return failures
 
 
+# Names of the dormant experimental profile/scoring builders CODX's
+# 2026-09-15 structural audit (F9) confirmed have zero live callers in
+# scripts/, api/, or tools/. Kept as data here (not just prose) so the
+# check below can assert this stays true rather than silently drifting
+# if one is ever wired in without updating this list.
+EXPERIMENTAL_ENTRY_POINTS = {
+    "build_profile_trope_shrinkage", "build_profile_trope_backoff",
+    "build_profile_series_field_dedup", "build_profile_series_field_dedup_protected",
+    "build_profile_per_value", "score_book_per_value", "explain_book_per_value",
+    "build_prevalence_lookup_grouped", "_apply_dealbreaker_veto_graduated",
+}
+
+
+def run_confidence_floor_regression_tests():
+    """Characterization/regression checks (2026-09-15, CODX structural-
+    audit A1) for the 4 confidence-floor bugs CODX's first review found
+    and CLDO fixed 2026-09-14 -- see docs/scoring-test-protocol.md's
+    "4 real bugs found by CODX's first review session" entry. These were
+    previously verified by hand (synthetic reproductions run once, then
+    described in prose) but never converted into a permanent executable
+    check, so a future edit near any of these 4 functions could silently
+    reintroduce the exact same bug class with nothing here to catch it.
+    Pure synthetic fixtures -- no catalog/database needed. Asserts and
+    fails loud, same style as run_user_rules_tests() above."""
+    failures = []
+
+    def check(label, condition):
+        status = "OK" if condition else "FAIL"
+        if not condition:
+            failures.append(label)
+        print(f"  {label}: {status}")
+
+    # --- Bug 1: _audit_attribute_ordinal() ZeroDivisionError on a
+    # neutral-only ("it_was_okay", magnitude 0) rating. ---
+    catalog = {"n": {"id": "n", "title": "Neutral Book", "overall_pace": "medium"}}
+    try:
+        result = R._audit_attribute_ordinal(catalog, {"n": 0}, "overall_pace")
+        check("audit_attribute_ordinal: neutral-only evidence doesn't crash", True)
+        check("audit_attribute_ordinal: neutral rating excluded from both sides",
+              result == {"liked": None, "disliked": None})
+    except ZeroDivisionError:
+        check("audit_attribute_ordinal: neutral-only evidence doesn't crash", False)
+
+    # --- Bug 2: _nominal_field_separation()/_trope_separation() ignored
+    # scoring_confidence() -- a confidence-zeroed (< MIN_CONFIDENCE_TO_COUNT)
+    # tag could still satisfy the sample-size gate. Reproduction: 1 real
+    # (confidence 1.0) + 2 confidence-zeroed (0.2) observations per side --
+    # MIN_DEALBREAKER_SAMPLE (3) is only met if the zeroed ones wrongly count. ---
+    def nominal_book(bid, value, confidence):
+        return {"id": bid, "romance_tone": value, "_field_confidence": {"romance_tone": confidence}}
+
+    nominal_catalog = {
+        "l1": nominal_book("l1", "understated_romance", 1.0),
+        "l2": nominal_book("l2", "understated_romance", 0.2),
+        "l3": nominal_book("l3", "understated_romance", 0.2),
+        "d1": nominal_book("d1", "melodramatic_romance_subplot", 1.0),
+        "d2": nominal_book("d2", "melodramatic_romance_subplot", 0.2),
+        "d3": nominal_book("d3", "melodramatic_romance_subplot", 0.2),
+    }
+    nominal_mags = {"l1": 1, "l2": 1, "l3": 1, "d1": -1, "d2": -1, "d3": -1}
+    check("nominal_field_separation: confidence-zeroed tags don't satisfy the sample gate",
+          R._nominal_field_separation(nominal_catalog, nominal_mags, "romance_tone") is None)
+
+    def trope_book(bid, has_trope, confidence):
+        b = {"id": bid, "tropes": (["found_family"] if has_trope else [])}
+        if has_trope:
+            b["_trope_confidence"] = {"found_family": confidence}
+        return b
+
+    trope_catalog = {
+        "l1": trope_book("l1", True, 1.0),
+        "l2": trope_book("l2", True, 0.2),
+        "l3": trope_book("l3", True, 0.2),
+        "d1": trope_book("d1", False, 1.0),
+        "d2": trope_book("d2", False, 1.0),
+        "d3": trope_book("d3", False, 1.0),
+    }
+    trope_mags = {"l1": 1, "l2": 1, "l3": 1, "d1": -1, "d2": -1, "d3": -1}
+    check("trope_separation: confidence-zeroed hits don't count as evidence either way",
+          R._trope_separation(trope_catalog, trope_mags, "found_family") is None)
+
+    # --- Bug 3: compute_series_dna() let a confidence-zeroed endpoint
+    # tag anchor a trajectory. 2-book series, book 2's romance_tone at
+    # confidence 0.2 -- fixed code should build no romance_tone
+    # trajectory at all (only 1 valid entry, below the 2-entry minimum). ---
+    series_catalog = {
+        "s1": {"id": "s1", "title": "Series Book 1", "series_id": "ser", "series_name": "Ser",
+               "position_in_series": "1", "romance_tone": "understated_romance"},
+        "s2": {"id": "s2", "title": "Series Book 2", "series_id": "ser", "series_name": "Ser",
+               "position_in_series": "2", "romance_tone": "melodramatic_romance_subplot",
+               "_field_confidence": {"romance_tone": 0.2}},
+    }
+    dna = R.compute_series_dna(series_catalog)
+    check("compute_series_dna: confidence-zeroed endpoint excluded from trajectory",
+          "romance_tone" not in dna.get("ser", {}).get("trajectories", {}))
+
+    # --- Bug 4: the 4 experimental profile-builder forks had the
+    # pre-2026-09-11 NOMINAL_FIELDS bug (crashed when one side's evidence
+    # was entirely zero-weight). Confirms they're still dormant (F9) --
+    # if one of these names ever gains a live caller, this both flags
+    # that EXPERIMENTAL_ENTRY_POINTS needs updating and that the caller
+    # should confirm the 2026-09-14 fix was actually applied there. ---
+    refs = []
+    for folder in ["scripts", "api", "tools"]:
+        folder_path = Path(os.path.dirname(__file__), "..", folder)
+        if not folder_path.exists():
+            continue
+        for p in folder_path.rglob("*.py"):
+            try:
+                tree = ast.parse(p.read_text())
+            except (SyntaxError, UnicodeError):
+                continue
+            for node in ast.walk(tree):
+                name = node.id if isinstance(node, ast.Name) else node.attr if isinstance(node, ast.Attribute) else None
+                if name in EXPERIMENTAL_ENTRY_POINTS:
+                    refs.append((str(p), node.lineno, name))
+    check("experimental profile/scoring builders remain uncalled outside their own definitions", refs == [])
+
+    if failures:
+        print(f"  ** {len(failures)} FAILURE(S): {failures}")
+    else:
+        print("  All confidence-floor regression checks passed.")
+    return failures
+
+
 def run_all():
     catalog = R.load_catalog()
 
     print("=== Scenario 1: real-rater held-out validation ===")
     run_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, "held-out")
+
+    print("\n=== Scenario 1b: real-rater held-out validation, REAL format_preference (2026-09-15, F3 fix) ===")
+    mathias_format_preference = load_rater_format_preference("mathias")
+    run_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, f"held-out, format_preference={mathias_format_preference}",
+                       format_preference=mathias_format_preference)
 
     print("\n=== Scenario 2: WEIGHT_CAP domination check ===")
     run_weight_cap_check(catalog, "current formula")
@@ -1072,7 +1229,24 @@ def run_all():
     run_contrastive_pairs_diagnostic(catalog, GABRIEL_RATINGS, "Gabriel")
 
     print("\n=== Scenario 13: user-adjustable rules (none of X / less of X) ===")
-    run_user_rules_tests(catalog)
+    rule_failures = run_user_rules_tests(catalog)
+
+    print("\n=== Scenario 14: confidence-floor regression checks (CODX Task 1/2 findings, 2026-09-14/15) ===")
+    regression_failures = run_confidence_floor_regression_tests()
+
+    # 2026-09-15 fix (CODX structural-audit F5): these two scenarios are
+    # hard correctness assertions, not aspirational quality targets like
+    # the accuracy scorecard above -- a real failure here means a genuine
+    # bug, not "below target for now". Previously their return values
+    # were silently discarded and a clean exit code couldn't be trusted
+    # to mean these actually passed. The scorecard's own unmet quality
+    # targets deliberately do NOT gate exit status here -- those are
+    # printed as their own "(target X%)" annotations above, a separate,
+    # ongoing concern from a genuine correctness regression.
+    hard_failures = rule_failures + regression_failures
+    if hard_failures:
+        print(f"\n*** {len(hard_failures)} CORRECTNESS FAILURE(S), exiting non-zero: {hard_failures}")
+        sys.exit(1)
 
 
 # --- Learning curve: does accuracy actually improve with more ratings? --

@@ -2106,7 +2106,9 @@ def score_book(book, centroid, weights, field_prevalence=None, trope_prevalence=
                 contributions.append((f"trope:{t}", round(w_eff, 3)))
 
     normalized = score / total_weight if total_weight > 0 else 0.0
-    contributions.sort(key=lambda x: -abs(x[1]))
+    # Secondary sort key (field/trope name) for the same reason explain_book()
+    # needs one -- see its own comment above the equivalent sort.
+    contributions.sort(key=lambda x: (-abs(x[1]), x[0]))
     return normalized, contributions[:5]
 
 
@@ -2182,8 +2184,14 @@ def explain_book(book, centroid, weights, top_n=5, field_prevalence=None, trope_
             w *= max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence)
         (matches if w >= 0 else mismatches).append((f"trope:{t}", abs(w)))
 
-    matches = sorted((m for m in matches if m[1] > 0.1), key=lambda x: -x[1])
-    mismatches = sorted((m for m in mismatches if m[1] > 0.1), key=lambda x: -x[1])
+    # Secondary sort key (field/trope name) makes tie order deterministic --
+    # without it, ties depend on set()/dict iteration order upstream (see
+    # `book_tropes = set(...)` above), which CODX's 2026-09-15 structural
+    # audit (F10) caught actually flipping between two identical runs.
+    # Scores/ranks are unaffected either way; only the DISPLAY order of
+    # equal-magnitude matches/mismatches is now stable.
+    matches = sorted((m for m in matches if m[1] > 0.1), key=lambda x: (-x[1], x[0]))
+    mismatches = sorted((m for m in mismatches if m[1] > 0.1), key=lambda x: (-x[1], x[0]))
     return matches[:top_n], mismatches[:top_n]
 
 

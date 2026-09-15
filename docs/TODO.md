@@ -639,22 +639,48 @@ worth deferring to a later session rather than batching in for
   **Task 2 (2026-09-15)**: the GPT/Astra-review-prompted structural
   audit of `recommend.py` (Phase 1 audit / Phase 2 baseline via the new
   read-only role / Phase 3 propose-max-3, feeding into this file's own
-  Phase A/B refactor plan above) — **run, but NOT YET REVIEWED by
-  CLDO**, blocked by a real filesystem-access issue (see the
-  2026-09-15 project-log entries): CLDO's shell lost the ability to
-  read `~/Documents/bookspell-codex` at all mid-session (Finder and a
-  sibling directory both unaffected — looks like a stuck macOS TCC
-  grant specific to CLDO's own process; the repo owner confirmed both
-  relevant toggles in System Settings are already ON, and access was
-  still blocked after that check and a retry — a fresh terminal/
-  session is the next thing to try, not yet confirmed to fix it).
-  **Next session: retry reading
-  `~/Documents/bookspell-codex/docs/codx-reports/` (or wherever CODX
-  actually left its Task 2 report — check both the new convention's
-  path and the repo root, since the convention was formalized only
-  after this task started) as the first thing to check** — if access
-  works again, review Task 2's findings the same way Task 1's were
-  verified before acting on any of them.
+  Phase A/B refactor plan above) — **REVIEWED and independently
+  verified by CLDO, 2026-09-15**. The filesystem-access issue resolved
+  itself (repo owner toggled Documents access off/on in System
+  Settings); once access worked, CODX's Task 2 findings turned out to
+  have never been written to a file at all (only relayed in its own
+  chat), so CODX was asked to reconstruct them into a real report
+  under the new `docs/codx-reports/` convention before review could
+  happen — see
+  `docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md`
+  (Task 2 handoff gap) and the same date's project-log entries for
+  that sequence. CLDO then independently re-ran every one of CODX's
+  Appendix B reproduction commands directly against this repo's own
+  `scripts/recommend.py`/`scripts/scoring_tests.py` (not just trusted
+  the report's pasted output) and confirmed all 10 findings (F1–F10)
+  reproduce exactly: ranking/explanation score divergence, the
+  explain_book recursion risk, dropped format_preference in tests,
+  stale per-catalog caches, the audit-attribution confidence-floor
+  gap, file/function size counts, duplicate magnitude-floor literals,
+  zero live references to the dormant experimental builders, and the
+  set()-driven tie-order nondeterminism. The verified report is now
+  the permanent record at
+  `docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md`.
+  **All 7 decisions resolved and A1 landed, 2026-09-15** (same day) —
+  see `docs/scoring-test-protocol.md`'s "A1 kickoff" entry for the full
+  writeup. Landed: the 4 confidence-floor bugs from Task 1 are now
+  permanent regression checks (`scoring_tests.py` Scenario 14, not just
+  prose); tie-order nondeterminism (F10) is actually fixed via a
+  deterministic secondary sort key in `explain_book()`/`score_book()`,
+  verified byte-identical across two full-suite runs; the benchmark now
+  has an explicitly-named `format_preference`-aware scenario (Scenario
+  1b) alongside the existing print-default baseline (F3); and
+  `run_all()` now exits non-zero on a genuine correctness-test failure
+  instead of silently discarding it (F5), scoped narrowly so the
+  scorecard's own aspirational quality targets still don't gate exit
+  status. **Decided but deliberately NOT YET implemented** (needs A2's
+  shared result/view contract first): the recommendation card's match
+  label should eventually describe `recommend()`'s actual ranked score
+  (including cold-start blend + user rules), not `explain_match()`'s
+  narrower score as today (F1) — this is A2/A3/A4 work, not A1.
+  **Next real step here: A2** (extract the shared lower-level factor
+  evaluator both `score_book()`/`explain_book()` consume, per the
+  decided recursion-avoiding boundary) — not Phase B file movement.
 
   Old note, superseded by the above but kept for history: **Not done
   yet, and not part of "setup" — actually running Codex

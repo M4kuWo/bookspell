@@ -15976,3 +15976,102 @@ before acting on any of it, same discipline as always. Everything else
 from this session is either fully landed and verified, or already
 captured as a properly scoped, prioritized `docs/TODO.md` item with no
 information only living in this conversation's own history.
+
+## 2026-09-15 (new session) -- filesystem-access issue resolved; CODX's Task 2 report reconstructed and independently verified
+
+The repo owner toggled Documents-folder access for Claude off and back
+on in System Settings. Re-tested immediately: `ls`/`cat`/`git status`
+against `~/Documents/bookspell-codex` all worked normally, including a
+real `git log`/`git status` in that clone. This resolves the prior
+session's open filesystem-access thread -- no further TCC workaround
+needed, at least for this session's process.
+
+With access restored, went to read CODX's Task 2 report and found
+`docs/codx-reports/` didn't exist in the clone at all -- Task 2's
+structural-refactor-audit findings had only ever been relayed in
+CODX's own chat, never written to a file, because the report-file
+convention was formalized (see prior entry) only after Task 2 already
+finished. Prompted CODX to (1) re-sync and re-read the updated
+`AGENTS.md`, and (2) reconstruct its Task 2 findings from that same
+conversation into a real file at
+`docs/codx-reports/2026-09-15-recommend-refactor-audit.md`, explicitly
+instructed to write full reasoning and exact command output rather
+than a compressed summary, and to touch nothing else (no engine edits,
+no commits, no pushes). It also used the newly-approved
+`git pull --ff-only` auto-approval correctly to sync the clone first.
+
+CODX delivered a genuinely thorough ~1300-line report: a full call-site
+inventory of every scoring path in `recommend.py` with stage-order
+tables, ten numbered findings (F1-F10, ranging from ranking/explanation
+score divergence to tie-order nondeterminism from Python `set()`
+iteration), a Phase 2 canonical-suite baseline run twice for
+reproducibility (honestly reporting a real two-line non-determinism
+between the runs rather than claiming false byte-identity), a
+"considered but rejected" section, and 7 explicit decisions left for
+CLDO/the repo owner rather than CODX deciding them itself.
+
+**Independently verified rather than trusting the report at face
+value, same discipline as Task 1's bugs**: re-ran every one of CODX's
+own Appendix B reproduction snippets directly against this repo's own
+`scripts/recommend.py`/`scripts/scoring_tests.py` at the same commit
+(`8ee6740`), not just read its pasted output. All 10 findings
+reproduced exactly, including the file/function line counts (3,895
+lines/66 functions in `recommend.py`), the cold-start
+score-vs-explanation divergence (1.0 vs. 0.0/"Poor match" for the same
+book), the stale-cache reproduction, the audit-attribution
+confidence-floor gap, and the AST scan confirming zero live references
+to the dormant experimental scoring variants. A genuinely solid,
+accurate second outing for CODX -- nothing checked out false or
+embellished.
+
+Copied the verified report to
+`docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md` as the
+permanent record (same pattern as Task 1) and updated `docs/TODO.md`'s
+CODX entry to reflect the review is done. **Not yet done: acting on
+any of it** -- the report's own first proposed batch is only A1
+(characterization checks) and A2 (shared base-factor extraction), and
+7 decisions (e.g. what score the recommendation card's label should
+describe, whether evaluation should honor rater `format_preference`,
+how tied explanation ordering should be handled) need an answer from
+CLDO/the repo owner before that work starts.
+
+## 2026-09-15 (same session, continued) -- all 7 decisions made, A1 landed
+
+Went through the report's 7 explicit decisions with the repo owner.
+Four were CLDO's own engineering calls (the shared-factor extraction
+boundary, avoiding the explain_book/veto/trajectory recursion; the
+deterministic tie-break fix; sourcing audit evidence from the same
+confidence-filtered evidence the profile actually used; already-done
+verification). Two were genuine product/methodology calls put to the
+repo owner directly: the recommendation card's match label should
+eventually describe `recommend()`'s actual ranked score rather than
+`explain_match()`'s narrower one (F1), and the canonical benchmark
+should be fixed to honor a rater's real `format_preference` rather than
+silently testing print-profile semantics for an audiobook listener
+(F3) -- both decided "yes, do it" by the repo owner. The label-semantics
+decision needs A2's shared result contract first, so it's recorded but
+not yet implemented.
+
+Implemented A1 for real (not just documentation) in
+`scripts/recommend.py`/`scripts/scoring_tests.py` -- see
+`docs/scoring-test-protocol.md`'s "A1 kickoff" entry for the complete
+writeup, not re-summarized here to avoid drift between two versions of
+the same description. Short version: the 4 confidence-floor bugs from
+Task 1 are now permanent executable regression checks instead of prose
+only; the tie-order nondeterminism CODX's two suite runs actually
+exposed (a real, different Golden Son flag ordering between its two
+runs) is fixed via a deterministic secondary sort key in
+`explain_book()`/`score_book()` -- didn't re-reproduce the pre-fix
+nondeterminism independently (CODX's own two runs already demonstrated
+it), but ran the suite twice AFTER the fix and confirmed the output is
+now byte-identical; the benchmark now has an explicitly-named
+format-aware scenario alongside the existing baseline; and a real
+correctness-test failure now exits non-zero instead of being silently
+swallowed, scoped to not touch the scorecard's own aspirational quality
+targets. Full suite re-run to completion afterward: exit 0, all
+scenarios (including the 2 new ones) pass, two consecutive runs
+byte-identical.
+
+Updated `docs/TODO.md`'s CODX entry to reflect all 7 decisions resolved
+and A1 landed; next real step is A2 (the shared base-factor
+extraction), not Phase B file movement.
