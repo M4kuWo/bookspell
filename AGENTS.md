@@ -197,8 +197,43 @@ limitation for good.
 
 ## Handing off your work — there's no live channel, same as CLDA/CLDO
 
-You can't push, so your output needs to actually reach someone. Three
-ways, in order of convenience:
+### Every task ends with a written report — mandatory, predictable location (added 2026-09-15)
+
+Whatever you were asked to do — a review, an audit, a bug hunt, running
+a test suite — **write your full findings/output to a file before you
+consider the task done**, even if you also print a summary in your own
+terminal. Don't rely on the repo owner scrolling back through your
+terminal output or screenshotting it for CLDO — that's slow and lossy
+(a long report doesn't fit one screenshot; a screenshot can't be
+grepped, quoted precisely, or diffed against later).
+
+- **Path**: `docs/codx-reports/<YYYY-MM-DD>-<short-slug>.md` in your
+  own clone (e.g. `docs/codx-reports/2026-09-15-recommend-refactor-audit.md`)
+  — a dedicated directory so these don't get lost among other docs, and
+  distinct on purpose from `docs/codx-reviews/` (in the MAIN repo,
+  singular, committed) — that one is the *permanent* record CLDO copies
+  a report into once it's been read and verified, same pattern as your
+  first review. `docs/codx-reports/` in your own clone is just your own
+  working output, uncommitted, before that review happens.
+- **Content**: the same thing you'd otherwise only say in chat — full
+  reasoning, every finding, exact commands run and their real output,
+  anything flagged for a decision. Write it as if CLDO is reading it
+  cold, not as a compressed summary assuming they watched you work.
+- **Say the exact file path in your final terminal message too**, so
+  it's easy to point at even without opening it directly.
+- This is what makes CLDO's usual verification path direct: reading the
+  file straight from your clone (same machine, same disk) instead of
+  the repo owner needing to paste your output by hand into a Claude
+  Code session. If CLDO reports it can't access your clone's files (a
+  real filesystem-permission issue hit once already, 2026-09-15,
+  root cause still not fully pinned down) that's a separate problem to
+  flag to the repo owner — write the report regardless; it'll be
+  readable once that's sorted out, and pasting it becomes the fallback,
+  not the default.
+
+You can't push, so anything beyond a report (a real diff to merge, a
+destructive-action approval) still needs one of these three ways, in
+order of convenience:
 
 1. **The repo owner adds your clone as a local git remote** from his
    own `~/Documents/bookspell` and fetches your branch (`git remote add

@@ -15885,3 +15885,51 @@ With this in place, the GPT-drafted audit prompt (adjusted to point at
 this project's actual conventions, prior findings, and the Phase A/B
 refactor plan already in `docs/TODO.md`) was handed to CODX for its
 next task.
+
+## 2026-09-15 (later) -- formalized a standard report-file convention for CODX; a real filesystem-access issue surfaced and flagged (not yet resolved)
+
+After CODX's second task (the recommend.py refactor audit, prompted the
+same day) finished, the repo owner asked for a real workflow
+improvement: CODX logging its progress to a file CLDO can read
+directly, rather than the repo owner pasting terminal output/
+screenshots by hand every time -- something that had worked once
+already (CODX's first review) but wasn't yet a standing rule. Formalized
+it in `AGENTS.md`'s "Handing off your work" section: every CODX task
+now ends with a written report at `docs/codx-reports/<date>-<slug>.md`
+in its own clone (uncommitted, CLDO's working copy once reviewed goes
+into the already-established `docs/codx-reviews/` in the main repo),
+full reasoning and real command output, not a compressed summary.
+
+**While setting this up, tried to read CODX's actual second-task output
+and hit a real, still-unresolved filesystem issue**: CLDO's shell can no
+longer access `~/Documents/bookspell-codex` at all -- `ls`/`cat`/`find`/
+`xattr` all fail with "Operation not permitted," even for a specific
+known file path, even though `stat` on the directory itself still
+succeeds (normal-looking `drwxr-xr-x` ownership) and Finder opens the
+same folder with no issue at all (confirmed by the repo owner). Also
+observed, intermittently: plain `ls ~/Documents/` (the parent folder
+itself) sometimes fails the same way, while `~/Documents/bookspell` (a
+sibling directory) is completely unaffected the whole time -- reads and
+writes there kept working normally throughout.
+
+This points at a macOS TCC (privacy permission) issue specific to
+whatever app identity backs CLDO's shell process, not a real POSIX
+permissions problem and not a `bookspell-codex`-specific corruption
+(Finder, a different app identity, reads it fine). The repo owner
+checked System Settings -> Privacy & Security -> Files and Folders and
+found two separate Claude-related entries: a lowercase "claude" (generic
+icon, likely the actual CLI process identity) shown collapsed/unclear in
+the screenshot, and a capitalized "Claude" (the desktop app, distinct
+icon) with Documents Folder access already ON. **Not yet resolved** --
+the working theory is that the lowercase "claude" entry's grant is
+either off or was invalidated mid-session (a known TCC behavior when a
+granting app's binary/signature changes, e.g. from a CLI update), but
+this hasn't been confirmed. Re-tested access twice during this session,
+both times still blocked, so it's a persistent state, not a transient
+glitch. Next step is on the repo owner's side (expand/toggle the
+"claude" entry's Documents Folder permission) since GUI Privacy settings
+aren't something CLDO can act on directly.
+
+CODX's second-task report has not yet been read as a result -- the repo
+owner will paste it directly in the meantime per the new convention's
+own documented fallback.
