@@ -255,18 +255,22 @@ def _full_score(catalog, id_to_magnitude, validated_fields, centroid, weights, b
     Found a real regression in the author-isolated scenario, traced to
     a genuine conceptual flaw (population-level field correlation
     doesn't imply a specific candidate's simultaneous match on both is
-    redundant evidence) rather than a parameter to retune -- removed."""
+    redundant evidence) rather than a parameter to retune -- removed.
+
+    A5 (2026-09-16): delegate this same stage sequence to score_candidate()
+    with policy="evaluation"; retain the caches and bare-float contract."""
     global _SERIES_DNA_CACHE
     if _SERIES_DNA_CACHE is None:
         _SERIES_DNA_CACHE = R.compute_series_dna(catalog)
     field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
-    score, _ = R.score_book(book, centroid, weights, field_prevalence, trope_prevalence)
-    score = R._apply_series_repeat(catalog, id_to_magnitude, book, score)
-    score = R._apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, score,
-                                       field_prevalence, trope_prevalence)
-    score = R._apply_series_trajectory_penalty(_SERIES_DNA_CACHE, book, centroid, weights, score,
-                                                field_prevalence, trope_prevalence)
-    return score
+    result = R.score_candidate(
+        catalog, book["id"], centroid, weights, id_to_magnitude,
+        policy="evaluation", validated_fields=validated_fields,
+        series_dna=_SERIES_DNA_CACHE, field_prevalence=field_prevalence,
+        trope_prevalence=trope_prevalence,
+        poor_threshold=0.0,  # Placeholder: only affects the discarded match label.
+    )
+    return result["scores"]["final"]
 
 
 def verdict(true_label, predicted_label):

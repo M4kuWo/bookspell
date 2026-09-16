@@ -3263,8 +3263,9 @@ def score_candidate(catalog, book_id, centroid, weights, id_to_magnitude, *,
                     diversity=0.0, normalized_rules=None, top_n=None):
     """Assemble an explicit score result. `recommend()` consumes this via
     policy="ranking" (A3, 2026-09-16); `explain_match()` via
-    policy="explanation" (A4, 2026-09-16); `audit_book_score()`/
-    `scoring_tests._full_score()` are not migrated yet.
+    policy="explanation" (A4, 2026-09-16); `scoring_tests._full_score()`
+    via policy="evaluation" (A5, 2026-09-16); `audit_book_score()` is
+    not migrated yet.
 
     Prepared inputs belong to ONE caller-owned catalog/profile context:
     _resolve_profile() supplies centroid/weights/id_to_magnitude/matches_genre;

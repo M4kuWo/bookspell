@@ -757,11 +757,40 @@ worth deferring to a later session rather than batching in for
   "A4: `explain_match()` migrated onto `score_candidate()`" entry and
   `docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md`.
 
-  **Next real step here: A5** (migrate `scripts/scoring_tests.py`'s
-  `_full_score()`, and any other test-side reimplementation, onto the
-  same canonical function — the single highest-value step for
-  preventing test/production drift, per the plan) — not Phase B file
-  movement.
+  **A5 LANDED, 2026-09-16** — CODX's Task 7: `scripts/scoring_tests.py`'s
+  `_full_score()` now delegates to `score_candidate(...,
+  policy="evaluation")`, returning only `result["scores"]["final"]`;
+  its six-argument signature, bare-float contract, module-level
+  caches, and all 6 call sites are unchanged, and `scripts/recommend.py`
+  is confirmed byte-identical (untouched). Unlike A4, the canonical
+  suite IS meaningful evidence here — CODX traced the AST call graph
+  confirming all 6 call sites reach `run_all()` — so it kept its own
+  supplementary harness small (12 targeted comparisons, including
+  ablated-weights cases) rather than rebuilding A4's large one.
+  Honestly measured and reported (not optimized) an accepted whole-suite
+  cost: a controlled before/after `run_all()` timing (same frozen
+  catalog, caches reset, 3 samples each) found the complete suite
+  **about 11.6% slower** with the migration, from the extra evidence
+  `score_candidate()` computes and `_full_score()` discards — the same
+  category of accepted tradeoff as A2/A3's per-call cost, just measured
+  at the whole-suite level since `_full_score()` is called so densely
+  across held-out/ablation/threshold-sweep/contrastive diagnostics.
+  Independently re-verified by CLDO (AST-diff confirms `_full_score` is
+  the only changed function; `recommend.py` confirmed byte-identical;
+  canonical suite byte-identical before/after against local Supabase,
+  genuinely meaningful this time). See `docs/scoring-test-protocol.md`'s
+  "A5: `_full_score()` migrated onto `score_candidate()`" entry and
+  `docs/codx-reviews/codx-a5-full-score-migration-proposal-2026-09-16.md`.
+
+  **Phase A is now functionally complete for every explicitly named
+  step (A1-A5).** `audit_book_score()` (`policy="audit"`) is the one
+  remaining production caller not yet migrated — not its own named
+  Phase A step, and lower priority since it's an internal/debug tool,
+  not a production scoring path (see its own module comment). Next
+  real step, when the repo owner is ready to schedule it: Phase B
+  (extracting into `scripts/scoring/` submodules) per the plan above —
+  or, first, deciding whether `audit_book_score()`'s migration is worth
+  a dedicated task before Phase B, given it's not production-critical.
 
   Old note, superseded by the above but kept for history: **Not done
   yet, and not part of "setup" — actually running Codex
