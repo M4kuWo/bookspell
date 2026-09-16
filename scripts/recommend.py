@@ -3261,7 +3261,9 @@ def score_candidate(catalog, book_id, centroid, weights, id_to_magnitude, *,
                     trope_prevalence, poor_threshold, cold_start=None,
                     matches_genre=None, discovery_only=False, recent_books=(),
                     diversity=0.0, normalized_rules=None, top_n=None):
-    """Assemble an explicit score result; existing callers are not migrated yet.
+    """Assemble an explicit score result. `recommend()` consumes this via
+    policy="ranking" (A3, 2026-09-16); `explain_match()`/`audit_book_score()`/
+    `scoring_tests._full_score()` are not migrated yet.
 
     Prepared inputs belong to ONE caller-owned catalog/profile context:
     _resolve_profile() supplies centroid/weights/id_to_magnitude/matches_genre;
@@ -3451,46 +3453,33 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     series_dna = compute_series_dna(catalog)
     normalized_rules = normalize_user_rules(user_rules)
     field_prevalence, trope_prevalence = build_prevalence_lookup(catalog, genre)
+    # Calibration is base-only and shared by every candidate in this call.
+    # Ranking still returns only scores/contributions, not match labels.
+    poor_threshold = user_calibrated_poor_threshold(
+        catalog, id_to_magnitude, centroid, weights,
+        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence
+    )
 
     diversity = max(0.0, min(diversity, MAX_DIVERSITY))
     recent_books = [
         catalog[title_to_id[t]] for t in (recent_history or []) if t in title_to_id
     ]
 
-    excluded = set(id_to_magnitude.keys())
-    known_series = {
-        s for bid in excluded if (s := catalog[bid].get("series_id")) is not None
-    }
-    known_authors = {catalog[bid]["author"] for bid in excluded}
     scored = []
     for bid, book in catalog.items():
-        if bid in excluded or not matches_genre(bid):
+        result = score_candidate(
+            catalog, bid, centroid, weights, id_to_magnitude,
+            policy="ranking", validated_fields=validated_fields,
+            series_dna=series_dna, field_prevalence=field_prevalence,
+            trope_prevalence=trope_prevalence, poor_threshold=poor_threshold,
+            cold_start=csw, matches_genre=matches_genre,
+            discovery_only=discovery_only, recent_books=recent_books,
+            diversity=diversity, normalized_rules=normalized_rules
+        )
+        if result["exclusions"] or result["excluded_by_user_rule"]:
             continue
-        if discovery_only and (
-            book.get("series_id") in known_series or book["author"] in known_authors
-        ):
-            continue
-        if not series_position_ready(catalog, id_to_magnitude, book):
-            continue
-        relevance, contributions = score_book(book, centroid, weights, field_prevalence, trope_prevalence)
-        relevance = _apply_series_repeat(catalog, id_to_magnitude, book, relevance)
-        relevance = _apply_dealbreaker_veto(catalog, id_to_magnitude, validated_fields, book, centroid, weights, relevance,
-                                             field_prevalence, trope_prevalence)
-        relevance = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, relevance,
-                                                      field_prevalence, trope_prevalence)
-        if diversity > 0 and recent_books:
-            novelty = 1 - max(book_similarity(book, h) for h in recent_books)
-            relevance = (1 - diversity) * relevance + diversity * novelty
-        if csw > 0:
-            demand = GENRE_ACCESSIBILITY_DEMAND.get(book.get("genre_accessibility"), 0.5)
-            accessibility = 1.0 - demand
-            final = (1 - csw) * relevance + csw * accessibility
-        else:
-            final = relevance
-        final, excluded_by_rule = apply_user_rules(book, final, normalized_rules)
-        if excluded_by_rule:
-            continue
-        scored.append((final, book["title"], book["author"], contributions))
+        scored.append((result["scores"]["final"], book["title"], book["author"],
+                       result["contributions"]))
 
     scored.sort(key=lambda x: -x[0])
     return scored[:top_n]

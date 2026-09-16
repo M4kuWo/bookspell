@@ -714,10 +714,29 @@ worth deferring to a later session rather than batching in for
   record at
   `docs/codx-reviews/codx-a2-canonical-scorer-proposal-2026-09-16.md`.
 
-  **Next real step here: A3** (migrate `recommend()`'s own loop to call
-  `score_candidate(..., policy="ranking")` instead of the stage calls it
-  makes today, full scorecard byte-identical check before moving on) —
-  not Phase B file movement.
+  **A3 LANDED, 2026-09-16** — CODX's Task 5: `recommend()`'s own loop
+  now calls `score_candidate(..., policy="ranking")` instead of
+  inlining the stage calls, mapping the result back to the exact same
+  `(final, title, author, contributions)` tuple it always returned.
+  Purely internal — no change to `recommend()`'s signature or return
+  shape. Validated bit-exact across 284 full-list cases (92,825
+  returned tuples, entire lists compared, not just top-N), a dedicated
+  tie-order proof, and the reused Task 4 stage-interaction fixture;
+  39,203 assertions passed; canonical suite byte-identical before/after.
+  Honestly reported an accepted ~1.6x per-call wall-clock cost from the
+  extra evidence `score_candidate()` computes for every candidate — not
+  optimized, per the same tradeoff already accepted in A2 (Task 4).
+  Independently re-verified by CLDO (AST-diff confirms `recommend` is
+  the only changed function; confirmed `scoring_tests.py` actually
+  exercises `recommend()` with real data so the byte-identical result
+  is meaningful, not incidental). See `docs/scoring-test-protocol.md`'s
+  "A3: `recommend()` migrated onto `score_candidate()`" entry and
+  `docs/codx-reviews/codx-a3-recommend-migration-proposal-2026-09-16.md`.
+
+  **Next real step here: A4** (migrate `explain_match()`/`explain_book()`
+  to build on `score_candidate(..., policy="explanation")` instead of
+  separately re-deriving matches/mismatches/summaries, scorecard check
+  again) — not Phase B file movement.
 
   Old note, superseded by the above but kept for history: **Not done
   yet, and not part of "setup" — actually running Codex

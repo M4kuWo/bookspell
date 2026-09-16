@@ -2871,3 +2871,75 @@ Landed as-is; no further changes needed before this is real production
 behavior. Next: A3 (migrate `recommend()`'s own loop to call
 `score_candidate(..., policy="ranking")`, full scorecard byte-identical
 check before moving on) per `docs/TODO.md`'s Phase A plan.
+
+## A3: `recommend()` migrated onto `score_candidate()` -- LANDED (2026-09-16, proposed by CODX, independently verified and applied by CLDO)
+
+Implements Phase A step 3 from `docs/TODO.md`: `recommend()`'s
+per-candidate loop now delegates to `score_candidate(catalog, bid,
+centroid, weights, id_to_magnitude, policy="ranking", ...)` instead of
+inlining the eligibility checks and the six stage calls itself. One
+new line computes `user_calibrated_poor_threshold()` once per
+`recommend()` call (required by `score_candidate()`'s signature;
+`recommend()` never computed a threshold before and still doesn't
+expose a label -- that's separate, undecided future work per the F1
+note). The loop body maps the result back to the exact same
+`(final, title, author, contributions)` tuple recommend() has always
+returned, skipping a candidate when `result["exclusions"]` or
+`result["excluded_by_user_rule"]` is set -- the same net effect as the
+removed `continue` statements. No other function is touched; the diff
+is 18 insertions/31 deletions inside `recommend()` alone.
+
+CODX built and validated this in its own clone
+(`docs/codx-reports/2026-09-16-a3-recommend-migration-proposal.md`).
+Validation: bit-exact (IEEE-754 hex, no rounding) comparison of the
+ORIGINAL vs. migrated `recommend()` across 284 full-list cases (5 rater
+files x 3 genres x 3 formats x 6 variants -- baseline, diversity with
+known/unknown recent history, discovery_only, real exclude/reduce
+rules, and a combined case), each comparing the ENTIRE returned list
+(not just top-N) -- 92,825 returned tuples total, plus 95 truncation
+checks at top_n in {0,1,10,-1,None}. `sys.settrace`-based tracing on 14
+paired calls confirmed exactly one `user_calibrated_poor_threshold()`
+call per `recommend()` invocation and exact agreement on every
+exclusion reason and stage value. A dedicated tie-order proof (28 tied
+groups, 1,120 rows, plus a synthetic 8-book catalog tested at forward/
+reversed/rotated insertion order) confirmed ties still resolve via
+catalog-iteration/stable-sort order, not an accidental secondary key --
+the exact class of regression A1 already had to fix once (tie-order
+nondeterminism, F10). Reused Task 4's 8-book interaction fixture to
+re-confirm the non-commuting stage math agrees end to end. 39,203
+primary equality assertions passed; the canonical suite passed
+byte-identical before/after (matching SHA-256). CODX explicitly
+reported an initial harness assumption failure (assumed catalog titles
+were unique; the real catalog has two rows titled "The One") and fixed
+its harness rather than the data, and reported the accepted per-call
+wall-clock cost honestly: ~1.6x slower (about 35.5ms) for a single
+`recommend()` call on the full catalog, entirely from the extra
+evidence (`factors`/`matches`/`dealbreaker_flags`/`series_note`)
+`score_candidate()` computes for every candidate -- the same accepted,
+undeferred tradeoff already named in the A2 (Task 4) entry above, not
+something this task attempted to optimize.
+
+**Independently re-verified by CLDO before applying**: extracted the
+diff, applied it to a clean checkout at the matching base revision
+(`git apply --check` clean), confirmed via Python's `ast` module that
+`recommend` is the ONLY top-level function whose AST changed (no
+function added or removed). Confirmed `scripts/scoring_tests.py`
+actually exercises this exact code path with real data
+(`R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy", ...)`,
+including a real `user_rules` exclusion case), not just incidentally --
+so the byte-identical suite result is a meaningful regression check on
+this specific change, not a coincidence. Ran the real suite against
+local Supabase before and after -- byte-identical (a different
+database than CODX's hosted read-only snapshot). Also fixed one stale
+piece of documentation CODX flagged but correctly left alone (updating
+prose isn't its call to make unprompted): `score_candidate()`'s
+docstring said "existing callers are not migrated yet," which was true
+when Task 4 landed but not after this change -- reworded to name
+`recommend()` as migrated and list the still-unmigrated callers
+explicitly. Re-ran the canonical suite after that docstring edit to
+confirm it's cosmetic -- still byte-identical.
+
+Landed as-is. Next: A4 (migrate `explain_match()`/`explain_book()` to
+build on `score_candidate(..., policy="explanation")` instead of
+separately re-deriving matches/mismatches/summaries; scorecard check
+again) per `docs/TODO.md`'s Phase A plan.
