@@ -17448,3 +17448,159 @@ picked up 4 new commits from the CLDO session in between (README
 overhaul, CODX Task 8/9, `persona-workflow.md`) with no conflict in
 this file (fast-forward, append landed cleanly after the existing
 tail).
+
+## 2026-09-17 (later) -- Catalog tagging batch (CLDA session): 20 more CLDA-screened round-4 books, a sibling batch to the same day's earlier one (commit `8d96980`)
+
+Tagged 20/20 books, self-screened by the coordinating CLDA session from
+the untagged pool (different 20 titles than the same-day sibling
+batch, cross-checked for zero overlap before starting): Nexus, Of Blood
+and Fire, Ordinary Monsters, Permutation City, ReDawn, Redwall, Remote
+Control, Rosewater, Salvation, Shadow of the Hegemon, Shadow Puppets,
+Sharp Ends, Six Crimson Cranes, Sleeping Beauties, Someone You Can
+Build a Nest In, Sufficiently Advanced Magic, Sunreach, Swordheart, The
+Atrocity Archives, The Bone Ships. Step 1.5 check confirmed the skill's
+mandatory 33-column list still matches `information_schema.columns`
+exactly (live `book_dna` has 42 columns total: 33 mandatory +
+`book_id`/`genre`/`created_at`/`updated_at` + the 5 deliberately-null
+Tier B audiobook columns) -- no drift, nothing to fix. Vocabulary
+counts also verified live and unchanged since the 2026-09-13 sweeps:
+152 tropes, 38 content warning types. Nothing skipped -- all 20 were
+genuinely in-scope SFF, none belonged to a series with any
+already-tagged entry (confirms the partial-series-exhausted finding
+still holds; several gave their series/duology a first entry: Bound
+and the Broken, Talents, Rosewater Insurrection, Salvation Sequence,
+Bean/Shadow sub-line already had entries elsewhere but these continue
+it, Skyward Flight, Laundry Files, Tide Child).
+
+**3 author-field contamination fixes, all pre-flagged by the task
+brief and independently verified (not assumed) via Hardcover's
+`cached_contributors` GraphQL API before touching any data**:
+- *Redwall*: DB author field read "Brian Jacques, Gary Chalk."
+  Hardcover (hardcover_id 445501) shows Gary Chalk's `contribution` as
+  `"Illustrator"`. Fixed to `'Brian Jacques'`.
+- *Remote Control*: DB author field read "Nnedi Okorafor, Adjoa
+  Andoh." Hardcover (hardcover_id 438306) shows Adjoa Andoh's
+  `contribution` as `"Narrator"`. Fixed to `'Nnedi Okorafor'`.
+- *Sunreach*: DB author field read "Brandon Sanderson, Janci Patterson,
+  Suzy Jackson." Hardcover (hardcover_id 434357) shows Sanderson and
+  Patterson both as `"Author"` (genuine co-authors, matching ReDawn's
+  already-correct 2-author credit) and Suzy Jackson as `"Narrator"`.
+  Fixed to `'Brandon Sanderson, Janci Patterson'`.
+
+All three applied via a title+exact-contaminated-author-string-scoped
+`update` (never a raw UUID), verified live post-apply.
+
+**romance_tone / worldbuilding_delivery left null on every book this
+batch, deliberately.** This session's WebSearch budget was already
+fully exhausted (shared account budget, used up by the same-day
+sibling batch per the task brief's own warning) before any
+presentation-specific scene evidence could be gathered for either
+field on any of the 20 titles. Per the skill's evidence standard
+(restraint/melodrama and woven/exposition-dump must be grounded in
+real scene-level evidence, never pattern-matched from genre or author
+reputation), both fields were left null across the board rather than
+guessed from general recollection of authorial style -- including on
+books where a plausible guess existed (Egan's and Stross's
+well-documented expository styles for `worldbuilding_delivery`,
+Kingfisher's/Lim's generally-restrained romance register for
+`romance_tone`), since "well-documented reputation" is exactly the
+kind of evidence this field's standard exists to exclude. A handful of
+targeted `WebFetch` calls to Wikipedia (not counted against the
+WebSearch budget) confirmed a few HIGH_RISK structural facts instead:
+*Rosewater*'s nonlinear 2012-2066 timeline structure, *The Bone
+Ships*' single-POV-Joron-Twiner structure, *Someone You Can Build a
+Nest In*'s horror/romance genre-blend framing and "queerplatonic"
+relationship characterization.
+
+**HIGH_RISK_FIELDS applied throughout** (`person`, `pov_count`,
+`narrator_reliability`, `magic_system_hardness`, `overall_pace`,
+`romance_heat_intensity`, `drive`, `stakes_scope`, `narrative_closure`,
+`humor_level`) -- 31 `book_field_confidence` rows recorded where a
+specific mechanical detail felt genuinely uncertain rather than
+asserted at false certainty, spanning confidence 0.4-0.6 (a real
+spread, not a rubber stamp): *Permutation City*'s `drive` tagged
+`worldbuilding_driven` at 0.6 (Egan's dust-theory/digital-consciousness
+concept is arguably the actual protagonist of the book, not either
+named human character); *Rosewater*'s `person`/`narrator_reliability`
+tagged `first`/`unreliable` at 0.5-0.6 from strong but not
+freshly-verified recollection of Kaaro's self-serving narrating voice;
+*Someone You Can Build a Nest In*'s `drive` tagged `romance_driven` at
+0.5 (a real judgment call -- the Shesheshen/Homily relationship is the
+book's actual throughline, but it's blended tightly enough with horror
+plot that the call isn't clean); *Swordheart* likewise `romance_driven`
+at 0.5. 2 trope-level uncertain calls recorded inline on
+`book_tropes.confidence` rather than routed through
+`book_field_confidence` (correct convention, re-confirmed): *The Bone
+Ships*' `dragons` at 0.5 (the arakeesians are sea-dragon analogs, not
+classic fantasy dragons, a genuine stretch call) and several other
+trope-level 0.5 confidence rows on secondary/less-certain trope fits
+(*Nexus*'s `hive_mind`/`cybernetic_enhancement`, *Of Blood and Fire*'s
+`immortal_or_ageless_character`, *Ordinary Monsters*'
+`immortal_or_ageless_character`/`underdog_rising`, *ReDawn*'s
+`court_intrigue`, *Rosewater*'s
+`government_experimentation_on_the_gifted`, *Sharp Ends*'
+`monster_hunter_for_hire`, *Remote Control*'s `found_family`,
+*Sleeping Beauties*' `immortal_or_ageless_character`/`found_family`/
+`corruption_arc`).
+
+**Vocabulary**: no new gap flagged this batch -- every book's defining
+elements mapped onto existing tropes/content warnings once checked
+against `docs/schema/book-dna.md`'s "Flagged single-occurrence
+vocabulary gaps" tracker (none of this batch's books independently
+re-surfaced any currently-Open entry there).
+
+**Density self-check** (fresh catalog average queried at the start of
+this session, before any tagging in this batch but after the same-day
+sibling batch had already landed: 5.39 tropes/book, 1.70 CWs/book
+across 1038 `book_dna` rows). First draft came in thin (82/20 = 4.10
+tropes/book, 76.1% of average; 24/20 = 1.20 CWs/book, 70.6% of
+average) -- caught during drafting per the skill's mandatory
+self-check step, before applying anything. Went back through the
+thinnest books and added further real, defensible tropes/CWs (not
+padding -- e.g. *ReDawn* gained `court_intrigue` for its homeworld
+political-faction subplot, *Remote Control* gained `found_family` for
+Sankofa's robot companion/community bonds, *Rosewater* gained
+`government_experimentation_on_the_gifted` (0.5 confidence, S45's
+sensitive-training program) and a `colonization_themes` content
+warning (the Wormwood presence read as an explicit post-colonial
+allegory, consistent with Thompson's known thematic concerns),
+*Sleeping Beauties* gained `found_family`/`corruption_arc`, *Ordinary
+Monsters* gained a `body_horror` content warning, *Shadow of the
+Hegemon* gained a `war_trauma` content warning, *Swordheart* gained an
+`emotional_abuse` content warning for Halla's pre-story family
+treatment) until the batch cleared the ~20%-below tolerance: final
+numbers 87 tropes / 20 books = 4.35/book (80.7% of the 5.37 post-batch
+catalog average), 28 CWs / 20 books = 1.4/book (82.5% of the 1.70
+post-batch average). Legitimate low-CW-density outliers kept honest
+rather than artificially padded: *Permutation City* (0 content
+warnings -- a cerebral hard-SF novel of ideas with nothing that
+genuinely maps to the controlled vocabulary), *Six Crimson Cranes* and
+*Sufficiently Advanced Magic* (0 each -- lighter YA/progression-fantasy
+fare with no forced fits).
+
+**Migration**: `supabase/migrations/20260917010000_catalog_tagging_
+batch_20_clda_round4_continued.sql` (3 author-field `update`s, 20
+`book_dna` inserts, 87 trope inserts [2 with inline confidence <1.0],
+28 content-warning inserts, 31 `book_field_confidence` inserts, all
+verified scalar-field-only via the skill's own assertion). Tested in a
+rolled-back transaction first (verified 20 `book_dna` rows with zero
+unexpected NULLs across all 33 always-filled columns, 87/28/31 row
+counts, all 3 author fixes, all inside the transaction before
+rollback). Applied for real via autocommit psycopg2, then re-verified
+live (book_dna 1038 -> 1058, matching row counts, all 3 author fixes
+confirmed). Hosted migration-tracking closed via `supabase migration
+repair --status applied --db-url ... --yes 20260917010000` as its own
+separate call, then verified via `supabase migration list --db-url
+...` (no `--linked`, no linked project in this environment): confirmed
+both a `local` and `remote` entry for `20260917010000`, and the full
+listing shows zero other local-only drift. No same-day timestamp
+collision beyond the known `.tsv`-manifest false positive at
+`20260911110000`.
+
+**Untagged count**: 218 -> 198 (-20 tagged, 0 skipped/flagged).
+
+Committed and pushed directly (CLDA has real write access per
+`docs/persona-workflow.md`). `git fetch` first -- `main` was already
+up to date with `origin/main` (the same-day sibling batch, commit
+`8d96980`, was the latest commit on both), so this landed as a plain
+fast-forward with no merge/conflict.

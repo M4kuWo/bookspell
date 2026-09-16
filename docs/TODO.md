@@ -1246,6 +1246,38 @@ worth deferring to a later session rather than batching in for
   88-ish-page in-universe pulp parody novella respectively), matching
   the precedent already set for thin-but-honest source material.
   Untagged count: 238 -> 218.
+
+  **DONE 2026-09-17 (CLDA, second same-day batch, sibling to the one
+  directly above -- commit `8d96980`).** Tagged a further 20/20 books
+  CLDA self-screened from the untagged pool (cross-checked zero overlap
+  with the sibling batch before starting): Nexus, Of Blood and Fire,
+  Ordinary Monsters, Permutation City, ReDawn, Redwall, Remote Control,
+  Rosewater, Salvation, Shadow of the Hegemon, Shadow Puppets, Sharp
+  Ends, Six Crimson Cranes, Sleeping Beauties, Someone You Can Build a
+  Nest In, Sufficiently Advanced Magic, Sunreach, Swordheart, The
+  Atrocity Archives, The Bone Ships -- see `docs/project-log.md`'s
+  2026-09-17 "(later)" entry for full detail. Nothing skipped -- all 20
+  cleared, none belonged to a series with an already-tagged entry.
+  **3 author-field contamination fixes**, all pre-flagged by the task
+  brief and verified via Hardcover's `cached_contributors` GraphQL API
+  before touching data: *Redwall*'s "Gary Chalk" is the book's
+  Illustrator; *Remote Control*'s "Adjoa Andoh" is the audiobook
+  Narrator; *Sunreach*'s "Suzy Jackson" is the Narrator, while Sanderson
+  and Patterson are confirmed genuine co-authors (matching ReDawn's
+  already-correct credit). **`romance_tone`/`worldbuilding_delivery`
+  left null on all 20 books this batch** -- this session's shared
+  WebSearch budget was already exhausted by the sibling batch above
+  before any real scene-level evidence could be gathered, so per the
+  skill's evidence standard both fields were left null rather than
+  pattern-matched from authors' general reputations (even well-known
+  ones like Egan's/Stross's expository styles). Migration:
+  `20260917010000_catalog_tagging_batch_20_clda_round4_continued.sql`.
+  Density self-check (fresh average at start of this batch: 5.39
+  tropes/book, 1.70 CWs/book across 1038 book_dna rows, i.e. after the
+  sibling batch had already landed): first draft came in thin (76.1%/
+  70.6% of average) -- caught before applying, enriched to 87 tropes /
+  20 = 4.35/book (80.7% of average) and 28 CWs / 20 = 1.4/book (82.5% of
+  average). Untagged count: 218 -> 198.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done
