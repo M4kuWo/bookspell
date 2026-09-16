@@ -16680,3 +16680,75 @@ step, when the repo owner is ready to schedule it: decide whether
 `audit_book_score()`'s migration is worth a dedicated task before
 starting Phase B (extracting into `scripts/scoring/` submodules) per
 the plan.
+
+## 2026-09-16 (later still) -- real local/hosted data drift found and fixed while checking on CLDA's task queue: 2 tagging batches + 3 trope-vocabulary sweeps never applied to local Postgres
+
+Repo owner asked whether there was more tagging work ready for CLDA
+while CODX is rate-limited. Before sizing that backlog, checked local's
+untagged-book count against hosted's (routine per CLAUDE.md's "verify
+they match afterward" rule) and found a real discrepancy: local showed
+315 untagged books, hosted showed 278 -- a 37-book gap, with `book_dna`
+row counts confirming it exactly (local 941 vs hosted's real 978).
+
+**Root cause, confirmed by direct row-level checking, not assumed**: two
+entire tagging migrations existed as committed files and were
+successfully pushed to hosted, but were never actually run against
+local's Postgres -- `20260913150000_tag_catalog_batch5_20_books.sql`
+(20 books) and `20260913270000_catalog_tagging_batch_17_books_9_series_
+completed.sql` (17 books). 20 + 17 = 37, matching the gap exactly. All
+37 titles were verified untagged locally, exactly one `books` row each,
+before touching anything -- Batch 5 has no `on conflict` guard, so
+confirming zero pre-existing rows first was required, not optional.
+
+Applying Batch 5 succeeded immediately. Batch 6 failed with a real,
+informative error: `ForeignKeyViolation` on `book_tropes_trope_id_fkey`
+for `magically_binding_bargain` -- a trope that doesn't exist in
+local's `tropes` vocabulary table at all. Multi-statement raw-SQL
+execution rolled back atomically (verified: `book_dna` count stayed at
+961 = 941 + 20, MaddAddam still untagged), so this was a clean failure,
+not partial corruption. Traced the real cause further: all THREE
+catalog-trope-gap-sweep migrations from that day
+(`20260913170000`/sweep #1, `20260913220000`/sweep #2,
+`20260913230000`/sweep #3) had also never been applied locally --
+checked directly (a real trope from each file's own vocabulary insert,
+absent from local's `tropes` table every time), not inferred from one
+data point.
+
+**Fixed**: applied, in chronological order, via the documented raw-
+psycopg2 method (autocommit, no `supabase db push` involved -- this is
+purely a local-side catch-up, hosted was never touched): sweep #1,
+sweep #2, sweep #3, `20260913250000_backfill_2_incomplete_trope_
+inserts.sql` (a small, already-idempotent 2-book trope backfill from
+the same day), then Batch 6 successfully on retry. **Local now matches
+hosted exactly on the number that matters for task-sizing**: `book_dna`
+978 = 978, untagged books 278 = 278. `book_tropes` has a small residual
+4-row gap (5319 local vs 5323 hosted) not chased down further -- it
+doesn't affect the tagged/untagged count and isn't blocking anything;
+worth a look in a future dedicated sync session.
+
+**Deliberately NOT done this session, flagged instead**: a full audit
+of every other 2026-09-13-onward migration's local-application status.
+Several unrelated files from the same window (audiobook-editions
+runtime backfills, `series.status`/`book_count` fixes batches 7-13,
+shared-universe audit batches 8-9, 2 author-contamination fixes) were
+NOT checked and may have the same gap -- this session only chased the
+specific thread that was blocking an accurate tagging-backlog count for
+CLDA, not a general resync. **Recommend a dedicated local/hosted
+resync audit as its own task** before assuming any local-only query
+result is authoritative for anything beyond book_dna/book_tropes counts.
+
+**Real finding for CLDA's next batch, not just a housekeeping note**:
+of the 278 untagged books, only 9 belong to a series with at least one
+already-tagged book (the "partial series" priority CLAUDE.md's tagging
+rule favors) -- and ALL 9 of those are already-known exceptions, not
+real candidates: The Winds of Winter/Red God/The Doors of Stone
+(unpublished), The Foundation Trilogy/The Hobbit & The Lord of the
+Rings/Monk and Robot/The Farseer Trilogy/Villains Duology (omnibus
+duplicates), and Holly (the one still-open scope question). **The
+partial-series-completion shortcut is fully exhausted right now** --
+every real remaining candidate (269 books: 119 with no series at all,
+150 in a series with zero tagged books so far) starts cold, no
+completion-priority signal to lean on. Worth knowing before handing
+CLDA a batch: pick from either pool per the tag-catalog-batch skill's
+normal build order, don't waste time hunting for a partial-series
+shortcut that isn't there anymore.

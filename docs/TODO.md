@@ -1122,7 +1122,21 @@ worth deferring to a later session rather than batching in for
   (`20260911110000_delete_old_romance_worldbuilding_tropes.sql`,
   predates this batch) was flagged during this batch's routine
   duplicate-timestamp check but not acted on -- out of scope, needs
-  CLDO to verify its hosted-applied status before any rename.
+  CLDO to verify its hosted-applied status before any rename. (Resolved
+  2026-09-16: a `.sql`+`.tsv` sidecar pair, not a real collision --
+  see that date's project-log entry.)
+  **Current catalog-wide status as of 2026-09-16** (verified against
+  hosted directly, after fixing a real local/hosted drift the same
+  session -- see that date's "local/hosted data drift" project-log
+  entry): **278 untagged books total.** Of those, only 9 belong to a
+  partially-tagged series, and ALL 9 are already-known exceptions, not
+  real candidates (3 unpublished, 5 omnibus duplicates, 1 open scope
+  question -- *Holly*, still undecided). **The partial-series-completion
+  priority is fully exhausted right now** -- the real remaining pool
+  (269 books: 119 standalone/no series, 150 in a series with nothing
+  tagged yet) all start cold. CLDA's next batch should pick from either
+  pool per `tag-catalog-batch`'s normal build order, not hunt for a
+  completion shortcut that isn't there anymore.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done
