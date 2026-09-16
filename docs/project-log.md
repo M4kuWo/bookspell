@@ -16230,3 +16230,41 @@ well-executed, well-validated implementation once unblocked (Task 3's
 retry) -- exactly the kind of track record the "starting posture, not
 permanent" language in CLAUDE.md's CODX section was written to let grow
 into more trust over time.
+
+## 2026-09-16 (later) -- caught and fixed stale AGENTS.md wording before it could block CODX's next task
+
+Repo owner asked directly whether `AGENTS.md` was ready before handing
+CODX its Task 4, referencing the earlier Task 3 correct-and-retry
+cycle. Checking the actual file (not just assuming the 2026-09-16
+CLAUDE.md clarification was enough) found a real gap: the "Deliberately
+NOT handed to you" section still said "**Scoring-algorithm design**
+(`scripts/recommend.py`'s actual scoring logic...) is CLDO-only
+territory... read it before ever suggesting a scoring change, even as a
+review comment" -- wording that predates the clarification and reads as
+forbidding exactly the kind of implementation work CODX's Task 3 just
+did successfully. Since Task 4 explicitly asks CODX to write more code
+in `scripts/recommend.py`, this stale line risked the same kind of
+stall Task 3 hit for a different reason.
+
+Fixed: split "scoring-algorithm DESIGN" (deciding what a change should
+be -- still CLDO-only) from implementing/validating a CLDO-specified
+design (now explicitly in scope, with the actual line to apply: did
+CODX decide what the change should be, or is it building something
+CLDO already decided). Also added a new task-list entry naming this as
+an established category now that Task 3 proved it works, not a one-off
+exception. Committed and pushed (`c3ffc1c`) -- confirmed
+`git log origin/main..HEAD` is empty before considering this done,
+the exact check that was missing before Task 3's first attempt.
+
+**Also hit again during this check**: the `~/Documents/bookspell-codex`
+filesystem-access issue recurred mid-session (had worked fine earlier
+in this same session, reading CODX's Task 3 report) -- `ls`/`cat` on
+that directory and even plain `~/Documents` now fail "Operation not
+permitted" again, while `~/Documents/bookspell` (sibling) stays fine.
+Same signature as the 2026-09-15 entries; still unresolved, still
+looks like it needs a fresh terminal/session to clear rather than
+anything fixable from within an already-running session. Didn't block
+this fix (AGENTS.md lives in the main repo, not CODX's clone), but
+means CODX's own clone state couldn't be directly inspected this time
+before handing off Task 4 -- CODX will sync for itself when it runs
+regardless of whether CLDO's shell can currently see its files.
