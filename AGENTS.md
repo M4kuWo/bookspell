@@ -279,6 +279,17 @@ bias toward this codebase's own history:**
   `scripts/backfill-standard-narrators.js`.
 - `tools/catalog-review/` and `tools/dogfood/` UI work.
 
+**Implementing a CLDO-specified `recommend.py` refactor (added
+2026-09-16, after your first one landed)**: when CLDO's phased refactor
+plan (`docs/TODO.md`) reaches a step whose design is already decided —
+e.g. "extract this duplicated logic into one function, byte-identical
+behavior" — building and validating it in your own clone (see the
+"scoring-algorithm DESIGN" clarification above) is real work you've now
+done well once (the `_iter_book_factors()` extraction, 2026-09-16,
+landed as commit `21389e3`). CLDO still independently re-verifies
+before applying anything for real, same as every other finding you
+produce.
+
 **Deliberately NOT handed to you, and not a good use of your time even
 if asked casually in passing:**
 - **Book DNA tagging.** This leans on hard-won evidence discipline this
@@ -287,14 +298,30 @@ if asked casually in passing:**
   `.claude/skills/tag-catalog-batch/SKILL.md`) — re-deriving that
   discipline from scratch risks repeating mistakes this project already
   paid to fix.
-- **Scoring-algorithm design** (`scripts/recommend.py`'s actual scoring
-  logic, weights, thresholds). This is CLDO-only territory per
-  `CLAUDE.md`'s persona system, specifically because
-  `docs/scoring-test-protocol.md`'s history of tried/rejected ideas is
-  expensive to re-derive and cheap to consult — read it before ever
-  suggesting a scoring change, even as a review comment, and check
+- **Scoring-algorithm DESIGN** — deciding WHAT a scoring change should
+  be (a new weight, heuristic, threshold, or aggregation shape). This is
+  CLDO-only territory per `CLAUDE.md`'s persona system, specifically
+  because `docs/scoring-test-protocol.md`'s history of tried/rejected
+  ideas is expensive to re-derive and cheap to consult — read it before
+  ever suggesting a scoring change, even as a review comment, and check
   whether the idea's already been tried and rejected before proposing
   it again.
+
+  **This does NOT mean you can't write or run code inside
+  `scripts/recommend.py`** (clarified 2026-09-16, in `CLAUDE.md`'s CODX
+  section — read it there for the full reasoning): when CLDO hands you
+  a task that already specifies the design (e.g. "extract this
+  duplicated math into one shared function, preserving exact behavior"),
+  implementing it — including editing `scripts/recommend.py` in your
+  own clone, uncommitted, and running `scripts/scoring_tests.py` against
+  it via your read-only role to validate — is real, in-scope execution
+  of a proposal, not scoring-algorithm design. The line is: did you
+  decide what the change should be (never yours to do), or are you
+  building and validating a change CLDO already decided (in scope, and
+  the expected way to do the more substantial tasks on this list going
+  forward). If a task's prompt is ambiguous about which one it is, ask
+  rather than guess — but don't default to refusing to touch the file
+  at all, that's now stricter than the actual rule.
 
 ## Token/budget note
 
