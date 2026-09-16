@@ -698,9 +698,26 @@ worth deferring to a later session rather than batching in for
   committed the A1 work locally but never pushed it — see that date's
   project-log entries.
 
-  **Next real step here: A3** (migrate `recommend()` to consume the
-  canonical scorer via `_iter_book_factors()`, checking scorecard
-  equivalence per the plan) — not Phase B file movement.
+  **A2 (Task 4) LANDED, 2026-09-16** — CODX's Task 4, the real Phase A
+  step 2: ONE canonical `score_candidate()` function in
+  `scripts/recommend.py`, covering the full stage sequence behind a
+  `policy` argument (`ranking`/`explanation`/`evaluation`/`audit`) and
+  returning a rich result dict, purely additive (no existing function
+  touched, nothing calls it yet). Built and validated as real running
+  code in CODX's own clone (378-case battery x 4 policies, 48 real-rater/
+  synthetic profile combinations, a targeted 8-book synthetic catalog
+  for stacked non-commuting stage interactions, 308,658 bit-exact
+  assertions) and independently re-verified by CLDO (AST-diff confirms
+  only one function added, byte-identical canonical suite before/after
+  against local Supabase). See `docs/scoring-test-protocol.md`'s "A2:
+  canonical `score_candidate()` orchestrator" entry and the permanent
+  record at
+  `docs/codx-reviews/codx-a2-canonical-scorer-proposal-2026-09-16.md`.
+
+  **Next real step here: A3** (migrate `recommend()`'s own loop to call
+  `score_candidate(..., policy="ranking")` instead of the stage calls it
+  makes today, full scorecard byte-identical check before moving on) —
+  not Phase B file movement.
 
   Old note, superseded by the above but kept for history: **Not done
   yet, and not part of "setup" — actually running Codex

@@ -3256,6 +3256,150 @@ def list_user_rule_targets(catalog):
     return targets
 
 
+def score_candidate(catalog, book_id, centroid, weights, id_to_magnitude, *,
+                    policy, validated_fields, series_dna, field_prevalence,
+                    trope_prevalence, poor_threshold, cold_start=None,
+                    matches_genre=None, discovery_only=False, recent_books=(),
+                    diversity=0.0, normalized_rules=None, top_n=None):
+    """Assemble an explicit score result; existing callers are not migrated yet.
+
+    Prepared inputs belong to ONE caller-owned catalog/profile context:
+    _resolve_profile() supplies centroid/weights/id_to_magnitude/matches_genre;
+    validated_dealbreaker_fields(), compute_series_dna(), and
+    build_prevalence_lookup() supply the other required context. Pass the
+    independently computed user_calibrated_poor_threshold() result: calibration
+    stays base-only and is never a stage of this candidate's pipeline. No
+    module-global cache or implicit profile/genre/format choice is used here.
+
+    Policies preserve the current callers' intentionally different contracts:
+      ranking: eligibility -> base -> repeat -> veto -> trajectory -> diversity
+               -> cold start -> rules (recommend)
+      explanation / evaluation: base -> repeat -> veto -> trajectory
+               (explain_match / scoring_tests._full_score)
+      audit: base -> repeat -> veto -> trajectory -> cold start -> rules
+               (audit_book_score; rule-excluded books still have a score)
+
+    ranking requires matches_genre from _resolve_profile(). ranking/audit
+    require cold_start from cold_start_weight(). Normalize rules and resolve
+    recent titles to catalog books once OUTSIDE this function. Other policies
+    ignore these ranking/audit-only inputs, just as their current callers do.
+    Sorting and top-K selection remain the ranking caller's responsibility.
+
+    Scores and factor tuples are unrounded. factors uses _iter_book_factors's
+    (label, similarity, raw_weight, effective_weight, is_trope) contract;
+    contributions retains score_book's rounded top-five display contract.
+    matches/mismatches and dealbreaker_flags are raw (label, magnitude) pairs,
+    not phrases or the audit's separately attributed/rounded display rows.
+    top_n defaults to 100 for audit and 5 otherwise; flag count remains the
+    existing dealbreaker_flags default, independent of top_n.
+
+    stage_sequence names enabled score stages. A skipped optional stage carries
+    forward its input unchanged in scores; it does NOT mean it was applied.
+    Ranking eligibility short-circuits in recommend's order: the first exclusion
+    is returned, all scores/label are None, and no scoring/evidence stage runs.
+    Rule exclusions retain their final score and use the audit's existing
+    'Excluded by user rule' label. Ranking currently exposes no label; its new
+    label is a view of its final score, not a change to any production caller.
+    series_note is the existing explanation view, supplied for every scored
+    policy (audit currently documents it but does not actually return it).
+    """
+    sequences = {
+        "ranking": ("base", "series_repeat", "veto", "trajectory", "diversity",
+                    "cold_start", "user_rules"),
+        "explanation": ("base", "series_repeat", "veto", "trajectory"),
+        "evaluation": ("base", "series_repeat", "veto", "trajectory"),
+        "audit": ("base", "series_repeat", "veto", "trajectory", "cold_start",
+                  "user_rules"),
+    }
+    if policy not in sequences:
+        raise ValueError(f"Unknown scoring policy: {policy!r}")
+    if policy == "ranking" and matches_genre is None:
+        raise ValueError("ranking requires matches_genre from _resolve_profile()")
+    if policy in ("ranking", "audit") and cold_start is None:
+        raise ValueError("ranking/audit require cold_start from cold_start_weight()")
+    book = catalog[book_id]
+    result = {
+        "book_id": book_id, "title": book["title"], "author": book["author"],
+        "policy": policy, "stage_sequence": sequences[policy],
+        "scores": dict.fromkeys(("base", "after_series_repeat", "after_veto",
+                                 "after_trajectory", "after_diversity",
+                                 "after_cold_start", "final")),
+        "poor_threshold": poor_threshold, "match_label": None,
+        "factors": [], "contributions": [], "matches": [], "mismatches": [],
+        "dealbreaker_flags": [], "exclusions": [],
+        "excluded_by_user_rule": False, "series_note": "",
+    }
+    if policy == "ranking":
+        if book_id in id_to_magnitude:
+            result["exclusions"] = ["already_rated"]
+        elif not matches_genre(book_id):
+            result["exclusions"] = ["genre"]
+        elif discovery_only and (
+            book.get("series_id") in {
+                s for bid in id_to_magnitude
+                if (s := catalog[bid].get("series_id")) is not None
+            } or book["author"] in {catalog[bid]["author"] for bid in id_to_magnitude}
+        ):
+            result["exclusions"] = ["discovery_only"]
+        elif not series_position_ready(catalog, id_to_magnitude, book):
+            result["exclusions"] = ["series_position"]
+        if result["exclusions"]:
+            return result
+
+    scores = result["scores"]
+    scores["base"], result["contributions"] = score_book(
+        book, centroid, weights, field_prevalence, trope_prevalence
+    )
+    scores["after_series_repeat"] = _apply_series_repeat(
+        catalog, id_to_magnitude, book, scores["base"]
+    )
+    scores["after_veto"] = _apply_dealbreaker_veto(
+        catalog, id_to_magnitude, validated_fields, book, centroid, weights,
+        scores["after_series_repeat"], field_prevalence, trope_prevalence
+    )
+    scores["after_trajectory"] = _apply_series_trajectory_penalty(
+        series_dna, book, centroid, weights, scores["after_veto"],
+        field_prevalence, trope_prevalence
+    )
+    relevance = scores["after_trajectory"]
+    if policy == "ranking":
+        diversity = max(0.0, min(diversity, MAX_DIVERSITY))
+        if diversity > 0 and recent_books:
+            novelty = 1 - max(book_similarity(book, h) for h in recent_books)
+            relevance = (1 - diversity) * relevance + diversity * novelty
+    scores["after_diversity"] = relevance
+    if policy in ("ranking", "audit") and cold_start > 0:
+        demand = GENRE_ACCESSIBILITY_DEMAND.get(book.get("genre_accessibility"), 0.5)
+        relevance = (1 - cold_start) * relevance + cold_start * (1.0 - demand)
+    scores["after_cold_start"] = relevance
+    excluded_by_rule = False
+    if policy in ("ranking", "audit"):
+        relevance, excluded_by_rule = apply_user_rules(book, relevance, normalized_rules)
+    scores["final"] = relevance
+    result["excluded_by_user_rule"] = excluded_by_rule
+    if excluded_by_rule:
+        result["exclusions"] = ["user_rule"]
+    result["match_label"] = (
+        "Excluded by user rule" if excluded_by_rule else match_label(relevance, poor_threshold)
+    )
+    result["factors"] = list(_iter_book_factors(
+        book, centroid, weights, field_prevalence, trope_prevalence
+    ))
+    result["matches"], result["mismatches"] = explain_book(
+        book, centroid, weights, top_n=(100 if policy == "audit" else 5) if top_n is None else top_n,
+        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence
+    )
+    result["dealbreaker_flags"] = dealbreaker_flags(
+        book, centroid, weights, validated_fields=validated_fields,
+        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence
+    )
+    if book.get("series_id"):
+        series_entry = series_dna.get(book["series_id"])
+        if series_entry:
+            result["series_note"] = describe_series_trajectory(series_entry)
+    return result
+
+
 def recommend(catalog, ratings, top_n=10, genre=None,
               recent_history=None, diversity=0.0, fatigue_overrides=None,
               discovery_only=False, user_rules=None, format_preference=None):

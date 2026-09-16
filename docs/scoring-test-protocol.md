@@ -2797,3 +2797,77 @@ helper -- the dormant experimental `_per_value` forks are untouched.
 Landed as-is; no further changes needed before this is real production
 behavior. Next: A3 (migrate `recommend()` to the canonical scorer,
 checking scorecard equivalence) per `docs/TODO.md`'s Phase A plan.
+
+## A2: canonical `score_candidate()` orchestrator -- LANDED (2026-09-16, proposed by CODX, independently verified and applied by CLDO)
+
+Implements the actual Phase A step 2 from `docs/TODO.md` (not to be
+confused with "A2 (prerequisite)" above, a separate, earlier scaffolding
+step): ONE canonical function, `score_candidate(catalog, book_id,
+centroid, weights, id_to_magnitude, *, policy, validated_fields,
+series_dna, field_prevalence, trope_prevalence, poor_threshold,
+cold_start=None, matches_genre=None, discovery_only=False,
+recent_books=(), diversity=0.0, normalized_rules=None, top_n=None)`,
+added to `scripts/recommend.py`. It covers the full stage sequence
+(base -> series-repeat -> dealbreaker veto -> series trajectory ->
+diversity -> cold-start blend -> user rules) behind one of four
+`policy` values (`ranking`/`explanation`/`evaluation`/`audit`) that
+each preserve the current callers' existing, intentionally different
+contracts (see the report's policy table), and returns a rich result
+dict (per-stage scores, label, factors, contributions, matches/
+mismatches, dealbreaker flags, series note, exclusions) instead of a
+bare float. **Purely additive**: no existing function is modified, and
+nothing calls the new function yet -- `recommend()`, `explain_match()`,
+`audit_book_score()`, and `scoring_tests.py` are all byte-for-byte
+unchanged. Caller migration is A3, a separate task.
+
+CODX built and validated this as real running code in its own clone
+(`docs/codx-reports/2026-09-16-a2-canonical-scorer-proposal.md`, ~1720
+lines), per the same standing clarification that local sandbox
+implementation/execution is in scope for a proposal. Its validation:
+a `sys.settrace` bit-for-bit comparison (IEEE-754 hex encoding,
+including signed zero) against the *original* stage helpers' actual
+locals, using a live 978-book catalog snapshot pulled once via
+`codx_readonly`; the exact 378-case Task 3 battery reused verbatim
+across all four policies; 48 real-rater/synthetic profile combinations
+(4 real raters + the Goodreads fixture, x genre x format, plus
+empty-history/one-rating/negative-fatigue edge profiles) with entire
+ranked lists and top-10 detail views compared, not just aggregate
+scores; and a targeted 8-book synthetic catalog built from real
+(unmocked) profile/calibration/series-DNA/cold-start preparation,
+specifically to exercise stacked, non-commuting stage interactions
+(veto cap actually triggered, then trajectory discount, diversification,
+cold-start blend, and rule reduction/exclusion, checked separately per
+policy). 308,658 bit-exact assertions passed. The canonical suite
+passed before and after (exit 0 each), byte-identical (matching
+SHA-256). CODX explicitly reported its own dead ends along the way
+(an initial coverage gap where no sampled profile actually changed
+score at the veto stage, closed by the synthetic catalog; an invalid
+rule-key typo caught by the real parser) rather than hiding them.
+Reverted its own clone to exact HEAD bytes afterward, hash-verified,
+and confirmed the saved patch still applies cleanly against the
+restored tree before calling it done -- same discipline as A2
+(prerequisite).
+
+**Independently re-verified by CLDO before applying**: extracted the
+diff from CODX's report, applied it to this repo's own checkout at the
+matching base revision (`git apply --check` clean), and confirmed via
+Python's `ast` module that the patch adds exactly one top-level
+function (`score_candidate`) and changes the AST of every other
+existing top-level function/class by zero bytes -- not just trusting
+the diff's visual shape. Ran the real `scripts/scoring_tests.py`
+against local Supabase before and after applying -- byte-identical
+(matching SHA-256), a genuinely different database than CODX's hosted
+read-only snapshot. Read the diff directly: the policy table, stage
+order (veto before trajectory, diversity before cold start, rules
+last), and per-policy input-ignoring behavior all match the report's
+prose exactly, and the interaction-test numbers in the report are
+internally consistent with that table (e.g. `after_veto` identical
+across all four policies since every policy shares the same base ->
+veto pipeline; `after_diversity`/`after_cold_start` only move for
+`ranking`/`audit`, carried forward unchanged for `explanation`/
+`evaluation`).
+
+Landed as-is; no further changes needed before this is real production
+behavior. Next: A3 (migrate `recommend()`'s own loop to call
+`score_candidate(..., policy="ranking")`, full scorecard byte-identical
+check before moving on) per `docs/TODO.md`'s Phase A plan.
