@@ -16268,3 +16268,42 @@ this fix (AGENTS.md lives in the main repo, not CODX's clone), but
 means CODX's own clone state couldn't be directly inspected this time
 before handing off Task 4 -- CODX will sync for itself when it runs
 regardless of whether CLDO's shell can currently see its files.
+
+## 2026-09-16 (later still) -- new evidence on the recurring bookspell-codex access issue: toggling the permission mid-session does NOT fix it
+
+Repo owner tried the same workaround that fixed this earlier in THIS
+session (toggle Documents access for Claude off/on in System
+Settings). Re-tested immediately after: still fully blocked --
+`ls`/`cat`/`git status` on `~/Documents/bookspell-codex` and even plain
+`~/Documents` all still fail "Operation not permitted," identical
+signature to when it broke earlier today, `~/Documents/bookspell`
+(sibling) unaffected throughout.
+
+**This is a real, useful new data point, not just a repeat failure.**
+Earlier in this exact session, the SAME toggle action did restore
+access (confirmed directly -- reads/writes to bookspell-codex worked
+immediately after). It then broke again later, unprompted, mid-session.
+Toggling it a second time, still within that same continuously-running
+session/process, did nothing. This is consistent with, and adds real
+support to, the working theory already on file from 2026-09-15: a
+macOS TCC grant is cached per-process at launch, so flipping the System
+Settings toggle only takes effect for a NEW process -- it can restore
+access once (if the process launched before the toggle takes hold) but
+can't fix a mid-session revocation on an already-running process no
+matter how many more times it's toggled. The first success in this
+session was likely coincidental timing (the toggle landing before or
+during this process's own TCC grant resolution), not evidence the
+toggle itself is a reliable fix.
+
+**Recommended next step, not yet tried this session**: a genuinely
+fresh terminal/Claude Code session (new process), rather than another
+toggle on the current one. Not yet confirmed to work -- if it's tried
+and still fails, that would rule out the per-process-caching theory
+entirely and point at something else (e.g. a corruption or revocation
+specific to the bookspell-codex directory's own extended attributes,
+which Finder's own access doesn't reveal since it's a different app
+identity). Next session should try this first and report back either
+way -- confirming OR ruling out the leading theory both move this
+forward, and it's been open long enough (first flagged 2026-09-15) that
+narrowing the cause matters more than continuing to just retry the
+same fix.
