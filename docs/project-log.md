@@ -16307,3 +16307,60 @@ way -- confirming OR ruling out the leading theory both move this
 forward, and it's been open long enough (first flagged 2026-09-15) that
 narrowing the cause matters more than continuing to just retry the
 same fix.
+
+## 2026-09-16 (later still) -- CODX hit the identical access error; new evidence points at VS Code as the shared terminal host, but doesn't fully explain last time's fix -- restart test in progress, session ending here
+
+**New symptom**: CODX itself (not just CLDO's shell) failed outright
+with `turn/start failed in TUI: turn/start failed: invalid cwd:
+Operation not permitted (os error 1)` -- it couldn't even start a turn
+because its own clone's cwd was inaccessible. Confirmed CLDO's shell
+was simultaneously blocked from the same path at the same moment.
+
+**This shifts the working theory**: two unrelated tools (Claude Code,
+Codex CLI) breaking on the identical directory at the identical moment
+argues against either tool having its own isolated, coincidentally-
+timed problem, and toward a shared cause. Repo owner confirmed both run
+inside **VS Code's integrated terminal** -- notable because VS Code's
+own git integration was already found injecting itself into this same
+terminal session once before (`GIT_ASKPASS` overriding CODX's push-hook
+testing, 2026-09-13 entries), so it having some shared effect on file
+access for child processes in that terminal isn't a new kind of
+interference for this setup. Repo owner toggled Documents access for
+Visual Studio Code specifically (not "claude"/"Claude") off and on;
+macOS asked for a VS Code restart to take effect. Retested immediately
+without restarting yet: still blocked, as expected (not evidence
+against the theory -- the restart hasn't happened).
+
+**A real complication, not yet resolved**: the repo owner pointed out
+that LAST time this happened, switching to a different terminal app
+did NOT fix access, but toggling the "claude" (lowercase, generic-icon)
+entry specifically then did. If VS Code-as-host were the whole story,
+switching terminal apps should have mattered and toggling "claude"
+specifically shouldn't have -- so something doesn't fully add up yet.
+Leading hypothesis to test next: Claude Code CLI and Codex CLI may
+both run through a shared underlying interpreter/launcher binary (e.g.
+both via node), and TCC may be attributing file-access grants to THAT
+shared binary identity rather than to VS Code or to each tool
+individually -- which would explain both today's simultaneous CODX/
+CLDO failure and last time's "claude" toggle fixing both at once,
+without VS Code itself being the real gatekeeper. Not confirmed either
+way yet.
+
+**Session ending here at the repo owner's request, restarting VS Code
+to test.** Nothing is at risk: `git status`/`git log origin/main..HEAD`
+both confirmed clean and fully pushed on this repo before stopping (see
+this file's own last several entries for the full session: A1 landed
+and verified, a fresh DB backup taken and pushed with a flagged
+auth.users finding, CODX's Task 3 -- the A2 shared-factor-evaluator
+prerequisite -- correctly refused once on a stale baseline CLDO caused
+by forgetting to push, then landed and independently re-verified after
+the fix, and a stale AGENTS.md scope line fixed before it could block
+CODX's Task 4). **Open thread for next session, in priority order**:
+(1) resolve this filesystem-access question for good -- try the VS
+Code restart first, and if still blocked, check the actual Files and
+Folders entry list (what's really there: "claude", "Claude", "Code"/
+Visual Studio Code, anything named Codex or node) rather than guessing
+at another toggle; (2) once resolved, send CODX Task 4 (the canonical-
+scorer/rich-result proposal, Proposal 3 from its Task 2 report) --
+the prompt is already drafted in this conversation's history, not yet
+sent as of this entry.
