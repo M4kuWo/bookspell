@@ -3262,7 +3262,8 @@ def score_candidate(catalog, book_id, centroid, weights, id_to_magnitude, *,
                     matches_genre=None, discovery_only=False, recent_books=(),
                     diversity=0.0, normalized_rules=None, top_n=None):
     """Assemble an explicit score result. `recommend()` consumes this via
-    policy="ranking" (A3, 2026-09-16); `explain_match()`/`audit_book_score()`/
+    policy="ranking" (A3, 2026-09-16); `explain_match()` via
+    policy="explanation" (A4, 2026-09-16); `audit_book_score()`/
     `scoring_tests._full_score()` are not migrated yet.
 
     Prepared inputs belong to ONE caller-owned catalog/profile context:
@@ -3524,39 +3525,39 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     if title not in title_to_id:
         raise ValueError(f"{title!r} not found in catalog")
-    book = catalog[title_to_id[title]]
+    book_id = title_to_id[title]
+    book = catalog[book_id]
 
     centroid, weights, id_to_magnitude, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides, format_preference)
     validated = validated_dealbreaker_fields(catalog, id_to_magnitude)
     series_dna = compute_series_dna(catalog)
     field_prevalence, trope_prevalence = build_prevalence_lookup(catalog, genre)
-    score, _ = score_book(book, centroid, weights, field_prevalence, trope_prevalence)
-    score = _apply_series_repeat(catalog, id_to_magnitude, book, score)
-    score = _apply_dealbreaker_veto(catalog, id_to_magnitude, validated, book, centroid, weights, score,
-                                     field_prevalence, trope_prevalence)
-    score = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, score,
-                                              field_prevalence, trope_prevalence)
     poor_threshold = user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
                                                      field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
-    matches, mismatches = explain_book(book, centroid, weights, top_n=top_n,
-                                        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
-    flags = dealbreaker_flags(book, centroid, weights, validated_fields=validated,
-                               field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
+    if top_n is None:
+        # explain_book() treats [:None] as unlimited; score_candidate() uses
+        # None for its default limit. Each scalar/trope supplies at most one
+        # row per evidence list, so this bound preserves the unlimited view.
+        top_n = len(weights) + len(weights.get("tropes", {}))
+    result = score_candidate(
+        catalog, book_id, centroid, weights, id_to_magnitude,
+        policy="explanation", validated_fields=validated, series_dna=series_dna,
+        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence,
+        poor_threshold=poor_threshold, top_n=top_n
+    )
+    score = result["scores"]["final"]
+    matches, mismatches = result["matches"], result["mismatches"]
+    flags = result["dealbreaker_flags"]
+    series_note = result["series_note"]
 
     matches_labeled = [(label, p) for label, _ in matches if (p := describe(label, book))]
     mismatches_labeled = [(label, p) for label, _ in mismatches if (p := describe(label, book))]
     flags_labeled = [(label, p) for label, _ in flags if (p := describe(label, book))]
 
-    series_note = ""
-    if book.get("series_id"):
-        series_entry = series_dna.get(book["series_id"])
-        if series_entry:
-            series_note = describe_series_trajectory(series_entry)
-
     return {
         "title": title,
         "score": round(score, 3),
-        "match_label": match_label(score, poor_threshold),
+        "match_label": result["match_label"],
         "matches": [p for _, p in matches_labeled],
         "mismatches": [p for _, p in mismatches_labeled],
         "summary": natural_sentence(matches_labeled, positive=True),

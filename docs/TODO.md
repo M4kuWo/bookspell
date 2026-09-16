@@ -733,10 +733,35 @@ worth deferring to a later session rather than batching in for
   "A3: `recommend()` migrated onto `score_candidate()`" entry and
   `docs/codx-reviews/codx-a3-recommend-migration-proposal-2026-09-16.md`.
 
-  **Next real step here: A4** (migrate `explain_match()`/`explain_book()`
-  to build on `score_candidate(..., policy="explanation")` instead of
-  separately re-deriving matches/mismatches/summaries, scorecard check
-  again) — not Phase B file movement.
+  **A4 LANDED, 2026-09-16** — CODX's Task 6: `explain_match()` now
+  calls `score_candidate(..., policy="explanation")` instead of its
+  own inline score/evidence computation; `explain_book()` itself
+  stays untouched (it's a dependency of `score_candidate()`, not a
+  caller). Caught a real edge case before finalizing: a literal
+  migration silently truncated `explain_match(..., top_n=None)`
+  (meant to be unlimited) down to 5 items, since `score_candidate()`
+  treats `None` as its own default-limit sentinel rather than
+  "unlimited" the way `explain_book()`'s slicing did — fixed with a
+  provably-sufficient explicit upper bound
+  (`len(weights) + len(weights.get("tropes", {}))`) computed inside
+  `explain_match()` alone. Also verified up front that
+  `scoring_tests.py` never actually calls `explain_match()` anywhere,
+  so unlike A3 the canonical suite is NOT meaningful regression
+  evidence here — validated instead with a dedicated direct-comparison
+  harness covering all 978 physical catalog rows x 5 raters x 2 limits
+  (9,780 pairs) plus a supplementary grid, 335,398 bit-exact assertions,
+  all passed. Independently re-verified by CLDO (AST-diff confirms only
+  `explain_match` changed; independently reproduced the `top_n=None`
+  finding against local Supabase with a fresh harness, 3,690
+  comparisons, zero mismatches). See `docs/scoring-test-protocol.md`'s
+  "A4: `explain_match()` migrated onto `score_candidate()`" entry and
+  `docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md`.
+
+  **Next real step here: A5** (migrate `scripts/scoring_tests.py`'s
+  `_full_score()`, and any other test-side reimplementation, onto the
+  same canonical function — the single highest-value step for
+  preventing test/production drift, per the plan) — not Phase B file
+  movement.
 
   Old note, superseded by the above but kept for history: **Not done
   yet, and not part of "setup" — actually running Codex

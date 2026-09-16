@@ -2943,3 +2943,91 @@ Landed as-is. Next: A4 (migrate `explain_match()`/`explain_book()` to
 build on `score_candidate(..., policy="explanation")` instead of
 separately re-deriving matches/mismatches/summaries; scorecard check
 again) per `docs/TODO.md`'s Phase A plan.
+
+## A4: `explain_match()` migrated onto `score_candidate()` -- LANDED (2026-09-16, proposed by CODX, independently verified and applied by CLDO)
+
+Implements Phase A step 4 from `docs/TODO.md`: `explain_match()` now
+calls `score_candidate(catalog, book_id, centroid, weights,
+id_to_magnitude, policy="explanation", validated_fields=validated,
+series_dna=series_dna, field_prevalence=field_prevalence,
+trope_prevalence=trope_prevalence, poor_threshold=poor_threshold,
+top_n=top_n)` instead of its own inline score computation (score_book
+-> `_apply_series_repeat` -> `_apply_dealbreaker_veto` ->
+`_apply_series_trajectory_penalty`), its own `explain_book()` call, its
+own `dealbreaker_flags()` call, and its own series-note derivation.
+`explain_book()` itself is untouched -- it's a dependency
+`score_candidate()` calls internally, and migrating it would create a
+cycle, so this is purely a caller-side change inside `explain_match()`.
+The existing phrase-presentation layer (labeled-phrase comprehensions,
+`describe()` filtering, `natural_sentence()`, `dealbreaker_sentence()`,
+`round(score, 3)`) is unchanged -- only its raw inputs now come from
+`score_candidate()`'s result fields instead of locally-derived values.
+18 insertions/18 deletions, inside `explain_match()` alone.
+
+**A real edge case caught before finalizing, not after**: a literal
+migration passing `top_n=top_n` verbatim breaks `explain_match(...,
+top_n=None)`. The original `explain_book()` treats `rows[:None]` as
+Python's "no limit" slice; `score_candidate()` instead treats `top_n=
+None` as its own default-limit sentinel (5 for non-audit policies) --
+so a caller explicitly asking for the unlimited view would have
+silently gotten only 5 items back. CODX caught this with a direct
+probe (Mathias/Warbreaker: original lengths `6, 1` vs. a literal
+migration's `5, 1`) before finalizing, and fixed it entirely inside
+`explain_match()`: when `top_n is None`, it computes `len(weights) +
+len(weights.get("tropes", {}))` as an explicit upper bound and passes
+that concrete integer instead of `None`. This bound is provably
+sufficient, not just empirically probed -- every scalar factor
+`_iter_book_factors()` yields contributes exactly one entry to BOTH
+`matches` and `mismatches`, and every trope factor contributes to
+exactly one of them, so neither list's true pre-filter length can
+exceed `len(weights) + len(weights.get("tropes", {}))`. `score_candidate()`
+itself is untouched by this fix -- its own `top_n=None`-means-default
+contract (already landed and independently verified in A2/Task 4) is
+unaffected; this is purely a caller-side compatibility adapter.
+
+CODX also verified, before relying on anything else, that
+`scripts/scoring_tests.py` never actually calls `explain_match()`
+anywhere (confirmed by both a `rg` search and a separate AST traversal
+finding zero executable references) -- so unlike A3, "canonical suite
+byte-identical" is NOT meaningful regression evidence here, and CODX
+said so explicitly rather than leaning on it. The entire
+behavior-preservation claim rests on a dedicated direct-comparison
+harness: the REAL original and migrated `explain_match()` functions
+invoked side by side (no mocking) across all 978 physical catalog rows
+(with a dedicated view constructed to make the shadowed duplicate `The
+One` row independently addressable, not just re-testing the title
+map's winning row twice) x 5 real raters x 2 explicit limits (9,780
+paired calls), plus a supplementary grid crossing more context/limit
+combinations, targeted dealbreaker/series-repeat/trajectory coverage,
+and 6 missing-title exception cases (including titles with quotes,
+newlines, and Unicode). 10,538 total call pairs, 10,532 successful
+full-dictionary comparisons plus 6 exact `ValueError` comparisons,
+335,398 bit-exact assertions, all passed. Reverted its own clone to
+exact HEAD bytes afterward.
+
+**Independently re-verified by CLDO before applying**: extracted the
+diff, applied it to a clean checkout at the matching base revision
+(`git apply --check` clean), confirmed via Python's `ast` module that
+`explain_match` is the ONLY top-level function whose AST changed, and
+explicitly confirmed (not just by absence of diff) that
+`explain_book`, `dealbreaker_flags`, `describe_series_trajectory`,
+`natural_sentence`, `dealbreaker_sentence`, `describe`,
+`score_candidate`, `recommend`, and `audit_book_score` are all
+byte-for-byte unchanged. Independently reproduced the `top_n=None`
+finding with a fresh, self-written comparison harness against LOCAL
+Supabase (a different catalog snapshot than CODX's hosted read-only
+one): 3,690 original/migrated comparisons across 5 raters x 3 genres x
+a deterministic title sample x six `top_n` values (`None`, `1`, `5`,
+`20`, `0`, `-1`), zero mismatches. Ran the canonical suite before/after
+as a collateral check only (byte-identical, exit 0 both times) --
+consistent with CODX's own correct framing that this is not meaningful
+direct evidence for this specific function. Also updated
+`score_candidate()`'s docstring, which still listed `explain_match` as
+an unmigrated caller (a documentation detail CODX explicitly flagged
+but correctly left alone), and re-ran the suite to confirm that edit
+was cosmetic.
+
+Landed as-is. Next: A5 (migrate `scripts/scoring_tests.py`'s
+`_full_score()`, and any other test-side reimplementation, onto the
+same canonical function -- the single highest-value step for
+preventing test/production drift, per `docs/TODO.md`'s Phase A plan).
