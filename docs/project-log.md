@@ -17053,3 +17053,52 @@ collision beyond the known `.tsv`-manifest false positive at
 **Untagged count**: 258 -> 238 (-20 tagged, 0 skipped/flagged this batch
 -- unlike the prior 2026-09-16 batch, none of these 20 hit a permanent-
 skip category).
+
+## 2026-09-16 (later still) -- formalized cross-persona task handoff: new docs/persona-workflow.md, CODX gets a real task file instead of copy-pasted prompts
+
+Repo owner caught a real mistake: this session described CODX's
+copy-paste-a-prompt-between-terminals handoff as if it were the general
+mechanism for ALL personas, when CLDA has never worked that way (her
+own handoff -- sync, read `docs/TODO.md`, self-direct, report back to
+the repo owner in conversation -- was already correct and has now run
+successfully for 2 real batches today). Asked for the mechanics to be
+documented properly, in a dedicated place, before this kind of
+misremembering happens again.
+
+**Landed**: a new `docs/persona-workflow.md` -- the single source of
+truth for HOW a task actually moves between CLDO/CLDA/CODX (trigger
+phrases, where each reads its next task, where output lands, who
+reviews it), explicitly distinct from `CLAUDE.md`'s persona section
+(which stays focused on WHO each persona is and what it's trusted to
+do). Both `CLAUDE.md` and `AGENTS.md` now point to it instead of
+re-explaining any of this inline.
+
+**The actual mechanism fix, not just documentation**: CODX previously
+had no equivalent of CLDA's `docs/TODO.md` -- its only path to a
+specific, ready-to-execute task was a prompt drafted in a CLDO
+conversation and manually pasted into its terminal by the repo owner.
+Added `docs/codx-tasks/current-task.md`, a single always-current
+assignment file, tracked and committed in the SHARED repo (not CODX's
+own clone) -- an ordinary `git pull` gets it, closing the gap with
+CLDA's mechanism. Seeded it with the already-drafted, ready Task 8
+(migrate `audit_book_score()` onto `score_candidate(..., policy=
+"audit")`), updated to the current baseline (`c5de5b6`) rather than the
+stale one it was originally drafted against.
+
+**The one asymmetry actually worth remembering, spelled out in the new
+doc so it doesn't get flattened again**: task INPUT now works
+identically for CLDA and CODX (a tracked file, read after a normal
+sync) -- but OUTPUT genuinely differs, by design: CLDA can commit/push
+her own work directly (real, earned write access); CODX cannot, at
+all, so its reports stay in its own clone's untracked
+`docs/codx-reports/` until CLDO manually reads, independently
+re-verifies, and copies them into the tracked `docs/codx-reviews/`.
+That manual copy step is a deliberate control, not something to
+"fix" by generalizing CLDA's write access to CODX.
+
+Also standardized the exact trigger phrases the repo owner should use
+going forward -- "Sync with the repo and get your next instructions"
+for CLDA, "Sync with the repo and start on your next task" for CODX --
+so future sessions (including a future CLDO) have one unambiguous
+wording to recognize rather than reconstructing intent from whatever
+phrasing happened to get used in a given conversation.

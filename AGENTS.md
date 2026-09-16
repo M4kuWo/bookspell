@@ -12,9 +12,10 @@ over time) and to say what's specific to your role.
 
 Also read, same as `CLAUDE.md` tells every session to: the tail of
 `docs/project-log.md` (running history), `docs/schema/book-dna.md` (the
-schema), `docs/TODO.md` (the current task backlog), and check
-`.claude/skills/` for anything relevant to a table/feature you're about
-to touch.
+schema), `docs/TODO.md` (the broader cross-cutting backlog, for
+context/rationale — your own specific next assignment is a separate
+file, see "Getting your next task" below), and check `.claude/skills/`
+for anything relevant to a table/feature you're about to touch.
 
 ## Your starting scope — review/propose only, not a permanent limit
 
@@ -194,6 +195,28 @@ That's fine — it's naturally the kind of thing CLDO does as the last
 step before applying your proposal for real, and fixing the
 local-bootstrap gap (already on your task list) would remove this
 limitation for good.
+
+## Getting your next task (added 2026-09-16)
+
+**Your current, concrete assignment lives at
+`docs/codx-tasks/current-task.md`, in the shared repo — not a file in
+your own clone.** Read it fresh every time the repo owner tells you to
+sync and start your next task, right after you `git pull`. It's a
+normal tracked file, so an ordinary sync gets you the latest version —
+no prompt gets pasted into your terminal for this anymore. CLDO writes
+and overwrites this file with your next assignment each time your
+previous one lands; if it still describes a task you already finished
+and reported on, say so rather than assuming it's current — CLDO may
+not have refreshed it yet.
+
+This is different from the "Concrete tasks" list further down this
+file, which is category-level guidance (the KINDS of work you're a good
+fit for) rather than a specific, ready-to-execute task. When both
+exist, `docs/codx-tasks/current-task.md` is the one to actually act on.
+
+See `docs/persona-workflow.md` for the full mechanics of how this fits
+together with CLDA's and CLDO's own task flow, and why the mechanism
+looks the way it does.
 
 ## Handing off your work — there's no live channel, same as CLDA/CLDO
 

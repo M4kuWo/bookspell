@@ -30,7 +30,15 @@ nothing.
 
 Three named, standing personas exist for this project (CLDO/CLDA added
 2026-09-10, CODX added 2026-09-13), one per machine/environment/tool
-this repo runs from:
+this repo runs from. **This section is about who each persona is and
+what it's trusted to do — for the mechanics of how a task actually gets
+from one persona to another (trigger phrases, where each one reads its
+next task from, where its output lands, who reviews it), see
+`docs/persona-workflow.md`, the single source of truth for that. Don't
+re-derive or re-explain those mechanics here or anywhere else — a
+session already got this wrong once (2026-09-16) by generalizing
+CODX's copy-paste-a-prompt handoff to CLDA, who has never worked that
+way.**
 
 - **CLDO** — the primary session, worked directly with the repo owner.
   Owns `scripts/recommend.py`/`scripts/scoring_tests.py` (all
