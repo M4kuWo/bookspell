@@ -16593,3 +16593,90 @@ onto `score_candidate()`" entry, permanent record at
 reimplementation, onto the same canonical function -- the single
 highest-value step for preventing test/production drift, per the
 plan).
+
+## 2026-09-16 (later still) -- CODX's Task 7 landed: _full_score() migrated onto score_candidate(), Phase A now complete for every named step, independently re-verified and applied
+
+CODX finished Task 7 -- report already committed
+(`docs/codx-reports/2026-09-16-a5-full-score-migration-proposal.md`),
+clone already reverted, by the time this session checked.
+
+The report implements Phase A step 5 from `docs/TODO.md` -- the step
+the plan itself calls "the single highest-value step for preventing
+the exact CODX-found bug class, since test/audit code silently
+drifting from production is precisely what happened there" (the
+2026-09-14 confidence-floor bugs). `_full_score()` now delegates its
+stage sequence to `score_candidate(..., policy="evaluation")`,
+returning only `result["scores"]["final"]`, instead of its own inline
+`score_book -> _apply_series_repeat -> _apply_dealbreaker_veto ->
+_apply_series_trajectory_penalty` chain. `poor_threshold=0.0` is an
+explicit, commented placeholder -- verified, by reading
+`score_candidate()`'s source rather than assuming, to only feed the
+discarded `match_label`. Confirmed there's no OTHER test-side
+reimplementation of this chain anywhere in the file. `_full_score()`'s
+six-argument signature, bare-float contract, module-level caches, and
+all 6 call sites are unchanged; its historical docstring (the reverted
+validated-positive-floor and correlated-field-redundancy narratives)
+is kept as an exact prefix. `scripts/recommend.py` is confirmed
+byte-identical to HEAD, not just AST-equal.
+
+**Unlike A4, the canonical suite IS meaningful direct evidence here**
+-- CODX verified this with an AST-derived call-graph trace rather than
+assuming it by analogy to Task 5: all 6 `_full_score()` call sites
+trace up through `run_all()` via `run_leave_one_out_diagnostic`,
+`run_held_out_test`, `run_ablation_study`, and
+`run_contrastive_pairs_diagnostic`. Given that, it kept its own
+supplementary direct-comparison harness small (12 paired calls across
+3 raters, baseline vs. `_apply_ablation`-zeroed weights, confirming the
+ablated cases actually differ from baseline) rather than rebuilding
+Task 6's large-scale harness unnecessarily. It also explicitly caught
+the "two separately-imported `recommend` modules aren't the same
+object" pitfall CLAUDE.md warns about, asserting `O.R is N.R is R`
+before trusting any comparison.
+
+**The user asked what "controlled full-suite runtime increased about
+11.6%" means -- explained here for the record**: CODX honestly
+measured and reported an accepted cost rather than optimizing it away.
+`score_candidate()` computes strictly more evidence (factors, matches,
+mismatches, dealbreaker flags, series note) than `_full_score()` needs,
+all immediately discarded. Because `_full_score()` is called so
+densely (every held-out title, every ablation field group, every
+threshold-sweep title, every contrastive pair), CODX measured the
+FULL `run_all()` wall-clock cost rather than a single-call estimate.
+A first, noisy live-database-load pair was unreliable (live query
+variance can mask or even invert a real CPU-side cost). The real
+measurement froze the catalog snapshot in memory, reused it for both
+original and migrated complete `run_all()` runs, reset module caches
+between runs, and took 3 samples each, alternating execution order:
+median 1.706s (original) vs. 1.904s (migrated) -- a ratio of about
+1.116, i.e. the complete test suite's own computation (excluding
+database I/O) takes about 11.6% longer with the migration, purely from
+the extra unused evidence work, with every one of those 6 full outputs
+still byte-identical to the primary canonical runs. Not a correctness
+regression, not optimized as part of this task -- the same category of
+accepted tradeoff as A2/A3's per-call cost, just measured at the
+whole-suite level since that's what a `_full_score()` slowdown
+actually affects (every future test run, not a live user-facing path).
+
+**Independently re-verified before applying**: entered a worktree,
+applied the diff, confirmed via `ast` that `_full_score` is the ONLY
+function in `scripts/scoring_tests.py` whose AST changed, and confirmed
+`scripts/recommend.py` byte-identical to HEAD (not just AST-equal).
+Ran the real canonical suite against local Supabase before/after --
+byte-identical (matching SHA-256), and this time that result genuinely
+covers the migrated code path, including the ablation scenario. Also
+fixed `score_candidate()`'s docstring, still listing `_full_score()`
+as unmigrated, and re-ran the suite to confirm that edit was cosmetic.
+
+Landed (`efe80d3`, pushed to `main`). Documented in
+`docs/scoring-test-protocol.md`'s new "A5: `_full_score()` migrated
+onto `score_candidate()`" entry, permanent record at
+`docs/codx-reviews/codx-a5-full-score-migration-proposal-2026-09-16.md`,
+`docs/TODO.md` updated. **Phase A is now functionally complete for
+every explicitly named step (A1-A5).** `audit_book_score()`
+(`policy="audit"`) is the one remaining production caller not yet
+migrated -- not its own named Phase A step, lower priority since it's
+an internal/debug tool, not a production scoring path. Next real
+step, when the repo owner is ready to schedule it: decide whether
+`audit_book_score()`'s migration is worth a dedicated task before
+starting Phase B (extracting into `scripts/scoring/` submodules) per
+the plan.
