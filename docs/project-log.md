@@ -16462,3 +16462,69 @@ byte-identical check before moving on) -- this is caller migration,
 touching real production behavior, so the design call stays CLDO's per
 CLAUDE.md's persona rules even though CODX could again build and
 validate a CLDO-specified implementation of it in its own sandbox.
+
+## 2026-09-16 (later still) -- CODX's Task 5 landed: recommend() migrated onto score_candidate(), independently re-verified and applied
+
+Sent CODX Task 5 directly (relayed by the repo owner into its own
+Codex CLI session, per the file-based/asynchronous handoff convention
+-- no live channel from this session). Checked on it partway through
+and found it genuinely mid-task: `scripts/recommend.py` still showed
+an uncommitted diff in CODX's clone, no report yet in
+`docs/codx-reports/`, only a draft `intro.md` under its scratch
+`/private/tmp/codx-task5/` directory. Checked again moments later and
+the clone had already reverted its working tree and the finished
+report (`docs/codx-reports/2026-09-16-a3-recommend-migration-proposal.md`)
+had landed -- a real example of "finished" needing an actual recheck
+rather than trusting the first glance.
+
+The report implements Phase A step 3 from `docs/TODO.md`:
+`recommend()`'s per-candidate loop now calls `score_candidate(...,
+policy="ranking")` instead of inlining the eligibility checks and six
+stage calls itself, mapping the result back to the exact same
+`(final, title, author, contributions)` tuple it always returned. One
+new line computes `user_calibrated_poor_threshold()` once per call
+(required by `score_candidate()`'s signature; the label itself is
+still discarded, per Task 5's explicit scope boundary against
+prematurely exposing it). Purely internal -- no change to
+`recommend()`'s external contract, and no other function touched.
+
+CODX's validation: bit-exact comparison of the ORIGINAL vs. migrated
+`recommend()` across 284 full-list cases (5 real rater files x 3
+genres x 3 formats x 6 variants including diversity, discovery_only,
+and real user rules), comparing entire returned lists -- 92,825
+returned tuples -- not just top-N, plus 95 truncation checks. A
+dedicated tie-order proof (28 tied groups, 1,120 rows, plus a
+synthetic catalog tested at forward/reversed/rotated insertion order)
+confirmed ties still resolve by catalog-iteration/stable-sort order --
+exactly the class of bug A1 already had to fix once (F10). 39,203
+assertions passed; canonical suite byte-identical before/after. CODX
+reported an honest dead end (an initial harness assumption that
+catalog titles were unique broke on two real rows both titled "The
+One" -- fixed the harness, not the data) and an honest cost: ~1.6x
+slower per `recommend()` call (about 35.5ms) purely from the extra
+evidence `score_candidate()` computes for every candidate, matching
+the tradeoff already accepted when A2 (Task 4) landed. Reverted its
+own clone to exact HEAD bytes afterward.
+
+**Independently re-verified before applying**: entered a worktree,
+applied the diff to a clean checkout, confirmed via Python's `ast`
+module that `recommend` is the ONLY top-level function whose AST
+changed. Confirmed `scripts/scoring_tests.py` actually calls
+`R.recommend()` with real ratings/genre/rules (not just lower-level
+scoring functions), so the byte-identical suite result is a genuine
+regression check on this code path. Ran the real suite against local
+Supabase before and after -- byte-identical, a different database
+than CODX's hosted read-only snapshot. Also fixed one piece of
+documentation CODX flagged but correctly left alone: `score_candidate()`'s
+docstring said "existing callers are not migrated yet," stale now that
+`recommend()` is one; reworded to name it and re-ran the suite to
+confirm the edit was cosmetic (still byte-identical).
+
+Landed (`0863719`, pushed to `main`). Documented in
+`docs/scoring-test-protocol.md`'s new "A3: `recommend()` migrated onto
+`score_candidate()`" entry, permanent record at
+`docs/codx-reviews/codx-a3-recommend-migration-proposal-2026-09-16.md`,
+`docs/TODO.md` updated. Next real step: A4 (migrate
+`explain_match()`/`explain_book()` onto `score_candidate(..., policy=
+"explanation")`, scorecard check again) -- still caller migration of
+an already-decided design, same posture as A3.
