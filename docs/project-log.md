@@ -16364,3 +16364,44 @@ at another toggle; (2) once resolved, send CODX Task 4 (the canonical-
 scorer/rich-result proposal, Proposal 3 from its Task 2 report) --
 the prompt is already drafted in this conversation's history, not yet
 sent as of this entry.
+
+## 2026-09-16 (later still) -- bookspell-codex filesystem access confirmed restored; routine migration-hygiene check clean
+
+New CLDO session, started with the required sync: read this file's
+tail, `docs/TODO.md`'s P0 section, and `docs/PENDING_APPROVALS.md`
+(empty -- nothing open). Repo owner reported CODX appeared to have
+access again, so re-tested the exact access path that failed at the
+end of the prior session.
+
+**Confirmed working**: `ls ~/Documents`, `ls`/`git status`/`git log` in
+`~/Documents/bookspell-codex` all succeed now, no "Operation not
+permitted" error. CODX's clone is on `main` at `00f72c7`, matching
+CLDO's own `origin/main` HEAD exactly -- the two are genuinely in sync,
+not just independently unblocked. Untracked files in that clone
+(`docs/codx-recommend-review-2026-09-14.md`, `docs/codx-reports/`) are
+CODX's own report output, left alone.
+
+Doesn't resolve which theory from the prior session's entries was
+right (VS Code restart vs. the shared-launcher-binary TCC theory) --
+whichever fix was applied this time, access is back. Not spending
+further time isolating the exact mechanism now that it's unblocked;
+worth revisiting only if it recurs again.
+
+**Also ran the routine migration-tracking hygiene check** (both halves
+CLAUDE.md calls for): `supabase migration list --linked` shows every
+entry with a matching `local`/`remote` timestamp, no repair needed. The
+duplicate-timestamp check initially looked like a real hit
+(`20260911110000` appearing twice) but is a false positive --
+`20260911110000_delete_old_romance_worldbuilding_tropes.sql` and its
+`..._manifest.tsv` sidecar share a numeric prefix, and Supabase's own
+CLI already skips the `.tsv` (confirmed in the `migration list` output:
+"Skipping migration ...manifest.tsv... file name must match pattern").
+Not two competing `.sql` migrations -- no action needed.
+
+**Current state**: working tree clean, `main` up to date with
+`origin/main`, nothing open in `PENDING_APPROVALS.md`. Next real step
+per the prior session's open thread: send CODX Task 4 (the canonical-
+scorer/rich-result proposal, Proposal 3 from its Task 2 report) -- the
+prompt drafted for it lived only in that prior conversation's history,
+not committed anywhere, so it isn't available to this session and would
+need to be re-drafted from the Task 2 report before sending.
