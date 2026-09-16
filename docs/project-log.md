@@ -17162,3 +17162,62 @@ Next step: Phase B (extracting into `scripts/scoring/` submodules) per
 `docs/TODO.md`, once the repo owner is ready to schedule it -- or an
 independent CODX QA pass on CLDA's 4 batches from today, still
 undecided.
+
+## 2026-09-17 -- CODX Task 9 queued: independent QA pass on low-confidence HIGH_RISK_FIELDS tags from 2026-09-16's tagging batches
+
+Repo owner asked whether the 2026-09-16 batches' accuracy actually
+warranted a CODX QA pass, or whether it was worth doing a catalog-wide
+confidence-raising sweep instead. Checked the real record rather than
+guessing on either question.
+
+**Correction to a small inaccuracy in the prior day's entry**: that
+entry referred to "CLDA's 4 batches from today" -- the real count was
+**2 batches** (40 books total), not 4. Not rewriting the append-only
+entry itself per this file's own convention; noting the correction here
+instead.
+
+**On accuracy**: re-read both 2026-09-16 batch entries in full. Neither
+shows a quality problem -- both show real process discipline (mandatory
+schema/duplicate-title checks, 3 real author-contamination catches each
+independently verified against Hardcover's `cached_contributors`,
+density self-checks passing with real in-draft enrichment rather than
+after-the-fact padding, honest confidence-scoring instead of false
+certainty under an explicitly disclosed tight WebSearch budget). This
+is not "the work looks sloppy, intervene" territory.
+
+**On whether a QA pass is still worth it despite that**: yes, but
+narrowly targeted, not because of a visible problem -- because
+self-review under time pressure structurally can't catch the specific,
+already-documented failure mode this project cares about most
+(`HIGH_RISK_FIELDS` being *confidently* wrong on a mechanical detail,
+not *uncertain* -- the Dungeon Crawler Carl/Empire of Silence pattern).
+Confidence-scoring catches uncertainty; it can't catch confident
+wrongness by definition. An independent model doing fresh verification
+is one of the only real checks against that specific class of error.
+
+**On the catalog-wide question**: queried real numbers before
+answering. 600 `book_field_confidence` rows catalog-wide, 125 below
+0.5 -- but 61% of ALL confidence rows (366) are `romance_tone`/
+`worldbuilding_delivery`, which are deliberately low-confidence by
+design (a narrow presentation-specific evidence bar, deferred pending
+real user/tester data per existing project decision) -- NOT a target
+for a research-based confidence-raising effort; more research mostly
+just reconfirms honest uncertainty there rather than resolving it.
+Excluding those two fields, `HIGH_RISK_FIELDS` rows below 0.6 total
+**~161 catalog-wide** -- a real, tractable number, but not urgent (a
+low-confidence field is already discounted correctly by the scoring
+engine, not actively causing harm today). **Decision: incremental,
+not a one-time sweep** -- work through `HIGH_RISK_FIELDS` low-confidence
+rows in periodic batches of 15-20, same cadence as tagging itself, with
+today's 20 (the freshest, from 2026-09-16's batches) as the first real
+round establishing the pattern.
+
+**Queued as Task 9** in `docs/codx-tasks/current-task.md` -- the exact
+20 (book, field, confidence) pairs pulled directly from a live query,
+not reconstructed from the log text, plus two items self-flagged by
+CLDA worth a second look regardless of raw confidence value (*Shroud*'s
+real title-collision risk with a different, unrelated 2003 novel of the
+same name; *Ilium*'s structural `person: mixed` claim). Framed
+explicitly as a review/verification task (CODX's established scope),
+not tagging, and as the first round of a recurring task type rather
+than a one-off.
