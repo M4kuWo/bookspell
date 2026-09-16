@@ -1137,6 +1137,45 @@ worth deferring to a later session rather than batching in for
   tagged yet) all start cold. CLDA's next batch should pick from either
   pool per `tag-catalog-batch`'s normal build order, not hunt for a
   completion shortcut that isn't there anymore.
+
+  **CLDA: next task, ready now.** The 119 standalone-untagged pool was
+  screened by title/author for obvious non-SFF leakage before picking a
+  batch (Hardcover's genre search reliably pulls in some literary
+  fiction/thriller/nonfiction alongside real SFF -- same documented
+  pattern as every prior round). **Tag this batch of 20 first**, all
+  confidently in-scope sci-fi/fantasy standalones, no series
+  dependencies:
+
+  Accelerando (Charles Stross); Alien Clay (Adrian Tchaikovsky); Annie
+  Bot (Sierra Greer); Aurora (Kim Stanley Robinson); Diaspora (Greg
+  Egan); Embassytown (China Miéville); Fall; or, Dodge in Hell (Neal
+  Stephenson); Gods of Jade and Shadow (Silvia Moreno-Garcia); Heartless
+  (Marissa Meyer); Hell Followed with Us (Andrew Joseph White); Lord of
+  Light (Roger Zelazny); Pushing Ice (Alastair Reynolds); Replay (Ken
+  Grimwood); Shroud (Adrian Tchaikovsky); Six Wakes (Mur Lafferty);
+  Termination Shock (Neal Stephenson); The Bright Sword (Lev Grossman);
+  The Daughter of Doctor Moreau (Silvia Moreno-Garcia); The Deep Sky
+  (Yume Kitasei); The Echo Wife (Sarah Gailey).
+
+  **Two real, new scope items flagged while screening -- resolve these
+  before or during the batch, don't silently tag or skip**: *Nimona*
+  (ND Stevenson) is a graphic novel -- add it to the existing v1-scope
+  graphic-novel skip list (same treatment as the 8 already-known
+  round-4 cases), not a candidate to tag. *The Lottery* (Shirley
+  Jackson) and *The Egg* (Andy Weir) both look like single short
+  stories in the catalog as standalone "books," not novels -- likely a
+  format mismatch from the same ingestion pass, not a deliberate
+  catalog entry; verify against Hardcover before deciding whether to
+  tag as-is, flag for the repo owner, or delete as a bad ingest.
+
+  **Not pre-screened, deliberately left for tagging-time judgment**: the
+  remaining ~99 standalone books beyond this batch include a real mix of
+  further non-SFF leakage (nonfiction, literary classics, thrillers --
+  e.g. *Superintelligence*, *A Farewell to Arms*, *Nuclear War: A
+  Scenario*) and genuinely uncertain borderline cases (magical realism,
+  literary fiction with light spec elements). Catch those the normal way
+  at tagging time per this file's own documented pattern, not by
+  assuming this batch's clean screen extends to the rest of the pool.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done
