@@ -16405,3 +16405,60 @@ scorer/rich-result proposal, Proposal 3 from its Task 2 report) -- the
 prompt drafted for it lived only in that prior conversation's history,
 not committed anywhere, so it isn't available to this session and would
 need to be re-drafted from the Task 2 report before sending.
+
+## 2026-09-16 (later still) -- CODX's Task 4 landed: canonical score_candidate() orchestrator, independently re-verified and applied
+
+Repo owner reported CODX had finished the task handed to it (Task 4,
+sent outside this session -- the drafted prompt from the prior
+session's conversation history wasn't available here, so it must have
+been sent directly). Found CODX's report waiting in its clone:
+`docs/codx-reports/2026-09-16-a2-canonical-scorer-proposal.md`
+(~1,720 lines, newer than the Task 3 report already reviewed earlier
+today).
+
+The report implements the real Phase A step 2 from `docs/TODO.md` (not
+the earlier "A2 (prerequisite)" scaffolding step): one new,
+purely-additive function, `score_candidate()`, added to
+`scripts/recommend.py`. It assembles the full stage sequence behind a
+`policy` argument (`ranking`/`explanation`/`evaluation`/`audit`),
+returning a rich result dict instead of a bare float, and preserves
+each existing caller's own contract exactly. No existing function is
+touched; nothing calls the new one yet.
+
+CODX's own validation was extensive: a `sys.settrace` bit-for-bit
+comparison against the original stage helpers' actual locals using a
+live 978-book catalog snapshot (`codx_readonly`), the exact 378-case
+Task 3 battery reused across all four policies, 48 real-rater/synthetic
+profile combinations with entire ranked lists compared (not just
+aggregates), and a targeted 8-book synthetic catalog built from real
+(unmocked) preparation helpers specifically to force stacked,
+non-commuting stage interactions -- 308,658 bit-exact assertions,
+canonical suite byte-identical before/after. It explicitly reported its
+own dead ends (an initial coverage gap where no sampled profile
+actually changed score at the veto stage; a rejected rule-key typo)
+rather than omitting them. Reverted its own clone to exact HEAD bytes
+afterward, hash-verified.
+
+**Independently re-verified before applying, same discipline as A2
+(prerequisite)**: entered a worktree, extracted the diff from CODX's
+report, applied it cleanly (`git apply --check`), and confirmed via
+Python's `ast` module that the patch adds exactly one top-level
+function and changes the AST of every other existing function/class by
+zero bytes -- not just trusted the diff's visual shape. Ran the real
+`scripts/scoring_tests.py` against local Supabase before and after --
+byte-identical, a genuinely different database than CODX's hosted
+read-only snapshot. Read the diff directly and confirmed the policy
+table, stage order, and per-policy input-ignoring behavior all match
+the report's prose, and that the interaction-test numbers in the
+report are internally consistent with that table.
+
+Landed (`25411d9`, pushed to `main`). Documented in
+`docs/scoring-test-protocol.md`'s new "A2: canonical `score_candidate()`
+orchestrator" entry, permanent record copied to
+`docs/codx-reviews/codx-a2-canonical-scorer-proposal-2026-09-16.md`,
+`docs/TODO.md` updated. Next real step: A3 (migrate `recommend()`'s own
+loop to call `score_candidate(..., policy="ranking")`, full scorecard
+byte-identical check before moving on) -- this is caller migration,
+touching real production behavior, so the design call stays CLDO's per
+CLAUDE.md's persona rules even though CODX could again build and
+validate a CLDO-specified implementation of it in its own sandbox.
