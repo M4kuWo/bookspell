@@ -677,10 +677,30 @@ worth deferring to a later session rather than batching in for
   shared result/view contract first): the recommendation card's match
   label should eventually describe `recommend()`'s actual ranked score
   (including cold-start blend + user rules), not `explain_match()`'s
-  narrower score as today (F1) — this is A2/A3/A4 work, not A1.
-  **Next real step here: A2** (extract the shared lower-level factor
-  evaluator both `score_book()`/`explain_book()` consume, per the
-  decided recursion-avoiding boundary) — not Phase B file movement.
+  narrower score as today (F1) — this is A3/A4 work now that A2 is
+  landed, not A1.
+
+  **A2 (prerequisite) LANDED, 2026-09-16** — CODX's Task 3, its first
+  proposal built and validated as real running code (not just a
+  written diff) in its own clone, per the same-day CLAUDE.md
+  clarification that local sandbox implementation is in scope for a
+  proposal. `_iter_book_factors()` now supplies both `score_book()`/
+  `explain_book()`; see `docs/scoring-test-protocol.md`'s "A2
+  (prerequisite)" entry for CODX's validation (a `sys.settrace`
+  bit-for-bit comparison against the original functions' actual
+  locals, 378 cases) and CLDO's independent re-verification (same
+  patch applied to a separate checkout, byte-identical suite output
+  against local Supabase — a different database than CODX used).
+  Permanent record at
+  `docs/codx-reviews/codx-a2-factor-evaluator-proposal-2026-09-16.md`.
+  Also worth noting as a process fix, not a CODX mistake: CODX's first
+  attempt at this task correctly refused to proceed because CLDO had
+  committed the A1 work locally but never pushed it — see that date's
+  project-log entries.
+
+  **Next real step here: A3** (migrate `recommend()` to consume the
+  canonical scorer via `_iter_book_factors()`, checking scorecard
+  equivalence per the plan) — not Phase B file movement.
 
   Old note, superseded by the above but kept for history: **Not done
   yet, and not part of "setup" — actually running Codex

@@ -2743,3 +2743,57 @@ work, not implemented today. See
 `docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md` section
 8 for the full decision list; all 7 are now resolved (recorded there
 and in `docs/TODO.md`'s CODX entry).
+
+## A2 (prerequisite): shared base-factor evaluator extracted -- LANDED (2026-09-16, proposed by CODX, independently verified and applied by CLDO)
+
+Implements Task 2's Proposal 2. CODX built and validated this in its
+own clone first (`docs/codx-reports/2026-09-16-a2-factor-evaluator-
+proposal.md`, per the 2026-09-16 clarification that local sandbox
+implementation/execution is in scope for a proposal, not a bypass of
+"never delegated" -- see CLAUDE.md's CODX section): a new
+`_iter_book_factors(book, centroid, weights, field_prevalence,
+trope_prevalence)` generator in `scripts/recommend.py`, yielding
+`(label, similarity, raw_weight, effective_weight, is_trope)` per
+field/trope, extracted from `score_book()`'s original body (the same
+math `explain_book()` was separately, slightly-differently
+re-deriving). `score_book()` and `explain_book()` now both consume it;
+neither calls the other, and the evaluator calls neither of them nor
+any higher-level modifier -- satisfies F2's recursion constraint by
+construction (`_apply_dealbreaker_veto()`/`_apply_series_trajectory_
+penalty()` still call `explain_book()` directly, no cycle introduced).
+
+CODX's own validation (run in its clone against its `codx_readonly`
+role): a `sys.settrace`-based comparison tracing the *original*
+`score_book()`/`explain_book()`'s actual local variables at the moment
+of accumulation, compared bit-for-bit (IEEE-754 double hex encoding,
+distinguishing signed zero) against the new evaluator's output, across
+378 cases (18 named boundary cases -- missing evidence, confidence
+immediately below/at/above the 0.3 floor, partial nominal similarity,
+both redundancy triggers, prevalence discount + its floor, zero
+evidence, negative fatigue, tied magnitudes, signed zero, the 0.1/0.15
+display boundaries -- plus 360 combinatorial sweep cases). Also ran the
+full canonical suite before/after the edit: byte-identical (matching
+SHA-256), including Scenario 14's regression checks and the format-
+aware Scenario 1b. Reverted its own clone to exact HEAD bytes afterward
+(hash-verified, not just visually) before reporting.
+
+**Independently re-verified by CLDO before applying, not trusted on
+CODX's word alone** (same discipline as Task 1's bugs): extracted the
+diff from CODX's report, applied it to a clean checkout at the same
+base revision, ran the real `scripts/scoring_tests.py` against local
+Supabase before and after -- byte-identical (confirmed via `diff` and
+matching SHA-256, using a different database than CODX's hosted
+read-only run, so this isn't just re-checking the same output twice).
+Ran the patched suite twice more -- still byte-identical, confirming
+the 2026-09-15 tie-order determinism fix survived the extraction.
+Read the applied code directly (not just the diff) to confirm the
+`field not in centroid` skip, the 2026-09-11 nominal-missing-value fix,
+and the deliberately asymmetric contribution-display gate (`w > 0.15`
+for scalars using the raw signed weight, `abs(w) > 0.15` for tropes)
+were preserved exactly, not simplified into one shape. Confirmed the
+diff touches nothing outside `score_book()`/`explain_book()`/the new
+helper -- the dormant experimental `_per_value` forks are untouched.
+
+Landed as-is; no further changes needed before this is real production
+behavior. Next: A3 (migrate `recommend()` to the canonical scorer,
+checking scorecard equivalence) per `docs/TODO.md`'s Phase A plan.

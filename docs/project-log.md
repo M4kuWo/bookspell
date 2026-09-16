@@ -16173,3 +16173,60 @@ different from CODX's.
 Next step: CODX's Task 3 instructions are otherwise unchanged and
 still apply -- just needs a retry now that origin/main actually has
 what it needs.
+
+## 2026-09-16 (later still) -- A2 landed: CODX's first genuinely-executed proposal, independently re-verified and applied
+
+CODX's retry succeeded (clone fast-forwarded to `f93dbde`) and it
+delivered a real, substantial Task 3 report
+(`docs/codx-reports/2026-09-16-a2-factor-evaluator-proposal.md` in its
+clone, ~1,368 lines): the A2 prerequisite -- a shared
+`_iter_book_factors()` generator both `score_book()`/`explain_book()`
+now consume instead of separately re-deriving the same math -- built
+and run as real code in its own clone (not a hand-written, unrun diff),
+per the same-day clarification that this is in scope for a proposal.
+
+CODX's own validation was genuinely rigorous: a `sys.settrace`-based
+harness that traces the *original* `score_book()`/`explain_book()`'s
+actual local variables at the moment they accumulate a factor,
+compares them bit-for-bit (IEEE-754 double hex encoding, so signed
+zero is distinguished, not just "close enough") against the new
+evaluator's output, across 378 cases (18 hand-named boundary cases --
+missing evidence, confidence at/around the 0.3 floor from both sides,
+partial nominal similarity, both redundancy triggers, prevalence
+discount and its floor, zero evidence, negative fatigue, ties, the
+0.1/0.15 display boundaries, signed zero -- plus 360 combinatorial
+sweep cases). Also ran the full canonical suite before/after via its
+`codx_readonly` role: byte-identical (matching SHA-256). Reverted its
+own clone to exact HEAD bytes afterward and verified that by hash too,
+not just by eye, then confirmed the saved patch still applies cleanly
+against the restored tree before calling it done.
+
+**Independently re-verified before applying, same discipline as every
+prior CODX finding**: extracted the diff from its report, applied it
+to a clean checkout at the same base revision, ran the real
+`scripts/scoring_tests.py` against LOCAL Supabase (a genuinely
+different database than CODX's hosted read-only run, so this wasn't
+just re-checking the same output) before and after -- byte-identical,
+confirmed via `diff` and matching SHA-256. Ran the patched suite twice
+more to confirm the 2026-09-15 tie-order determinism fix survived the
+extraction -- still byte-identical. Read the applied code directly
+(not just the diff hunks, which omit unchanged context) to confirm the
+`field not in centroid` skip, the 2026-09-11 nominal-missing-value fix,
+and the deliberately asymmetric contribution-display gate were
+preserved exactly. Confirmed the diff's scope is limited to
+`score_book()`/`explain_book()`/the new helper -- the dormant
+`_per_value` experimental forks are untouched.
+
+Applied for real (this is now production behavior, not a pending
+proposal). Copied CODX's report to
+`docs/codx-reviews/codx-a2-factor-evaluator-proposal-2026-09-16.md` as
+the permanent record, documented in `docs/scoring-test-protocol.md`'s
+"A2 (prerequisite)" entry, and updated `docs/TODO.md` -- next real step
+is A3 (migrate `recommend()` onto the canonical scorer).
+
+This is CODX's strongest outing yet: a correct refusal when the
+baseline was wrong (Task 3's first attempt), followed by a genuinely
+well-executed, well-validated implementation once unblocked (Task 3's
+retry) -- exactly the kind of track record the "starting posture, not
+permanent" language in CLAUDE.md's CODX section was written to let grow
+into more trust over time.

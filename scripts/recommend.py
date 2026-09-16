@@ -2024,34 +2024,20 @@ def _redundancy_adjusted_weight(book, field, w):
     return w
 
 
-def score_book(book, centroid, weights, field_prevalence=None, trope_prevalence=None):
-    """Confidence discount (2026-08-30): a field/trope's effective weight
-    for THIS book is scaled by get_confidence(book, field) before it
-    contributes -- an uncertain tag gets less voting power in the
-    weighted average rather than being trusted at face value or assumed
-    to be a mismatch. Discounting both the numerator (contribution) and
-    denominator (total_weight) equally is what keeps this a "count for
-    less" effect rather than a bias toward either match or mismatch.
+def _iter_book_factors(book, centroid, weights, field_prevalence=None, trope_prevalence=None):
+    """Yield (label, similarity, raw_weight, effective_weight, is_trope).
 
-    Candidate-pool prevalence discount (2026-09-06, LANDED): field_prevalence/
-    trope_prevalence -- from build_prevalence_lookup(catalog, genre), computed
-    ONCE per scoring session by the caller, never per candidate -- further
-    scale w_eff by max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence) when given.
-    A genuine, well-evidenced preference can still fail to RANK one candidate
-    above another if most of the candidate pool already shares the matching
-    value (e.g. emotional_resolution: bittersweet at ~53% catalog prevalence
-    contributed a suspiciously constant +0.323 across nearly every top
-    fantasy match before this landed) -- see docs/scoring-test-protocol.md's
-    2026-09-06 entries for the full validation (8-row scorecard, all 4 real
-    raters, every regression traced to a specific book and understood, not
-    just accepted because the aggregate numbers looked fine) this landed on.
-    None/None (the default) is a guaranteed no-op, byte-identical to
-    pre-2026-09-06 behavior -- callers with no genre/catalog context handy
-    (most of scripts/scoring_tests.py's direct calls) are unaffected."""
-    score = 0.0
-    total_weight = 0.0
-    contributions = []
+    Scalar fields follow weights' insertion order; present tropes follow
+    weights["tropes"] order afterward, exactly as the original consumers.
+    Missing scalar values/centroids and absent tropes are skipped. Zero
+    effective weights are retained: filtering and accumulation belong to
+    the consumers, including their different raw-weight display gates.
 
+    A present trope has similarity 1.0, but consumers still add its
+    effective weight directly (rather than changing their arithmetic).
+    This evaluator sits below scoring and explanation; it never invokes
+    either consumer or a higher-level scoring modifier.
+    """
     for field, w in weights.items():
         if field == "tropes":
             continue
@@ -2086,24 +2072,58 @@ def score_book(book, centroid, weights, field_prevalence=None, trope_prevalence=
         if field_prevalence is not None:
             prevalence = field_prevalence.get(field, {}).get(book.get(field), 0.0)
             w_eff *= max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence)
-        contribution = w_eff * sim
-        score += contribution
-        total_weight += abs(w_eff)
-        if w > 0.15:
-            contributions.append((field, round(contribution, 3)))
+        yield field, sim, w, w_eff, False
 
     trope_weights = weights.get("tropes", {})
     book_tropes = set(book.get("tropes") or [])
     for t, w in trope_weights.items():
-        if t in book_tropes:
-            w_eff = w * scoring_confidence(book, t)
-            if trope_prevalence is not None:
-                prevalence = trope_prevalence.get(t, 0.0)
-                w_eff *= max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence)
-            score += w_eff
-            total_weight += abs(w_eff)
-            if abs(w) > 0.15:
-                contributions.append((f"trope:{t}", round(w_eff, 3)))
+        if t not in book_tropes:
+            continue
+        w_eff = w * scoring_confidence(book, t)
+        if trope_prevalence is not None:
+            prevalence = trope_prevalence.get(t, 0.0)
+            w_eff *= max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence)
+        yield f"trope:{t}", 1.0, w, w_eff, True
+
+
+def score_book(book, centroid, weights, field_prevalence=None, trope_prevalence=None):
+    """Confidence discount (2026-08-30): a field/trope's effective weight
+    for THIS book is scaled by get_confidence(book, field) before it
+    contributes -- an uncertain tag gets less voting power in the
+    weighted average rather than being trusted at face value or assumed
+    to be a mismatch. Discounting both the numerator (contribution) and
+    denominator (total_weight) equally is what keeps this a "count for
+    less" effect rather than a bias toward either match or mismatch.
+
+    Candidate-pool prevalence discount (2026-09-06, LANDED): field_prevalence/
+    trope_prevalence -- from build_prevalence_lookup(catalog, genre), computed
+    ONCE per scoring session by the caller, never per candidate -- further
+    scale w_eff by max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence) when given.
+    A genuine, well-evidenced preference can still fail to RANK one candidate
+    above another if most of the candidate pool already shares the matching
+    value (e.g. emotional_resolution: bittersweet at ~53% catalog prevalence
+    contributed a suspiciously constant +0.323 across nearly every top
+    fantasy match before this landed) -- see docs/scoring-test-protocol.md's
+    2026-09-06 entries for the full validation (8-row scorecard, all 4 real
+    raters, every regression traced to a specific book and understood, not
+    just accepted because the aggregate numbers looked fine) this landed on.
+    None/None (the default) is a guaranteed no-op, byte-identical to
+    pre-2026-09-06 behavior -- callers with no genre/catalog context handy
+    (most of scripts/scoring_tests.py's direct calls) are unaffected."""
+    score = 0.0
+    total_weight = 0.0
+    contributions = []
+
+    for label, sim, w, w_eff, is_trope in _iter_book_factors(
+        book, centroid, weights, field_prevalence, trope_prevalence
+    ):
+        contribution = w_eff if is_trope else w_eff * sim
+        score += contribution
+        total_weight += abs(w_eff)
+        # Preserve the original asymmetry: scalar display gates use the
+        # signed raw weight, while trope gates use its absolute value.
+        if (abs(w) if is_trope else w) > 0.15:
+            contributions.append((label, round(contribution, 3)))
 
     normalized = score / total_weight if total_weight > 0 else 0.0
     # Secondary sort key (field/trope name) for the same reason explain_book()
@@ -2119,7 +2139,7 @@ def explain_book(book, centroid, weights, top_n=5, field_prevalence=None, trope_
     math score_book() uses, decomposed for human explanation instead of
     collapsed into one number.
 
-    Why this needs its own pass rather than just re-reading
+    Why this needs its own factor view rather than just re-reading
     score_book()'s contributions: a field can have a small raw
     contribution (w * sim) for two very different reasons -- either the
     user doesn't weight it much (w is small), or it matters a lot AND
@@ -2143,27 +2163,12 @@ def explain_book(book, centroid, weights, top_n=5, field_prevalence=None, trope_
     pipeline than what the user actually sees."""
     matches, mismatches = [], []
 
-    for field, w in weights.items():
-        if field == "tropes" or field not in centroid:
-            continue
-        if field in ORDINAL_FIELDS:
-            pos = ordinal_position(field, book.get(field))
-            if pos is None:
-                continue
-            sim = 1 - abs(pos[0] / pos[1] - centroid[field])
-        else:
-            # See score_book()'s identical fix (2026-09-11) -- a
-            # never-tagged NOMINAL field must be skipped, not scored as
-            # a full mismatch against None.
-            if book.get(field) is None:
-                continue
-            sim = nominal_similarity(field, book.get(field), centroid[field])
-        w = _redundancy_adjusted_weight(book, field, w) * scoring_confidence(book, field)
-        if field_prevalence is not None:
-            prevalence = field_prevalence.get(field, {}).get(book.get(field), 0.0)
-            w *= max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence)
-
-        if w >= 0:
+    for field, sim, raw_weight, w, is_trope in _iter_book_factors(
+        book, centroid, weights, field_prevalence, trope_prevalence
+    ):
+        if is_trope:
+            (matches if w >= 0 else mismatches).append((field, abs(w)))
+        elif w >= 0:
             matches.append((field, w * sim))
             mismatches.append((field, w * (1 - sim)))
         else:
@@ -2173,20 +2178,9 @@ def explain_book(book, centroid, weights, top_n=5, field_prevalence=None, trope_
             matches.append((field, abs(w) * (1 - sim)))
             mismatches.append((field, abs(w) * sim))
 
-    trope_weights = weights.get("tropes", {})
-    book_tropes = set(book.get("tropes") or [])
-    for t, w in trope_weights.items():
-        if t not in book_tropes:
-            continue
-        w = w * scoring_confidence(book, t)
-        if trope_prevalence is not None:
-            prevalence = trope_prevalence.get(t, 0.0)
-            w *= max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence)
-        (matches if w >= 0 else mismatches).append((f"trope:{t}", abs(w)))
-
     # Secondary sort key (field/trope name) makes tie order deterministic --
     # without it, ties depend on set()/dict iteration order upstream (see
-    # `book_tropes = set(...)` above), which CODX's 2026-09-15 structural
+    # trope collection in _iter_book_factors()), which CODX's 2026-09-15 structural
     # audit (F10) caught actually flipping between two identical runs.
     # Scores/ranks are unaffected either way; only the DISPLAY order of
     # equal-magnitude matches/mismatches is now stable.
