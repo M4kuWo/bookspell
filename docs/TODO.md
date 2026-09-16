@@ -1211,6 +1211,41 @@ worth deferring to a later session rather than batching in for
   Thomas*). Migration: `20260916010000_catalog_tagging_batch_20_cldo_
   screened_books.sql`. Nothing skipped this batch -- all 20 cleared.
   Untagged count: 258 -> 238.
+
+  **DONE 2026-09-17 (CLDA, round-4 batch continued).** Tagged a further
+  20/20 books CLDA self-screened from the untagged pool: A Fate Inked in
+  Blood, A House With Good Bones, A River Enchanted, Alcatraz vs. the
+  Evil Librarians, Allomancer Jak and the Pits of Eltania, Belladonna,
+  Book of Night, Cemetery Boys, City of Dragons, City of Last Chances,
+  Cursed Bunny, Dance of Thieves, Delirium, Dragon Haven, Emergency
+  Skin, Evershore, Exile, Gone, Half a Soul, How to Become the Dark Lord
+  and Die Trying -- see `docs/project-log.md`'s 2026-09-17 entry for
+  full detail. Nothing skipped -- all 20 cleared, none belonged to a
+  series with any already-tagged entry (confirms the 2026-09-16
+  partial-series-exhausted finding still holds), though several gave
+  series their first tagged book (Saga of the Unfated, Elements of
+  Cadence, Alcatraz vs. the Evil Librarians, Belladonna, The Charlatan
+  Duology, Rain Wild Chronicles, The Tyrant Philosophers, Dance of
+  Thieves, Regency Faerie Tales, Dark Lord Davi, Gone, and Skyward
+  Flight/Dark Elf Trilogy got their first entries from this pool too).
+  **2 author-field contamination fixes**, both pre-flagged and verified
+  via Hardcover's `cached_contributors` GraphQL API before touching the
+  data: *Alcatraz vs. the Evil Librarians*'s "Hayley Lazo" is the book's
+  Illustrator (not the audiobook narrator as guessed in the task brief,
+  and not a co-author); *Cursed Bunny*'s "Anton Hur" is Bora Chung's
+  English translator. Both stripped to the sole genuine author.
+  Migration: `20260917000000_catalog_tagging_batch_20_clda_round4.sql`.
+  Density self-check (fresh catalog average at start of batch: 5.41
+  tropes/book, 1.71 CWs/book across 1018 book_dna rows): this batch
+  landed 87 tropes / 20 books = 4.35/book (80.4% of average) and 28 CWs
+  / 20 books = 1.4/book (81.9% of average) -- both inside the ~20%-below
+  tolerance, no post-hoc enrichment pass needed beyond what was folded
+  into the original draft. Real per-book variance, not padding: *A
+  House With Good Bones* and *Allomancer Jak and the Pits of Eltania*
+  legitimately carry only 2 tropes each (a slim horror standalone and an
+  88-ish-page in-universe pulp parody novella respectively), matching
+  the precedent already set for thin-but-honest source material.
+  Untagged count: 238 -> 218.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done

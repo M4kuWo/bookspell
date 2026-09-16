@@ -17269,3 +17269,182 @@ good writing) while updating anything that referenced now-superseded
 architecture, and added two new hurdles from the recent scoring-engine
 refactor (the split-import module-identity bug, the `top_n=None`
 truncation bug CODX caught before it shipped).
+
+## 2026-09-17 -- Catalog tagging batch (CLDA session): 20 CLDA-screened round-4 books, 2 author-contamination fixes
+
+Followed `.claude/skills/tag-catalog-batch/SKILL.md` on a clean retry
+of a batch a previous CLDA attempt had queued but never actually
+applied (that attempt hit a shared account rate limit before any real
+work landed -- confirmed at the start of this session via `git status`
+clean and hosted `book_dna` count unchanged at 1018 -- so no partial
+state to reconcile).
+
+**Step 1.5 (mandatory live-schema check) passed clean**: queried
+`information_schema.columns` for `book_dna` (42 live columns) against
+the skill's mandatory list (33 always-filled fields + `book_id` +
+`genre` + the 5 deliberately-deferred Tier B audiobook columns +
+`created_at`/`updated_at` = 42) -- no drift, nothing to fix before
+tagging. Also verified live vocabulary sizes matched the schema docs
+fresh: 152 tropes, 38 content warning types.
+
+**Batch**: 20 books CLDA self-screened from the untagged pool (per the
+task brief) -- A Fate Inked in Blood, A House With Good Bones, A River
+Enchanted, Alcatraz vs. the Evil Librarians, Allomancer Jak and the
+Pits of Eltania, Belladonna, Book of Night, Cemetery Boys, City of
+Dragons, City of Last Chances, Cursed Bunny, Dance of Thieves,
+Delirium, Dragon Haven, Emergency Skin, Evershore, Exile, Gone, Half a
+Soul, How to Become the Dark Lord and Die Trying. Verified no title
+collisions (`select title, count(*) ... having count(*) > 1` over all
+20 came back empty) and confirmed none belonged to a series with any
+already-tagged entry -- the partial-series-completion shortcut remains
+fully exhausted catalog-wide, several of these gave their series their
+very first tagged book instead (Saga of the Unfated, Elements of
+Cadence, Alcatraz vs. the Evil Librarians, Belladonna, The Charlatan
+Duology, Rain Wild Chronicles, The Tyrant Philosophers, Dance of
+Thieves, Regency Faerie Tales, Dark Lord Davi, Gone, Skyward Flight,
+Dark Elf Trilogy). Nothing skipped, no permanent-skip-category hits.
+
+**2 author-field contamination fixes**, both pre-flagged by the task
+brief and independently verified (not assumed) via Hardcover's
+`cached_contributors` GraphQL API before touching any data:
+- *Alcatraz vs. the Evil Librarians*: DB author field read "Brandon
+  Sanderson, Hayley Lazo." Hardcover's `cached_contributors` for this
+  book (hardcover_id 113379) shows Hayley Lazo's `contribution` as
+  `"Illustrator"` -- not the audiobook narrator the task brief guessed
+  as the likely explanation, and not a co-author either way. Fixed to
+  `'Brandon Sanderson'`.
+- *Cursed Bunny*: DB author field read "Bora Chung, Anton Hur."
+  Hardcover's `cached_contributors` (hardcover_id 1617146) shows Anton
+  Hur's `contribution` as `"Translator"` (Chung's real English
+  translator, as the task brief flagged). Fixed to `'Bora Chung'`.
+
+Both fixes applied via a title-scoped `update ... where title = ... and
+author = '<exact contaminated string>'` (never a raw UUID), verified
+live post-apply.
+
+**Short-story collection handled per standing policy**: *Cursed Bunny*
+tagged as a normal book (`work_type` already correctly set at
+ingestion) per CLAUDE.md's "Short-story collections are in scope"
+note -- not treated as a format-mismatch case. Its anthology structure
+genuinely doesn't map cleanly onto several per-book scalar fields
+(`pov_count`, `person`, `timeline`, `pace_shape`, `drive`,
+`magic_system_hardness`, `prose_density`), so those were tagged with
+an honest best-guess value AND a `book_field_confidence` row at
+0.3-0.5 rather than asserted at false certainty or force-averaged --
+9 of this one book's 34 scalar fields carry a confidence row, by far
+the densest confidence coverage of any book this batch.
+
+**HIGH_RISK_FIELDS applied to every book, every field on the list**
+(`person`, `pov_count`, `narrator_reliability`, `magic_system_hardness`,
+`overall_pace`, `romance_heat_intensity`, `drive`, `stakes_scope`,
+`narrative_closure`, `humor_level`). Real catches worth naming:
+*Emergency Skin* (N.K. Jemisin) is narrated in **second person** by the
+colony's collective-AI voice addressing the protagonist as "you" --
+tagged `person: second` at a real 0.7 confidence (a genuinely unusual,
+easy-to-default-past-to-third-person structural choice) rather than
+defaulting to third as most sci-fi novellas would pattern-match to; its
+`narrator_reliability` was also tagged `unreliable` (0.5 confidence) on
+the same basis -- the AI narrator's claims about Earth are revealed
+false by the story's own end, a real unreliability, not just a strong
+narrative voice. *Gone* (Michael Grant)'s `magic_system_hardness` was
+tagged `na` rather than pattern-matched to `soft` -- the book's powers
+are sci-fi/mutation-sourced (radiation from the power plant), not a
+fantasy magic system, so `na` is the schema-correct value even though
+"kids with powers" superficially resembles a soft-magic YA fantasy.
+Every other HIGH_RISK field across the batch was tagged from real
+recollection with an honest `book_field_confidence` entry wherever a
+specific mechanical detail (not just "any call has some uncertainty")
+felt genuinely uncertain -- 90 scalar confidence rows total, plus 20
+more recorded inline on `book_tropes.confidence` for individually
+uncertain trope calls (not routed through `book_field_confidence`,
+which is scalar-fields-only -- see "process note" below).
+
+**romance_tone / worldbuilding_delivery evidence**: this session's
+shared WebSearch budget was already exhausted (a prior session in this
+environment used the full 200-call allotment) and WebFetch attempts at
+search-engine result pages returned unusable localized/blocked content
+for the two titles most worth checking (*A Fate Inked in Blood*'s POV
+structure, *Emergency Skin*'s narration) -- confirmed via direct
+Hardcover-book-id lookups instead where that was viable (the two author
+checks), and via strong existing recollection elsewhere, but genuinely
+**left `romance_tone`/`worldbuilding_delivery` null rather than
+force-tagged** on every book where real presentation-specific evidence
+wasn't actually in hand (*A Fate Inked in Blood*, *Allomancer Jak*,
+*City of Last Chances*, *Cursed Bunny*, *Dance of Thieves*, *Delirium*,
+*Evershore*, *Exile*, *How to Become the Dark Lord*) -- 9 of 20 books
+carry a deliberate null on one or both fields rather than a guessed
+value. Where real, specific evidence was in hand, tagged with an
+honest confidence: `understated` at 0.4 on *City of Dragons*/*Dragon
+Haven* (Robin Hobb's characteristically restrained, introspective
+prose register, not scene-specific), `woven` at 0.3 on *Half a Soul*.
+
+**Vocabulary**: no new gap flagged this batch -- every book's defining
+elements mapped cleanly onto existing tropes/content warnings once
+checked against the "Flagged single-occurrence vocabulary gaps"
+tracker in `docs/schema/book-dna.md` (none of this batch's books
+independently re-surfaced any of the currently-Open entries there).
+
+**Density self-check** (queried fresh at the start of this session,
+before any tagging): 5.41 tropes/book, 1.71 CWs/book across 1018
+`book_dna` rows. First draft came in meaningfully thin (75.8% of
+average on tropes, 76% on CWs) -- caught during drafting, not after,
+per the skill's mandatory self-check step. Went back through the
+thinnest books and added further real, defensible tropes/CWs (not
+padding: e.g. *A River Enchanted* gained `mythological_pantheon_as_
+characters`/`found_family`/`underdog_rising`, *Emergency Skin* gained
+`satirical_or_comedic_scifi`, *Exile* gained `black_and_white_morality`
+and a `torture` content warning) until the batch cleared the ~20%-below
+tolerance: final numbers 87 tropes / 20 books = 4.35/book (80.4% of
+average), 28 CWs / 20 books = 1.4/book (81.9% of average). Legitimate
+low-density outliers kept honest rather than artificially padded: *A
+House With Good Bones* (2 tropes -- a slim horror standalone) and
+*Allomancer Jak and the Pits of Eltania* (2 tropes -- a short, obscure
+in-universe pulp-parody novella with thin real source material to draw
+defining tropes from).
+
+**Process note (caught before applying, not after)**: a first draft of
+the migration routed every trope-level and content-warning-level
+uncertainty through `book_field_confidence` with the trope/CW id as
+`field_name`. That table has no FK tying `field_name` to actual
+`book_dna` columns, so it would have inserted without error -- but it's
+schema-wrong per this project's own convention (`book_field_confidence`
+is for scalar `book_dna` fields; trope uncertainty belongs inline on
+`book_tropes.confidence`/`.source`, and content warnings have no
+confidence column in this schema at all, only `severity`/
+`reveals_spoiler`). Caught by re-reading the skill's own text
+("record it in `book_field_confidence` (for scalar fields) or as
+confidence directly on the `book_tropes` row (for tropes)") before
+testing, not after a failed apply -- rewrote the generator to assert
+every `book_field_confidence` field name against the real scalar
+column list, and moved all 20 trope-level uncertain calls onto inline
+`book_tropes.confidence` instead. Zero content-warning-level confidence
+rows exist in the final migration (correctly -- the mechanism doesn't
+exist for CWs).
+
+**Migration**: `supabase/migrations/20260917000000_catalog_tagging_
+batch_20_clda_round4.sql` (2 author-field `update`s, 20 `book_dna`
+inserts, 87 trope inserts [20 with inline confidence], 28
+content-warning inserts, 90 `book_field_confidence` inserts, all
+scalar-field-only). Tested in a rolled-back transaction first
+(verified 20 `book_dna` rows with zero unexpected NULLs across all 31
+always-filled columns, 87/28/90 row counts, both author fixes, all
+inside the transaction before rollback). Applied for real via
+autocommit psycopg2, then re-verified live (book_dna 1018 -> 1038,
+same row counts, both author fixes confirmed). Hosted migration-
+tracking closed via `supabase migration repair --status applied
+--db-url ... --yes 20260917000000` as its own separate call, THEN
+verified via `supabase migration list --db-url ...` (no `--linked` --
+no linked project in this environment): confirmed both a `local` and
+`remote` entry for `20260917000000`, and spot-checked the full listing
+for any other `local`-only drift -- none found. No same-day timestamp
+collision beyond the known `.tsv`-manifest false positive at
+`20260911110000`.
+
+**Untagged count**: 238 -> 218 (-20 tagged, 0 skipped/flagged).
+
+Committed and pushed directly (CLDA has real write access per
+`docs/persona-workflow.md`). `git fetch`/`git pull --ff-only` first --
+picked up 4 new commits from the CLDO session in between (README
+overhaul, CODX Task 8/9, `persona-workflow.md`) with no conflict in
+this file (fast-forward, append landed cleanly after the existing
+tail).
