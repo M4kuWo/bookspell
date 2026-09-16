@@ -16130,3 +16130,46 @@ volume yet to be a real exposure. Repo owner noted this should be
 revisited ("different measures") if this kind of data grows more
 numerous in future dumps -- worth checking for again at the next
 snapshot, not assumed resolved by this one decision.
+
+## 2026-09-16 (later) -- CODX correctly refused to run Task 3 against a stale baseline; real gap was CLDO never pushing
+
+Handed CODX its Task 3 (propose+locally-validate an A2 implementation).
+CODX checked in a real, well-written report
+(`docs/codx-reports/2026-09-16-a2-factor-evaluator-proposal.md` in its
+clone) explaining it could NOT proceed: its `git pull --ff-only`
+reported "Already up to date" at `8ee6740`, but the task depended on
+commits after that (A1's landing, the CODX scope clarification) which
+simply didn't exist on `origin/main` yet. It explicitly verified this
+(`git rev-parse HEAD`/`origin/main` both `8ee6740`, `git cat-file -t
+2b76625` failing, the A1 kickoff protocol entry and CLAUDE.md
+clarification both absent from its checked-out files) rather than
+assuming or guessing, and correctly declined to either reimplement A1
+itself (out of scope, would produce a different baseline than the one
+CLDO approved) or proceed against the wrong revision. Made no edits,
+no commits, no hosted access -- a clean, correct refusal.
+
+**Root cause: entirely on CLDO's side, not CODX's.** The prior
+session's 3 commits (A1 itself, the CODX scope clarification, and the
+backup-snapshot log entry) were all committed locally in CLDO's own
+`~/Documents/bookspell` checkout but never actually pushed to
+`origin/main` -- confirmed via `git status` showing "ahead of
+'origin/main' by 3 commits" and `git log origin/main..HEAD`. CODX has
+no access to CLDO's local disk; it only ever sees what's on the GitHub
+remote, so from its side this looked exactly like those commits never
+happened. Pushed immediately (`8ee6740..54fb632`), then verified the
+fix by pulling in CODX's own clone directly (`git pull --ff-only`
+there fast-forwarded cleanly to `54fb632`, pulling in all 7 expected
+files including the Task 2 review and the A1 kickoff entry) rather
+than just assuming the push alone was sufficient.
+
+**Standing lesson, worth checking every time a task is handed to CODX
+going forward**: after committing work CODX's next task depends on,
+confirm it's actually on `origin/main` (`git log origin/main..HEAD` --
+should be empty) before telling the repo owner to hand off the task,
+not just that it's committed locally. A local commit and a pushed
+commit look identical from CLDO's own side but are completely
+different from CODX's.
+
+Next step: CODX's Task 3 instructions are otherwise unchanged and
+still apply -- just needs a retry now that origin/main actually has
+what it needs.
