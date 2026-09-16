@@ -16752,3 +16752,134 @@ completion-priority signal to lean on. Worth knowing before handing
 CLDA a batch: pick from either pool per the tag-catalog-batch skill's
 normal build order, don't waste time hunting for a partial-series
 shortcut that isn't there anymore.
+
+## 2026-09-16 (CLDA) -- catalog tagging batch: 20 pre-screened standalone SFF books
+
+Ran `.claude/skills/tag-catalog-batch/SKILL.md` against the 20 titles
+CLDO hand-picked from the 119-book standalone-untagged pool (see
+`docs/TODO.md`'s "Catalog expansion round 4" entry, "CLDA: next task,
+ready now"). Step 1.5 verified first: the skill's mandatory `book_dna`
+column list matches the live `information_schema.columns` output for
+`book_dna` exactly (33 fields, set-equal both directions) -- no fix
+needed, schema and skill are in sync.
+
+**Two scope items resolved before tagging, per the task brief:**
+- **Nimona** (ND Stevenson) confirmed a graphic novel (272pp, matches
+  the existing v1-scope comics-are-out-of-scope pattern --
+  `CLAUDE.md`'s "Catalog scope & series hierarchy" section, same
+  treatment as *Saga*/*The Sandman*/the 8 round-4 comics already
+  identified). Not tagged, added to the skip list (see `docs/TODO.md`
+  update).
+- **The Lottery** (Shirley Jackson) and **The Egg** (Andy Weir)
+  verified against Hardcover (`hardcover_id` 123252 / 429406) via the
+  GraphQL API before touching either: `pages: 32` and `pages: 3`
+  respectively -- both are single short stories catalogued as
+  standalone "books," not novels. Neither tagged (`book_length`/
+  `pace_shape` and most other fields would be meaningless for
+  flash-fiction-length text); `books` rows left in place untagged, same
+  treatment as any other confirmed-out-of-scope-but-real-work case.
+  Flagged in `docs/TODO.md` for the repo owner rather than tagged or
+  deleted.
+
+**Author-field contamination caught before tagging** (mandatory
+ingestion-verification step, not an afterthought): *The Daughter of
+Doctor Moreau*'s `author` field read "Silvia Moreno-Garcia, Gisela
+Chipe". Checked Hardcover's `cached_contributors` directly (per
+`hardcover_id` 454797) -- Chipe's `contribution` is "Narrator", not
+"Author". Fixed via the migration (`update books set author =
+'Silvia Moreno-Garcia' where ... and author = '...Chipe'`), verified
+live post-apply. No other book in this batch had a multi-name author
+field.
+
+**Tagged 20/20 books**: Accelerando, Alien Clay, Annie Bot, Aurora,
+Diaspora, Embassytown, Fall or, Dodge in Hell, Gods of Jade and Shadow,
+Heartless, Hell Followed with Us, Lord of Light, Pushing Ice, Replay,
+Shroud, Six Wakes, Termination Shock, The Bright Sword, The Daughter of
+Doctor Moreau, The Deep Sky, The Echo Wife. None belonged to a series
+(pre-screened as standalones per the task brief) so there was no
+partial-series-completion angle this batch. Verified duplicate-title-free
+against `books` before building the title-keyed lookup script (none
+found).
+
+**HIGH_RISK_FIELDS**: no confident-but-wrong catches this batch (nothing
+like the Dungeon Crawler Carl/Empire of Silence pattern), but a real
+research-budget limit is being disclosed honestly rather than papered
+over: this session's WebSearch budget was exhausted by other work
+earlier in the conversation before this batch's research began, so
+verification leaned on WebFetch against specific review/wiki URLs
+(succeeded for *Alien Clay*, *The Bright Sword*, *The Daughter of Doctor
+Moreau*, *Annie Bot*, *The Deep Sky*) plus, where that also failed
+(*Shroud*, and partially *Embassytown*/*Lord of Light*/several others),
+direct recollection with `book_field_confidence` entries recorded for
+every genuinely uncertain HIGH_RISK/romance_tone/worldbuilding_delivery
+call rather than asserting false certainty -- 47 confidence rows total
+across the batch, a real, honest reflection of a batch tagged under a
+tighter research budget than usual. **Flagging *Shroud* specifically for
+a spot-check**: `person`/`pov_count`/`form` were all tagged at
+confidence 0.4-0.5, the lowest-confidence book in this batch -- every
+attempted web source either 404'd or returned the wrong "Shroud" (John
+Banville's 2003 novel, not Tchaikovsky's 2025 one).
+
+**romance_tone / worldbuilding_delivery evidence**: applied the strict
+presentation-specific evidence standard throughout, not genre pattern-
+matching. Confident, presentation-level calls (confidence 0.6):
+*Gods of Jade and Shadow* (`understated` -- recalled the quiet, dignified
+parting scene specifically, not just "restrained courtship pacing"),
+*Accelerando*/*Aurora*/*Diaspora*/*Fall or, Dodge in Hell* (`worldbuilding_
+delivery: exposition_dump`, all four matching the well-established
+Stross/Robinson/Egan/Stephenson infodump pattern already documented
+elsewhere in this catalog). Genuinely uncertain calls tagged at 0.2 per
+the skill's convention rather than skipped: *Heartless* and *The Bright
+Sword* (`romance_tone`, both -- real romantic content confirmed present,
+but no specific presentation-level scene verified either way for either
+book) and *The Daughter of Doctor Moreau* (`romance_tone` -- the
+"doll to carry around" line found via research is content/character
+evidence about Eduardo, not presentation-style evidence, so it doesn't
+clear this schema's evidence bar on its own).
+
+**Density self-check** (queried fresh, catalog-wide): 5.43 tropes/book,
+1.71 CWs/book across the whole catalog (998 `book_dna` rows after this
+batch). This batch: 4.75 tropes/book (87.5% of catalog average, -12.5%,
+inside the ~20%-below tolerance), 1.65 CWs/book (96.5% of average, well
+inside tolerance) -- density check passes, no enrichment pass needed
+beyond two books already topped up during drafting (*Replay* +
+`tragic_reversal_of_fortune`, *The Deep Sky* + `survivalist_ingenuity`).
+Real per-book variance is expected and legitimate: *Diaspora* (extremely
+hard, idea-driven SF with no real content-warning-relevant material) and
+*Lord of Light* both carry 0 CWs honestly rather than forced ones;
+*Annie Bot* carries only 2 tropes (a tight 2-character literary SF study)
+but 4 CWs -- the thinnest-trope book in the batch, compensated by being
+one of its highest-CW books.
+
+**Vocabulary gap tracking**: *Alien Clay* was one of two books named in
+`docs/schema/book-dna.md`'s open "first-contact-with-a-non-alien-
+non-human-intelligence-via-natural-evolution" tracker entry as worth
+checking once tagged. Checked directly against real plot research: Kiln's
+emergent planetary intelligence is confirmed genuine extraterrestrial
+biology (an alien planet's own ecosystem), not a natural-Earth-evolution
+case like *The Mountain in the Sea*'s octopuses -- correctly excluded on
+the same grounds as the already-checked *Blindsight*, tagged plain
+`first_contact` only. Tracker entry updated with this third check; gap
+stays Open (still just the one real occurrence). *Termination Shock*'s
+opening Category-6 Houston hurricane was tagged `natural_disaster_mass_
+casualty` (`central_theme`) -- straightforward use of the already-real
+vocabulary value (promoted 2026-09-13 via *The Kill Order*/*Seveneves*),
+not a new gap.
+
+**Migration**: `supabase/migrations/20260916000000_catalog_tagging_
+batch_20_standalone_sff_books.sql` (20 `book_dna` inserts, 95 trope
+inserts, 33 content-warning inserts, 47 `book_field_confidence` inserts,
+1 author-field `update`), applied directly to hosted via autocommit
+psycopg2 per this project's working-directly-against-hosted convention
+(tested first in a rolled-back transaction -- executed cleanly, then
+applied for real and re-verified row counts/author fix live). Hosted
+migration-tracking closed via `supabase migration repair --status
+applied` (as its own separate call, per the task brief) --
+`supabase migration list --linked` confirms `20260916000000` now shows
+both `local` and `remote` timestamps, and no other drift exists across
+the full list. No same-day timestamp collision (only the known,
+already-documented `.tsv`-manifest false positive at `20260911110000`).
+
+**Untagged count**: 278 -> 258 standalone-pool books remaining (119-book
+pre-screened pool now has 99 unscreened books left, per the task's
+explicit "not part of this batch" boundary -- see `docs/TODO.md` update).

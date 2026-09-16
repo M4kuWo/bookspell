@@ -1138,35 +1138,44 @@ worth deferring to a later session rather than batching in for
   pool per `tag-catalog-batch`'s normal build order, not hunt for a
   completion shortcut that isn't there anymore.
 
-  **CLDA: next task, ready now.** The 119 standalone-untagged pool was
-  screened by title/author for obvious non-SFF leakage before picking a
-  batch (Hardcover's genre search reliably pulls in some literary
-  fiction/thriller/nonfiction alongside real SFF -- same documented
-  pattern as every prior round). **Tag this batch of 20 first**, all
-  confidently in-scope sci-fi/fantasy standalones, no series
-  dependencies:
+  **DONE 2026-09-16 (CLDA).** Tagged all 20/20 of the pre-screened
+  standalone batch: Accelerando, Alien Clay, Annie Bot, Aurora, Diaspora,
+  Embassytown, Fall or, Dodge in Hell, Gods of Jade and Shadow, Heartless,
+  Hell Followed with Us, Lord of Light, Pushing Ice, Replay, Shroud, Six
+  Wakes, Termination Shock, The Bright Sword, The Daughter of Doctor
+  Moreau, The Deep Sky, The Echo Wife -- see `docs/project-log.md`'s
+  2026-09-16 "catalog tagging batch: 20 pre-screened standalone SFF
+  books" entry for full detail (density self-check numbers, romance_tone/
+  worldbuilding_delivery evidence, an author-contamination fix on *The
+  Daughter of Doctor Moreau*, a vocabulary-gap tracker check on *Alien
+  Clay*). Migration: `20260916000000_catalog_tagging_batch_20_standalone_
+  sff_books.sql`.
 
-  Accelerando (Charles Stross); Alien Clay (Adrian Tchaikovsky); Annie
-  Bot (Sierra Greer); Aurora (Kim Stanley Robinson); Diaspora (Greg
-  Egan); Embassytown (China Miéville); Fall; or, Dodge in Hell (Neal
-  Stephenson); Gods of Jade and Shadow (Silvia Moreno-Garcia); Heartless
-  (Marissa Meyer); Hell Followed with Us (Andrew Joseph White); Lord of
-  Light (Roger Zelazny); Pushing Ice (Alastair Reynolds); Replay (Ken
-  Grimwood); Shroud (Adrian Tchaikovsky); Six Wakes (Mur Lafferty);
-  Termination Shock (Neal Stephenson); The Bright Sword (Lev Grossman);
-  The Daughter of Doctor Moreau (Silvia Moreno-Garcia); The Deep Sky
-  (Yume Kitasei); The Echo Wife (Sarah Gailey).
+  **Both flagged scope items resolved, not silently tagged or skipped**:
+  *Nimona* (ND Stevenson) confirmed a graphic novel (272pp) -- added to
+  the v1-scope graphic-novel skip list, not tagged (same treatment as
+  the 8 already-known round-4 cases: *Monstress Vol. 1*, *Paper Girls
+  Vol. 1*, *Saga Vol. 3/4*, *The Walking Dead Vol. 1*, *Watchmen*,
+  *White Sand Vol. 1*, *Y: The Last Man Vol. 1*). *The Lottery* (Shirley
+  Jackson) and *The Egg* (Andy Weir) verified against Hardcover
+  (`hardcover_id` 123252 / 429406, GraphQL `pages` field): 32pp and 3pp
+  respectively -- both genuinely single short stories catalogued as
+  standalone "books," not a data-entry fluke worth silently fixing.
+  **Flagged for the repo owner, not tagged and not deleted**: decide
+  whether these two rows should be removed from `books` entirely (a
+  short story isn't a "book" in this catalog's sense and most Book DNA
+  fields would be meaningless for it) or left as permanently-untagged
+  rows the way other out-of-scope-but-real cases are handled.
 
-  **Two real, new scope items flagged while screening -- resolve these
-  before or during the batch, don't silently tag or skip**: *Nimona*
-  (ND Stevenson) is a graphic novel -- add it to the existing v1-scope
-  graphic-novel skip list (same treatment as the 8 already-known
-  round-4 cases), not a candidate to tag. *The Lottery* (Shirley
-  Jackson) and *The Egg* (Andy Weir) both look like single short
-  stories in the catalog as standalone "books," not novels -- likely a
-  format mismatch from the same ingestion pass, not a deliberate
-  catalog entry; verify against Hardcover before deciding whether to
-  tag as-is, flag for the repo owner, or delete as a bad ingest.
+  **One real spot-check flagged from this batch**: *Shroud* (Adrian
+  Tchaikovsky) was tagged under unusually low research confidence --
+  this session's WebSearch budget was already exhausted before this
+  batch started, and every WebFetch attempt at a review/wiki page either
+  404'd or returned the wrong "Shroud" (John Banville's 2003 novel).
+  `person`/`pov_count`/`form` are recorded in `book_field_confidence` at
+  0.4-0.5 rather than asserted with false certainty -- worth a real
+  spot-check (re-read a synopsis or two) next time someone's in the
+  neighborhood of Tchaikovsky's catalog entries.
 
   **Not pre-screened, deliberately left for tagging-time judgment**: the
   remaining ~99 standalone books beyond this batch include a real mix of
@@ -1176,6 +1185,8 @@ worth deferring to a later session rather than batching in for
   literary fiction with light spec elements). Catch those the normal way
   at tagging time per this file's own documented pattern, not by
   assuming this batch's clean screen extends to the rest of the pool.
+  Standalone-pool remaining count: 278 -> 258 (-20 tagged; *Nimona*/*The
+  Lottery*/*The Egg* stay untagged/flagged, not counted as cleared).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done

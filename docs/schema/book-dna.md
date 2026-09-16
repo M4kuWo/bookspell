@@ -1197,6 +1197,15 @@ don't re-derive it from the log):
   re-confirmed correctly excluded (genuine extraterrestrial contact, not
   natural-Earth-evolution). No other book across all 7 sweep-#3 clusters
   hit this specific mechanism.
+  **CHECKED again 2026-09-16 (CLDA, round-4 standalone batch)** — *Alien
+  Clay* is now tagged (this session). Confirmed via direct research
+  (Wikipedia plot summary) exactly as this tracker predicted: Kiln's
+  "builders" are an emergent property of an *alien* planet's own
+  ecosystem — genuine extraterrestrial biology, not a natural-Earth-
+  evolution case — so it's correctly excluded on the same grounds as
+  *Blindsight*, tagged plain `first_contact` (no `incomprehensible_alien_
+  contact` either, since mutual nonverbal comprehension is achieved).
+  Still just one real occurrence — stays Open.
 - **Trope**: `skinchanging_or_body_possession` — a character projects
   their consciousness into and directly controls another living
   creature's body (animal or human) while their own body remains
