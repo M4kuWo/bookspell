@@ -16883,3 +16883,173 @@ already-documented `.tsv`-manifest false positive at `20260911110000`).
 **Untagged count**: 278 -> 258 standalone-pool books remaining (119-book
 pre-screened pool now has 99 unscreened books left, per the task's
 explicit "not part of this batch" boundary -- see `docs/TODO.md` update).
+
+## 2026-09-16 (CLDA, second batch) -- catalog tagging batch: 20 CLDO-screened books
+
+Ran `.claude/skills/tag-catalog-batch/SKILL.md` against a fresh set of 20
+titles CLDO hand-picked and pre-screened from the 258-book untagged
+standalone pool (favoring titles this session had solid real knowledge of,
+given a tight WebSearch budget). Step 1.5 verified first: live
+`information_schema.columns` for `book_dna` has 42 columns, matching the
+skill's mandatory-33-plus-`book_id`/`genre`-plus-5-excluded-Tier-B-audiobook
+list exactly (42 = 33 + 2 + 5 + `created_at`/`updated_at`) -- no fix needed.
+Vocabulary confirmed live: 152 tropes / 38 content warnings, matching the
+task brief exactly.
+
+**Duplicate-title check**: `select title, count(*) ... having count(*) > 1`
+against all 20 titles came back empty -- none are duplicated in `books`,
+safe to build a title-keyed lookup.
+
+**Two author-field contamination checks, both confirmed real** (mandatory
+per-book check, not just "looks contaminated"): checked both flagged
+fields against Hardcover's `cached_contributors` via GraphQL before
+tagging either.
+- *Elric of Melniboné and Other Stories*' `author` field read "Michael
+  Moorcock, Alan Moore" -- Hardcover's `cached_contributors` shows Alan
+  Moore's `contribution` as `"foreword"`, not authorship. Fixed via the
+  migration (`update books set author = 'Michael Moorcock' where ... and
+  author = 'Michael Moorcock, Alan Moore'`), verified live post-apply.
+- *Leviathan*'s `author` field read "Scott Westerfeld, Alan Cumming" --
+  `cached_contributors` shows Alan Cumming's `contribution` as
+  `"Narrator"` (the audiobook narrator, exactly the pattern flagged in
+  the task brief). Fixed the same way, verified live.
+
+**Tagged 20/20 books, nothing skipped**: Alanna: The First Adventure,
+Congo, Daughter of the Empire, Dreamcatcher, Elric of Melniboné and Other
+Stories, Feed, Gateway, Horus Rising, Ilium, Kushiel's Dart, Legion,
+Leviathan, Little Brother, Mortal Engines, Odd Thomas, On Basilisk
+Station, Shards of Honour, Soulless, The Amulet of Samarkand, The End of
+Eternity. None belonged to a series with any already-tagged entry (the
+partial-series-completion shortcut is confirmed fully exhausted
+catalog-wide as of the 2026-09-16 earlier entry) -- several belong to
+series that now have their FIRST tagged book: Horus Heresy, Vorkosigan
+Saga, Parasol Protectorate, Bartimaeus, Honor Harrington, Song of the
+Lioness, Empire Trilogy, Elric Saga, Mortal Engines Quartet, Leviathan
+trilogy. Tagged each on its own merits per Step 3, no completion
+shortcut chased (matches the task brief's explicit instruction).
+
+**HIGH_RISK_FIELDS checks**: applied the extra-verification standard to
+every HIGH_RISK field on every book. Two genuine web-verification passes
+done via WebFetch (given the tight WebSearch budget): confirmed *Legion*
+(Sanderson novella) is genuinely 88 pages via Hardcover's own `pages`
+field -- confirming it's the standalone first novella, not the trilogy
+omnibus, which settled `narrative_closure: requires_series` and
+`book_length: short` rather than guessing from the bare title match.
+Confirmed *Shards of Honour*'s Vorrutyer subplot via a Wikipedia plot
+summary before tagging its content warning: Vorrutyer orders Bothari to
+rape Cordelia, then moves to do it himself, and is killed by Bothari
+before the assault occurs -- tagged `sexual_assault` at `moderate`
+severity (attempted, prevented, not completed) rather than guessing at
+severity from vague memory of "something bad happens with Vorrutyer."
+The same page also confirmed the Aral/Cordelia romance's restrained,
+principled presentation (Cordelia repeatedly rejects marriage, accepts
+only after practical necessity) -- raised `romance_tone: understated`
+from an initial 0.3 guess to a real 0.6 confidence once presentation-
+specific evidence was in hand.
+
+Every other HIGH_RISK field (`person`, `pov_count`, `narrator_reliability`,
+`magic_system_hardness`, `overall_pace`, `romance_heat_intensity`,
+`drive`, `stakes_scope`, `narrative_closure`, `humor_level`) was tagged
+from real recollection with an honest `book_field_confidence` entry
+wherever a specific mechanical detail felt genuinely uncertain rather
+than asserted with false certainty -- 31 confidence rows total across the
+batch (`person` on *Congo*/*Dreamcatcher*/*Legion*/*Ilium*/*The Amulet of
+Samarkand* at 0.5-0.6; `narrator_reliability` on *Gateway*/*Legion* at
+0.4-0.5 given genuinely ambiguous cases -- Broadhead's avoidance-driven
+therapy-session narration and Stephen Leeds' self-aware-but-hallucinating
+condition don't map cleanly onto the reliable/unreliable/ambiguous
+trichotomy; `drive` on *Shards of Honour*/*Soulless* at 0.4-0.5, flagging
+real judgment calls between `character_driven`/`romance_driven`). No
+confident-but-wrong catch on the scale of the Dungeon Crawler Carl/Empire
+of Silence precedent this batch, but two real judgment calls worth
+naming: *Shards of Honour*'s `drive` could reasonably go either
+`character_driven` (tagged) or `romance_driven` given how central the
+Cordelia/Aral bond is to every major plot decision -- flagged rather than
+picked silently. *Ilium*'s `person` tagged `mixed` (Hockenberry's
+sections first-person, the Earth/Jovian-moon threads third-person) --
+a real, checkable structural fact, tagged at 0.6 from strong but
+unverified recollection.
+
+**romance_tone / worldbuilding_delivery evidence**: applied the strict
+presentation-specific evidence standard, not genre pattern-matching.
+Confident calls (0.6): *Shards of Honour* (`understated`, upgraded via
+research above), *Little Brother* (`worldbuilding_delivery:
+exposition_dump` -- Doctorow's well-known didactic in-text cryptography
+tutorials), *On Basilisk Station* (`exposition_dump` -- Weber's
+famously heavy military/political infodumping is a defining stylistic
+trait, not a one-off guess). Genuinely uncertain calls tagged at 0.2-0.4
+per the skill's convention rather than skipped or force-tagged at full
+confidence: *Elric*'s `romance_tone: melodramatic` (Moorcock's generally
+florid, doom-laden register, no specific Cymoril-scene evidence in
+hand), *Gateway*'s `romance_tone: understated` (Broadhead/Klara's
+melancholy, internalized-guilt presentation, not confirmed against a
+specific scene), *Soulless*'s `romance_tone: mixed` (a real tonal
+tension between the book's comedic banter register and genuine
+melodrama beats -- didn't force it onto either single pole), *Kushiel's
+Dart*'s `romance_tone: understated` (the Phèdre/Joscelin bond's
+restrained devotion is a distinct axis from the book's separate, much
+higher heat level -- didn't infer tone from heat). Left null (too little
+romantic or worldbuilding-exposition content to judge either way) on:
+`romance_tone` for Congo, Dreamcatcher, Feed, Horus Rising, Ilium,
+Leviathan, Little Brother, The Amulet of Samarkand; `worldbuilding_
+delivery` for Congo, Dreamcatcher, Elric, Odd Thomas, Soulless.
+
+**Density self-check** (queried fresh, catalog-wide, before this batch):
+5.43 tropes/book, 1.71 CWs/book across 998 `book_dna` rows. This batch:
+91 tropes / 20 books = 4.55/book (83.8% of catalog average, -16.2%,
+inside the ~20%-below tolerance), 29 CWs / 20 books = 1.45/book (84.8%
+of average, well inside tolerance) -- density check passes. Real
+per-book variance is honest here, not padding: *Odd Thomas* and *The End
+of Eternity* carry 0 content warnings (see vocabulary gap below for one
+reason why), *Congo* and *Legion* carry only 2 tropes each (a tight
+survival-thriller and an 88-page novella respectively, genuinely thinner
+source material than a doorstopper epic fantasy) -- both are honest
+low-density outcomes, not under-tagging, matching the precedent the
+2026-09-16 earlier entry set for *Diaspora*/*Lord of Light*. Where a book
+sat unnecessarily thin relative to its actual content (*Horus Rising*,
+*Dreamcatcher*, *Little Brother*, *On Basilisk Station*, *Shards of
+Honour*, *The End of Eternity*), one additional real trope was added to
+each during drafting, not after the fact, bringing the batch from an
+initial 78%-of-average draft up to the reported 83.8%.
+
+**Vocabulary gap flagged, not acted on** (single occurrence, added to
+`docs/schema/book-dna.md`'s "Flagged single-occurrence vocabulary gaps"
+tracker): *Odd Thomas*'s climax is a foiled mass-shooting/bombing plot
+at a shopping mall -- a human-perpetrated, contemporary-setting mass-
+casualty attack. No existing content warning cleanly covers this:
+`war_trauma` implies organized conflict, `natural_disaster_mass_casualty`
+(promoted 2026-09-13) is explicitly natural/astronomical in origin, and
+`genocide` requires group-identity targeting. This is a distinct third
+category (a planned, human-perpetrated mass-casualty attack in an
+otherwise-ordinary contemporary setting) with no vocabulary home yet.
+One occurrence only -- correctly deferred per the "does this change the
+recommendation" bar, not turned into a new value off one book. Watch for
+a second occurrence (a school shooting, a terrorist bombing, etc. as a
+book's central event) in a future batch or sweep.
+
+**Migration**: `supabase/migrations/20260916010000_catalog_tagging_
+batch_20_cldo_screened_books.sql` (2 author-field `update`s, 20 `book_dna`
+inserts, 91 trope inserts, 29 content-warning inserts, 31
+`book_field_confidence` inserts). Tested in a rolled-back transaction
+first (verified 20 `book_dna` rows, 91/29/31 row counts, both author
+fixes, zero unexpected NULLs beyond the two legitimate romance_tone/
+worldbuilding_delivery exceptions -- all inside the transaction before
+rollback). Applied for real via autocommit psycopg2 per this project's
+working-directly-against-hosted convention, then re-verified live
+(same counts, both author fixes confirmed). Hosted migration-tracking
+closed via `supabase migration repair --status applied --db-url ... --yes
+20260916010000` as its own separate call -- returned `{"versions":
+["20260916010000"],"status":"applied"}`. `supabase migration list
+--linked` could not be run from this session to double-check (project
+not linked from this CLDA environment -- no working local Supabase
+stack here, the same thinner-safety-net gap CLAUDE.md's destructive-
+action-gate section already documents for CLDA's environment) --
+the `repair` command's own success response is the verification on
+record for this session; worth a routine `migration list --linked`
+check from CLDO's environment at the next sync. No same-day timestamp
+collision beyond the known `.tsv`-manifest false positive at
+`20260911110000`.
+
+**Untagged count**: 258 -> 238 (-20 tagged, 0 skipped/flagged this batch
+-- unlike the prior 2026-09-16 batch, none of these 20 hit a permanent-
+skip category).

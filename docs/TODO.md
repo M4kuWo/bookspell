@@ -1187,6 +1187,21 @@ worth deferring to a later session rather than batching in for
   assuming this batch's clean screen extends to the rest of the pool.
   Standalone-pool remaining count: 278 -> 258 (-20 tagged; *Nimona*/*The
   Lottery*/*The Egg* stay untagged/flagged, not counted as cleared).
+
+  **DONE 2026-09-16 (CLDA, second batch).** Tagged a further 20/20 books
+  CLDO hand-picked from the 258-book remaining pool: Alanna: The First
+  Adventure, Congo, Daughter of the Empire, Dreamcatcher, Elric of
+  Melniboné and Other Stories, Feed, Gateway, Horus Rising, Ilium,
+  Kushiel's Dart, Legion, Leviathan, Little Brother, Mortal Engines, Odd
+  Thomas, On Basilisk Station, Shards of Honour, Soulless, The Amulet of
+  Samarkand, The End of Eternity -- see `docs/project-log.md`'s 2026-09-16
+  "second batch" entry for full detail (density self-check numbers,
+  HIGH_RISK_FIELDS checks including two real WebFetch verifications,
+  romance_tone/worldbuilding_delivery evidence, two author-contamination
+  fixes on *Elric*/*Leviathan*, one new vocabulary gap flagged on *Odd
+  Thomas*). Migration: `20260916010000_catalog_tagging_batch_20_cldo_
+  screened_books.sql`. Nothing skipped this batch -- all 20 cleared.
+  Untagged count: 258 -> 238.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done

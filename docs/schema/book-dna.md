@@ -1314,6 +1314,17 @@ don't re-derive it from the log):
   `deadly_competition_or_trial` (covers the trial mechanic generically,
   not the extraction-as-tribute economics it's wrapped around). One
   occurrence only.
+- **Content warning**: no `content_warnings` value cleanly covers a
+  planned, human-perpetrated mass-casualty attack (a shooting, a bombing)
+  in an otherwise-ordinary contemporary setting — distinct from
+  `war_trauma` (implies organized conflict), `natural_disaster_mass_
+  casualty` (explicitly natural/astronomical in origin, promoted
+  2026-09-13), and `genocide` (requires group-identity targeting). First
+  seen 2026-09-16 (CLDA, tagging batch) on *Odd Thomas* (Dean Koontz) --
+  the book's climax is a foiled mall shooting/bombing plot, tagged with
+  no content warning at all rather than forced into one of the three
+  near-misses above. Watch for a second occurrence (a school shooting, a
+  terrorist bombing, etc. as a book's central event).
 - **Trope**: permanent, non-consensual parasitic body possession — an
   entity permanently colonizes a resistant human host with no return
   trip and no separate vulnerable body of its own, while the original
