@@ -1,478 +1,443 @@
-# Bookspell
+<div align="center">
 
-A sci-fi/fantasy book discovery app built on structured **Book DNA**
-attributes instead of aggregate star ratings. A 4.2-star average tells
-you nothing about *why* — Bookspell tags every book on a controlled
-vocabulary (pacing, tone, POV structure, tropes, content warnings, and
-more) and recommends by matching a reader's own taste profile against
-that structure, not by popularity or what other users liked.
+# 📖 Bookspell
 
-This is a working prototype in active validation, not a shipped
-product: the catalog, schema, and recommendation engine are built and
-under real-reader testing; the actual app (onboarding, UI, accounts)
-hasn't been built yet. See [`docs/project-log.md`](docs/project-log.md)
-for the full, dated history of every decision, bug, and fix.
+**A sci-fi/fantasy book discovery app built on structured "Book DNA," not star ratings.**
+
+A 4.2-star average tells you nothing about *why*. Bookspell tags every book on a
+controlled vocabulary — pacing, tone, POV structure, tropes, content warnings,
+and more — and recommends by matching a reader's own taste profile against
+that structure, not by popularity or "users who liked X also liked Y."
+
+[**Live web app**](https://m4kuwo.github.io/bookspell/app/) ·
+[Browse the tagged catalog](https://m4kuwo.github.io/bookspell/tools/catalog-review/) ·
+[Rate books](https://m4kuwo.github.io/bookspell/tools/rate-books/) ·
+[Project log](docs/project-log.md) ·
+[Roadmap](docs/TODO.md)
+
+*Private prototype, actively in development — not a shipped, polished product yet.*
+
+</div>
+
+---
+
+## Status at a glance
 
 | | |
 |---|---|
-| Books in catalog | 871 |
-| Fully tagged | 861 (98.9% — the rest are graphic novels/omnibus duplicates/unpublished, not a real backlog) |
-| Series tracked | 341 |
-| Tropes in vocabulary | 133 |
-| Content warning types | 37 |
-| Shared universes | 2 (Cosmere, Middle-earth) |
-| Raters with real data | 4 (Mathias, Osnat, Dandan, Gabriel) |
+| 📚 Books in catalog | **1,256** |
+| ✅ Fully tagged | **1,018** (81%) — the catalog was deliberately expanded ~45% this month; absolute tagged count keeps climbing, see [Roadmap](#-roadmap) |
+| 📖 Series tracked | 484, spanning **18 shared universes** (Cosmere, Middle-earth, Westeros, the Grishaverse, and 14 more) |
+| 🏷️ Tropes in vocabulary | 152, applied **5,505** times |
+| ⚠️ Content warning types | 38 |
+| 🎧 Audiobook editions tracked | 1,123 (narrators, cast, production type) |
+| 🧑‍🤝‍🧑 Real raters | 4 people, 335+ real ratings, plus one imported Goodreads history |
+| 🌐 v1 web app | **Live** — real accounts, manual rating, live recommendations, Goodreads/Fable CSV import |
 
-Browse the tagged catalog yourself: [live catalog review tool](https://m4kuwo.github.io/bookspell/tools/catalog-review/)
-(read-only, queries the hosted database directly).
+Everything above is real, queryable data — not aspirational. Browse it yourself at the links above.
 
-## How the recommendation logic works, in plain terms
+## Table of contents
 
-No collaborative filtering, no "users who liked X also liked Y" — there
-aren't enough users yet for that to mean anything, and it wouldn't
-explain *why* anyway. Instead, each book has ~30 structured attributes
-(pacing, darkness, POV structure, romance heat, tropes, and more), and
-a reader's own like/dislike history is compared directly against those
-attributes.
+- [How the recommendation engine works](#-how-the-recommendation-engine-works)
+- [Architecture](#-architecture)
+- [Current state](#-current-state)
+- [Roadmap](#-roadmap)
+- [Hurdles overcome](#-hurdles-overcome)
+- [How this repo is actually built](#-how-this-repo-is-actually-built)
+- [Repo layout](#-repo-layout)
+- [Running things locally](#-running-things-locally)
+- [Design principles](#-design-principles)
 
-1. **Build a taste profile.** From everything a reader has rated
-   (`loved` down to `hated`, a 5-tier scale, not a flat thumbs up/down),
-   the engine computes a *centroid* — the attribute values their loved
-   books tend to share — and a *weight* per field, based on how much
-   that field actually differs between their liked and disliked books.
-   A reader who loves and hates books across every pacing speed learns
-   "pacing doesn't matter much to you"; a reader whose dislikes are all
-   slow and whose loves are all fast learns the opposite.
-2. **Score a candidate book** by comparing it field-by-field against
-   that profile, weighting each comparison by how much that field
-   matters to this specific reader, and averaging it into one score.
+## 🧠 How the recommendation engine works
+
+No collaborative filtering, no "users who liked X also liked Y" — there aren't
+enough users yet for that to mean anything, and it wouldn't explain *why*
+anyway. Instead, each book has ~30 structured attributes (pacing, darkness,
+POV structure, romance heat, tropes, and more), and a reader's own like/dislike
+history is compared directly against those attributes.
+
+1. **Build a taste profile.** From everything a reader has rated (`loved` down
+   to `hated`, a 5-tier scale, not a flat thumbs-up/down), the engine computes
+   a *centroid* — the attribute values their loved books tend to share — and a
+   *weight* per field, based on how much that field actually differs between
+   their liked and disliked books. A reader who loves and hates books across
+   every pacing speed learns "pacing doesn't matter much to you"; a reader
+   whose dislikes are all slow and loves are all fast learns the opposite.
+2. **Score a candidate book** by comparing it field-by-field against that
+   profile, weighting each comparison by how much that field matters to this
+   specific reader, and averaging it into one score.
 3. **Explain the match** in a sentence or two, naming the specific
    fields/tropes that pulled the score up or down — not just a number.
 
-A few real problems surfaced in testing and what fixes them:
+<details>
+<summary><strong>A few real problems surfaced in testing, and what fixed them</strong></summary>
 
 - **A correct signal can get outvoted.** If a reader dislikes a book
-  specifically for being first-person, but everything else they've
-  rated happens to agree on a dozen other traits, that one real signal
-  can get diluted into irrelevance by everything else agreeing for
-  unrelated reasons. A weighted average is compensatory by construction
-  — no amount of weight-tuning fixes that, only a different aggregation
-  shape does. Addressed two ways, both conditional on real per-user
-  statistical evidence, not a blanket rule: the strongest mismatch is
-  surfaced as an explicit "possible dealbreaker" callout next to the
-  score, and — only once there's enough of a reader's own liked-vs-
-  disliked history to trust it — a real dealbreaker caps the score below
-  "Good match" outright, rather than just being diluted into the
-  average. See "Currently being worked on" below for what still doesn't
-  work.
-- **A field can dominate everything else.** If a reader's ratings
-  happen to split cleanly on one structural trait (say, POV count),
-  that field can end up so heavily weighted it functions as a near
-  hard-filter, drowning out genre, tone, and trope preferences
-  entirely. Fixed with a weight cap, later refined further (see below).
-- **Two fields can double-count the same fact.** First-person narration
-  and single-POV structure aren't independent — one usually implies the
-  other. Counting both at full strength effectively double-counts one
-  signal. Fixed with a *conditional redundancy discount*: when a
-  specific candidate book actually exhibits both correlated values, one
-  gets discounted for that book specifically — not a blanket rule
-  applied regardless of context.
-- **A series shouldn't out-vote a standalone.** A reader who loved all
-  6 Wheel of Time books didn't give 6x the evidence of someone who
-  loved one standalone with the same traits — it's largely the same
-  underlying taste, repeated. Fixed: a book's vote is now split evenly
-  among its series-mates present in the same ratings pool.
-- **Don't recommend a book whose predecessor hasn't been read.**
-  Recommending book 3 of a trilogy to someone who's only confirmed book
-  1 is a real spoiler risk and mostly useless. Fixed: a series
-  installment is excluded from recommendations unless every earlier
-  installment has been rated.
-- **A "Poor match" label that could never actually fire.** A fixed
-  numeric cutoff for "Poor match" turned out to sit below every
-  genuinely disliked book's real score, across every rater tested — the
-  label was mathematically unreachable no matter how well the engine
-  was actually ranking underneath. Fixed: the cutoff is now calibrated
-  per user, from the gap between their own liked and disliked books'
-  scores, falling back to the old fixed value only when someone hasn't
-  rated anything as disliked yet.
+  specifically for being first-person, but everything else they've rated
+  happens to agree on a dozen other traits, that one real signal can get
+  diluted into irrelevance. A weighted average is compensatory by
+  construction — no amount of weight-tuning fixes that, only a different
+  aggregation shape does. Fixed two ways, both conditional on real per-user
+  statistical evidence: the strongest mismatch is surfaced as an explicit
+  "possible dealbreaker" callout, and — only once there's enough history to
+  trust it — a real dealbreaker caps the score outright.
+- **A field can dominate everything else.** If a reader's ratings happen to
+  split cleanly on one structural trait, that field can end up so heavily
+  weighted it functions as a near hard-filter. Fixed with a weight cap.
+- **Two fields can double-count the same fact.** First-person narration and
+  single-POV structure aren't independent. Fixed with a *conditional
+  redundancy discount* — applied per candidate book, never as a blanket rule.
+- **A series shouldn't out-vote a standalone.** Loving all 6 Wheel of Time
+  books isn't 6x the evidence of loving one standalone with the same traits.
+  Fixed: a book's vote is split evenly among its rated series-mates.
+- **Don't recommend book 3 of a trilogy to someone who's only read book 1.**
+  Fixed: a series installment is excluded unless every earlier one is rated.
+- **A "Poor match" label that could never actually fire.** A fixed numeric
+  cutoff sat below every genuinely disliked book's real score, across every
+  rater. Fixed: the cutoff is now calibrated per user from the gap between
+  their own liked and disliked scores.
 
-The full design writeup with worked examples is in
-[`docs/scoring-test-protocol.md`](docs/scoring-test-protocol.md) and
-[`docs/project-log.md`](docs/project-log.md).
+Full writeups with worked examples: [`docs/scoring-test-protocol.md`](docs/scoring-test-protocol.md)
+and [`docs/project-log.md`](docs/project-log.md).
 
-## Current state
+</details>
 
-- **Book DNA schema**: ~30 scalar fields (pacing, darkness, POV count,
-  prose style, stakes scope, audiobook length, etc.) plus a controlled
-  vocabulary of 123 tropes and 37 content warnings. Full spec:
-  [`docs/schema/book-dna.md`](docs/schema/book-dna.md) (human-readable)
-  and [`docs/schema/book-dna.schema.yaml`](docs/schema/book-dna.schema.yaml)
-  (machine-readable).
-- **Confidence layer**: every tag can carry a confidence score and a
-  source (`ai_inferred`, `manual_review`, etc.) instead of being trusted
-  at face value. A field with a track record of real tagging errors
-  defaults to reduced trust when unassessed, so a human-verified
-  correction actually outranks an unverified guess rather than tying
-  with it.
-- **Recommendation engine v1** ([`scripts/recommend.py`](scripts/recommend.py)):
-  per-user weighted profile (see above), genre-scoped profiles
-  (fantasy vs. sci-fi vs. blended), a structural-vs-content field split
-  so craft/format preferences generalize across genres while
-  tone/trope preferences stay genre-specific, series-position
-  awareness, series-aware weighting, conditional redundancy discounts,
-  Series DNA (aggregate trajectory across a tagged series — does a
-  series improve, worsen, or stay consistent book to book), "summon
-  something different" / "less of X" diversity controls, a per-user
-  calibrated "Poor match" threshold (see above), a two-tier dealbreaker
-  mechanism (a displayed flag for any strong mismatch, and — only once
-  there's enough of a reader's own liked/disliked history to
-  statistically validate a field as a real personal dealbreaker for
-  them, not just a fixed heuristic — an actual score cap, not just a
-  callout), and a cold-start fallback for readers the engine doesn't
-  know well yet: blends toward broadly-accessible recommendations
-  (`genre_accessibility`, a new Book DNA field) when a reader has too
-  little demonstrated genre experience, fading out as real signal
-  accumulates. "Too little experience" isn't just rating count — a
-  reader whose only rating is Gardens of the Moon has shown real
-  readiness a short list doesn't otherwise capture, so the fallback
-  weight combines rating count with the hardest tier the reader's
-  actually engaged with. Fixes a real, previously-confirmed bug: a
-  reader with zero ratings used to get literal `0.000` scores in
-  arbitrary order (nothing for `build_profile()` to compute weights
-  from) instead of a sane default.
-- **Real external reader validation**: the catalog-review tool
-  ([`tools/catalog-review/`](tools/catalog-review/)) is in front of
-  real test readers, whose feedback has already caught and fixed
-  genuine tagging errors across 10+ fields, several missing tropes, and
-  a mis-flagged spoiler — see the Hurdles overcome section below.
-- **Real rater data** ([`data/ratings/`](data/ratings/)): 4 people's real
-  liked/disliked lists (see the stats table above), one hand-collected,
-  three via the public intake form ([`tools/rate-books/`](tools/rate-books/)
-  — a no-account, mobile-friendly page for a friend to rate books
-  straight from the live catalog, no typo/title-matching cleanup needed
-  afterward).
-- **Reusable scoring test suite** ([`scripts/scoring_tests.py`](scripts/scoring_tests.py)):
-  every scoring change gets checked against real held-out ratings across
-  every rater above, a reconstructed "one field dominates" scenario, a
-  sparse-data scenario, series/author-isolated held-out splits (so a
-  correct prediction can't hide behind "it's seen this series/author
-  before"), a DNA-field ablation study, and a benchmark scorecard
-  (bucket accuracy, pairwise preference accuracy, loved-book recall,
-  hated-book rejection, each against a target) — before anything is
-  considered safe to land. See
-  [`docs/scoring-test-protocol.md`](docs/scoring-test-protocol.md) for
-  the full running log of what's been tried, including what looked
-  promising and didn't pan out.
+**Recently consolidated** (Sept 2026): every scoring entry point —
+ranking, explanation, evaluation, and audit — now runs through one
+canonical `score_candidate()` function instead of four separately
+maintained call sites that had already drifted out of sync once (a real,
+already-fixed class of bug). See [Current state](#-current-state) below.
 
-## Roadmap
+## 🏗️ Architecture
 
-Near-term, roughly in order:
+```mermaid
+flowchart LR
+    Reader(["🧑 Reader"])
+    App["Static web app<br/>(GitHub Pages)"]
+    Auth[("Supabase Auth")]
+    DB[("Supabase Postgres<br/>catalog · ratings · rules")]
+    API["FastAPI backend<br/>(Render)"]
+    Engine["recommend.py<br/>scoring engine"]
+    Tagging["Book DNA tagging<br/>(.claude/skills/)"]
 
-1. **Catalog tagging is done** — 861 of 871 books tagged (98.9%); the
-   remaining 10 are all confirmed permanent exceptions (graphic novels
-   out of v1 scope, omnibus/compilation duplicates, unpublished
-   sequels), not a real backlog. Two ongoing execution-DNA trope sweeps
-   (`romance_tone`, `worldbuilding_delivery` — real presentation-style
-   signals, validated against production scoring, run as `book_tropes`
-   pairs rather than new scalar fields for now) are well past their
-   original ~20-batch estimate and still finding real candidates.
-   Audiobook edition data (`.claude/skills/tag-audiobook-editions/
-   SKILL.md`) is well underway — 94+ `audiobook_editions` rows across
-   GraphicAudio and BBC Audio, plus 3 confirmed Audible Originals
-   candidates ready for ingestion. See [`docs/TODO.md`](docs/TODO.md)
-   for the full prioritized backlog
-   across all of this, not just tagging.
-2. **Recruit more real readers.** Grew from 1 to 4 real raters this
-   session (Osnat, Dandan, and Gabriel joined Mathias's original list) —
-   still far from enough: most scoring conclusions in
-   `docs/scoring-test-protocol.md` were established against Mathias's
-   data specifically and are only lightly checked against the other 3
-   so far, since their datasets are newer and thinner (Gabriel: 7 ratings
-   total; Dandan: 3 negative-tier ratings; Osnat: enough volume but no
-   field currently separates her likes from dislikes strongly, a real,
-   separate finding — not a data-volume problem for her). Recruiting
-   attempts so far: a Reddit post was drafted then abandoned after
-   checking r/Fantasy's actual rules (surveys/crowdsourcing posts are
-   explicitly disallowed there); the UCSD Goodreads dataset (~55M
-   fantasy/paranormal interactions) was evaluated as a bulk alternative
-   and set aside given this project's commercial intent — its license
-   is academic/non-commercial-use only, and so is Hardcover's own
-   ratings/reviews data beyond the book metadata already in use. See
-   `docs/project-log.md`'s entries from this session for the full
-   reasoning on both.
-3. **Import an existing reading history on signup — likely a real
-   adoption blocker, not just a nice-to-have.** Raised directly by a
-   friend who said she wouldn't have switched from Goodreads to Fable
-   at all if Fable hadn't let her bring her history with her. Our
-   target audience (avid readers with years of history already logged
-   elsewhere) is in exactly that position — asking them to start from
-   zero is a real reason not to switch. The import mechanics
-   (Goodreads/StoryGraph both export a CSV) are the easy part; mapping
-   an imported star rating onto Book DNA fields with none of our
-   structured signal, and matching imported titles against a catalog
-   that won't have every book a long-time reader has logged, is the
-   real design work. Not started.
-4. **Extend the dilution fix beyond one rater's easy case.** Landed a
-   real fix (statistically-validated dealbreaker flags + score cap, see
-   above) — but it only engages once a rater has enough of their own
-   disliked-book history to statistically validate a field, and stress-
-   testing surfaced a real, not-yet-fixed edge case: categorical fields
-   like narrative person match all-or-nothing, so two "close" values
-   (e.g. two flavors of third-person) can trigger a cap that a human
-   wouldn't consider a real mismatch. Doesn't show up in any real
-   rater's data yet, only a deliberately extreme synthetic test — logged
-   as a known limitation, not blocking.
-5. **Author-affinity**, tempered by which specific sub-style of an
-   author's catalog a reader actually responds to, not a flat "you like
-   this author" boost. Logically validated, not yet landed.
-6. **Fix spoiler leakage** in the explanation layer — some
-   spoiler-flagged fields have already shown up in generated
-   explanations.
-7. Real app: onboarding flow, UI, accounts. Not started. One concrete
-   idea already logged for whenever this starts: let a new reader
-   self-report their genre experience directly ("find and rate books
-   you liked and disliked, the more the better — or if you're new to
-   the genre, we can decide for you"), as a starting prior for the
-   cold-start fallback (see above) rather than relying purely on
-   inferring it from ratings so far — but real inferred signal should
-   still be able to override that initial self-report over time, not
-   leave someone stuck in cold-start mode forever after one checkbox.
-8. (Further out) A guide-character UX — a witch/wizard leading the
-   reader through "summoning" a book recommendation, with matching
-   illustrated art. Purely presentation-layer, deliberately deferred
-   until recommendation quality is proven.
-
-The single source of truth for sequencing and open questions is the
-[project planning document](docs/project-log.md) plus the "Future
-fields backlog" section at the bottom of
-[`docs/schema/book-dna.md`](docs/schema/book-dna.md).
-
-## Currently being worked on
-
-- **The "one field dominates" vs. "a real signal gets diluted" tension —
-  a real fix landed, still not the general answer.** Weight-tuning alone
-  (a structural-field weight boost, category-based weight budgets, a
-  BM25-style saturating curve, Bayesian-average shrinkage) never cleanly
-  solved dilution without risking domination elsewhere — because a
-  weighted average is compensatory by construction, so no weight
-  adjustment inside that shape can fix it. The actual fix changed the
-  shape instead: a per-user, statistically validated dealbreaker field
-  now caps a book's score outright rather than getting outvoted (see
-  Current state above). Landing it required catching and fixing a real
-  regression first — an early version of the statistical validation
-  threshold let small-sample noise "validate" several spurious fields at
-  once, which briefly collapsed one rater's loved-book recall to 0% in
-  testing before the threshold was corrected; see
-  `docs/scoring-test-protocol.md`'s "Veto/cap mechanism" entry.
-  **Currently dormant for all 4 real raters** (confirmed 2026-09-07,
-  `validated_dealbreaker_fields()` returns empty for every one right
-  now) — the threshold is doing its job, not broken: e.g. `person` was
-  Mathias's clearest candidate early on, but turned out not to be a
-  real dealbreaker once enough of his rating history filled in (18 of
-  23 rated first-person fantasy books are loved/liked). A graduated
-  (non-flat-cap) version of the mechanism is built and structurally
-  verified but can't be proven against real data until some field/rater
-  pair actually validates — see `docs/scoring-test-protocol.md`'s
-  "Graduated dealbreaker veto" entry. Real per-rater data growth is the
-  actual blocker here, not more engineering.
-- **Most scoring conclusions are still tuned against one rater.** 4 real
-  raters exist now (up from 1), but most ideas in
-  `docs/scoring-test-protocol.md` — including "this idea doesn't work"
-  verdicts — were established against Mathias's ratings specifically
-  (143 and growing) and only lightly re-checked against the other 3,
-  whose datasets are newer and thinner. The doc explicitly tracks which ideas are
-  "deferred" (not disproven, just not shown to help *this* rater at
-  *this* scale) vs. genuinely rejected, specifically so more/different
-  rater data can revisit them rather than assume they're settled.
-- **Author-field data quality.** 65 of 606 books had contaminated
-  author fields (translator, illustrator, or narrator credits mixed in
-  from the ingestion source) — cleaned up, but the broader bibliographic
-  data hasn't had a full audit for other latent issues.
-- **A ~30-book "framing device" audit.** A new trope
-  (`retrospective_memoir_narration`) was added and applied to the 2
-  books directly confirmed; the other ~30 books sharing the broader
-  `framing_device` tag haven't been individually checked for whether
-  they actually match this more specific pattern.
-
-## Hurdles overcome
-
-A few of the more interesting bugs and near-misses this project has
-already been through:
-
-- **A migration-tracking desync from a cross-machine mistake.** A
-  session on a different machine applied migrations directly against
-  hosted Postgres instead of through `supabase db push`, so hosted's own
-  tracking table didn't know they'd happened — the next real push tried
-  to redo them and failed on a non-idempotent statement. Fixed with
-  `supabase migration repair`, and the exact failure mode is now
-  documented in [`CLAUDE.md`](CLAUDE.md) so it doesn't happen twice.
-- **A left-join bug made untagged books look tagged.** The catalog
-  review tool's Supabase query used a default left join, so untagged
-  reserve-batch books showed up with blank fields — indistinguishable
-  from genuinely under-tagged books, and it fed a real tester's first
-  round of (partially false) feedback before being caught.
-- **Real reader feedback caught real tagging errors, fast.** Within one
-  message from one external reader: two mistagged books (wrong POV
-  person, a first-contact trope that didn't actually apply), a missing
-  spoiler flag, and the discovery that the schema was missing a value
-  entirely (`narrator_reliability` had no way to express "deliberately
-  ambiguous," only reliable/unreliable).
-- **Catalog expansion alone didn't fix bad recommendations.** Doubling
-  the catalog size was hypothesized to help profile accuracy; a
-  controlled rerun of the same test showed near-zero score movement —
-  the fix needed better *counter-examples* in the training data, not a
-  bigger candidate pool.
-- **A held-out test caught the engine confidently recommending deep
-  sequels** to a reader who'd only confirmed reading an early book in
-  that series — a real, since-fixed gap, not a hypothetical one.
-- **A "same fact stated twice" bug hid inside a bug fix.** A discount
-  meant to fix one field dominating another was itself asymmetric in a
-  way that wasn't caught until a sharper follow-up question ("wait, is
-  this a one-way implication?") revealed the fix needed to be
-  conditional on the specific book being scored, not a blanket
-  adjustment — see `docs/scoring-test-protocol.md`.
-
-## Repo layout
-
+    Reader -->|browse, rate, import| App
+    App --> Auth
+    App -->|catalog browse, manual ratings, rules| DB
+    App -->|recommendations, CSV import| API
+    API --> Engine
+    Engine --> DB
+    Tagging -->|batch INSERTs, versioned migrations| DB
 ```
+
+| Layer | Tech | Notes |
+|---|---|---|
+| Frontend | Static HTML/CSS/JS, no build step | `app/` — auth, dashboard, manual rating, Goodreads/Fable import; deployed on GitHub Pages |
+| Backend API | FastAPI (Python) | `api/` — the only part needing live Python: scoring calls + CSV parsing; deployed on Render's free tier (cold start ~30-60s after idle) |
+| Database | Supabase (Postgres) | Catalog, Book DNA, ratings, auth, RLS-scoped user data |
+| Scoring engine | Pure Python, no ML framework | [`scripts/recommend.py`](scripts/recommend.py) — see below |
+| Data pipeline | Versioned SQL migrations + batch-tagging skills | [`supabase/migrations/`](supabase/migrations/), [`.claude/skills/`](.claude/skills/) |
+
+## 📊 Current state
+
+- **Book DNA schema**: ~30 scalar fields (pacing, darkness, POV count, prose
+  style, stakes scope, audiobook length, etc.) plus a controlled vocabulary of
+  152 tropes and 38 content warnings. Full spec:
+  [`docs/schema/book-dna.md`](docs/schema/book-dna.md) (human-readable) and
+  [`docs/schema/book-dna.schema.yaml`](docs/schema/book-dna.schema.yaml)
+  (machine-readable).
+- **Confidence layer**: every tag can carry a confidence score and a source
+  (`ai_inferred`, `manual_review`, etc.) instead of being trusted at face
+  value. Fields with a track record of real tagging errors default to reduced
+  trust when unassessed, so a verified correction actually outranks an
+  unverified guess.
+- **Recommendation engine** ([`scripts/recommend.py`](scripts/recommend.py)):
+  per-user weighted profile, genre-scoped profiles, a structural-vs-content
+  field split so craft/format preferences generalize across genres while
+  tone/trope preferences stay genre-specific, series-position awareness,
+  Series DNA (does a series improve, worsen, or stay consistent book to
+  book), diversity controls, a per-user calibrated "Poor match" threshold, a
+  two-tier dealbreaker mechanism, and a cold-start fallback for readers the
+  engine doesn't know well yet. **All four scoring entry points — ranking,
+  explanation, evaluation, and audit — now share one canonical
+  `score_candidate()` implementation**, closing off the exact "test code
+  silently drifted from production" bug class that caused real regressions
+  earlier this project.
+- **v1 web app is live**: real Supabase Auth accounts, per-genre
+  recommendations with full "why this matched" explanations, manual rating
+  with edit, Goodreads/Fable CSV import, persistent "none of X"/"less of X"
+  filter rules. Onboarding/polish/mobile pass still ahead — see
+  [Roadmap](#-roadmap).
+- **Real external reader validation**: the [catalog review tool](https://m4kuwo.github.io/bookspell/tools/catalog-review/)
+  is in front of real test readers, whose feedback has already caught and
+  fixed genuine tagging errors across 10+ fields, several missing tropes, and
+  a mis-flagged spoiler.
+- **Real rater data** ([`data/ratings/`](data/ratings/)): 4 people's real
+  liked/disliked lists (335+ ratings total), collected via a no-account,
+  mobile-friendly [rating page](https://m4kuwo.github.io/bookspell/tools/rate-books/)
+  that saves straight into the live catalog.
+- **Reusable scoring test suite** ([`scripts/scoring_tests.py`](scripts/scoring_tests.py)):
+  every scoring change is checked against real held-out ratings across every
+  rater, a "one field dominates" stress test, a sparse-data scenario,
+  series/author-isolated held-out splits, a DNA-field ablation study, and a
+  benchmark scorecard — before anything is considered safe to land. Full
+  running log of what's been tried, landed, or deferred:
+  [`docs/scoring-test-protocol.md`](docs/scoring-test-protocol.md).
+
+## 🗺️ Roadmap
+
+Near-term, roughly in order — the living, prioritized version is
+[`docs/TODO.md`](docs/TODO.md):
+
+1. **Keep closing the tagging gap.** The catalog grew from ~870 to 1,256
+   books this month (a deliberate scope expansion, not scope creep going
+   unchecked) — 1,018 are tagged, with the rest a real, actively-worked
+   backlog rather than a handful of permanent exceptions like before.
+   Audiobook edition data (1,123 rows) and two ongoing presentation-style
+   trope sweeps (`romance_tone`, `worldbuilding_delivery`) are both well
+   underway alongside it.
+2. **Recruit more real readers.** 4 real raters exist now; most scoring
+   conclusions are still primarily validated against one rater's larger
+   dataset and only lightly cross-checked against the others, whose
+   histories are newer and thinner. Bulk third-party rating datasets were
+   evaluated and set aside — their licenses are academic/non-commercial-use
+   only, incompatible with this project's commercial intent.
+3. **Import an existing reading history on signup** — likely a real adoption
+   blocker, not just a nice-to-have, for readers already invested in
+   Goodreads/StoryGraph. The CSV import mechanics exist
+   (`POST /import/goodreads`); mapping an imported star rating onto Book DNA
+   fields with no structured signal is the real remaining design work.
+4. **Extend the dilution fix beyond the easy case** — a statistically
+   validated dealbreaker cap works, but only once a rater has enough
+   disliked-book history to validate it, and a known edge case (categorical
+   fields matching all-or-nothing) hasn't shown up in real data yet.
+5. **Author-affinity**, weighted toward which specific sub-style of an
+   author's catalog a reader actually responds to — logically validated, not
+   yet landed.
+6. **Fix spoiler leakage** in the explanation layer.
+7. **Onboarding, polish, a real mobile pass** on the now-live v1 app.
+8. *(Further out)* A guide-character UX — a witch/wizard leading the reader
+   through "summoning" a recommendation — deliberately deferred until
+   recommendation quality is proven.
+
+<details>
+<summary><strong>What's actively being worked on right now</strong></summary>
+
+- **The "one field dominates" vs. "a real signal gets diluted" tension** — a
+  real fix landed (a statistically validated dealbreaker cap), but it's
+  currently dormant for most real raters simply because their data hasn't
+  grown enough to validate a field yet — the threshold is doing its job, not
+  broken. A graduated (non-flat-cap) version is built and structurally
+  verified but can't be proven against real data until some field/rater pair
+  actually validates.
+- **Most scoring conclusions are still tuned against one rater's data.**
+  `docs/scoring-test-protocol.md` explicitly tracks which ideas are
+  "deferred" (not disproven, just not yet shown to help at other raters'
+  current scale) vs. genuinely rejected.
+- **Author-field data quality** is a recurring, actively-monitored issue —
+  translator/illustrator/narrator credits keep slipping into the `author`
+  field from the ingestion source. Every newly ingested or re-tagged book
+  now gets its author field explicitly verified against source metadata
+  before being trusted, rather than fixed reactively after it surfaces.
+- **Ongoing vocabulary-gap sweeps** across the whole catalog, looking for
+  trope/content-warning gaps that only show up once enough books share a
+  pattern to be worth a new vocabulary entry.
+
+</details>
+
+## 🧗 Hurdles overcome
+
+A few of the more interesting bugs and near-misses this project has already
+been through:
+
+<details>
+<summary><strong>Click to expand — real incidents, real fixes</strong></summary>
+
+- **A migration-tracking desync from a cross-machine mistake.** A session on
+  a different machine applied migrations directly against hosted Postgres
+  instead of through `supabase db push`, so hosted's own tracking table
+  didn't know they'd happened — the next real push tried to redo them and
+  failed. Fixed with `supabase migration repair`, and the exact failure mode
+  is now documented in [`CLAUDE.md`](CLAUDE.md) so it doesn't happen twice.
+- **A left-join bug made untagged books look tagged**, feeding a real
+  tester's first round of partially-false feedback before being caught.
+- **Real reader feedback caught real tagging errors, fast** — within one
+  message from one external reader: two mistagged books, a missing spoiler
+  flag, and a schema gap (`narrator_reliability` had no way to express
+  "deliberately ambiguous").
+- **Catalog expansion alone didn't fix bad recommendations** — doubling
+  candidate-pool size moved scores almost not at all; the fix needed better
+  *counter-examples* in training data, not more candidates.
+- **A "same fact stated twice" bug hid inside a bug fix** — a discount meant
+  to fix one field dominating another was itself asymmetric until a sharper
+  follow-up question surfaced it.
+- **A silent, split-import test-validation bug**: an A/B test of an
+  experimental scoring variant monkeypatched one imported copy of the
+  scoring module while the real benchmark suite had separately imported a
+  second copy under a different name — the "byte-identical, zero
+  regressions" result was measuring unmodified code against itself. Caught
+  before the variant landed by asserting the two "same" module objects were
+  actually the same object (they weren't).
+- **A silent truncation bug caught before it ever shipped**, during the
+  recent scoring-engine consolidation: a literal migration of one caller
+  would have quietly turned an "unlimited results" request into "5 results
+  max," because two functions used the same sentinel value (`None`) to mean
+  two different things. Caught by a direct before/after probe, not assumed
+  safe because the code compiled and ran.
+
+</details>
+
+## 🤖 How this repo is actually built
+
+This is a real, working detail worth knowing if you're poking around the
+codebase: Bookspell is developed through a **multi-agent workflow across
+three standing personas** — two Claude Code sessions with different roles
+(the primary engineering session, and a dedicated data/tagging session), plus
+an independent Codex CLI instance used for code review and validated
+engine-refactor execution, kept in review-only/no-hosted-write scope by
+design. There's no live channel between them; task handoff and review
+happen entirely through files committed to this repo.
+
+Curious how that actually works? Start with
+[`docs/persona-workflow.md`](docs/persona-workflow.md) (the mechanics),
+[`CLAUDE.md`](CLAUDE.md) (repo conventions every session reads first), and
+[`AGENTS.md`](AGENTS.md) (the Codex-specific counterpart).
+
+## 📁 Repo layout
+
+```text
 docs/
   project-log.md               running history — what got built, argued
                                 over, and changed, and why (start here)
-  TODO.md                       prioritized, mutable task backlog —
-                                different from project-log.md (append-
-                                only history) and book-dna.md's schema-
-                                idea backlog
-  scoring-test-protocol.md     scoring-engine test scenarios + a running
-                                log of what's been tried, landed, or deferred
+  TODO.md                       prioritized, mutable task backlog
+  scoring-test-protocol.md      scoring-engine test scenarios + a running
+                                 log of what's been tried, landed, or deferred
+  persona-workflow.md           how tasks move between the three personas
+  codx-tasks/                   CODX's current assignment (one file, always
+                                 current — see persona-workflow.md)
+  codx-reviews/                 permanent record of every CODX proposal
+                                 CLDO has independently verified and applied
+  PENDING_APPROVALS.md          cross-session destructive-action approval gate
   schema/
     book-dna.md                 human-readable schema spec + roadmap backlog
     book-dna.schema.yaml        machine-readable schema
-  recommendation-engine/        design + validation writeups
-  data-quality/                 catalog data-quality audit records
-  pilot/, catalog-audit/,       tagging-quality process records
-  remaining-catalog-tagging/, step04-test-batch/
+  pilot/, catalog-audit/,       earlier-phase tagging-quality process
+  remaining-catalog-tagging/,   records, superseded by the skills in
+  step04-test-batch/            .claude/skills/ but kept for history
+  recommendation-engine/,       older design/validation writeups, superseded
+  data-quality/                 by scoring-test-protocol.md but kept for history
 
 scripts/
   recommend.py                  the recommendation engine
   scoring_tests.py               reusable scoring test scenarios
   ingest-seed-catalog.js         bootstraps the catalog from Hardcover's API
-  backfill-audio-duration.js     audiobook-length backfill utility
-  insert-tagged-batch.py         helper for applying a tagging migration
-  feedback_log.jsonl             logged post-read "why didn't it work" feedback
   requirements.txt               Python deps (psycopg2)
 
+app/                             v1 web app — static HTML/CSS/JS, no build
+                                  step, Supabase Auth + direct Supabase
+                                  queries for everything except live scoring
+
+api/                             FastAPI backend — the only part needing
+                                  live Python (scoring calls, CSV import)
+
 data/
-  ratings/                       one {name}.json per real rater (see its
-                                  own README for the roster + collection
-                                  notes) — the durable stand-in for a
-                                  real user/account system, which doesn't
-                                  exist yet
+  ratings/                       one {name}.json per real rater — the
+                                  durable stand-in for a real accounts
+                                  system, pre-dating the v1 app's real one
 
 supabase/
   migrations/                    every schema/data change, in order
   config.toml                    local dev config
 
 tools/
-  catalog-review/                internal QA tool — browse/filter the
-                                  full tagged catalog in a browser; also
-                                  hosted live at
-                                  https://m4kuwo.github.io/bookspell/tools/catalog-review/
-  rate-books/                    public, no-account intake form — a
-                                  friend searches the live catalog and
-                                  taps a rating, saved straight into
-                                  hosted (see its own README for the
-                                  submit -> export flow)
-  dogfood/                       internal Streamlit tool — pick a rater,
-                                  add/fix ratings, build "none of X"/
-                                  "less of X" rules, see live
-                                  recommendations with a full per-book
-                                  score breakdown (repo owner only, not
-                                  for external testers)
+  catalog-review/                browse/filter the full tagged catalog —
+                                  live at the link above
+  rate-books/                    public, no-account rating intake form
+  dogfood/                       internal Streamlit tool for live scoring
+                                  debugging (repo owner only)
 
-.claude/skills/
-  tag-catalog-batch/             batch-tagging skill for outsourced
-                                  tagging sessions
-  tag-audiobook-editions/        batch skill for audiobook edition data
-                                  (dramatized full-cast editions, audio-
-                                  only Audible Originals) — separate from
-                                  tag-catalog-batch's Book DNA sweeps
+.claude/skills/                  batch-tagging and QA skills (Book DNA,
+                                  audiobook editions, trope-gap sweeps)
 
-CLAUDE.md                        working conventions for this repo —
-                                  read before touching migrations or data
+CLAUDE.md                        working conventions — read before touching
+                                  migrations or data
+AGENTS.md                        the same, for Codex CLI specifically
 ```
 
-## Running things locally
+## 🚀 Running things locally
 
 **Database** (Postgres via Supabase CLI):
-```
+```bash
 supabase start          # local dev DB at 127.0.0.1:54322
 supabase db push        # apply pending migrations to the hosted project
 ```
 
 **Recommendation engine** (reads `DATABASE_URL`, defaults to local):
-```
+```bash
 pip install -r scripts/requirements.txt
 python3 scripts/recommend.py
 ```
-Or import `load_catalog`/`recommend` directly for a custom liked/disliked
-list — see the `__main__` block in `scripts/recommend.py` for a working
-example.
 
 **Scoring test suite**:
-```
+```bash
 DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres python3 scripts/scoring_tests.py
 ```
 
-**Catalog ingestion** (needs `HARDCOVER_API_TOKEN` + `DATABASE_URL` in `.env`):
+**Backend API** (see [`api/README.md`](api/README.md) for full details):
+```bash
+cd api && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres \
+SUPABASE_JWKS_URL=https://yhvubjqstswxvctdikbc.supabase.co/auth/v1/.well-known/jwks.json \
+.venv/bin/uvicorn main:app --reload
 ```
+
+**Frontend** (`app/`): static files, no build step — open directly or serve
+with any static file server; it talks to the hosted Supabase project and API
+by default.
+
+**Catalog ingestion** (needs `HARDCOVER_API_TOKEN` + `DATABASE_URL` in `.env`):
+```bash
 npm run ingest:seed-catalog
 ```
 
-**Catalog review tool** — see [`tools/catalog-review/README.md`](tools/catalog-review/README.md).
-
-## Design principles
+## 🎯 Design principles
 
 A few things worth knowing before touching the schema or the engine:
 
-- **Controlled vocabulary only, never free text** — every Book DNA
-  field is a finite, enumerated set of values. That constraint is what
-  makes similarity scoring possible at all.
-- **Content warnings are descriptive, not a taste signal** — they're
-  deliberately excluded from the recommendation score; they belong in
-  hard filters ("never show me X"), not similarity matching.
+- **Controlled vocabulary only, never free text** — every Book DNA field is a
+  finite, enumerated set of values. That constraint is what makes similarity
+  scoring possible at all.
+- **Content warnings are descriptive, not a taste signal** — deliberately
+  excluded from the recommendation score; they belong in hard filters, not
+  similarity matching.
 - **New trope vocabulary has to earn its place**: the bar is "does this
-  change a recommendation," not "is this a real term." A trope that's
-  real but doesn't discriminate between books a reader would and
-  wouldn't want gets left out.
-- **Per-user weights, not a fixed formula** — how much a field matters
-  is learned per user from how much it actually differs between their
-  liked and disliked books, not applied identically to everyone.
-- **A correction should outrank a guess** — a human-verified tag fix
-  needs real headroom above an unassessed default to actually matter,
-  not just tie with it.
+  change a recommendation," not "is this a real term."
+- **Per-user weights, not a fixed formula** — how much a field matters is
+  learned per user, not applied identically to everyone.
+- **A correction should outrank a guess** — a human-verified tag fix needs
+  real headroom above an unassessed default to actually matter.
 - **Discounts and adjustments are conditional on the specific book being
-  scored, never a blanket rule applied regardless of context** — a fix
-  discovered the hard way after an early version of the redundancy
-  discount got this wrong.
+  scored, never a blanket rule** — a fix discovered the hard way after an
+  early version got this wrong.
 - **Every scoring change gets checked against more than one failure
   scenario before landing** — a fix that helps one case has repeatedly
-  turned out to reopen a different, previously-fixed one. See
-  `docs/scoring-test-protocol.md`.
-- **Don't confidently guess on a factual question** — check the DB,
-  check the catalog, or do a quick search rather than trust recall,
-  especially for anything mechanical (POV structure, whether a specific
-  plot beat occurs). This project's tagging errors have consistently
-  come from confident-but-wrong recall, not felt uncertainty.
+  turned out to reopen a different, previously-fixed one.
+- **Don't confidently guess on a factual question** — check the DB, the
+  catalog, or do a quick search rather than trust recall. This project's
+  tagging errors have consistently come from confident-but-wrong recall,
+  not felt uncertainty.
 - **A problem in how scores are combined can't be fixed by retuning the
   weights that feed into it** — a weighted average is compensatory by
-  construction, so a real signal getting outvoted by unrelated agreeing
-  fields needs a different aggregation shape (a validated cap, a
-  separate flag), not another weight adjustment inside the same shape.
-  Every purely weight-based attempt at this specific problem either did
-  nothing or turned into a near-hard-filter.
-- **A statistically "validated" pattern still needs a sample-size floor,
-  even for metadata that only displays, let alone anything that changes
-  a score** — a small enough sample lets noise clear almost any fixed
-  threshold. Caught once already: an under-gated version of this
-  briefly collapsed a real rater's loved-book recall to 0% in testing
-  before landing.
+  construction; a real signal getting outvoted needs a different
+  aggregation shape, not another weight adjustment inside the same shape.
+- **A statistically "validated" pattern still needs a sample-size floor** —
+  a small enough sample lets noise clear almost any fixed threshold.
+
+---
+
+<div align="center">
+
+Built and maintained as an active, evolving prototype — not a finished
+product. See [`docs/project-log.md`](docs/project-log.md) for the complete,
+dated history of every decision, bug, and fix.
+
+</div>

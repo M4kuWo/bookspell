@@ -17221,3 +17221,51 @@ same name; *Ilium*'s structural `person: mixed` claim). Framed
 explicitly as a review/verification task (CODX's established scope),
 not tagging, and as the first round of a recurring task type rather
 than a one-off.
+
+## 2026-09-17 -- README.md complete overhaul: current stats, live v1 app, architecture diagram, persona-workflow mention
+
+The README hadn't been touched since 2026-09-09 -- stale on catalog
+stats (871 books/861 tagged/341 series/133 tropes/37 CWs/4 raters/2
+shared universes), and written before the v1 web app existed, before
+the score_candidate() scoring-engine consolidation, and before the
+CLDO/CLDA/CODX persona workflow was formalized. Repo owner asked for a
+full overhaul, visually restructured to be less plain-text.
+
+Verified every real number fresh against local Supabase before writing
+anything (books 1256, tagged 1018/81%, series 484, 18 shared universes,
+152 tropes applied 5505 times, 38 content warning types, 1123
+audiobook editions, 4 real raters with 335 combined ratings plus one
+imported Goodreads history) rather than reusing the old figures. Also
+verified the v1 app is genuinely live before claiming so: confirmed
+`https://m4kuwo.github.io/bookspell/app/` returns 200, and the Render
+API (`https://bookspell-api.onrender.com/rule-targets`) returns 200
+after its documented cold-start delay.
+
+Restructured visually: a centered header with quick links, a stats
+table, a table of contents, a Mermaid architecture diagram (frontend ->
+Supabase Auth/Postgres, API -> scoring engine, tagging skills -> DB) and
+a tech-stack table, and `<details>` blocks collapsing the longer
+historical sections (test-time bugs found, full roadmap detail, hurdles
+overcome) so the top of the page stays scannable. Added a new "How this
+repo is actually built" section briefly describing the multi-persona
+workflow and pointing to `docs/persona-workflow.md`/`CLAUDE.md`/
+`AGENTS.md` -- a genuinely distinctive, real part of the project's
+current process, not previously mentioned at all.
+
+Caught and fixed a real omission before finishing: an early draft of
+the new "Repo layout" section dropped several real, still-present
+directories (`docs/pilot/`, `docs/catalog-audit/`,
+`docs/remaining-catalog-tagging/`, `docs/step04-test-batch/`,
+`docs/recommendation-engine/`, `docs/data-quality/`,
+`docs/PENDING_APPROVALS.md`) that the old README did list. Verified
+they're genuinely superseded one-time process artifacts (dated
+findings/fix files from August 2026, not living docs) before
+characterizing them that way, added back with an honest "kept for
+history" framing rather than silently omitting them.
+
+Kept the substance of the original's "how the engine works," "hurdles
+overcome," and "design principles" sections (still accurate, still
+good writing) while updating anything that referenced now-superseded
+architecture, and added two new hurdles from the recent scoring-engine
+refactor (the split-import module-identity bug, the `top_n=None`
+truncation bug CODX caught before it shipped).
