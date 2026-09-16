@@ -16528,3 +16528,68 @@ Landed (`0863719`, pushed to `main`). Documented in
 `explain_match()`/`explain_book()` onto `score_candidate(..., policy=
 "explanation")`, scorecard check again) -- still caller migration of
 an already-decided design, same posture as A3.
+
+## 2026-09-16 (later still) -- CODX's Task 6 landed: explain_match() migrated onto score_candidate(), a real edge case caught before finalizing, independently re-verified and applied
+
+CODX finished Task 6 while this session was checking on it -- found the
+finished report (`docs/codx-reports/2026-09-16-a4-explain-match-migration-proposal.md`)
+already committed, working tree already reverted.
+
+The report implements Phase A step 4 from `docs/TODO.md`:
+`explain_match()` now calls `score_candidate(..., policy="explanation")`
+instead of its own inline score computation, `explain_book()` call,
+`dealbreaker_flags()` call, and series-note derivation. `explain_book()`
+itself stays untouched -- it's a dependency `score_candidate()` calls
+internally, not a caller, so migrating it would create a cycle; this
+task is purely a caller-side change inside `explain_match()`.
+
+**A real edge case caught before finalizing, not after**: a literal
+migration passing `top_n=top_n` verbatim breaks
+`explain_match(..., top_n=None)`. The original `explain_book()` treats
+`rows[:None]` as Python's "no limit" slice; `score_candidate()`
+instead treats `top_n=None` as its own default-limit sentinel (5 for
+non-audit policies) -- so a caller explicitly asking for the unlimited
+view would have silently gotten only 5 items back. CODX caught this
+with a direct probe (Mathias/Warbreaker: original lengths `6, 1` vs. a
+literal migration's `5, 1`) and fixed it entirely inside
+`explain_match()`: an explicit, provably-sufficient upper bound
+(`len(weights) + len(weights.get("tropes", {}))`) computed when
+`top_n is None`, leaving `score_candidate()` itself untouched.
+
+CODX also verified up front, before relying on anything else, that
+`scripts/scoring_tests.py` never actually calls `explain_match()`
+anywhere (both a text search and a separate AST traversal found zero
+executable references) -- so unlike A3, the canonical suite is NOT
+meaningful regression evidence for this migration, and CODX said so
+explicitly in its report rather than leaning on a green checkmark that
+wasn't testing anything. The entire behavior-preservation claim rests
+on a dedicated direct-comparison harness instead: the real original
+and migrated `explain_match()` invoked side by side across all 978
+physical catalog rows (including a dedicated view making the shadowed
+duplicate `The One` row independently addressable) x 5 real raters x 2
+explicit limits (9,780 pairs), plus a supplementary grid, 335,398
+bit-exact assertions, all passed. Reverted its own clone afterward.
+
+**Independently re-verified before applying**: entered a worktree,
+applied the diff, confirmed via `ast` that `explain_match` is the ONLY
+changed function and explicitly checked nine other functions/helpers
+byte-for-byte unchanged. Wrote a fresh, independent comparison harness
+(not reusing CODX's) against LOCAL Supabase -- a different catalog
+snapshot than CODX's hosted read-only one -- reproducing the
+`top_n=None` finding directly: 3,690 comparisons across 5 raters x 3
+genres x a deterministic title sample x six `top_n` values, zero
+mismatches. Ran the canonical suite before/after as a collateral check
+only (byte-identical, exit 0 both times), consistent with CODX's own
+framing that it isn't meaningful evidence here. Also fixed
+`score_candidate()`'s docstring, still listing `explain_match` as
+unmigrated, and re-ran the suite to confirm that edit was cosmetic.
+
+Landed (`06e1e6c`, pushed to `main`). Documented in
+`docs/scoring-test-protocol.md`'s new "A4: `explain_match()` migrated
+onto `score_candidate()`" entry, permanent record at
+`docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md`,
+`docs/TODO.md` updated. Next real step: A5 (migrate
+`scripts/scoring_tests.py`'s `_full_score()`, and any other test-side
+reimplementation, onto the same canonical function -- the single
+highest-value step for preventing test/production drift, per the
+plan).
