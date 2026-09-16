@@ -3264,8 +3264,9 @@ def score_candidate(catalog, book_id, centroid, weights, id_to_magnitude, *,
     """Assemble an explicit score result. `recommend()` consumes this via
     policy="ranking" (A3, 2026-09-16); `explain_match()` via
     policy="explanation" (A4, 2026-09-16); `scoring_tests._full_score()`
-    via policy="evaluation" (A5, 2026-09-16); `audit_book_score()` is
-    not migrated yet.
+    via policy="evaluation" (A5, 2026-09-16); `audit_book_score()` via
+    policy="audit" (2026-09-16, Task 8) -- every production/test caller
+    of the original stage sequence now goes through this function.
 
     Prepared inputs belong to ONE caller-owned catalog/profile context:
     _resolve_profile() supplies centroid/weights/id_to_magnitude/matches_genre;
@@ -3790,22 +3791,27 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
     deduped_id_to_magnitude = _series_deduped_id_to_magnitude(catalog, id_to_magnitude)
     series_dna = compute_series_dna(catalog)
     field_prevalence, trope_prevalence = build_prevalence_lookup(catalog, genre)
-    book = catalog[title_to_id[title]]
+    book_id = title_to_id[title]
+    book = catalog[book_id]
 
-    raw_score, _ = score_book(book, centroid, weights, field_prevalence, trope_prevalence)
-    after_series = _apply_series_repeat(catalog, id_to_magnitude, book, raw_score)
-    after_veto = _apply_dealbreaker_veto(
-        catalog, id_to_magnitude, validated_fields, book, centroid, weights, after_series,
-        field_prevalence, trope_prevalence
+    poor_threshold = user_calibrated_poor_threshold(
+        catalog, id_to_magnitude, centroid, weights,
+        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence
     )
-    after_trajectory = _apply_series_trajectory_penalty(series_dna, book, centroid, weights, after_veto,
-                                                         field_prevalence, trope_prevalence)
-    if csw > 0:
-        demand = GENRE_ACCESSIBILITY_DEMAND.get(book.get("genre_accessibility"), 0.5)
-        after_cold_start = (1 - csw) * after_trajectory + csw * (1.0 - demand)
-    else:
-        after_cold_start = after_trajectory
-    final, excluded_by_rule = apply_user_rules(book, after_cold_start, normalize_user_rules(user_rules))
+    result = score_candidate(
+        catalog, book_id, centroid, weights, id_to_magnitude,
+        policy="audit", validated_fields=validated_fields, series_dna=series_dna,
+        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence,
+        poor_threshold=poor_threshold, cold_start=csw,
+        normalized_rules=normalize_user_rules(user_rules), top_n=100
+    )
+    raw_score = result["scores"]["base"]
+    after_series = result["scores"]["after_series_repeat"]
+    after_veto = result["scores"]["after_veto"]
+    after_trajectory = result["scores"]["after_trajectory"]
+    after_cold_start = result["scores"]["after_cold_start"]
+    final = result["scores"]["final"]
+    excluded_by_rule = result["excluded_by_user_rule"]
 
     pipeline = [
         {"stage": "raw score_book()", "score": round(raw_score, 4), "changed": None},
@@ -3822,8 +3828,7 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
          "excluded": excluded_by_rule},
     ]
 
-    matches, mismatches = explain_book(book, centroid, weights, top_n=100,
-                                        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
+    matches, mismatches = result["matches"], result["mismatches"]
 
     def build_rows(rows, negate=False):
         out = []
@@ -3862,15 +3867,14 @@ def audit_book_score(catalog, ratings, title, genre=None, fatigue_overrides=None
             out.append(row)
         return out
 
-    dealbreaker = dealbreaker_flags(book, centroid, weights, validated_fields=validated_fields,
-                                     field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
+    dealbreaker = result["dealbreaker_flags"]
     series_sim = series_repeat_worst_similarity(catalog, id_to_magnitude, book)
 
     return {
         "title": book["title"],
         "author": book["author"],
         "final_score": round(final, 4),
-        "match_label": "Excluded by user rule" if excluded_by_rule else match_label(final, user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights, field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)),
+        "match_label": result["match_label"],
         "excluded_by_user_rule": excluded_by_rule,
         "pipeline": pipeline,
         "matches": build_rows(matches),

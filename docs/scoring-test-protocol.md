@@ -3116,3 +3116,97 @@ an internal/debug tool, not a production scoring path. Otherwise Phase
 A is now functionally complete for every named step (A1-A5); Phase B
 (extracting into `scripts/scoring/` submodules) is next per
 `docs/TODO.md`, once the repo owner is ready to schedule it.
+
+## `audit_book_score()` migrated onto `score_candidate()` -- LANDED (2026-09-16, Task 8, proposed by CODX, independently verified and applied by CLDO)
+
+Not a named Phase A step (A1-A5 were already complete) -- a separately
+authorized follow-up migrating the one remaining production caller of
+the original stage sequence. `audit_book_score()` now calls
+`score_candidate(catalog, book_id, centroid, weights, id_to_magnitude,
+policy="audit", validated_fields=validated_fields, series_dna=
+series_dna, field_prevalence=field_prevalence, trope_prevalence=
+trope_prevalence, poor_threshold=poor_threshold, cold_start=csw,
+normalized_rules=normalize_user_rules(user_rules), top_n=100)` instead
+of its own inline stage chain and direct `explain_book()`/
+`dealbreaker_flags()` calls. The six-entry `pipeline` list's own
+construction code (labels, `round(x, 4)`, `abs(x-y) > 1e-9` "changed"
+comparisons) is byte-identical -- only the local variables it reads
+from changed, mapped 1:1 onto `result["scores"]`'s six stage fields.
+Cold start's "changed" comparison correctly diffs `after_cold_start`
+against `after_trajectory` (not `after_diversity`, which audit's policy
+carries forward unused) -- exactly the trap flagged when this task was
+handed off. `audit_book_score()`'s own audit-only presentation helpers
+(`_series_deduped_id_to_magnitude()`, `build_rows()`,
+`_audit_attribute_nominal_or_trope()`, `_audit_attribute_ordinal()`,
+`series_repeat_worst_similarity()`, `print_score_audit()`) are all
+untouched -- confirmed byte-for-byte, not just "no diff shown."
+
+**A real, deliberate behavior nuance, verified not to change any
+output**: the original return statement's ternary
+(`"Excluded by user rule" if excluded_by_rule else match_label(final,
+user_calibrated_poor_threshold(...))`) never evaluated the calibration
+call at all for an excluded candidate, since Python ternaries are
+lazily evaluated. This migration's required restructuring (computing
+`poor_threshold` once, up front, before calling `score_candidate()`)
+necessarily makes that calibration call unconditional. Since
+`user_calibrated_poor_threshold()` is a pure function of (catalog,
+profile, prevalence) with no dependency on the specific candidate or
+its exclusion status, this is strictly additional computation, never a
+changed result -- CODX verified this by tracing calibration call counts
+directly (zero for excluded candidates originally, one for every
+candidate now) and confirming every returned value still matches
+bit-for-bit regardless.
+
+Also confirmed and flagged, not fixed (a separate decision for
+CLDO/the repo owner): `audit_book_score()`'s own docstring advertises
+`"series_note": str` in its return shape, but the actual return dict
+has never included that key -- 11 keys, `series_note` is not one of
+them. Nothing in the codebase reads it (`print_score_audit()` doesn't,
+`tools/dogfood/app.py`, the only real caller, doesn't). `score_candidate()`'s
+audit policy DOES compute a real series note internally; CODX confirmed
+the migrated function still omits it from the returned dict rather than
+opportunistically fixing a dormant discrepancy as a side effect of an
+otherwise byte-identical migration.
+
+CODX also verified up front, before relying on anything else, that
+`audit_book_score()` is called from exactly one place in the entire
+tracked codebase (`tools/dogfood/app.py:187`, a Streamlit debugging
+tool) with zero automated test coverage -- same situation as A4's
+`explain_match()`, not A5's `_full_score()`. Validated instead with a
+dedicated direct-comparison harness: the real original and migrated
+`audit_book_score()` invoked side by side (no mocking) across every
+physical catalog row (1,018, including the shadowed duplicate-title
+row made independently addressable the same way A4 did it) x 5 real
+raters x 2 rule variants (10,180 primary pairs), plus a supplementary
+grid, missing-title exceptions, and the Task 4 interaction fixture --
+11,455 total pairs, 433,906 bit-exact assertions, all passed, matching
+output digests. Reverted its own clone to exact HEAD bytes afterward.
+
+**Independently re-verified by CLDO before applying**: extracted the
+diff, applied it to a clean checkout, confirmed via `ast` that
+`audit_book_score` is the ONLY changed function and that
+`scripts/scoring_tests.py` is completely untouched (byte-identical).
+Ran the canonical suite before/after -- byte-identical, a collateral
+check only since the suite never calls `audit_book_score()` (confirmed,
+same as CODX found). Also updated `score_candidate()`'s docstring,
+which still listed `audit_book_score()` as unmigrated, and re-ran the
+suite to confirm that edit was cosmetic.
+
+**A separate, real finding surfaced while verifying this locally, not
+part of the migration itself**: local Postgres was missing CLDA's two
+most recent tagging batches from earlier today (40 books, pushed to
+hosted but never applied locally) -- the exact same drift pattern
+already found and fixed once today for an earlier pair of batches (see
+that date's "local/hosted data drift" project-log entry). Applied both
+migrations locally (both fully idempotent, `on conflict` guarded
+throughout) before finishing verification here. This is now a
+recurring pattern, not a one-off -- worth a standing routine check
+before trusting local Supabase for anything data-dependent, not just a
+one-time fix.
+
+Landed as-is. **Every production caller of the original score-book ->
+repeat -> veto -> trajectory -> cold-start -> rules sequence now goes
+through `score_candidate()`** -- `recommend()`, `explain_match()`,
+`scoring_tests._full_score()`, and `audit_book_score()`. Next: Phase B
+(extracting into `scripts/scoring/` submodules) per `docs/TODO.md`,
+once the repo owner is ready to schedule it.

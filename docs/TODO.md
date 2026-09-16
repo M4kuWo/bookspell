@@ -782,15 +782,24 @@ worth deferring to a later session rather than batching in for
   "A5: `_full_score()` migrated onto `score_candidate()`" entry and
   `docs/codx-reviews/codx-a5-full-score-migration-proposal-2026-09-16.md`.
 
-  **Phase A is now functionally complete for every explicitly named
-  step (A1-A5).** `audit_book_score()` (`policy="audit"`) is the one
-  remaining production caller not yet migrated — not its own named
-  Phase A step, and lower priority since it's an internal/debug tool,
-  not a production scoring path (see its own module comment). Next
-  real step, when the repo owner is ready to schedule it: Phase B
-  (extracting into `scripts/scoring/` submodules) per the plan above —
-  or, first, deciding whether `audit_book_score()`'s migration is worth
-  a dedicated task before Phase B, given it's not production-critical.
+  **`audit_book_score()` migration LANDED, 2026-09-16 (Task 8)** —
+  CODX's follow-up (not a named Phase A step): `audit_book_score()` now
+  calls `score_candidate(..., policy="audit")` instead of its own
+  inline stage chain, with a bit-exact direct-comparison harness across
+  all 1,018 physical catalog rows x 5 raters x 2 rule variants (11,455
+  pairs, 433,906 bit-exact assertions) since the canonical suite gives
+  zero coverage of this caller. Independently re-verified by CLDO
+  (AST-diff confirms only `audit_book_score` changed;
+  `scripts/scoring_tests.py` byte-identical). See
+  `docs/scoring-test-protocol.md`'s "`audit_book_score()` migrated onto
+  `score_candidate()`" entry and
+  `docs/codx-reviews/codx-audit-book-score-migration-proposal-2026-09-16.md`.
+
+  **Every production caller of the original stage sequence now goes
+  through `score_candidate()`** — `recommend()`, `explain_match()`,
+  `scoring_tests._full_score()`, and `audit_book_score()`. Next real
+  step, when the repo owner is ready to schedule it: Phase B
+  (extracting into `scripts/scoring/` submodules) per the plan above.
 
   Old note, superseded by the above but kept for history: **Not done
   yet, and not part of "setup" — actually running Codex

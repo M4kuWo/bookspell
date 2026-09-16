@@ -17102,3 +17102,63 @@ for CLDA, "Sync with the repo and start on your next task" for CODX --
 so future sessions (including a future CLDO) have one unambiguous
 wording to recognize rather than reconstructing intent from whatever
 phrasing happened to get used in a given conversation.
+
+## 2026-09-16 (later still) -- Task 8 landed: audit_book_score() migrated onto score_candidate(), completing every production caller; a recurring local/hosted drift caught and fixed again
+
+CODX finished Task 8 (report already committed to its own clone,
+working tree already reverted, by the time this session checked). Note
+for the record: CODX's report shows it actually worked from the
+ORIGINAL prompt drafted earlier in this session's conversation
+(baseline `e531320`, before the persona-workflow mechanism existed),
+not the refreshed `docs/codx-tasks/current-task.md` file (baseline
+`c5de5b6`) -- the task content was identical either way, so this
+didn't affect the result, but it means Task 8 was NOT actually the
+first real test of the new file-based handoff. That test is still
+pending the next task.
+
+`audit_book_score()` now calls `score_candidate(..., policy="audit")`
+instead of its own inline stage chain and direct `explain_book()`/
+`dealbreaker_flags()` calls -- the pipeline list's own construction
+code is byte-identical, only the local variables it reads from moved
+to `result["scores"]`. CODX caught a real, deliberate behavior nuance
+in its own required restructuring: moving `poor_threshold` computation
+earlier makes a previously lazily-skipped calibration call (for
+excluded candidates) unconditional -- verified this changes no output
+(the function is pure) by tracing calibration call counts directly,
+not just asserting it. Also confirmed and correctly left alone a
+dormant discrepancy: `audit_book_score()`'s docstring advertises a
+`series_note` key its return dict has never actually included.
+Validated with a dedicated harness (no canonical-suite coverage exists
+for this caller) across all 1,018 physical catalog rows x 5 raters x 2
+rule variants -- 11,455 pairs, 433,906 bit-exact assertions, all
+passed.
+
+Independently re-verified by CLDO: AST-diff confirms only
+`audit_book_score` changed, `scripts/scoring_tests.py` byte-identical,
+canonical suite byte-identical before/after (collateral only, same as
+CODX's own correct framing). Landed (see
+`docs/scoring-test-protocol.md`'s new entry).
+
+**A recurring local/hosted drift, caught again while verifying
+locally**: local Postgres was missing CLDA's two most recent tagging
+batches from earlier today (40 books, both fully idempotent migrations
+already pushed to hosted). This is the exact same failure mode found
+and fixed once already today for an earlier pair of batches -- applied
+both migrations locally to bring counts back in sync (book_dna 1018 =
+1018, matching hosted). **This is now a pattern worth a standing
+routine check, not a one-off**: verify local matches hosted (a
+`book_dna`/untagged-count spot check) before trusting local Supabase
+for anything data-dependent, especially right after a CLDA tagging
+session, not just when something breaks loudly.
+
+**Every production caller of the original score-book -> repeat -> veto
+-> trajectory -> cold-start -> rules sequence now goes through
+`score_candidate()`** -- `recommend()`, `explain_match()`,
+`scoring_tests._full_score()`, and `audit_book_score()`. Updated
+`docs/codx-tasks/current-task.md` to a holding-pattern note (nothing
+queued yet, candidates listed for context, explicitly told CODX not to
+self-select) rather than leaving the completed Task 8 sitting there.
+Next step: Phase B (extracting into `scripts/scoring/` submodules) per
+`docs/TODO.md`, once the repo owner is ready to schedule it -- or an
+independent CODX QA pass on CLDA's 4 batches from today, still
+undecided.
