@@ -234,6 +234,97 @@ worth deferring to a later session rather than batching in for
   experiments). Not actionable by engineering work -- actionable by
   recruiting readers, whenever that becomes a priority.
 
+- [ ] **Recruit more raters -- the single biggest lever on the
+  reader-count bottleneck above, and now an active priority (2026-09-17)
+  rather than a deferred one.** r/Fantasy's front page doesn't allow a
+  standalone "give me your Goodreads data" post, so recruiting needs to
+  happen through channels/formats with looser self-promo norms, or
+  through personal network expansion.
+
+  **Draft pitch** (deliberately vague about the project's specifics --
+  don't lead with what it does or how, just that it's a personal
+  reading-recommendation project that needs testers):
+  - Longer version (forum posts, Discord #self-promo channels): "Hey
+    all -- I'm working on a personal project (a recommendation tool for
+    readers) and I'm looking for a handful of people willing to share
+    their reading history to help me test it. If you use Goodreads or
+    StoryGraph, that's just exporting your library as a CSV -- takes
+    about 2 minutes, no signup or payment involved. **If you'd rather do
+    it the old-fashioned way, you can also just message me a list of
+    books with a star rating for each -- the more the better, and
+    disliked/hated books are especially valuable, maybe even more so
+    than the ones you loved, since they define your taste just as much.**
+    In exchange I'm happy to send you what the tool spits out for you
+    once it's working, and I'd genuinely appreciate the feedback on
+    whether it gets your taste right or not. DM me or reply here if
+    you're up for it!"
+  - Shorter version (Discord chat, casual threads): "Building a little
+    book-recommendation side project and need a few people to test it
+    on -- if you're willing to export your Goodreads/StoryGraph data
+    (or just message me a rated book list, disliked books especially
+    welcome) and let me poke at it, hit me up. Free, takes a couple
+    minutes, happy to share results."
+  - One-liner (strict-length self-promo threads): "Building a book rec
+    tool, looking for a few readers willing to share a Goodreads/
+    StoryGraph export (or just a rated book list) to help test it --
+    DM me if interested."
+
+  **Places to post, and how to find them**:
+  1. r/Fantasy's Discord -- linked from the subreddit's sidebar/wiki
+     (reddit.com/r/Fantasy); has a #self-promo or general chat channel
+     where this ask is normal, unlike the subreddit's front page.
+  2. r/Fantasy's own scheduled threads -- check the "Weekly Threads"
+     wiki page (reddit.com/r/Fantasy/wiki/schedule) for "Self-Promo
+     Saturday" or "Recommend Me a Book" stickies; post there instead of
+     a standalone thread.
+  3. 17th Shard (17thshard.com) -- the big Sanderson/Cosmere fan
+     community, forum + Discord linked from the homepage. Very active,
+     detail-oriented readers.
+  4. Sword & Laser -- a long-running SFF book club: a Goodreads group
+     (search "Sword and Laser" on goodreads.com/group), a Discord, and
+     a subreddit (r/swordandlaser). Culture is tester/feedback-friendly.
+  5. StoryGraph's community -- Discord/socials linked from
+     thestorygraph.com's footer. Good fit since their userbase already
+     tracks detailed reading data.
+  6. Goodreads Groups -- goodreads.com/group, search "fantasy," "sci-fi,"
+     or "book recommendations." Many smaller groups are more permissive
+     about this ask than a big subreddit.
+  7. r/PrintSF, r/RomanceBooks, r/suggestmeabook -- each has its own
+     self-promo rules (check each sidebar); worth checking since these
+     may not have cracked down the way r/Fantasy's front page has.
+  8. Indie Hackers (indiehackers.com) -- post in the community feed or
+     a "Show IH" thread; builder crowd, but plenty read and are happy
+     to test a side project outside their usual domain.
+  9. Hacker News "Show HN" (news.ycombinator.com) -- same idea,
+     technical audience, lower conversion but decent volume if it lands.
+  10. Personal network -- friends/coworkers/local library or university
+      SFF book clubs. Lowest volume, highest trust, easiest to follow up
+      with for qualitative "did this feel right" feedback -- best fit
+      for the first ~10-reader tier above.
+
+  **Open methodological consideration, flagged 2026-09-17, not yet
+  solved**: raters are likely to skew heavily toward liked books, with
+  very little negative-rating data per person -- not a recruiting
+  failure to fix, but a structural property of the hobby itself.
+  Reasoning (the repo owner's own observation): someone who dislikes a
+  large fraction of what they read probably doesn't keep reading much
+  -- a book hobby survives occasional misses, not a high rate of them --
+  so any individual rater's history is naturally survivorship-biased
+  toward books they were likely to enjoy going in. The repo owner's own
+  case: a strong felt sense of having disliked "a great many books,"
+  which is nonetheless a small minority by raw count against everything
+  read. If this holds across raters generally (untested so far, since
+  there's effectively one real rater today), it means dealbreaker/
+  negative-signal fields will be chronically data-poor even once
+  reader-count grows, which the current scoring/testing approach doesn't
+  yet have a specific plan for. Worth watching once real rater data
+  starts coming in from the recruiting above (does each rater's
+  liked:disliked ratio actually skew this way in practice, or was this
+  guess wrong) rather than solving in the abstract now -- but the
+  recruiting pitch above already leans into it by explicitly asking for
+  disliked/hated books, not just favorites, to counteract the skew at
+  the collection stage rather than only discovering it later.
+
 - [x] **`recommend.py` structural refactor -- FULLY LANDED 2026-09-17
   (both Phase A and Phase B, via CODX Tasks 4-12, each independently
   verified by CLDO before applying).** Originally proposed by a GPT

@@ -18229,3 +18229,40 @@ both named in batch 13's tail but not gotten to this time.
 docs/TODO.md updated with the full batch detail and a corrected
 "Next (batch 15)" exclude-list pointer (266 checked names + 65 flagged
 names).
+
+## 2026-09-17 (later still): rater recruiting made an active priority, plus an open question about negative-rating scarcity
+
+The reader-count bottleneck (docs/TODO.md's existing note, sourced from
+a GPT review's point 4) moved from a deferred "wait for more data" item
+to an actively-worked one: drafted a recruiting pitch (deliberately
+vague about the project's specifics) and a list of places to post it
+(Discord communities with looser self-promo norms than r/Fantasy's
+front page -- 17th Shard, Sword & Laser, StoryGraph's community --
+plus r/Fantasy's own scheduled self-promo threads, smaller subreddits,
+Goodreads Groups, Indie Hackers/Show HN, and personal network). Full
+pitch text and posting list logged in docs/TODO.md's new "Recruit more
+raters" entry (P1) rather than duplicated here.
+
+**A real open methodological question, raised by the repo owner**: most
+raters recruited this way probably won't provide much negative-rating
+data, and not because of a recruiting failure -- because of a
+structural property of the hobby itself. Someone who dislikes a large
+fraction of what they read likely doesn't keep reading much; a reading
+habit survives occasional misses, not a high rate of them. So any given
+rater's history is likely survivorship-biased toward books they were
+probably going to enjoy going in. The repo owner's own case was the
+example that surfaced this: a strong felt sense of having disliked "a
+great many books," which is nonetheless a small minority by raw count
+against everything actually read.
+
+This hasn't been tested against real data yet -- there's effectively
+one real rater today, so there's no dataset yet to check the claim
+against. If it holds up once more raters are recruited, it means
+dealbreaker/negative-signal fields will likely stay chronically data-
+poor per-rater even as reader-count grows past the ~10/25/100
+milestones in the reader-count-bottleneck note, which the current
+scoring/testing approach has no specific plan for yet. Not solved here
+-- logged as an open question to watch once real rater data starts
+coming in, and the recruiting pitch itself already leans into it by
+explicitly asking for disliked/hated books, not just favorites, to
+counteract the skew at the collection stage.
