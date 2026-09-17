@@ -58,7 +58,7 @@ import re
 import difflib
 
 sys.path.insert(0, os.path.dirname(__file__))
-import recommend as R
+from scoring import catalog as scoring_catalog, constants
 
 # Goodreads' own 1-5 star scale, mapped by POSITION to this project's
 # 5-tier scale -- not by Goodreads' own (somewhat confusing) star-label
@@ -125,13 +125,13 @@ def normalize_isbn(raw):
 
 
 def fetch_isbns_by_book_id():
-    """R.load_catalog()'s own SELECT deliberately doesn't include
+    """scoring_catalog.load_catalog()'s own SELECT deliberately doesn't include
     `books.isbn` (it's bibliographic data, not something any scoring
     field uses) -- fetched here as a separate, minimal query instead of
     changing that shared, heavily-used function for a need specific to
     this one script."""
     import psycopg2
-    conn = psycopg2.connect(R.DATABASE_URL)
+    conn = psycopg2.connect(constants.DATABASE_URL)
     cur = conn.cursor()
     cur.execute("select id, isbn from books where isbn is not null")
     return {str(bid): isbn for bid, isbn in cur.fetchall()}
@@ -235,7 +235,7 @@ def main():
         sys.exit(1)
     csv_path, rater_name = sys.argv[1], sys.argv[2]
 
-    catalog = R.load_catalog()
+    catalog = scoring_catalog.load_catalog()
     isbns_by_book_id = fetch_isbns_by_book_id()
     ratings, rated_dates, reviews, matched_rows, unmatched_rows = import_goodreads_csv(csv_path, catalog, isbns_by_book_id)
 

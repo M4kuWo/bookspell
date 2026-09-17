@@ -1,5 +1,5 @@
 """Bookspell v1 API -- the ONLY things that genuinely need live Python:
-calling recommend.py's scoring engine, and parsing an uploaded
+calling the scoring engine, and parsing an uploaded
 Goodreads/Fable-exported CSV. Everything else (auth, catalog browse,
 manual rating CRUD, filter-rule CRUD) is handled directly by the
 frontend talking to Supabase -- see the approved plan
@@ -20,7 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from jwt import PyJWKClient
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
-import recommend as R  # noqa: E402
+from scoring import api, constants, rules as scoring_rules  # noqa: E402
 from import_goodreads import fetch_isbns_by_book_id, import_goodreads_csv  # noqa: E402
 
 from catalog_cache import get_catalog  # noqa: E402
@@ -80,13 +80,13 @@ def require_user_id(authorization: str = Header(default=None)) -> str:
 
 
 def _db():
-    return psycopg2.connect(R.DATABASE_URL)
+    return psycopg2.connect(constants.DATABASE_URL)
 
 
 def _load_user_ratings(user_id: str, catalog: dict) -> dict:
     """{title: rating_label} -- the raw shape recommend()/explain_match()
     expect, built by joining this user's `ratings` rows to `books.title`
-    (recommend.py's own functions only know titles, not book_id/user_id
+    (the scoring engine's own functions only know titles, not book_id/user_id
     -- see the plan's research pass on this)."""
     conn = _db()
     try:
@@ -117,7 +117,7 @@ def _load_user_rules(user_id: str) -> dict:
             if rule_type == "exclude":
                 rules["exclude"].append(key)
             else:
-                rules["reduce"].append({"key": key, "strength": float(strength) if strength is not None else R.DEFAULT_REDUCE_STRENGTH})
+                rules["reduce"].append({"key": key, "strength": float(strength) if strength is not None else constants.DEFAULT_REDUCE_STRENGTH})
         return rules
     finally:
         conn.close()
@@ -141,7 +141,7 @@ def rule_targets():
     filter search box already uses. No auth needed, same trust level as
     the catalog tables anyone can already read via the anon key."""
     catalog = get_catalog()
-    return R.list_user_rule_targets(catalog)
+    return scoring_rules.list_user_rule_targets(catalog)
 
 
 @app.get("/recommendations")
@@ -156,19 +156,19 @@ def recommendations(genre: str = None, top_n: int = 10, authorization: str = Hea
         raise HTTPException(status_code=400, detail="genre must be 'fantasy', 'sci_fi', or omitted")
     # recommend() already scores the whole catalog every call regardless
     # of top_n (only the final truncation differs) -- this is not a
-    # scoring-engine change, just exposing a parameter recommend.py
+    # scoring-engine change, just exposing a parameter scoring/api.py
     # already supports. Bounded so a client filtering post-hoc (e.g. the
     # audiobook-availability filters) can ask for a bigger pool without
     # the endpoint returning the entire catalog.
     top_n = max(1, min(top_n, 100))
 
-    results = R.recommend(
+    results = api.recommend(
         catalog, ratings, top_n=top_n, genre=genre,
         user_rules=user_rules, format_preference=format_preference,
     )
     out = []
     for score, title, author, contributions in results:
-        detail = R.explain_match(catalog, ratings, title, genre=genre, format_preference=format_preference)
+        detail = api.explain_match(catalog, ratings, title, genre=genre, format_preference=format_preference)
         out.append({
             "title": title,
             "author": author,

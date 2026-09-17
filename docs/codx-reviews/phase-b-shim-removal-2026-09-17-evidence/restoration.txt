@@ -1,0 +1,5 @@
+HEAD 16d09c9685547c0ca829a47eb6cc0c9767c3bb33
+PASS six task files restored; working tree/index contain no tracked changes
+PASS SHA-256 of all 391 tracked files equals HEAD
+PASS proposal.patch applies cleanly (git apply --check)
+PASS core.hooksPath = .githooks

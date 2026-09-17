@@ -1,0 +1,159 @@
+{
+  "api/main.py": {
+    "names": {
+      "DATABASE_URL": "constants",
+      "DEFAULT_REDUCE_STRENGTH": "constants",
+      "explain_match": "api",
+      "list_user_rule_targets": "rules",
+      "recommend": "api"
+    },
+    "aliases": {
+      "api": "api",
+      "constants": "constants",
+      "rules": "scoring_rules"
+    },
+    "runtime_attributes": [
+      "DATABASE_URL",
+      "DEFAULT_REDUCE_STRENGTH",
+      "explain_match",
+      "list_user_rule_targets",
+      "recommend"
+    ]
+  },
+  "api/catalog_cache.py": {
+    "names": {
+      "load_catalog": "catalog"
+    },
+    "aliases": {
+      "catalog": "catalog"
+    },
+    "runtime_attributes": [
+      "load_catalog"
+    ]
+  },
+  "scripts/scoring_tests.py": {
+    "names": {
+      "DEFAULT_REDUCE_STRENGTH": "constants",
+      "NOMINAL_FIELDS": "constants",
+      "ORDINAL_FIELDS": "constants",
+      "RATING_LABELS": "constants",
+      "STAT_SEPARATION_THRESHOLD": "constants",
+      "_audit_attribute_ordinal": "audit",
+      "_nominal_field_separation": "pipeline",
+      "_resolve_profile": "profile",
+      "_series_trajectory_penalty_factor": "pipeline",
+      "_trope_separation": "pipeline",
+      "apply_user_rules": "rules",
+      "book_similarity": "series",
+      "build_prevalence_lookup": "prevalence",
+      "build_profile": "profile",
+      "compute_series_dna": "series",
+      "dealbreaker_flags": "pipeline",
+      "describe": "explanations",
+      "explain_book": "pipeline",
+      "list_user_rule_targets": "rules",
+      "load_catalog": "catalog",
+      "match_label": "calibration",
+      "normalize_user_rules": "rules",
+      "parse_user_rule_key": "rules",
+      "recommend": "api",
+      "score_candidate": "pipeline",
+      "user_calibrated_poor_threshold": "pipeline",
+      "validated_dealbreaker_fields": "pipeline"
+    },
+    "aliases": {
+      "api": "api",
+      "audit": "audit",
+      "calibration": "calibration",
+      "catalog": "scoring_catalog",
+      "constants": "constants",
+      "explanations": "explanations",
+      "pipeline": "pipeline",
+      "prevalence": "prevalence",
+      "profile": "profile",
+      "rules": "rules",
+      "series": "series"
+    },
+    "runtime_attributes": [
+      "DEFAULT_REDUCE_STRENGTH",
+      "NOMINAL_FIELDS",
+      "ORDINAL_FIELDS",
+      "RATING_LABELS",
+      "STAT_SEPARATION_THRESHOLD",
+      "_audit_attribute_ordinal",
+      "_nominal_field_separation",
+      "_resolve_profile",
+      "_trope_separation",
+      "apply_user_rules",
+      "book_similarity",
+      "build_prevalence_lookup",
+      "build_profile",
+      "compute_series_dna",
+      "dealbreaker_flags",
+      "describe",
+      "explain_book",
+      "list_user_rule_targets",
+      "load_catalog",
+      "match_label",
+      "normalize_user_rules",
+      "parse_user_rule_key",
+      "recommend",
+      "score_candidate",
+      "user_calibrated_poor_threshold",
+      "validated_dealbreaker_fields"
+    ]
+  },
+  "scripts/import_goodreads.py": {
+    "names": {
+      "DATABASE_URL": "constants",
+      "load_catalog": "catalog"
+    },
+    "aliases": {
+      "catalog": "scoring_catalog",
+      "constants": "constants"
+    },
+    "runtime_attributes": [
+      "DATABASE_URL",
+      "load_catalog"
+    ]
+  },
+  "tools/dogfood/app.py": {
+    "names": {
+      "DATABASE_URL": "constants",
+      "DEFAULT_REDUCE_STRENGTH": "constants",
+      "RATING_LABELS": "constants",
+      "_resolve_profile": "profile",
+      "audit_book_score": "audit",
+      "build_prevalence_lookup": "prevalence",
+      "list_user_rule_targets": "rules",
+      "load_catalog": "catalog",
+      "match_label": "calibration",
+      "recommend": "api",
+      "user_calibrated_poor_threshold": "pipeline"
+    },
+    "aliases": {
+      "api": "api",
+      "audit": "scoring_audit",
+      "calibration": "calibration",
+      "catalog": "scoring_catalog",
+      "constants": "constants",
+      "pipeline": "pipeline",
+      "prevalence": "prevalence",
+      "profile": "profile",
+      "rules": "rules"
+    },
+    "runtime_attributes": [
+      "DATABASE_URL",
+      "DEFAULT_REDUCE_STRENGTH",
+      "RATING_LABELS",
+      "_resolve_profile",
+      "audit_book_score",
+      "build_prevalence_lookup",
+      "list_user_rule_targets",
+      "load_catalog",
+      "match_label",
+      "recommend",
+      "user_calibrated_poor_threshold"
+    ]
+  }
+}

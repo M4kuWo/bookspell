@@ -1,6 +1,6 @@
 """Minimal internal dogfooding tool for the Bookspell recommendation
 engine -- NOT the real product UI (see README.md in this directory for
-why). Lets a real person interact with scripts/recommend.py directly:
+why). Lets a real person interact with scripts/scoring/ directly:
 pick/edit a rater's ratings, build "none of X"/"less of X" rules
 against a search box, and see live recommendations with a per-book
 explanation, without anyone hand-running Python in a terminal.
@@ -15,7 +15,17 @@ import psycopg2
 import streamlit as st
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "scripts"))
-import recommend as R
+from scoring import (
+    api,
+    audit as scoring_audit,
+    calibration,
+    catalog as scoring_catalog,
+    constants,
+    pipeline,
+    prevalence,
+    profile,
+    rules,
+)
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data", "ratings")
 
@@ -24,15 +34,15 @@ st.set_page_config(page_title="Bookspell dogfood", layout="wide")
 
 @st.cache_resource
 def load_catalog():
-    return R.load_catalog()
+    return scoring_catalog.load_catalog()
 
 
 @st.cache_resource
 def load_cover_urls():
-    # Not part of R.load_catalog()'s query -- book_dna/scoring has no use
+    # Not part of scoring_catalog.load_catalog()'s query -- book_dna/scoring has no use
     # for cover art, so it's fetched here rather than widening the shared
     # engine's query for a display-only field.
-    conn = psycopg2.connect(R.DATABASE_URL)
+    conn = psycopg2.connect(constants.DATABASE_URL)
     cur = conn.cursor()
     cur.execute("select id, cover_url from books where cover_url is not null")
     urls = {bid: url for bid, url in cur.fetchall()}
@@ -43,7 +53,7 @@ def load_cover_urls():
 
 @st.cache_resource
 def load_rule_targets(_catalog):
-    return R.list_user_rule_targets(_catalog)
+    return rules.list_user_rule_targets(_catalog)
 
 
 def list_raters():
@@ -80,7 +90,7 @@ ratings = rater_data["ratings"]
 st.sidebar.metric("Ratings on file", len(ratings))
 
 # --- Format preference (2026-09-07) -- gates book_length/audiobook_length,
-# see recommend.py's build_profile() docstring and data/ratings/README.md.
+# see scoring/profile.py's build_profile() docstring and data/ratings/README.md.
 rater_meta = rater_data.setdefault("_meta", {})
 FORMAT_LABELS = {"print": "Print/ebook", "audiobook": "Audiobook", "mixed": "Both"}
 current_format = rater_meta.get("format_preference", "print")
@@ -101,7 +111,7 @@ with st.sidebar.expander("Add or fix a rating"):
         cover = cover_urls.get(title_to_id.get(title_pick))
         if cover:
             st.image(cover, width=80)
-    label_pick = st.selectbox("Rating", [""] + list(R.RATING_LABELS.keys()), key="rating_label")
+    label_pick = st.selectbox("Rating", [""] + list(constants.RATING_LABELS.keys()), key="rating_label")
     if st.button("Save rating") and title_pick and label_pick:
         ratings[title_pick] = label_pick
         save_rater_data(rater_name, rater_data)
@@ -132,9 +142,9 @@ if picked_label:
         if key not in st.session_state.rules["exclude"]:
             st.session_state.rules["exclude"].append(key)
     if advanced:
-        strength = st.sidebar.slider("Strength", 0.0, 1.0, R.DEFAULT_REDUCE_STRENGTH, 0.05)
+        strength = st.sidebar.slider("Strength", 0.0, 1.0, constants.DEFAULT_REDUCE_STRENGTH, 0.05)
     else:
-        strength = R.DEFAULT_REDUCE_STRENGTH
+        strength = constants.DEFAULT_REDUCE_STRENGTH
     if col2.button("Less of this"):
         st.session_state.rules["reduce"] = [
             r for r in st.session_state.rules["reduce"] if r["key"] != key
@@ -161,7 +171,7 @@ genre = st.selectbox("Genre", ["fantasy", "sci_fi"])
 top_n = st.slider("How many", 5, 30, 20)
 
 if st.button("Get recommendations", type="primary"):
-    recs = R.recommend(catalog, ratings, top_n=top_n, genre=genre, user_rules=st.session_state.rules,
+    recs = api.recommend(catalog, ratings, top_n=top_n, genre=genre, user_rules=st.session_state.rules,
                         format_preference=format_pick)
     # Genre-scoped (matches recommend()'s own profile) and prevalence-aware
     # (matches recommend()'s own now-discounted scores, landed 2026-09-06) --
@@ -169,22 +179,22 @@ if st.button("Get recommendations", type="primary"):
     # Poor/Mixed threshold against a different pipeline than what recs
     # actually went through. Same format_preference as the recommend() call
     # above, for the same reason (2026-09-07).
-    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, ratings, genre, format_preference=format_pick)
-    field_prevalence, trope_prevalence = R.build_prevalence_lookup(catalog, genre)
-    poor_threshold = R.user_calibrated_poor_threshold(
+    centroid, weights, id_to_magnitude, _ = profile._resolve_profile(catalog, ratings, genre, format_preference=format_pick)
+    field_prevalence, trope_prevalence = prevalence.build_prevalence_lookup(catalog, genre)
+    poor_threshold = pipeline.user_calibrated_poor_threshold(
         catalog, id_to_magnitude, centroid, weights,
         field_prevalence=field_prevalence, trope_prevalence=trope_prevalence,
     )
 
     for i, (score, title, author, contributions) in enumerate(recs, 1):
-        label = R.match_label(score, poor_threshold)
+        label = calibration.match_label(score, poor_threshold)
         cover = cover_urls.get(title_to_id.get(title))
         col_cover, col_expander = st.columns([1, 11])
         with col_cover:
             if cover:
                 st.image(cover, width=60)
         with col_expander, st.expander(f"{i}. {title} -- {author} -- {score:.3f} ({label})"):
-            audit = R.audit_book_score(catalog, ratings, title, genre=genre, user_rules=st.session_state.rules,
+            audit = scoring_audit.audit_book_score(catalog, ratings, title, genre=genre, user_rules=st.session_state.rules,
                                         format_preference=format_pick)
             st.write("**Pipeline:**")
             st.table(audit["pipeline"])

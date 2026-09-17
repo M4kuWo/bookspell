@@ -1,0 +1,2 @@
+2026-09-17 15:01:53.018 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+PASS real Streamlit top-level execution + Get recommendations click; 20 audit tables; no rater writes; 15710 bytes; sha256 d14f5b5a8c9c64c3c1abdfbebfa541c3526cb54adf25fe686bd353e9ef37db60

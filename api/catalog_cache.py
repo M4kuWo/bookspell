@@ -1,4 +1,4 @@
-"""In-process cache around recommend.py's load_catalog() -- that call
+"""In-process cache around scoring.catalog.load_catalog() -- that call
 opens a fresh DB connection and does a full-catalog scan every time
 (confirmed, not assumed -- see the plan's research pass), so calling it
 per-request would make every API request pay that cost. The same
@@ -11,7 +11,7 @@ this service has no other way to learn about them."""
 import threading
 import time
 
-import recommend as R
+from scoring import catalog
 
 REFRESH_SECONDS = 15 * 60
 
@@ -25,7 +25,7 @@ def get_catalog():
     now = time.time()
     with _lock:
         if _catalog is None or (now - _loaded_at) > REFRESH_SECONDS:
-            _catalog = R.load_catalog()
+            _catalog = catalog.load_catalog()
             _loaded_at = now
         return _catalog
 
@@ -36,6 +36,6 @@ def force_refresh():
     needs the cache invalidated sooner than the timer."""
     global _catalog, _loaded_at
     with _lock:
-        _catalog = R.load_catalog()
+        _catalog = catalog.load_catalog()
         _loaded_at = time.time()
     return _catalog

@@ -826,9 +826,38 @@ worth deferring to a later session rather than batching in for
   original file and the new shim side-by-side — byte-identical results,
   not just "it imports."
 
-  **Not yet done (B4, deliberately deferred)**: updating the 2 real
-  consumers to import from `scripts/scoring/` directly and dropping the
-  shim — a separate, purely cosmetic follow-up, not blocking anything.
+  **B4 LANDED, 2026-09-17 (CODX's Task 12)** — all 5 real consumers
+  (`api/main.py`, `api/catalog_cache.py`, `scripts/scoring_tests.py`,
+  `scripts/import_goodreads.py`, `tools/dogfood/app.py`) now import
+  directly from `scripts/scoring/` submodules; `scripts/recommend.py`
+  is reduced from 439 to 105 lines, keeping only its original module
+  docstring and CLI demo (the documented `python3 scripts/recommend.py`
+  entry point still works, unchanged output) — no more shim/re-export
+  role. CODX caught a real bug before it shipped: a naive unaliased
+  `from scoring import catalog` would have raised `UnboundLocalError`
+  in `scoring_tests.py`/`import_goodreads.py`, since both already use
+  `catalog` as a local variable name in the exact function that would
+  import it — fixed with `catalog as scoring_catalog` aliasing
+  throughout. Validated with real Streamlit AppTest execution of the
+  dogfood tool (not just an import check), a real Goodreads
+  self-check run, and the same isolated-venv FastAPI endpoint
+  comparison Task 11 used — all byte-identical to Task 11's own saved
+  baseline. Flagged (not fixed) a real, resulting staleness in
+  `CLAUDE.md`'s monkeypatch A/B-testing guidance, which checked a
+  single `R is T.R` identity that no longer applies once
+  `scoring_tests.py` imports several submodules — CLDO to apply
+  CODX's proposed per-submodule replacement check after review.
+  Independently re-verified by CLDO (patch applied in a worktree,
+  canonical suite and CLI demo byte-identical against local Supabase,
+  confirmed zero remaining `R.`/shim references via grep, manually
+  verified `api/main.py`'s diff line-by-line, confirmed the
+  `UnboundLocalError` claim was real by inspecting the exact code
+  path). See
+  `docs/codx-reviews/codx-phase-b-shim-removal-2026-09-17.md`.
+
+  **Phase B is now fully complete** (B1-B4). `scripts/recommend.py`
+  is a genuine, minimal CLI demo script; the real engine lives entirely
+  under `scripts/scoring/`.
 
   Old note, superseded by the above but kept for history: **Not done
   yet, and not part of "setup" — actually running Codex

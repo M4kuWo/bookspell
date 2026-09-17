@@ -1,0 +1,20 @@
+PASS imports/name qualification only (AST ignoring documentation), no old-shim references, sys.path unchanged: api/main.py
+PASS imports/name qualification only (AST ignoring documentation), no old-shim references, sys.path unchanged: api/catalog_cache.py
+PASS imports/name qualification only (AST ignoring documentation), no old-shim references, sys.path unchanged: scripts/scoring_tests.py
+PASS imports/name qualification only (AST ignoring documentation), no old-shim references, sys.path unchanged: scripts/import_goodreads.py
+PASS imports/name qualification only (AST ignoring documentation), no old-shim references, sys.path unchanged: tools/dogfood/app.py
+PASS CLI docstring exact; main block AST identical after qualification; only docstring/import/main remain (105 lines)
+PASS all 16 scoring package files exactly unchanged
+PASS grep exit 1 (no matches): rg -n \bR\.|import recommend|recommend\.py|\bshim\b api/main.py api/catalog_cache.py scripts/scoring_tests.py scripts/import_goodreads.py tools/dogfood/app.py
+PASS byte-identical suite: 29599 bytes; SHA-256 0ef77ed37376853eb66954bfc9a28a165e7a7ff5d9b8bdf6eabfe2dfed155874
+PASS byte-identical cli: 4721 bytes; SHA-256 dd0ec3fcffa9429b95ef65b5bb72cc68cc586587fdf7c939d81a2731950d9ad2
+PASS byte-identical frozen-suite: 29599 bytes; SHA-256 0ef77ed37376853eb66954bfc9a28a165e7a7ff5d9b8bdf6eabfe2dfed155874
+PASS byte-identical api: 44169 bytes; SHA-256 0a7d3ed9347291dc74bf79af937f2e5fc01675e0993708953a8aae1091a95fc5
+PASS byte-identical goodreads: 755 bytes; SHA-256 ae0e07278b911bde806886b9f05154c832bbf1dcc3783da52d2a874f38127584
+PASS byte-identical dogfood: 15710 bytes; SHA-256 d14f5b5a8c9c64c3c1abdfbebfa541c3526cb54adf25fe686bd353e9ef37db60
+PASS fresh import api/main.py
+PASS fresh import api/catalog_cache.py
+PASS fresh import scripts/scoring_tests.py
+PASS fresh import scripts/import_goodreads.py
+PASS fresh import scripts/recommend.py
+PASS fresh dogfood interpreter: real AppTest startup and recommendation/audit loop (see dogfood-after.log)

@@ -20,7 +20,19 @@ import ast
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-import recommend as R
+from scoring import (
+    api,
+    audit,
+    calibration,
+    catalog as scoring_catalog,
+    constants,
+    explanations,
+    pipeline,
+    prevalence,
+    profile,
+    rules,
+    series,
+)
 
 EXPECT_GOOD = {"loved", "liked"}
 EXPECT_POOR = {"hated", "disliked"}
@@ -166,7 +178,7 @@ def run_leave_one_out_diagnostic(catalog, ratings, label, quiet=False):
     run_held_out_test() does, so pairwise_accuracy()/recall_and_rejection()/
     scorecard_row() all work on it unchanged.
 
-    Uses R.user_calibrated_poor_threshold() per leave-one-out iteration,
+    Uses pipeline.user_calibrated_poor_threshold() per leave-one-out iteration,
     same as run_held_out_test() -- each training set gets its own
     calibration, consistent with how a real profile would actually be
     built."""
@@ -176,14 +188,14 @@ def run_leave_one_out_diagnostic(catalog, ratings, label, quiet=False):
         print(f"  {label}:")
     for held_out_title, true in ratings.items():
         train = {t: r for t, r in ratings.items() if t != held_out_title}
-        centroid, weights, id_to_mag, _ = R._resolve_profile(catalog, train)
+        centroid, weights, id_to_mag, _ = profile._resolve_profile(catalog, train)
         field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
-        poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_mag, centroid, weights,
+        poor_threshold = pipeline.user_calibrated_poor_threshold(catalog, id_to_mag, centroid, weights,
                                                            field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
-        validated = R.validated_dealbreaker_fields(catalog, id_to_mag)
+        validated = pipeline.validated_dealbreaker_fields(catalog, id_to_mag)
         book = catalog[title_to_id[held_out_title]]
         score = _full_score(catalog, id_to_mag, validated, centroid, weights, book)
-        pred = R.match_label(score, poor_threshold)
+        pred = calibration.match_label(score, poor_threshold)
         v = verdict(true, pred)
         rows.append((held_out_title, true, score, pred, v))
         if not quiet:
@@ -194,7 +206,7 @@ def run_leave_one_out_diagnostic(catalog, ratings, label, quiet=False):
 # Computed ONCE (pure function of the catalog, not of any user's
 # profile) and reused across every _full_score() call, rather than
 # recomputed per candidate -- see
-# R._series_trajectory_penalty_factor()'s own docstring.
+# pipeline._series_trajectory_penalty_factor()'s own docstring.
 _SERIES_DNA_CACHE = None
 
 # Same caching pattern, for the candidate-pool prevalence discount
@@ -208,7 +220,7 @@ _PREVALENCE_CACHE = None
 def _get_prevalence_cache(catalog):
     global _PREVALENCE_CACHE
     if _PREVALENCE_CACHE is None:
-        _PREVALENCE_CACHE = R.build_prevalence_lookup(catalog, genre=None)
+        _PREVALENCE_CACHE = prevalence.build_prevalence_lookup(catalog, genre=None)
     return _PREVALENCE_CACHE
 
 
@@ -261,9 +273,9 @@ def _full_score(catalog, id_to_magnitude, validated_fields, centroid, weights, b
     with policy="evaluation"; retain the caches and bare-float contract."""
     global _SERIES_DNA_CACHE
     if _SERIES_DNA_CACHE is None:
-        _SERIES_DNA_CACHE = R.compute_series_dna(catalog)
+        _SERIES_DNA_CACHE = series.compute_series_dna(catalog)
     field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
-    result = R.score_candidate(
+    result = pipeline.score_candidate(
         catalog, book["id"], centroid, weights, id_to_magnitude,
         policy="evaluation", validated_fields=validated_fields,
         series_dna=_SERIES_DNA_CACHE, field_prevalence=field_prevalence,
@@ -293,7 +305,7 @@ def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_
     rather than printing this test's output directly.
 
     format_preference (2026-09-15, added per CODX's structural-audit F3):
-    passed straight through to R._resolve_profile()/build_profile(),
+    passed straight through to profile._resolve_profile()/build_profile(),
     default None ('print' semantics) -- matches every existing caller's
     behavior unchanged. Before this parameter existed, EVERY scenario in
     this file silently benchmarked the print-profile shape regardless of
@@ -304,7 +316,7 @@ def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_
     reproduction and why the existing default-print scenarios are kept
     as their own named baseline rather than silently changed.
 
-    Uses R.user_calibrated_poor_threshold() (2026-09-02 landed fix) for
+    Uses pipeline.user_calibrated_poor_threshold() (2026-09-02 landed fix) for
     the Poor/Mixed boundary rather than the flat 0.35 default -- this is
     now real production behavior (explain_match() uses the same
     function), so the benchmark should reflect what a live user actually
@@ -315,17 +327,17 @@ def run_held_out_test(catalog, all_ratings, held_out, label, quiet=False, train_
     train = train_ratings if train_ratings is not None else {
         t: r for t, r in all_ratings.items() if t not in held_out
     }
-    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train, format_preference=format_preference)
+    centroid, weights, id_to_magnitude, _ = profile._resolve_profile(catalog, train, format_preference=format_preference)
     field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
-    poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
+    poor_threshold = pipeline.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
                                                        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
-    validated = R.validated_dealbreaker_fields(catalog, id_to_magnitude)
+    validated = pipeline.validated_dealbreaker_fields(catalog, id_to_magnitude)
     correct = wrong = soft = 0
     rows = []
     for title in held_out:
         book = catalog[title_to_id[title]]
         score = _full_score(catalog, id_to_magnitude, validated, centroid, weights, book)
-        pred = R.match_label(score, poor_threshold)
+        pred = calibration.match_label(score, poor_threshold)
         true = all_ratings[title]
         v = verdict(true, pred)
         if v == "OK":
@@ -361,7 +373,7 @@ def pairwise_accuracy(rows):
         for j in range(i + 1, len(rows)):
             _, true_i, score_i, _, _ = rows[i]
             _, true_j, score_j, _, _ = rows[j]
-            mag_i, mag_j = R.RATING_LABELS[true_i], R.RATING_LABELS[true_j]
+            mag_i, mag_j = constants.RATING_LABELS[true_i], constants.RATING_LABELS[true_j]
             if mag_i == mag_j:
                 continue
             total += 1
@@ -459,8 +471,8 @@ def run_weight_cap_check(catalog, label):
     mechanism fires correctly, even though it's not a fair held-out
     prediction test), not the raw weights dict."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
-    ids = {title_to_id[t]: R.RATING_LABELS[r] for t, r in WEIGHT_CAP_RATINGS.items()}
-    centroid, weights = R.build_profile(catalog, ids)
+    ids = {title_to_id[t]: constants.RATING_LABELS[r] for t, r in WEIGHT_CAP_RATINGS.items()}
+    centroid, weights = profile.build_profile(catalog, ids)
     max_trope = max((abs(w) for w in weights.get("tropes", {}).values()), default=0)
     candidate = catalog[title_to_id["Assassin's Apprentice"]]
     # Assassin's Apprentice mismatches person/pov_count against this
@@ -471,7 +483,7 @@ def run_weight_cap_check(catalog, label):
     # (w_eff * (1-sim)) is what actually reflects the field's real,
     # dominance-relevant weight.
     field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
-    matches, mismatches = R.explain_book(candidate, centroid, weights, top_n=30,
+    matches, mismatches = pipeline.explain_book(candidate, centroid, weights, top_n=30,
                                           field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     mismatch_map = dict(mismatches)
     person_mismatch = mismatch_map.get("person", 0)
@@ -686,17 +698,17 @@ def run_ablation_held_out(catalog, all_ratings, held_out, train_ratings, ablate_
     train = train_ratings if train_ratings is not None else {
         t: r for t, r in all_ratings.items() if t not in held_out
     }
-    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
+    centroid, weights, id_to_magnitude, _ = profile._resolve_profile(catalog, train)
     weights = _apply_ablation(weights, ablate_fields)
     field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
-    poor_threshold = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
+    poor_threshold = pipeline.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
                                                        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
-    validated = R.validated_dealbreaker_fields(catalog, id_to_magnitude)
+    validated = pipeline.validated_dealbreaker_fields(catalog, id_to_magnitude)
     rows = []
     for title in held_out:
         book = catalog[title_to_id[title]]
         score = _full_score(catalog, id_to_magnitude, validated, centroid, weights, book)
-        pred = R.match_label(score, poor_threshold)
+        pred = calibration.match_label(score, poor_threshold)
         true = all_ratings[title]
         rows.append((title, true, score, pred, verdict(true, pred)))
     return rows
@@ -754,8 +766,8 @@ def print_ablation_table(baselines, results):
 # 0.35 -- so a fixed threshold that low could mathematically never fire
 # on this project's real data.
 #
-# LANDED 2026-09-02: R.user_calibrated_poor_threshold() (in
-# scripts/recommend.py) is now real production behavior, used by
+# LANDED 2026-09-02: pipeline.user_calibrated_poor_threshold() (in
+# scripts/scoring/) is now real production behavior, used by
 # explain_match() and, via run_held_out_test()/run_ablation_held_out()
 # above, by every scenario/scorecard/ablation number in this file. This
 # section keeps the comparison sweep as a permanent regression/rationale
@@ -769,7 +781,7 @@ def print_ablation_table(baselines, results):
 #    overfits to Mathias's score range or does nothing for Osnat's
 #    (whose disliked scores run much higher, 0.72-0.90 -- no fixed
 #    constant in a plausible range fixes both raters at once).
-#  - The landed per-user CALIBRATED threshold (R.user_calibrated_poor_
+#  - The landed per-user CALIBRATED threshold (pipeline.user_calibrated_poor_
 #    threshold()): the midpoint between this specific user's own mean
 #    TRAINING score on their liked/loved books vs. their disliked/hated
 #    books. This is the repo owner's original idea, refined: rather than
@@ -798,8 +810,8 @@ def run_threshold_diagnostic(catalog, all_ratings, held_out, train_ratings):
     train = train_ratings if train_ratings is not None else {
         t: r for t, r in all_ratings.items() if t not in held_out
     }
-    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
-    validated = R.validated_dealbreaker_fields(catalog, id_to_magnitude)
+    centroid, weights, id_to_magnitude, _ = profile._resolve_profile(catalog, train)
+    validated = pipeline.validated_dealbreaker_fields(catalog, id_to_magnitude)
 
     raw = {}
     for title in held_out:
@@ -810,13 +822,13 @@ def run_threshold_diagnostic(catalog, all_ratings, held_out, train_ratings):
         rows = []
         for title, score in raw.items():
             true = all_ratings[title]
-            pred = R.match_label(score, threshold)
+            pred = calibration.match_label(score, threshold)
             rows.append((title, true, score, pred, verdict(true, pred)))
         return rows
 
     variants = {f"fixed {t:.2f}" + (" (old default)" if t == 0.35 else ""): t for t in FIXED_THRESHOLD_SWEEP}
     field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
-    calibrated = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
+    calibrated = pipeline.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
                                                    field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     variants[f"calibrated ({calibrated:.3f}) -- LANDED"] = calibrated
 
@@ -839,9 +851,9 @@ def print_threshold_diagnostic(catalog):
 
     print("  No-negative-signal fallback check (repo owner's caveat):")
     all_positive = {t: r for t, r in REAL_RATINGS.items() if r in ("loved", "liked", "it_was_okay")}
-    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, all_positive)
+    centroid, weights, id_to_magnitude, _ = profile._resolve_profile(catalog, all_positive)
     field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
-    calibrated = R.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
+    calibrated = pipeline.user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
                                                    field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
     print(f"    {len(all_positive)} all-positive ratings (no disliked/hated) -> "
           f"calibrated threshold = {calibrated:.3f} "
@@ -849,7 +861,7 @@ def print_threshold_diagnostic(catalog):
 
 
 # --- Dealbreaker-flag sanity check --------------------------------------
-# dealbreaker_flags() (recommend.py, 2026-09-02) was validated only
+# dealbreaker_flags() (scoring/pipeline.py, 2026-09-02) was validated only
 # against Mathias before landing -- purely additive metadata, never
 # touches score/match_label, so it shipped without the full two-scenario
 # gauntlet a real scoring change needs. This closes that gap: checks the
@@ -864,14 +876,14 @@ def check_dealbreaker_flags(catalog, all_ratings, held_out, train_ratings, label
     """Runs dealbreaker_flags() over one scenario's held-out/LOO set.
     validated_fields_fn: optional callable(id_to_magnitude) -> set, for
     checking the statistically-validated variant (see
-    validated_dealbreaker_fields() in recommend.py) instead of the fixed
+    validated_dealbreaker_fields() in scoring/pipeline.py) instead of the fixed
     threshold alone. Returns (fp_count, fp_total, tp_count, tp_total,
     detail_rows) where detail_rows is [(title, true, flagged_phrases)]."""
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     train = train_ratings if train_ratings is not None else {
         t: r for t, r in all_ratings.items() if t not in held_out
     }
-    centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
+    centroid, weights, id_to_magnitude, _ = profile._resolve_profile(catalog, train)
     validated = validated_fields_fn(id_to_magnitude) if validated_fields_fn else None
     field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
 
@@ -880,9 +892,9 @@ def check_dealbreaker_flags(catalog, all_ratings, held_out, train_ratings, label
     for title in held_out:
         book = catalog[title_to_id[title]]
         true = all_ratings[title]
-        flags = R.dealbreaker_flags(book, centroid, weights, validated_fields=validated,
+        flags = pipeline.dealbreaker_flags(book, centroid, weights, validated_fields=validated,
                                      field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
-        phrases = [p for f, _ in flags if (p := R.describe(f, book))]
+        phrases = [p for f, _ in flags if (p := explanations.describe(f, book))]
         rows.append((title, true, phrases))
         if true in EXPECT_GOOD:
             fp_total += 1
@@ -908,13 +920,13 @@ def run_leave_one_out_flags_check(catalog, ratings, label, validated_fields_fn=N
     rows = []
     for held_out_title, true in ratings.items():
         train = {t: r for t, r in ratings.items() if t != held_out_title}
-        centroid, weights, id_to_magnitude, _ = R._resolve_profile(catalog, train)
+        centroid, weights, id_to_magnitude, _ = profile._resolve_profile(catalog, train)
         validated = validated_fields_fn(id_to_magnitude) if validated_fields_fn else None
         field_prevalence, trope_prevalence = _get_prevalence_cache(catalog)
         book = catalog[title_to_id[held_out_title]]
-        flags = R.dealbreaker_flags(book, centroid, weights, validated_fields=validated,
+        flags = pipeline.dealbreaker_flags(book, centroid, weights, validated_fields=validated,
                                      field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
-        phrases = [p for f, _ in flags if (p := R.describe(f, book))]
+        phrases = [p for f, _ in flags if (p := explanations.describe(f, book))]
         rows.append((held_out_title, true, phrases))
         if true in EXPECT_GOOD:
             fp_total += 1
@@ -960,72 +972,72 @@ def run_user_rules_tests(catalog):
         print(f"  {label}: {status}")
 
     # --- parse_user_rule_key() ---
-    check("parse trope key", R.parse_user_rule_key("slow_burn_romance") == ("trope", "slow_burn_romance"))
-    check("parse valid ordinal field:value", R.parse_user_rule_key("age_category:ya") == ("field_value", "age_category", "ya"))
-    check("parse valid nominal field:value", R.parse_user_rule_key("drive:romance_driven") == ("field_value", "drive", "romance_driven"))
-    check("reject invalid ordinal value", R.parse_user_rule_key("age_category:not_a_real_value") is None)
-    check("reject unknown field", R.parse_user_rule_key("not_a_real_field:whatever") is None)
+    check("parse trope key", rules.parse_user_rule_key("slow_burn_romance") == ("trope", "slow_burn_romance"))
+    check("parse valid ordinal field:value", rules.parse_user_rule_key("age_category:ya") == ("field_value", "age_category", "ya"))
+    check("parse valid nominal field:value", rules.parse_user_rule_key("drive:romance_driven") == ("field_value", "drive", "romance_driven"))
+    check("reject invalid ordinal value", rules.parse_user_rule_key("age_category:not_a_real_value") is None)
+    check("reject unknown field", rules.parse_user_rule_key("not_a_real_field:whatever") is None)
 
     # --- normalize_user_rules() ---
-    check("normalize None is empty", R.normalize_user_rules(None) == {"exclude": [], "reduce": []})
-    check("normalize {} is empty", R.normalize_user_rules({}) == {"exclude": [], "reduce": []})
-    norm = R.normalize_user_rules({
+    check("normalize None is empty", rules.normalize_user_rules(None) == {"exclude": [], "reduce": []})
+    check("normalize {} is empty", rules.normalize_user_rules({}) == {"exclude": [], "reduce": []})
+    norm = rules.normalize_user_rules({
         "exclude": ["age_category:ya", "not_a_real_field:x"],
         "reduce": [{"key": "drive:romance_driven"}, {"key": "slow_burn_romance", "strength": 0.3}],
     })
     check("normalize drops bad keys, keeps good ones", norm["exclude"] == [("field_value", "age_category", "ya")])
-    check("normalize applies default strength", norm["reduce"][0] == (("field_value", "drive", "romance_driven"), R.DEFAULT_REDUCE_STRENGTH))
+    check("normalize applies default strength", norm["reduce"][0] == (("field_value", "drive", "romance_driven"), constants.DEFAULT_REDUCE_STRENGTH))
     check("normalize respects explicit strength", norm["reduce"][1] == (("trope", "slow_burn_romance"), 0.3))
 
     # --- apply_user_rules() ---
     ya_book = {"age_category": "ya", "tropes": ["slow_burn_romance"]}
     adult_book = {"age_category": "adult", "tropes": []}
-    check("no rules is a guaranteed no-op", R.apply_user_rules(ya_book, 0.7, None) == (0.7, False))
-    check("no rules is a no-op even with {}", R.apply_user_rules(ya_book, 0.7, R.normalize_user_rules({})) == (0.7, False))
+    check("no rules is a guaranteed no-op", rules.apply_user_rules(ya_book, 0.7, None) == (0.7, False))
+    check("no rules is a no-op even with {}", rules.apply_user_rules(ya_book, 0.7, rules.normalize_user_rules({})) == (0.7, False))
 
-    exclude_ya = R.normalize_user_rules({"exclude": ["age_category:ya"]})
-    score, excluded = R.apply_user_rules(ya_book, 0.7, exclude_ya)
+    exclude_ya = rules.normalize_user_rules({"exclude": ["age_category:ya"]})
+    score, excluded = rules.apply_user_rules(ya_book, 0.7, exclude_ya)
     check("exclude exact-matches and flags excluded", excluded is True)
-    score2, excluded2 = R.apply_user_rules(adult_book, 0.7, exclude_ya)
+    score2, excluded2 = rules.apply_user_rules(adult_book, 0.7, exclude_ya)
     check("exclude leaves non-matching book untouched", (score2, excluded2) == (0.7, False))
 
-    reduce_trope = R.normalize_user_rules({"reduce": [{"key": "slow_burn_romance", "strength": 0.5}]})
-    score3, excluded3 = R.apply_user_rules(ya_book, 0.8, reduce_trope)
+    reduce_trope = rules.normalize_user_rules({"reduce": [{"key": "slow_burn_romance", "strength": 0.5}]})
+    score3, excluded3 = rules.apply_user_rules(ya_book, 0.8, reduce_trope)
     check("reduce applies correct multiplicative discount", abs(score3 - 0.4) < 1e-9 and excluded3 is False)
-    score4, _ = R.apply_user_rules(adult_book, 0.8, reduce_trope)
+    score4, _ = rules.apply_user_rules(adult_book, 0.8, reduce_trope)
     check("reduce leaves non-matching book untouched", abs(score4 - 0.8) < 1e-9)
 
-    stacked = R.normalize_user_rules({"reduce": [
+    stacked = rules.normalize_user_rules({"reduce": [
         {"key": "age_category:ya", "strength": 0.5}, {"key": "slow_burn_romance", "strength": 0.5},
     ]})
-    score5, _ = R.apply_user_rules(ya_book, 1.0, stacked)
+    score5, _ = rules.apply_user_rules(ya_book, 1.0, stacked)
     check("multiple matching reduce rules stack multiplicatively", abs(score5 - 0.25) < 1e-9)
 
     # --- list_user_rule_targets() ---
-    targets = R.list_user_rule_targets(catalog)
+    targets = rules.list_user_rule_targets(catalog)
     keys = {t["key"] for t in targets}
     check("target list non-empty", len(targets) > 100)
     check("target list includes a known field_value", "drive:romance_driven" in keys)
     check("target list includes a known trope", "slow_burn_romance" in keys)
     check("target list never invents unused values", all(
-        R.parse_user_rule_key(t["key"]) is not None for t in targets
+        rules.parse_user_rule_key(t["key"]) is not None for t in targets
     ))
 
     # --- end-to-end via a real recommend() call ---
-    baseline = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy")
+    baseline = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy")
     baseline_titles = {title for _, title, _, _ in baseline}
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     baseline_has_ya = any(catalog[title_to_id[t]].get("age_category") == "ya" for t in baseline_titles if t in title_to_id)
     check("sanity: baseline top-20 fantasy contains at least one YA book", baseline_has_ya)
 
-    no_ya = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+    no_ya = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
                          user_rules={"exclude": ["age_category:ya"]})
     no_ya_titles = {title for _, title, _, _ in no_ya}
     check("exclude age_category:ya removes all YA from real recommend() output", not any(
         catalog[title_to_id[t]].get("age_category") == "ya" for t in no_ya_titles if t in title_to_id
     ))
 
-    less_romance = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+    less_romance = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
                                 user_rules={"reduce": [{"key": "drive:romance_driven", "strength": 0.8}]})
     less_romance_titles = [title for _, title, _, _ in less_romance]
     baseline_romance_rank = next((i for i, t in enumerate(t for _, t, _, _ in baseline)
@@ -1078,7 +1090,7 @@ def run_confidence_floor_regression_tests():
     # neutral-only ("it_was_okay", magnitude 0) rating. ---
     catalog = {"n": {"id": "n", "title": "Neutral Book", "overall_pace": "medium"}}
     try:
-        result = R._audit_attribute_ordinal(catalog, {"n": 0}, "overall_pace")
+        result = audit._audit_attribute_ordinal(catalog, {"n": 0}, "overall_pace")
         check("audit_attribute_ordinal: neutral-only evidence doesn't crash", True)
         check("audit_attribute_ordinal: neutral rating excluded from both sides",
               result == {"liked": None, "disliked": None})
@@ -1103,7 +1115,7 @@ def run_confidence_floor_regression_tests():
     }
     nominal_mags = {"l1": 1, "l2": 1, "l3": 1, "d1": -1, "d2": -1, "d3": -1}
     check("nominal_field_separation: confidence-zeroed tags don't satisfy the sample gate",
-          R._nominal_field_separation(nominal_catalog, nominal_mags, "romance_tone") is None)
+          pipeline._nominal_field_separation(nominal_catalog, nominal_mags, "romance_tone") is None)
 
     def trope_book(bid, has_trope, confidence):
         b = {"id": bid, "tropes": (["found_family"] if has_trope else [])}
@@ -1121,7 +1133,7 @@ def run_confidence_floor_regression_tests():
     }
     trope_mags = {"l1": 1, "l2": 1, "l3": 1, "d1": -1, "d2": -1, "d3": -1}
     check("trope_separation: confidence-zeroed hits don't count as evidence either way",
-          R._trope_separation(trope_catalog, trope_mags, "found_family") is None)
+          pipeline._trope_separation(trope_catalog, trope_mags, "found_family") is None)
 
     # --- Bug 3: compute_series_dna() let a confidence-zeroed endpoint
     # tag anchor a trajectory. 2-book series, book 2's romance_tone at
@@ -1134,7 +1146,7 @@ def run_confidence_floor_regression_tests():
                "position_in_series": "2", "romance_tone": "melodramatic_romance_subplot",
                "_field_confidence": {"romance_tone": 0.2}},
     }
-    dna = R.compute_series_dna(series_catalog)
+    dna = series.compute_series_dna(series_catalog)
     check("compute_series_dna: confidence-zeroed endpoint excluded from trajectory",
           "romance_tone" not in dna.get("ser", {}).get("trajectories", {}))
 
@@ -1168,7 +1180,7 @@ def run_confidence_floor_regression_tests():
 
 
 def run_all():
-    catalog = R.load_catalog()
+    catalog = scoring_catalog.load_catalog()
 
     print("=== Scenario 1: real-rater held-out validation ===")
     run_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, "held-out")
@@ -1215,7 +1227,7 @@ def run_all():
     print("\n=== Scenario 9: dealbreaker-flag sanity check (statistically validated, all 4 raters) ===")
     run_dealbreaker_sanity_check(
         catalog,
-        validated_fields_fn=lambda id_to_mag: R.validated_dealbreaker_fields(catalog, id_to_mag),
+        validated_fields_fn=lambda id_to_mag: pipeline.validated_dealbreaker_fields(catalog, id_to_mag),
     )
 
     print("\n=== Scenario 10: learning curve (accuracy vs. rating-history size) ===")
@@ -1463,10 +1475,10 @@ def simulate_field_validation(catalog, id_to_magnitude, n_values=2, trials=2000,
             bid: {**book, "_sim_field": assignment[bid]} if bid in assignment else book
             for bid, book in catalog.items()
         }
-        sep = R._nominal_field_separation(fake_catalog, id_to_magnitude, "_sim_field")
+        sep = pipeline._nominal_field_separation(fake_catalog, id_to_magnitude, "_sim_field")
         if sep is not None:
             max_sep = max(max_sep, abs(sep))
-            if abs(sep) >= R.STAT_SEPARATION_THRESHOLD:
+            if abs(sep) >= constants.STAT_SEPARATION_THRESHOLD:
                 false_positives += 1
     return false_positives / trials, max_sep
 
@@ -1501,8 +1513,8 @@ def simulate_detection_power(catalog, id_to_magnitude, true_separation, trials=2
             bid: {**book, "_sim_field": assignment[bid]} if bid in assignment else book
             for bid, book in catalog.items()
         }
-        sep = R._nominal_field_separation(fake_catalog, id_to_magnitude, "_sim_field")
-        if sep is not None and abs(sep) >= R.STAT_SEPARATION_THRESHOLD:
+        sep = pipeline._nominal_field_separation(fake_catalog, id_to_magnitude, "_sim_field")
+        if sep is not None and abs(sep) >= constants.STAT_SEPARATION_THRESHOLD:
             detected += 1
     return detected / trials
 
@@ -1543,15 +1555,15 @@ def find_contrastive_pairs(catalog, ratings, min_similarity=CONTRASTIVE_MIN_SIMI
         for j in range(i + 1, len(rated_ids)):
             book_a, book_b = catalog[rated_ids[i]], catalog[rated_ids[j]]
             title_a, title_b = book_a["title"], book_b["title"]
-            mag_a, mag_b = R.RATING_LABELS[ratings[title_a]], R.RATING_LABELS[ratings[title_b]]
+            mag_a, mag_b = constants.RATING_LABELS[ratings[title_a]], constants.RATING_LABELS[ratings[title_b]]
             gap = abs(mag_a - mag_b)
             if gap < min_rating_gap:
                 continue
-            sim = R.book_similarity(book_a, book_b)
+            sim = series.book_similarity(book_a, book_b)
             if sim < min_similarity:
                 continue
             dna_diffs = {}
-            for field in list(R.ORDINAL_FIELDS) + list(R.NOMINAL_FIELDS):
+            for field in list(constants.ORDINAL_FIELDS) + list(constants.NOMINAL_FIELDS):
                 va, vb = book_a.get(field), book_b.get(field)
                 if va is not None and vb is not None and va != vb:
                     dna_diffs[field] = (va, vb)
@@ -1574,13 +1586,13 @@ def check_contrastive_pair_ranking(catalog, all_ratings, pair):
     "correctly_ranked" added."""
     title_a, title_b = pair["book_a"], pair["book_b"]
     train = {t: r for t, r in all_ratings.items() if t not in (title_a, title_b)}
-    centroid, weights, id_to_mag, _ = R._resolve_profile(catalog, train)
-    validated = R.validated_dealbreaker_fields(catalog, id_to_mag)
+    centroid, weights, id_to_mag, _ = profile._resolve_profile(catalog, train)
+    validated = pipeline.validated_dealbreaker_fields(catalog, id_to_mag)
     title_to_id = {b["title"]: bid for bid, b in catalog.items()}
     score_a = _full_score(catalog, id_to_mag, validated, centroid, weights, catalog[title_to_id[title_a]])
     score_b = _full_score(catalog, id_to_mag, validated, centroid, weights, catalog[title_to_id[title_b]])
-    mag_a = R.RATING_LABELS[pair["rating_a"]]
-    mag_b = R.RATING_LABELS[pair["rating_b"]]
+    mag_a = constants.RATING_LABELS[pair["rating_a"]]
+    mag_b = constants.RATING_LABELS[pair["rating_b"]]
     correctly_ranked = (mag_a > mag_b) == (score_a > score_b)
     return {**pair, "score_a": round(score_a, 4), "score_b": round(score_b, 4), "correctly_ranked": correctly_ranked}
 

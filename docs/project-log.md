@@ -18008,3 +18008,66 @@ A/B-testing guidance checks `R is T.R`, which stops making sense once
 scoring_tests.py no longer has a single R object.
 
 Queued as Task 12 in docs/codx-tasks/current-task.md.
+
+
+## 2026-09-17 (later still) -- CODX's Task 12 landed: shim dropped, Phase B fully complete, another real bug caught before it shipped
+
+CODX finished Task 12 with the same rigor as Task 11 -- and caught
+another real bug CLDO's own task brief would have introduced if
+followed literally, not just executed the brief as written.
+
+**The work**: all 5 real consumers (api/main.py, api/catalog_cache.py,
+scripts/scoring_tests.py, scripts/import_goodreads.py,
+tools/dogfood/app.py) now import directly from scripts/scoring/
+submodules. scripts/recommend.py drops from 439 to 105 lines, keeping
+only its original module docstring and CLI demo -- the documented
+`python3 scripts/recommend.py` entry point still works, byte-identical
+output, but it's no longer anyone's import shim.
+
+**The bug CODX caught**: CLDO's task brief specified `from scoring
+import catalog` unaliased. scoring_tests.py's run_all() and
+import_goodreads.py's importer both already assign to a local variable
+named `catalog` in the exact function that would do this import --
+Python's scoping rules make that local assignment shadow the import
+throughout the whole function, so `catalog = catalog.load_catalog()`
+would raise UnboundLocalError. Fixed with `catalog as scoring_catalog`
+aliasing (similarly for audit/rules where they collided with existing
+local names). CLDO independently confirmed this wasn't a hypothetical
+risk -- traced the exact line (`catalog = scoring_catalog.load_catalog()`
+inside run_all()) and verified the unaliased version really would fail.
+
+**Validation went beyond what was asked**: real Streamlit AppTest
+execution of the dogfood tool (actual startup, actual "Get
+recommendations" click, comparing 20 audit tables -- not just an
+import check), a real run of the Goodreads importer's synthetic
+self-check, and the same isolated-venv real-FastAPI endpoint comparison
+Task 11 used -- all byte-identical to Task 11's own saved baseline
+hashes.
+
+**Flagged, not fixed, a real resulting documentation staleness**:
+CLAUDE.md's monkeypatch A/B-testing guidance checked a single `R is
+T.R` identity that stops applying once scoring_tests.py imports
+several submodules. CODX's proposed replacement was more technically
+precise than the original -- checking a function's __globals__ dict
+identity, not just module identity, since that's what actually
+determines which binding a monkeypatched function looks up. Applied
+this fix to CLAUDE.md myself after reviewing it, same process as every
+prior doc/skill staleness CODX has flagged.
+
+**Independently re-verified before applying**: applied the patch in a
+worktree, ran the canonical suite and CLI demo against local Supabase
+(byte-identical), confirmed zero remaining R./shim references via grep
+across all 6 files, confirmed all 6 files are syntactically valid
+Python, manually read api/main.py's exact diff line-by-line and
+confirmed every replacement matches the specified mapping, and
+independently traced the UnboundLocalError claim to the real code
+rather than trusting the explanation.
+
+Landed. Documented in docs/scoring-test-protocol.md's new "Phase B
+step 2 (B4)" entry, permanent record at
+docs/codx-reviews/codx-phase-b-shim-removal-2026-09-17.md, docs/TODO.md
+updated. **Phase B is now fully complete (B1-B4)**: the real scoring
+engine lives entirely under scripts/scoring/, every real consumer
+imports from it directly, and scripts/recommend.py is a genuine,
+minimal CLI demo script. docs/codx-tasks/current-task.md reset to a
+holding-pattern note.

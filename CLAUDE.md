@@ -564,13 +564,36 @@ repo) so it's discoverable from either side.
   unmodified scoring against itself. Once actually landed (by editing
   the real file's own module-level names, which both import paths
   execute), the true benchmark showed a severe regression that had
-  looked completely invisible under the flawed test. **Verify with
-  `import scripts.recommend as R; import scripts.scoring_tests as T; R
-  is T.R` (should be `True`) before trusting any monkeypatch-based A/B
-  result against `scoring_tests.py`** — or avoid the whole class of bug
-  by editing `scoring_tests.py`'s own `_full_score()` directly to call
-  the experimental variant, the way the series-trajectory-penalty
-  experiment (tested successfully) did it.
+  looked completely invisible under the flawed test.
+
+  **Updated 2026-09-17 after Phase B (the `scripts/recommend.py` ->
+  `scripts/scoring/` submodule split, see `docs/scoring-test-protocol.md`'s
+  "Phase B" entries) — the exact verification command above no longer
+  applies.** `scripts/scoring_tests.py` no longer has a single `R`
+  object to compare; it imports several `scripts/scoring/` submodules
+  directly (`pipeline`, `profile`, `series`, etc.). The underlying risk
+  is identical, just spread across more names — **verify the specific
+  submodule's identity, then the specific function's actual global
+  lookup**, not just "some module resolved the same":
+  ```python
+  import scripts.scoring_tests as T
+  from scoring import pipeline
+  assert T.pipeline is pipeline
+  assert T.pipeline.score_candidate.__globals__ is vars(pipeline)
+  # after installing a variant on pipeline.score_book:
+  assert T.pipeline.score_candidate.__globals__["score_book"] is variant
+  ```
+  The `__globals__` check matters because it's the actual binding a
+  function looks up at call time — module identity alone doesn't prove
+  a specific rebound name is what a specific function will actually
+  use. (Proposed by CODX, Task 12, after correctly flagging that the
+  original command was now stale — see
+  `docs/codx-reviews/codx-phase-b-shim-removal-2026-09-17.md`.) Or
+  avoid the whole class of bug by editing `scoring_tests.py`'s own
+  `_full_score()` directly to call the experimental variant, the way
+  the series-trajectory-penalty experiment (tested successfully) did
+  it — still the simplest, most reliable option regardless of module
+  structure.
 
 ## v1 web app (`app/`, `api/`)
 

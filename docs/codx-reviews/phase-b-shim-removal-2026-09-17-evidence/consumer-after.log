@@ -1,0 +1,4 @@
+PASS actual API endpoints match Task 11 baseline; 44169 bytes; sha256 0a7d3ed9347291dc74bf79af937f2e5fc01675e0993708953a8aae1091a95fc5
+PASS cache miss, cache hit, force_refresh; real cache functions, fixture catalog acquisition
+PASS Goodreads actual import and existing synthetic __main__ self-check
+PASS frozen canonical suite; 29599 bytes

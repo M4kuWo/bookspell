@@ -1,0 +1,7 @@
+=== Self-check against a synthetic fixture (NOT a real Goodreads export) ===
+Ratings parsed: {'The Way of Kings': 'loved', 'Mistborn: The Final Empire': 'liked'}
+Rated dates parsed: {'The Way of Kings': '2020-01-15'}
+Reviews parsed: {'The Way of Kings': 'Loved it.\nBest Sanderson yet.'}
+Matched: [('The Way of Kings', 'The Way of Kings', 'isbn'), ('Mistborn: The Final Empire (Mistborn, #1)', 'Mistborn: The Final Empire', 'exact_title_author')]
+Unmatched: [('Some Totally Unknown Book', 'Nobody Famous', '3.10')]
+Self-check PASSED: exact ISBN match, series-suffix-stripped exact title match, unmatched book correctly reported, currently-reading/unrated row correctly skipped, date/review extraction correct including a blank-date row correctly omitted.

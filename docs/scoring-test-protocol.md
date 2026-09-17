@@ -3296,3 +3296,69 @@ Landed as-is. B4 (updating the 2 real consumers to import from
 `scripts/scoring/` directly and dropping the shim) is deliberately
 deferred -- a separate, purely cosmetic follow-up, not blocking
 anything.
+
+## Phase B step 2 (B4): shim dropped, all 5 real consumers on direct imports -- LANDED (2026-09-17, Task 12, proposed by CODX, independently verified and applied by CLDO)
+
+CLDO again did the module-boundary research up front -- pulling the
+exact name-to-submodule mapping straight from Task 11's own
+`module-map.json` and grepping every real `R.name` access across all 5
+consumers -- so this stayed bounded/mechanical for CODX. All 5 real
+consumers (`api/main.py`, `api/catalog_cache.py`,
+`scripts/scoring_tests.py`, `scripts/import_goodreads.py`,
+`tools/dogfood/app.py`) now import directly from `scripts/scoring/`
+submodules; `scripts/recommend.py` drops from 439 to 105 lines, keeping
+only its original module docstring and CLI demo (the documented
+`python3 scripts/recommend.py` entry point still works, byte-identical
+output) -- no re-export/shim role left at all.
+
+**CODX caught a real bug CLDO's own task brief would have introduced
+if followed literally**: the brief specified `from scoring import
+catalog` unaliased, but `scoring_tests.py`'s `run_all()` and
+`import_goodreads.py`'s importer both already assign to a local
+variable named `catalog` in the exact function that would do this
+import -- Python's scoping rules would make that local assignment
+shadow the module-level import throughout the function, so
+`catalog = catalog.load_catalog()` would raise `UnboundLocalError:
+local variable 'catalog' referenced before assignment`. Fixed with
+`catalog as scoring_catalog` aliasing (and similar aliasing elsewhere
+`audit`/`rules` collided with existing local names). Not a hypothetical
+risk -- CLDO independently confirmed the exact line
+(`catalog = scoring_catalog.load_catalog()` inside `run_all()`) and
+traced through why the unaliased version would genuinely fail.
+
+**Validation went beyond the requested bar**: real Streamlit `AppTest`
+execution of the dogfood tool (launched at startup and after a real
+"Get recommendations" click, comparing all expander labels/markdown/20
+audit tables -- not just confirming it imports), a real execution of
+the Goodreads importer's existing synthetic CSV self-check, and the
+same isolated-venv real-FastAPI-dependency endpoint comparison Task 11
+used -- all outputs byte-identical to Task 11's own saved baseline
+hashes, not just internally consistent.
+
+**Flagged, not fixed, a real resulting documentation staleness**:
+`CLAUDE.md`'s monkeypatch A/B-testing guidance checks a single
+`import scripts.recommend as R; ... R is T.R` identity, which stops
+applying once `scoring_tests.py` imports several submodules instead of
+one `R`. CODX's proposed replacement is more technically precise than
+the original -- checking a specific function's `__globals__` dict
+identity (`T.pipeline.score_candidate.__globals__ is vars(pipeline)`),
+not just module identity, since that's what actually determines which
+binding a monkeypatched function looks up at call time. CLDO to apply
+this after review, same process as every other doc/skill staleness
+CODX has flagged.
+
+**Independently re-verified by CLDO before applying**: applied the
+patch in a worktree, ran the canonical suite and the CLI demo against
+local Supabase -- both byte-identical (a different environment than
+CODX's hosted/frozen-snapshot runs). Confirmed via grep that zero
+`R.`/`import recommend`/shim references remain across all 6 files.
+Confirmed all 6 files are syntactically valid Python. Manually read
+`api/main.py`'s exact diff line-by-line and confirmed every replacement
+matches the specified mapping exactly. Independently traced the
+`UnboundLocalError` claim to the real code (not just trusted the
+report's explanation).
+
+Landed as-is. **Phase B is now fully complete (B1-B4)**:
+`scripts/recommend.py` is a genuine, minimal CLI demo script; the real
+engine lives entirely under `scripts/scoring/`, and every real consumer
+imports from it directly.

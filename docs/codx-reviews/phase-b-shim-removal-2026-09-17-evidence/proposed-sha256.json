@@ -1,0 +1,8 @@
+{
+  "api/main.py": "56597456549c6a473dbcf06a19dd35b5f5b31bf281e1daec77ee65b0f4eeaba5",
+  "api/catalog_cache.py": "61ea7448d9db2bd857447967f06ca78a807c8b4a94e373f3518ba9938d6909cc",
+  "scripts/scoring_tests.py": "c4dd4214ab68af792b9f71c5fbef34edf22bf957900f1c28b558d37ed3580545",
+  "scripts/import_goodreads.py": "28f6ef7574f2d886f0652bfbec761704f7df755342a9dbd6076db2040bbfd3d1",
+  "tools/dogfood/app.py": "354ffd6695cb08fb5a78962b37ca523854b08ff81a9985920e47cec29227972a",
+  "scripts/recommend.py": "f4240b5d5cb31300e4451c52b95fcdc25feca694721d8676c2791a9e3b4b1395"
+}

@@ -1,0 +1,14 @@
+{
+  "HEAD": "16d09c9685547c0ca829a47eb6cc0c9767c3bb33",
+  "tracked_files_verified": 391,
+  "files_changed": [
+    "api/main.py",
+    "api/catalog_cache.py",
+    "scripts/scoring_tests.py",
+    "scripts/import_goodreads.py",
+    "tools/dogfood/app.py",
+    "scripts/recommend.py"
+  ],
+  "patch_sha256": "1e95f5d178f75d2e3a673ae688f6960027fe8e792a976072cbc9b19d8c365062",
+  "hook": ".githooks"
+}
