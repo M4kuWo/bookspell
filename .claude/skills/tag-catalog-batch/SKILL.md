@@ -377,10 +377,24 @@ rolled-back transaction first. Check for same-day migration-timestamp
 collisions before you push -- this project has hit real ones before (see
 CLAUDE.md's own documented incidents) -- via `ls supabase/migrations/ |
 sort | uniq -d`. Since you're working directly against hosted (see
-"Setup" above), you don't need a separate local-apply step -- just
+"Setup" above), you don't need a separate local-apply step yourself --
 test-in-transaction, apply to hosted, then commit the migration file so
-it's part of the tracked history (the repo owner's own local Postgres
-will pick it up next time he re-syncs).
+it's part of the tracked history.
+
+**A real, already-corrected mistake, worth knowing about even though
+it's not your job to fix**: this section used to say the repo owner's
+local Postgres would "pick it up next time he re-syncs," as if `git
+pull` alone brings a local database up to date. It doesn't -- pulling
+only fetches the migration FILE; nothing executes it against local
+Postgres. That drift recurred three times in three days
+(2026-09-13, then twice on 2026-09-17) before being caught -- see
+`docs/project-log.md`'s 2026-09-17 "third occurrence" entry. It's now
+the repo owner's/CLDO's explicit responsibility to apply every new
+migration file to local Postgres and verify it (`python3
+scripts/check_db_sync.py`) at the start of a sync, not something that
+happens automatically. You don't need to do anything differently here
+-- just don't assume "committed the migration file" means local is
+already caught up if you ever need to query local yourself.
 
 Log what you did to `docs/project-log.md` when you're done, same as
 every other change in this project -- how many books reviewed, how

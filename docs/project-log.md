@@ -17714,3 +17714,57 @@ known permanent exceptions since 2026-09-16 -- not re-verified this
 pass). 134 `HIGH_RISK_FIELDS` rows below 0.6 confidence catalog-wide
 (up from 85 immediately after Task 9 landed, since new tagging always
 adds some fresh low-confidence rows).
+
+## 2026-09-17 (later still) -- fixed the actual root cause of the recurring drift, not just patched it a fourth time
+
+Repo owner asked to fix the drift itself rather than keep reactively
+catching it. Found the real root cause in `.claude/skills/
+tag-catalog-batch/SKILL.md`'s Step 4: it explicitly told whoever ran it
+"you don't need a separate local-apply step... the repo owner's own
+local Postgres will pick it up next time he re-syncs." **That's false**
+-- `git pull` only fetches the migration FILE; nothing executes it
+against local Postgres. The skill was giving instructions that
+guaranteed this drift would keep recurring, not describing an
+environmental accident.
+
+Also worth noting why the skill was probably written this way in the
+first place, not just calling it a mistake: whoever runs
+`tag-catalog-batch` works directly against hosted via an exported
+`DATABASE_URL` (see the skill's own "Setup" section) and may not have a
+bootstrapped local Postgres available at all (the same "local-bootstrap
+gap" AGENTS.md documents as a known, real limitation for CODX). A
+local-apply step genuinely may not be that session's to do -- the bug
+was in leaving the responsibility to nobody explicitly, dressed up as
+"it happens automatically."
+
+**Fixed three ways**:
+1. Corrected the skill's wording -- no longer claims local Postgres
+   updates itself; explicitly states this is now CLDO's responsibility,
+   not the batch-runner's, and not automatic.
+2. Added a new `scripts/check_db_sync.py` -- compares row counts on the
+   tables tagging touches most (`books`, `book_dna`, `book_tropes`,
+   `tropes`, `content_warning_types`, `audiobook_editions`) between
+   local and hosted. A heuristic, not a real migration-tracking
+   mechanism (local's own `supabase_migrations` table is unreliable
+   here since local applies happen via raw psycopg2, bypassing the
+   Supabase CLI entirely) -- won't catch a pure-UPDATE migration with no
+   net row-count change, but catches every insert/delete-shaped drift,
+   which is what's recurred every time so far.
+3. Made running it explicit and hard to skip: a new paragraph at the
+   very top of `CLAUDE.md` (in the "read this before doing anything
+   else" section) plus a full entry in "Database & migrations"
+   documenting the incident history and the exact command.
+
+**Immediately paid off**: running the new script for the first time
+surfaced a real, previously-unresolved residual drift -- the "small
+4-row `book_tropes` gap" flagged but not chased down when A5 (Task 7)
+landed on 2026-09-16. Tracked it to two specific books:
+*A Wizard's Guide to Defensive Baking* (missing `found_family`,
+`hidden_talent_prodigy`, `satirical_or_comedic_fantasy` locally -- the
+same title CLAUDE.md's own apostrophe-type incident already flagged,
+confirmed still stored with a curly `'` on both sides) and
+*Emily Wilde's Map of the Otherlands* (missing `long_journey`).
+Inserted all 4 rows directly to local (hosted already had them
+correctly; this was a pure local catch-up, no new migration needed
+since no new data was introduced). Re-ran the script: local now
+matches hosted exactly on every checked table.

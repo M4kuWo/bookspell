@@ -26,6 +26,13 @@ in CLAUDE.md is not evidence it's unused — check the skills directory,
 not just the two doc files above, before assuming a feature starts from
 nothing.
 
+**If you're going to use or verify anything against local Postgres this
+session, run `python3 scripts/check_db_sync.py` first.** Local silently
+falling behind hosted's real data (not a tracking-table issue — the
+actual rows) has recurred three times in three days; see the "Database
+& migrations" section below for the full incident history and why this
+is no longer safe to assume away.
+
 ## Persona system
 
 Three named, standing personas exist for this project (CLDO/CLDA added
@@ -234,6 +241,29 @@ stack to dry-run against, discovered 2026-09-09).
   more than once (not a one-off), so check for it routinely via
   `supabase migration list --linked` (entries with a `local` timestamp
   but no matching `remote` one), not just when something breaks loudly.
+- **A separate, equally recurring drift: local Postgres's actual DATA
+  falling behind hosted's, even when every migration file is correctly
+  tracked on both sides.** Different failure mode than the one above —
+  this isn't about hosted's tracking table, it's about a migration that
+  landed on hosted (correctly) never actually being executed against
+  local Postgres. `git pull` only fetches the migration FILE; nothing
+  runs it against local. This recurred three times in three days
+  (2026-09-13, then twice on 2026-09-17 — see `docs/project-log.md`'s
+  entries) before the root cause was found: `tag-catalog-batch/SKILL.md`
+  used to tell whoever ran it that local Postgres would "pick it up
+  next time [the repo owner] re-syncs," which is false and left nobody
+  actually responsible for the local-apply step. **It is now CLDO's
+  explicit responsibility, every sync, not an assumption**: run `python3
+  scripts/check_db_sync.py` (compares row counts on the tables tagging
+  touches most between local and hosted) at the start of any session
+  that will do non-trivial work, and always right after a tagging batch
+  lands. It's a heuristic, not a real tracking mechanism — a pure-UPDATE
+  migration with no net row-count change won't be caught by it, so a
+  MISMATCH is trustworthy but a clean pass isn't an absolute guarantee.
+  If it reports a mismatch, find the specific migration file(s) or rows
+  responsible (diff per-table or per-book counts, not just the totals)
+  and apply them locally via the documented raw-psycopg2 method before
+  trusting any local-only query result.
 - **Write idempotent SQL**: `insert ... on conflict do nothing` for
   inserts, so a migration can be safely reapplied without duplicating
   data if something goes wrong partway through.
