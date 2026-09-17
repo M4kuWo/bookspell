@@ -17768,3 +17768,32 @@ Inserted all 4 rows directly to local (hosted already had them
 correctly; this was a pure local catch-up, no new migration needed
 since no new data was introduced). Re-ran the script: local now
 matches hosted exactly on every checked table.
+
+## 2026-09-17 (later still) -- CODX Task 10 queued: round 2 of the HIGH_RISK_FIELDS confidence QA pass
+
+Ran `scripts/check_db_sync.py` first (clean, as expected right after
+the drift fix) before pulling data for the new task -- exactly the
+routine the new tooling exists to make automatic.
+
+Queued 20 fresh (book, field, confidence) pairs, pulled live and
+ordered lowest-confidence-first, not reused from Task 9's list. Two
+real clusters flagged up front this time, learning from Task 9's
+"nine-book humor cluster" finding: *Cursed Bunny* (Bora Chung) has 4 of
+the 20 items -- verified directly against its own stored synopsis that
+it's genuinely a short-story collection ("No two stories are alike"),
+which may be exactly why several single-narrative-shaped fields
+(pov_count, narrator_reliability, drive) were hard to pin down at
+tagging time; and *Quidditch Through the Ages* (person), a known
+special case -- an in-universe fake "textbook," not a normal narrative
+-- where a first/third-person tag may not cleanly apply at all. Told
+CODX explicitly to consider "schema/format mismatch" as its own finding
+category for these two, rather than forcing a confident verdict.
+
+Caught and fixed a real mistake while drafting: an early version of the
+task incorrectly grouped *Auberon* (James S. A. Corey, Expanse
+universe) and *Evershore* (Brandon Sanderson & Janci Patterson, Skyward
+universe) together as "both Expanse novellas" -- completely different
+authors and series. Verified the correct attribution before finalizing
+rather than shipping a task file with a factual error in it, which
+would have been exactly the kind of confidently-wrong mistake this
+whole QA process exists to catch.
