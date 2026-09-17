@@ -17976,3 +17976,35 @@ updated. B4 (updating the 2 real consumers to import from
 `scripts/scoring/` directly, dropping the shim) deliberately deferred
 as a separate, purely cosmetic follow-up. `docs/codx-tasks/current-task.md`
 reset to a holding-pattern note.
+
+
+## 2026-09-17 (later still) -- CODX Task 12 queued: Phase B step 2 (B4), dropping the recommend.py compatibility shim
+
+Repo owner asked to hand CODX B4 next. Did the precise per-file
+research first (same approach as Task 11's planning): pulled the
+authoritative name->submodule mapping directly from Task 11's own
+module-map.json (not re-guessed), then grepped the exact R.name usage
+in all 5 real consumers found during Task 11 (api/main.py,
+api/catalog_cache.py, scripts/scoring_tests.py,
+scripts/import_goodreads.py, tools/dogfood/app.py) to build a complete,
+verified old-name -> new-submodule.name table for each file. Also
+confirmed how each file currently resolves the recommend import
+(sys.path.insert pattern, consistent across all 5) so the task
+specifies exactly what to keep unchanged vs. what to replace.
+
+Caught and fixed a real inconsistency in my own first draft before
+publishing it: scripts/scoring_tests.py's table clearly needed
+scoring.catalog (for load_catalog), but the "Needs" summary line above
+the table omitted it. Fixed before this went to CODX.
+
+Decided scripts/recommend.py should NOT be deleted -- the README
+documents `python3 scripts/recommend.py` as a real, working demo entry
+point. Task 12 keeps that file's __main__ demo block and docstring,
+dropping only its re-export/shim role.
+
+Also flagged (for CODX to surface in its report, not fix itself) a real
+documentation staleness this task will create: CLAUDE.md's monkeypatch
+A/B-testing guidance checks `R is T.R`, which stops making sense once
+scoring_tests.py no longer has a single R object.
+
+Queued as Task 12 in docs/codx-tasks/current-task.md.
