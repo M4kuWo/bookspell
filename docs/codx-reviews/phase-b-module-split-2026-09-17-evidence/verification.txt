@@ -1,0 +1,81 @@
+PASS AST + full function bytes: nominal_similarity -> encoding.py sha256=09784341730da0c27bb0d63c401e83ac4a3462a0d20b0714319e5ea1fec280a4
+PASS AST + full function bytes: reader_experience_fraction -> cold_start.py sha256=4b7e146751623e003d3ce29d796e8ed7cab7ab8076a62673bcc162b34fb04edd
+PASS AST + full function bytes: cold_start_weight -> cold_start.py sha256=7911d0034dd934c8c8dad9cbb361e1e6c5d1f99a7ada3a35d7757b3629c75943
+PASS AST + full function bytes: phrase_field -> explanations.py sha256=add0ef7cd27da6f64e5b330ede980665168f6b55e9e27db058bb069644b8d9ca
+PASS AST + full function bytes: phrase_trope -> explanations.py sha256=79770b1383b5b714a97d0084ff8a305400837854b3cefd3a829fa639dddac165
+PASS AST + full function bytes: describe -> explanations.py sha256=2b252fa45718c5cc32c5c632011ca12d959bf86ae457f1286637a62ac435bec7
+PASS AST + full function bytes: match_label -> calibration.py sha256=fc29b047016150521a95537bb5eadc1c1418398e978356a8cd22c1f18f2d857f
+PASS AST + full function bytes: user_calibrated_poor_threshold -> pipeline.py sha256=49b333dcd852f7e2ec1a05712831078ce970eaac7478e4a2d42986810d7e713a
+PASS AST + full function bytes: _join_list -> explanations.py sha256=aa2e6c5cbe115916f1195f407aa9d6089964aad99daa5f516490139612fdc840
+PASS AST + full function bytes: natural_sentence -> explanations.py sha256=870504f2cd700803d6f0f4db3006d894897fece5d329fd22f7eab8426010cf9e
+PASS AST + full function bytes: dealbreaker_sentence -> explanations.py sha256=51a1c92231c204623b77c73b3d0224aa9b987834727302dc381b8da31890af58
+PASS AST + full function bytes: compute_series_dna -> series.py sha256=204006ae88398d10867b77ca79f7ea36b08ae73080d8422705e759dcaf0e8c7d
+PASS AST + full function bytes: describe_series_trajectory -> series.py sha256=9fafbaf07bfc265eb76dcad38ee0da4d861ed8093908101dbba9195ab8579eb9
+PASS AST + full function bytes: series_dnf_outlook -> api.py sha256=d3b1fbd84e175b74032f280d4e60e7f70c0a35d01070e48280caa6d89dd96ba6
+PASS AST + full function bytes: load_catalog -> catalog.py sha256=e21b8ffce32d4af7dc68d6964efd66209d16f2fcccff9ee54eaa558fa322bb87
+PASS AST + full function bytes: get_confidence -> calibration.py sha256=3268df7e0c7ff16da2fe5c11c3a5229c82ac3febc7b17f1ecf5f41af87b38ef2
+PASS AST + full function bytes: scoring_confidence -> calibration.py sha256=ca575f6b9cda6f204ffafc256489c2207659c0abfd687acadf50de56653c2086
+PASS AST + full function bytes: ordinal_position -> encoding.py sha256=541be9b0155ba9732be6b0ba0fc69876e36cd48ac582b350e93a24320dea1af2
+PASS AST + full function bytes: _split_by_sign -> profile.py sha256=0732f805d89f2f45066e397652c24bc6b048d0633d127db34757700b825b6413
+PASS AST + full function bytes: _series_deduped -> profile.py sha256=6565aebfb7bbdf37a0e8243edb98e8987e3ac7092327eb360450c96d17bafd9a
+PASS AST + full function bytes: _series_deduped_id_to_magnitude -> profile.py sha256=b3a5ea16a2a0611c7f551ade7054af708dd93b8fc2d0dd4132bac970d4925223
+PASS AST + full function bytes: _n_independent_clusters -> profile.py sha256=c37ea309370f15690b7cf28f47637b64cb147303bd947fa405a5b4fa369a3599
+PASS AST + full function bytes: build_profile -> profile.py sha256=e3c08cc1a1838171d4dde53c1773addb10755d77bb3b7afa08ccb6ef4ec772a6
+PASS AST + full function bytes: build_profile_trope_shrinkage -> experimental.py sha256=ccd3fc619ce307aaaeb9bc10455788899dc7e07ea31ef374d0e50b0aeb08054a
+PASS AST + full function bytes: build_profile_trope_backoff -> experimental.py sha256=db7284042e367288887d5a390836c2d314b2e8119b228377f7d5dbbee258493a
+PASS AST + full function bytes: _dedup_factor_for_field -> experimental.py sha256=cf2b02d5e3adf98f8576dbc4c89808964318a30c5799914a53f2877ba9f0269c
+PASS AST + full function bytes: build_profile_series_field_dedup -> experimental.py sha256=0dcfd6cec788212e31c83feedbe9c8b6b9859407842208bfd18d8cbfa00fa8fb
+PASS AST + full function bytes: _dedup_factor_plain -> experimental.py sha256=1f1ca0de3132cf6cca20d9416a0c2d93788eb556fd9db955d387446f0a676cb6
+PASS AST + full function bytes: build_profile_series_field_dedup_protected -> experimental.py sha256=2ad20f9111cf0c8d4eb794ee4c2482b4b263803e00dc71dd2e7cada4752f3407
+PASS AST + full function bytes: build_profile_per_value -> experimental.py sha256=1301140139de73ef9991572dfe5427a02fd442f4593e77b9bc4e782c4c6ba47d
+PASS AST + full function bytes: score_book_per_value -> experimental.py sha256=1d5fc62363b301658d965f8d6b4e84fe3351d8a85b278650813b4731451c2718
+PASS AST + full function bytes: explain_book_per_value -> experimental.py sha256=b39baa98e17d10bae7dd58de6a3f61c24f291642af5c7238b08c434946581a4c
+PASS AST + full function bytes: _redundancy_adjusted_weight -> pipeline.py sha256=a1576770574e45330f473752048ad9ffd92d966c94945567fec8870bb6f3f9f1
+PASS AST + full function bytes: _iter_book_factors -> pipeline.py sha256=4f3b2126700453a9d99db7d4a9890862a5d080775bd013b7c71039cd5222d304
+PASS AST + full function bytes: score_book -> pipeline.py sha256=6db7463bf03ef6641949cc4048c25508cb0b550f4c2abddd0c3dbbd268238147
+PASS AST + full function bytes: explain_book -> pipeline.py sha256=4b16a45f8684b993a8786c6f761d96984c62b84169f7a0d12cadb8052d9b76ef
+PASS AST + full function bytes: build_prevalence_lookup -> prevalence.py sha256=7fe0ac914976039a00ab5e848b2bab9d4cf45009fd765c4d0badab078ab3eedc
+PASS AST + full function bytes: build_prevalence_lookup_grouped -> prevalence.py sha256=9bfeca06c8aca27e560865bf5688a3c34045ef5471b66e3f8855cfece87f5340
+PASS AST + full function bytes: _ordinal_field_separation -> pipeline.py sha256=6b1fa2431a577b31c7aa09a045e5b8e6fbc9cce2b66c1081a419949c1f22c5f2
+PASS AST + full function bytes: _nominal_field_separation -> pipeline.py sha256=3782a598f94ccd82cc945a5117bb25f8f416748d8ab656e188c8011cf0b25b0e
+PASS AST + full function bytes: _trope_separation -> pipeline.py sha256=06ba74bf38af96413c90d807e5fffbb0fdfaaa9cd44691def8fff36c82c5f433
+PASS AST + full function bytes: field_or_trope_separation -> pipeline.py sha256=4bfea461f111b7ae89cf7d64a5828a842631a74de89f2c035c47c0ce958e3d8b
+PASS AST + full function bytes: validated_dealbreaker_fields -> pipeline.py sha256=55c55b27d486e7fc1d74130a0b750f76c57099f9b1400460f2d32ca3917b94f7
+PASS AST + full function bytes: dealbreaker_flags -> pipeline.py sha256=a7c755da977972f2ad790c53ebf6989df63085f03349bf5dcb73fac1d4be41c9
+PASS AST + full function bytes: book_similarity -> series.py sha256=b47ab43bd97b57a7f0030f635dedb8c641fbbc27511edfa9d32491c170c49c01
+PASS AST + full function bytes: series_repeat_worst_similarity -> series.py sha256=3c1a9adfabd7ae45890bbee8b469af4c6d570947f9b622eb2f76c2334961a6b7
+PASS AST + full function bytes: _apply_series_repeat -> pipeline.py sha256=67131c1b986880aee2f30d5db5091a28d712b8eec0f2cf75482450cd2b6c8611
+PASS AST + full function bytes: _series_trajectory_penalty_factor -> pipeline.py sha256=5c11c91abd3aa79d76496f53445fcf0150f873f0112c12f4ea040441eade2d4c
+PASS AST + full function bytes: _apply_series_trajectory_penalty -> pipeline.py sha256=6e116f452438fe8ad3ad8e3ea06db604cb281f806944ae9ac9685d9ca7157411
+PASS AST + full function bytes: _apply_dealbreaker_veto -> pipeline.py sha256=2f2763a4a3ce48cacec60d4b0ebb0f30244907c910e5a7c5195491eb0d5256f4
+PASS AST + full function bytes: _apply_dealbreaker_veto_graduated -> pipeline.py sha256=778b48bb0e183512c69bb352730c7bb14a2a83bfdd71b3fa03b202faf4ff1e9e
+PASS AST + full function bytes: _resolve_profile -> profile.py sha256=fbf08e8a14bf2108df53bbf1c661f7cfafece346ae2764fc31cfc205000e9ca6
+PASS AST + full function bytes: series_position_ready -> series.py sha256=d5d017d0580c2605df527c86cff469cdcdaccf8baab50e5bdb33a59fe2cf4e88
+PASS AST + full function bytes: parse_user_rule_key -> rules.py sha256=9be772d2429bf1a0eddaf3661800e502539fc4dc5849398fb0dbc4191f091849
+PASS AST + full function bytes: normalize_user_rules -> rules.py sha256=c0368c79c2e6ab62906ec6cab2fb6f4199229056c34e0888179d6ed9419d9b1b
+PASS AST + full function bytes: _matches_rule_target -> rules.py sha256=cadee908a5b880df6586e7f0fb53dc15636e16b5fce71041b89fe953f39ff5e6
+PASS AST + full function bytes: apply_user_rules -> rules.py sha256=d8b846e2ef108de288fe456a7d871274c56bc407521bbe3f2ba95757098c051d
+PASS AST + full function bytes: list_user_rule_targets -> rules.py sha256=2989bd05eff03a540b047470a759488c4424c78f714d17c446cedefd11d0b074
+PASS AST + full function bytes: score_candidate -> pipeline.py sha256=034c8c847e6f95574324456f5a7b91b999ad9f4c7d472ce2234a73c4f3b03ab2
+PASS AST + full function bytes: recommend -> api.py sha256=0678016b4be998cdbb95143865845fca3d7608703cdbbd7eb9865ab96a797d06
+PASS AST + full function bytes: explain_match -> api.py sha256=fb14fc08f989c8d1b24ea1ac02b888d8e26832e6d006d4e78c0391b1eae23460
+PASS AST + full function bytes: book_feedback_options -> feedback.py sha256=c7aeae8ff38d1453a34d680a6494c0b0fcf72e01ae85097d36498af2c068ca33
+PASS AST + full function bytes: feedback_to_fatigue_overrides -> feedback.py sha256=82b2b0a97cd426d8d391f05fff1ccb247bc705ca62f60e76bca7c47436e082e1
+PASS AST + full function bytes: log_feedback -> feedback.py sha256=56d9b80cf96691c3bd61675a8b1a4b63b55bcfdee2e94440965c6329fe4903d1
+PASS AST + full function bytes: _audit_attribute_nominal_or_trope -> audit.py sha256=56efcf25ff4c735bac8b6f8936977f94cf1dfef0e6fbe566a491917850c5e57e
+PASS AST + full function bytes: _audit_attribute_ordinal -> audit.py sha256=ac69962291d3959a9fadae07e775d5aaec9769d3971cb613ec1f376c2221a127
+PASS AST + full function bytes: audit_book_score -> audit.py sha256=d4856366c2f8c57def7966b1acdc4115ca229f6298dee6b11d1cb5723d60f169
+PASS AST + full function bytes: print_score_audit -> audit.py sha256=419087bbd23bbe06a67452ce54e8c04ef204f40f63a804611e654988e6032fe7
+PASS all original constants retain equal values, including FEEDBACK_LOG_PATH; 112 definitions exported
+PASS all assignment bytes unchanged except required FEEDBACK_LOG_PATH relocation; default value identical
+PASS CLI main block byte-identical
+PASS unchanged consumer + exports: api/catalog_cache.py: load_catalog
+PASS unchanged consumer + exports: api/main.py: DATABASE_URL, DEFAULT_REDUCE_STRENGTH, explain_match, list_user_rule_targets, recommend
+PASS unchanged consumer + exports: scripts/import_goodreads.py: DATABASE_URL, load_catalog
+PASS unchanged consumer + exports: scripts/scoring_tests.py: DEFAULT_REDUCE_STRENGTH, NOMINAL_FIELDS, ORDINAL_FIELDS, RATING_LABELS, STAT_SEPARATION_THRESHOLD, _audit_attribute_ordinal, _nominal_field_separation, _resolve_profile, _trope_separation, apply_user_rules, book_similarity, build_prevalence_lookup, build_profile, compute_series_dna, dealbreaker_flags, describe, explain_book, list_user_rule_targets, load_catalog, match_label, normalize_user_rules, parse_user_rule_key, recommend, score_candidate, user_calibrated_poor_threshold, validated_dealbreaker_fields
+PASS unchanged consumer + exports: tools/dogfood/app.py: DATABASE_URL, DEFAULT_REDUCE_STRENGTH, RATING_LABELS, _resolve_profile, audit_book_score, build_prevalence_lookup, list_user_rule_targets, load_catalog, match_label, recommend, user_calibrated_poor_threshold
+PASS task export list covers all 28 real main.py/scoring_tests.py attributes; dogfood additionally needs audit_book_score
+PASS 34 fresh-interpreter imports; static dependency graph acyclic
+PASS frozen canonical suite: 29599 bytes, sha256=0ef77ed37376853eb66954bfc9a28a165e7a7ff5d9b8bdf6eabfe2dfed155874
+PASS actual api.main import and 3 recommendations() endpoint calls per version (9 recommendations + explanations), rule_targets(), 2 audits, series outlook: bit-exact sha256=0a7d3ed9347291dc74bf79af937f2e5fc01675e0993708953a8aae1091a95fc5
+API auth/user-data/catalog loaders replaced with local fixtures only; actual scoring and response construction executed unchanged. No hosted user-data or write access.

@@ -1,0 +1,57 @@
+{
+  "api/catalog_cache.py": [
+    "load_catalog"
+  ],
+  "api/main.py": [
+    "DATABASE_URL",
+    "DEFAULT_REDUCE_STRENGTH",
+    "explain_match",
+    "list_user_rule_targets",
+    "recommend"
+  ],
+  "scripts/import_goodreads.py": [
+    "DATABASE_URL",
+    "load_catalog"
+  ],
+  "scripts/scoring_tests.py": [
+    "DEFAULT_REDUCE_STRENGTH",
+    "NOMINAL_FIELDS",
+    "ORDINAL_FIELDS",
+    "RATING_LABELS",
+    "STAT_SEPARATION_THRESHOLD",
+    "_audit_attribute_ordinal",
+    "_nominal_field_separation",
+    "_resolve_profile",
+    "_trope_separation",
+    "apply_user_rules",
+    "book_similarity",
+    "build_prevalence_lookup",
+    "build_profile",
+    "compute_series_dna",
+    "dealbreaker_flags",
+    "describe",
+    "explain_book",
+    "list_user_rule_targets",
+    "load_catalog",
+    "match_label",
+    "normalize_user_rules",
+    "parse_user_rule_key",
+    "recommend",
+    "score_candidate",
+    "user_calibrated_poor_threshold",
+    "validated_dealbreaker_fields"
+  ],
+  "tools/dogfood/app.py": [
+    "DATABASE_URL",
+    "DEFAULT_REDUCE_STRENGTH",
+    "RATING_LABELS",
+    "_resolve_profile",
+    "audit_book_score",
+    "build_prevalence_lookup",
+    "list_user_rule_targets",
+    "load_catalog",
+    "match_label",
+    "recommend",
+    "user_calibrated_poor_threshold"
+  ]
+}

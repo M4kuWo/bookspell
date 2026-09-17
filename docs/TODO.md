@@ -799,16 +799,36 @@ worth deferring to a later session rather than batching in for
   through `score_candidate()`** — `recommend()`, `explain_match()`,
   `scoring_tests._full_score()`, and `audit_book_score()`.
 
-  **Phase B started, 2026-09-17 (CODX's Task 11)** — assigned the
-  first real Phase B step: split `scripts/recommend.py` into
-  `scripts/scoring/` submodules, pure code movement, zero logic
-  change, with the exact required-re-export surface for
-  `api/main.py`/`scoring_tests.py` computed by grepping both files'
-  real usage rather than guessed. See
-  `docs/codx-tasks/current-task.md` for the full brief (includes a
-  flagged real circular-import risk in the original 8-file sketch
-  below, and why the scoring core needs to stay together in one
-  `pipeline.py` rather than split further).
+  **Phase B step 1 (B1-B3) LANDED, 2026-09-17 (CODX's Task 11)** —
+  `scripts/recommend.py` (4,036 lines) split into 16 files under
+  `scripts/scoring/`, all 68 original functions/classes moved with
+  byte-identical source and AST (independently re-verified by CLDO, not
+  just trusted); `scripts/recommend.py` itself is now a 439-line
+  compatibility shim. CODX independently found and fixed 3 real
+  circular-import risks in CLDO's own proposed map (moved
+  `user_calibrated_poor_threshold` into `pipeline.py`,
+  `series_dnf_outlook` into `api.py`, and the series-dedup helpers into
+  `profile.py` — each for a specific, correct dependency reason spelled
+  out in the report) — and discovered **3 additional real consumers**
+  CLDO's own research had missed (`api/catalog_cache.py`,
+  `scripts/import_goodreads.py`, `tools/dogfood/app.py` — the latter
+  needing `audit_book_score`, which hadn't even been in the original
+  required-export list). All 5 real consumers confirmed unchanged and
+  working. See `docs/codx-reviews/codx-phase-b-module-split-2026-09-17.md`.
+
+  **Independently re-verified by CLDO before applying**: applied the
+  patch, ran the canonical suite before/after (byte-identical),
+  independently re-derived the AST-equality check for all 68 functions
+  from scratch (68/68 match, zero omissions/duplicates), confirmed all
+  16 new modules import cleanly with no circular dependency (fresh
+  interpreter, not inherited state), and directly executed
+  `recommend()`/`explain_match()`/`audit_book_score()` through both the
+  original file and the new shim side-by-side — byte-identical results,
+  not just "it imports."
+
+  **Not yet done (B4, deliberately deferred)**: updating the 2 real
+  consumers to import from `scripts/scoring/` directly and dropping the
+  shim — a separate, purely cosmetic follow-up, not blocking anything.
 
   Old note, superseded by the above but kept for history: **Not done
   yet, and not part of "setup" — actually running Codex

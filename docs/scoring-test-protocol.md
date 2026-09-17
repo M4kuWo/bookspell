@@ -3210,3 +3210,89 @@ through `score_candidate()`** -- `recommend()`, `explain_match()`,
 `scoring_tests._full_score()`, and `audit_book_score()`. Next: Phase B
 (extracting into `scripts/scoring/` submodules) per `docs/TODO.md`,
 once the repo owner is ready to schedule it.
+
+## Phase B step 1: `recommend.py` split into `scripts/scoring/` submodules -- LANDED (2026-09-17, Task 11, proposed by CODX, independently verified and applied by CLDO)
+
+Pure code movement, zero logic change -- only possible now that Phase A
+consolidated every scoring caller onto `score_candidate()`. CLDO did
+the module-boundary planning up front (grepping the exact
+required-re-export surface from every real consumer, rather than
+guessing "the public API") specifically so this stayed a bounded,
+low-research task for CODX rather than an open-ended one. `scripts/
+recommend.py` (4,036 lines, 68 top-level functions/classes) is now a
+439-line compatibility shim; the real code lives across 16 files under
+`scripts/scoring/` (`api.py`, `audit.py`, `calibration.py`,
+`catalog.py`, `cold_start.py`, `constants.py`, `encoding.py`,
+`experimental.py`, `explanations.py`, `feedback.py`, `pipeline.py`,
+`prevalence.py`, `profile.py`, `rules.py`, `series.py`, plus an empty
+`__init__.py`).
+
+**CODX improved on CLDO's own proposed module map in three places, each
+for a specific, correct dependency reason, not just following
+instructions literally**: `user_calibrated_poor_threshold` moved from
+the proposed `calibration.py` into `pipeline.py` (it calls
+`score_book`, and `pipeline.py` needs `match_label`/`scoring_confidence`
+back -- leaving it in calibration would create a calibration<->pipeline
+cycle); `series_dnf_outlook` moved from the proposed `series.py` into
+`api.py` (it's a real orchestrator -- calls `_resolve_profile`,
+`build_prevalence_lookup`, `score_book` -- not pure series data);
+`_series_deduped_id_to_magnitude` moved from the proposed `series.py`
+into `profile.py` (it calls `_split_by_sign`, and `build_profile` calls
+`_series_deduped` -- leaving both split would create a profile<->series
+cycle). The dependency graph CLDO's own proposal got right (keeping
+the veto/trajectory/dealbreaker functions together with the evaluator
+in one `pipeline.py`, avoiding the cycle a standalone `dealbreakers.py`
+would have created) was independently confirmed correct, not just
+assumed.
+
+**CODX also found a real gap in CLDO's own research**: the task named
+2 real consumers (`api/main.py`, `scripts/scoring_tests.py`); CODX's
+own AST scan across every tracked Python file found 3 more
+(`api/catalog_cache.py`, `scripts/import_goodreads.py`,
+`tools/dogfood/app.py`) -- the last of which needs `audit_book_score`,
+a name that hadn't been in the original required-export list at all.
+All 5 are confirmed unchanged and working. Also caught a real, subtle
+risk in "pure" movement: `FEEDBACK_LOG_PATH`'s default value is
+computed from `__file__`, so moving it naively (with `__file__` left
+literal) would have silently relocated the feedback-log destination --
+fixed with an explicit `os.path.dirname` anchor, verified against the
+original default.
+
+CODX's own validation: full source + AST comparison for all 68
+functions (not just AST-dump equality -- signatures, defaults, bodies,
+docstrings, comments), 34 separate fresh-interpreter imports covering
+every module and both import paths, the canonical suite run 4 ways
+(hosted-live and frozen-snapshot, before and after -- eliminating
+live-catalog drift as a confounder) all byte-identical, and real
+execution of `api/main.py`'s actual endpoint functions (in an isolated
+venv with real FastAPI/JWT dependencies installed) comparing bit-exact
+serialized output before/after. Transparently reported its own harness
+bugs along the way (a `__file__`-resolution false-positive in its first
+verifier, a cache-initializer mismatch in an early frozen-suite
+attempt) rather than hiding them. Also proactively flagged a real,
+relevant risk for future work: rebinding a shim attribute (a monkeypatch
+experiment) will no longer propagate to a moved function's actual
+defining module after this split -- directly referencing the project's
+own historical split-import monkeypatch trap (see A2 prerequisite's
+entry above) rather than treating it as unrelated.
+
+**Independently re-verified by CLDO before applying**: applied the
+patch to a clean worktree, ran the canonical suite before/after against
+local Supabase -- byte-identical (a different environment than CODX's
+hosted-read-only + frozen-snapshot runs). Independently re-derived the
+AST-equality check from scratch for all 68 functions (not trusting the
+68/68 PASS count) -- confirmed zero omissions, zero duplicates, every
+AST byte-identical. Confirmed all 16 new modules import cleanly with no
+circular dependency in a fresh interpreter. Directly executed
+`recommend()`, `explain_match()`, and `audit_book_score()` through both
+the original file (loaded as a separate module, avoiding the project's
+own documented split-import identity trap) and the new shim,
+side-by-side -- byte-identical results, not just "it imports without
+error." Confirmed the evidence directory's one credential-shaped grep
+hit was just the existing, already-tracked local-dev default connection
+string, not a real exposure.
+
+Landed as-is. B4 (updating the 2 real consumers to import from
+`scripts/scoring/` directly and dropping the shim) is deliberately
+deferred -- a separate, purely cosmetic follow-up, not blocking
+anything.

@@ -17902,3 +17902,77 @@ exact required-re-export list, the circular-import reasoning, and the
 validation bar (AST-diff per moved function, byte-identical canonical
 suite, both real consumers' actual call paths exercised) all spelled
 out explicitly so this stays a bounded, low-research-cost task.
+
+## 2026-09-17 (later still) -- CODX's Task 11 (Phase B step 1) landed: recommend.py split into 16 scoring/ submodules, CODX improved on CLDO's own plan in 3 places
+
+CODX finished Task 11 -- and delivered the most rigorous validation of
+this whole recurring engagement. The task was deliberately scoped as
+bounded/mechanical (CLDO did the module-boundary research beforehand,
+specifically to conserve CODX's budget after the confidence-QA pause),
+and CODX matched that intent: no web research needed, just careful
+reading of the real code and exhaustive verification.
+
+**The actual work**: `scripts/recommend.py` (4,036 lines, 68 top-level
+functions/classes) split into 16 files under `scripts/scoring/`;
+`scripts/recommend.py` itself is now a 439-line compatibility shim.
+
+**CODX improved on CLDO's own proposed module map, not just executed
+it**: found and fixed 3 real circular-import risks CLDO's own planning
+had missed -- moved `user_calibrated_poor_threshold` into `pipeline.py`
+(it calls `score_book`; leaving it in the proposed `calibration.py`
+would create a calibration<->pipeline cycle), `series_dnf_outlook` into
+`api.py` (it's a real orchestrator calling `_resolve_profile`/
+`build_prevalence_lookup`/`score_book`, not pure series data), and the
+series-dedup helpers into `profile.py` (cross-dependency with
+`build_profile`). Each fix came with the specific dependency reasoning
+spelled out, not just "moved it because it didn't work."
+
+**Also found a real gap in CLDO's own research**: the task named 2 real
+consumers (`api/main.py`, `scoring_tests.py`); CODX's own AST scan
+across every tracked Python file found 3 more --
+`api/catalog_cache.py`, `scripts/import_goodreads.py`, and
+`tools/dogfood/app.py` (needing `audit_book_score`, a name that hadn't
+even been in CLDO's original required-export list). All 5 confirmed
+unchanged and working. Also caught a real, subtle trap in "pure"
+movement: `FEEDBACK_LOG_PATH`'s default is computed from `__file__`, so
+a naive move would have silently relocated the feedback-log
+destination -- fixed with an explicit path anchor, verified against
+the real original default.
+
+**Validation, the most thorough yet**: full source+AST comparison for
+all 68 functions, 34 fresh-interpreter imports covering every module
+and both import paths, the canonical suite run 4 ways (hosted-live and
+frozen-snapshot, before/after, eliminating live-catalog drift as a
+confounder) all byte-identical, and real execution of `api/main.py`'s
+actual FastAPI endpoint functions (in an isolated venv with real
+dependencies installed) comparing bit-exact serialized output. It
+transparently reported its own harness bugs along the way (a
+`__file__`-resolution false-positive, a cache-initializer mismatch)
+rather than hiding them, and proactively flagged a real risk for future
+work: a monkeypatch experiment rebinding a shim attribute will no
+longer propagate to a moved function's actual defining module --
+explicitly tied to this project's own historical split-import
+monkeypatch trap, not treated as unrelated trivia.
+
+**Independently re-verified by CLDO before applying**: applied the
+patch in a worktree, ran the canonical suite against local Supabase
+(byte-identical, a different environment than CODX's runs).
+Independently re-derived the AST-equality check from scratch for all 68
+functions rather than trusting the 68/68 PASS count -- confirmed zero
+omissions, zero duplicates, every AST byte-identical. Confirmed all 16
+modules import cleanly with no circular dependency in a fresh
+interpreter. Directly executed `recommend()`/`explain_match()`/
+`audit_book_score()` through both the original file (loaded separately,
+avoiding this project's own split-import identity trap) and the new
+shim side-by-side -- byte-identical results. Confirmed the one
+credential-shaped grep hit in the evidence directory was the existing,
+already-tracked local-dev connection string default, not a real
+exposure.
+
+Landed. Documented in `docs/scoring-test-protocol.md`'s new "Phase B
+step 1" entry, permanent record at
+`docs/codx-reviews/codx-phase-b-module-split-2026-09-17.md`, `docs/TODO.md`
+updated. B4 (updating the 2 real consumers to import from
+`scripts/scoring/` directly, dropping the shim) deliberately deferred
+as a separate, purely cosmetic follow-up. `docs/codx-tasks/current-task.md`
+reset to a holding-pattern note.

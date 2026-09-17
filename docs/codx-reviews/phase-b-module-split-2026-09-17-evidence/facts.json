@@ -1,0 +1,12 @@
+{
+  "HEAD": "9d316308b8201ce68b59516b14ff8f50cccf6eb8",
+  "tracked_files_verified": 351,
+  "moved_functions": 68,
+  "original_lines": 4036,
+  "implementation_modules": 15,
+  "new_files": 16,
+  "proposal_patch_sha256": "e6bdb56a06d0fb798f0a8d4be03c713de6a5637d9351b68b1ec4c41c56dbf50b",
+  "canonical_sha256": "0ef77ed37376853eb66954bfc9a28a165e7a7ff5d9b8bdf6eabfe2dfed155874",
+  "canonical_bytes": 29599,
+  "comments_preserved": 821
+}

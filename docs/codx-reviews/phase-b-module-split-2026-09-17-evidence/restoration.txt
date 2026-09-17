@@ -1,0 +1,7 @@
+HEAD 9d316308b8201ce68b59516b14ff8f50cccf6eb8
+PASS all 68 functions moved byte-identically
+PASS all 821 original comment tokens retained
+PASS four canonical suite outputs identical (29599 bytes)
+PASS proposal.patch applies cleanly to HEAD (git apply --check)
+PASS task package removed; tracked working tree and index clean
+PASS SHA-256 of all 351 tracked files equals HEAD
