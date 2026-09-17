@@ -1360,10 +1360,12 @@ worth deferring to a later session rather than batching in for
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done
-  2026-09-14
-  (200 of 484 series fixed so far, verified by direct migration-file
-  reconstruction as of batch 13 -- see that batch's entry below for a
-  one-series correction to the batch-12 running total. The denominator
+  2026-09-14, batch 14 done 2026-09-17
+  (213 of 484 series fixed so far, verified by directly executing every
+  prior batch's migration file with `returning name` in a rolled-back
+  transaction as of batch 14 -- see that batch's entry below for a
+  one-name correction to the batch-13 running total (201 fixed names,
+  not 200). The denominator
   grew a lot from the 2026-09-12 378-book/118-series ingestion round,
   this isn't the catalog shrinking work).** `status` defaults to
   `'ongoing'` whenever Hardcover's `is_completed` flag isn't explicitly
@@ -2232,9 +2234,98 @@ worth deferring to a later session rather than batching in for
   total is now verified correct by direct migration-file reconstruction,
   not by carrying the old arithmetic forward).
 
-  **Next (batch 14)**: re-rank remaining series, excluding **251** now-
-  checked names across batches 1-13 (235 checked through batch 12 + this
-  batch's 16 fixed) plus **64** still-unsettled flagged names (the
+  **Batch 14 (2026-09-17, CLDO)**: re-derived the exclude list
+  mechanically this time rather than trusting the prose reconstruction
+  above -- ran every batches-1-through-13 migration file in a
+  rolled-back transaction with `returning name` appended to each
+  `update series` statement, which can't miss a name hidden behind
+  string concatenation (e.g. Legacy of Orisha's `chr(239)` escape) the
+  way plain-text `grep` can. Found **201** unique fixed names (1 more
+  than the doc's own reconstructed 200 -- a real, small discrepancy,
+  not investigated further since it doesn't change any batch-14
+  decision either way). Combined with the 64 flagged names above
+  (including the two DB-name-variant flagged entries, which correctly
+  did NOT reappear as fresh candidates) and a manually-tracked set of
+  classics already confirmed correct in batch 2 (Discworld, The
+  Expanse, The Wheel of Time, Throne of Glass, Foundation, Harry
+  Potter, Narnia, The Dark Tower, Dune, The Mortal Instruments,
+  Hainish Cycle, A Court of Thorns and Roses, etc.) for the exclude
+  set. Worked down the doc's own named "unresearched candidate tail"
+  first, then continued into newly-surfaced candidates by book_count
+  descending. Every value verified via live WebSearch/WebFetch
+  (Wikipedia, publisher pages, author's own site) before writing.
+
+  **13 needed a real fix**: The Chronicles of the Black Company (Glen
+  Cook: completed/10 -> ongoing/12 -- a real reversal, since a new
+  confirmed multi-volume continuation, "A Pitiless Rain," began with
+  Lies Weeping in Nov 2025 and is still actively being written, not a
+  finished classic), Hundred Kingdoms (Alexandra Christo: ongoing/7 ->
+  completed/2), Matched (Ally Condie: ongoing/7 -> completed/3), The
+  Band (Nicholas Eames, Kings of the Wyld: ongoing/7 -> completed/3),
+  The Last Unicorn (Peter S. Beagle: ongoing/7 -> completed/1 -- the
+  1968 novel itself; "Two Hearts"/"Sooz" are companion novellas, not
+  counted), The Chronicles of Osreth (Katherine Addison: ongoing/7 ->
+  completed/4 -- The Goblin Emperor + the Cemeteries of Amalo trilogy,
+  confirmed closed by The Tomb of Dragons 2025), Fae & Alchemy (Callie
+  Hart: book_count only, 7 -> 2 -- a planned trilogy, only Quicksilver
+  and Brimstone published so far, 3rd book not yet out), Inheritance
+  Trilogy (N.K. Jemisin: ongoing/7 -> completed/3), The Crimson Moth
+  (Kristen Ciccarelli: ongoing/7 -> completed/2 -- the author's own
+  site confirms a completed duology despite a stray, uncorroborated
+  3rd-book listing on Goodreads), A Targaryen History (George R.R.
+  Martin: book_count only, 6 -> 1 -- only Fire & Blood has actually
+  been published), John Dies at the End (David Wong/Jason Pargin:
+  book_count only, 6 -> 5), Xenogenesis (Octavia Butler: ongoing/6 ->
+  completed/3), Firefall (Peter Watts: book_count only, 6 -> 2 --
+  "The Colonel" is a sub-40-page Tor.com Original novella, not a
+  mainline novel, same companion-novella convention as above).
+
+  **2 confirmed already correct**: The Dresden Files (Jim Butcher --
+  ongoing/18 already matches 18 published mainline novels through
+  Twelve Months, Jan 2026), The Vampire Chronicles (Anne Rice --
+  completed/13 already matches the full published run).
+
+  **1 new name flagged, not fixed**: Four Masterworks (1895-1898) --
+  a publisher-created omnibus grouping of 4 unrelated standalone H.G.
+  Wells novels (The Time Machine, The Island of Doctor Moreau, The
+  Invisible Man, The War of the Worlds), same not-really-a-series shape
+  as the existing Green Mile/Windup Universe flags.
+
+  **A real author-field contamination bug caught during this batch's
+  research, fixed in the same migration** (per CLAUDE.md's standing
+  policy that contamination gets fixed the moment it's found, not just
+  at ingestion time): "To Kill a Kingdom" (Hundred Kingdoms #1) had its
+  two audiobook narrators (Jacob York, Stephanie Willis -- confirmed via
+  AudioFile Magazine's own review byline) merged into the `author`
+  field; "The Last Unicorn" had Patrick Rothfuss listed as a co-author,
+  who in fact only wrote a new introduction to a later reissue
+  (confirmed via the Penguin Random House listing's own title). Both
+  fixed to their real sole author.
+
+  Migration `20260917040000_fix_series_status_book_count_batch14.sql`
+  -- all 15 statements tested in a rolled-back transaction first (each
+  matched exactly one row, post-update values verified), applied to
+  local via the standard raw-psycopg2 method, pushed to hosted via
+  `supabase db push`, then independently re-verified by directly
+  querying both local and hosted for every touched row -- all 15 match
+  exactly. `series` (484) and `books` (1256) row counts unchanged
+  (pure UPDATE, no inserts/deletes), confirmed via
+  `scripts/check_db_sync.py` afterward too.
+
+  Running total: **213** of 484 series fixed across batches 1-14 (201 +
+  13 -- not 200 + 13, per the off-by-one this batch's mechanical
+  reconstruction found in the prior running total, see above).
+
+  **Not reached this batch, left for batch 15**: Todd Family (Life
+  After Life -- likely out-of-scope, literary fiction with a time-loop,
+  not decided) and Elements of Cadence (A River Enchanted), both named
+  in batch 13's tail but not gotten to this time.
+
+  **Next (batch 15)**: re-rank remaining series, excluding **266** now-
+  checked names across batches 1-14 (251 checked through batch 13 +
+  this batch's 13 fixed + 2 confirmed already correct) plus **65**
+  still-unsettled flagged names (this batch's new Four Masterworks
+  (1895-1898) flag, plus the
   pre-existing 54 -- Hogwarts Library, The Roald Dahl Classic
   Collection, The Riyria Revelations (Omnibus), Robert Langdon, The
   Inheritance Games, Imperial Radch (publication order), Enderverse:
@@ -2258,14 +2349,16 @@ worth deferring to a later session rather than batching in for
   Bloom's Modern Critical Interpretations, The Windup Universe, White
   Sand, Never After, Millennium, 1Q84, Involuntary trilogy, Voice from
   the Edge). Unresearched candidate tail from this batch's ranked list
-  (not reached, available for batch 14): The Band (Kings of the Wyld),
-  The Crimson Moth (Heartless Hunter), Matched, Inheritance Trilogy
-  (N.K. Jemisin), The Last Unicorn, Hundred Kingdoms (To Kill a
-  Kingdom), Fae & Alchemy (Quicksilver), Todd Family (Life After Life --
-  likely out-of-scope, literary fiction with a time-loop, not decided),
-  Elements of Cadence (A River Enchanted). The "count(b.id) currently
-  linked" primary ranking signal remains saturated at 1 book/series for
-  the whole remaining catalog -- keep using Hardcover's raw `book_count`
+  (STALE -- batch 14 (see above) processed all of these except Todd
+  Family and Elements of Cadence, which are carried forward to batch 15
+  instead): The Band (Kings of the Wyld), The Crimson Moth (Heartless
+  Hunter), Matched, Inheritance Trilogy (N.K. Jemisin), The Last
+  Unicorn, Hundred Kingdoms (To Kill a Kingdom), Fae & Alchemy
+  (Quicksilver), Todd Family (Life After Life -- likely out-of-scope,
+  literary fiction with a time-loop, not decided), Elements of Cadence
+  (A River Enchanted). The "count(b.id) currently linked" primary
+  ranking signal remains saturated at 1 book/series for the whole
+  remaining catalog -- keep using Hardcover's raw `book_count`
   descending as the secondary sort.
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of
   Sanderson's real Cosmere books were actually linked to the existing

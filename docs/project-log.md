@@ -18071,3 +18071,161 @@ engine lives entirely under scripts/scoring/, every real consumer
 imports from it directly, and scripts/recommend.py is a genuine,
 minimal CLI demo script. docs/codx-tasks/current-task.md reset to a
 holding-pattern note.
+
+## 2026-09-17 (later still): docs/TODO.md hygiene fix -- stale `recommend.py` refactor entry marked done
+
+A separate P1 entry describing the `recommend.py` structural refactor
+as "not yet started, needs a real scoping decision" had gone stale
+without anyone noticing: Phase A and Phase B (see the many entries
+above, CODX Tasks 4-12, 2026-09-14 through 2026-09-17) landed the exact
+plan this entry laid out, but the entry itself was never updated
+alongside the "Phase A/B plan" section elsewhere in the same file.
+Marked done, pointed at the real landing record
+(docs/scoring-test-protocol.md's "Phase A"/"Phase B" entries and
+docs/codx-reviews/codx-phase-b-shim-removal-2026-09-17.md), and kept
+the original proposal text as historical design rationale rather than
+deleting it, since it held up well.
+
+## 2026-09-17 (later still): series.status/book_count fix, batch 14 -- 13 series fixed, 2 confirmed already correct, 1 new name flagged, plus a real author-contamination bug caught and fixed
+
+Continuing the P2 catalog-wide `series.status`/`book_count` fix (root
+cause unchanged: `status` defaults to 'ongoing' whenever Hardcover's
+`is_completed` isn't explicitly true; `book_count` is Hardcover's raw
+edition/omnibus/box-set count, not a curated mainline-installment
+count -- neither field is read by `scripts/recommend.py`, display-only
+bug in `tools/catalog-review/`). Done directly by CLDO, not delegated,
+since no CLDA/CODX task was queued for it and the repo owner asked to
+pick up ready CLDO-appropriate work from `docs/TODO.md`.
+
+**A more reliable exclude-list method than prose reconstruction**:
+rather than trusting the running prose summary from batch 13 (itself a
+correction of an earlier off-by-one), re-derived the exact set of
+already-fixed series names by actually EXECUTING every batches-1-13
+migration file against local Postgres inside a rolled-back transaction,
+with `returning name` appended to each `update series` statement. This
+can't miss a name hidden behind SQL string concatenation the way a
+plain-text regex search can (e.g. Legacy of Orisha's
+`'Legacy of Or' || chr(239) || 'sha'` escape for its accented
+character) -- and, sure enough, found **201** unique fixed names, one
+more than the doc's own reconstructed 200. Not investigated further
+since it doesn't change any batch-14 decision, but worth flagging as a
+real, small discrepancy in a total that had already been "corrected"
+once before. Combined with the 64 already-flagged names and a
+manually-tracked set of classics already confirmed correct in batch 2
+(Discworld, The Wheel of Time, Dune, Harry Potter, Narnia, The Dark
+Tower, The Mortal Instruments, Hainish Cycle, Throne of Glass,
+Foundation, The Expanse, A Court of Thorns and Roses) for the exclude
+set, then re-ran the ranking query (book_count descending) and worked
+down it, starting with the doc's own named "unresearched candidate
+tail" from batch 13.
+
+**13 needed a real fix**:
+- **The Chronicles of the Black Company** (Glen Cook): completed/10 ->
+  ongoing/12 -- a genuine reversal, not just a number correction.
+  Wikipedia confirms 11 novels through Port of Shadows (2018), plus
+  Lies Weeping (Nov 2025) opening a new, actively-continuing multi-
+  volume arc ("A Pitiless Rain" -- They Cry due Nov 2026, at least 3
+  more volumes planned after that). This is a direct narrative
+  continuation of the same story, not a spinoff/companion, so it
+  counts toward book_count; the series is very much not a finished
+  classic anymore.
+- **Hundred Kingdoms** (Alexandra Christo): ongoing/7 -> completed/2.
+  Two standalone novels in the same world (To Kill a Kingdom 2018,
+  Princess of Souls 2022), no third book announced.
+- **Matched** (Ally Condie): ongoing/7 -> completed/3. The classic
+  completed trilogy (2010-2012).
+- **The Band** (Nicholas Eames, Kings of the Wyld): ongoing/7 ->
+  completed/3. A finished trilogy (2017-2023).
+- **The Last Unicorn** (Peter S. Beagle): ongoing/7 -> completed/1.
+  The 1968 novel itself, long finished; "Two Hearts" (2004) and "Sooz"
+  (2023, collected as "The Way Home") are companion novellas, not
+  counted, same convention as Powder Mage's "Forsworn"/Arc of a
+  Scythe's "Gleanings" from batch 1.
+- **The Chronicles of Osreth** (Katherine Addison): ongoing/7 ->
+  completed/4. The Goblin Emperor (2014) plus the Cemeteries of Amalo
+  trilogy (2021-2025), confirmed closed by The Tomb of Dragons; "Lora
+  Selezh" and "The Orb of Cairado" are companion novellas, not counted.
+- **Fae & Alchemy** (Callie Hart): book_count only, 7 -> 2. A planned
+  trilogy -- Quicksilver (2024) and Brimstone (2025) published, a third
+  book not yet out (estimates range 2026-2027 across retailers).
+  Status was already correctly 'ongoing'.
+- **Inheritance Trilogy** (N.K. Jemisin): ongoing/7 -> completed/3.
+  The classic completed trilogy (2010-2011); "The Awakened Kingdom" is
+  a companion novella, not counted.
+- **The Crimson Moth** (Kristen Ciccarelli): ongoing/7 -> completed/2.
+  The author's own site explicitly confirms a completed duology
+  (Heartless Hunter, Rebel Witch) despite an uncorroborated 3rd-book
+  ("Dark Descent") listing on Goodreads that no publisher or the
+  author's own site backs up.
+- **A Targaryen History** (George R.R. Martin): book_count only, 6 ->
+  1. Only Fire & Blood (2018) has actually been published; the second
+  volume remains unwritten/in progress. Status was already correctly
+  'ongoing'.
+- **John Dies at the End** (David Wong/Jason Pargin): book_count only,
+  6 -> 5. Status was already correctly 'ongoing'.
+- **Xenogenesis** (Octavia Butler): ongoing/6 -> completed/3. The
+  classic completed trilogy (1987-1989), later republished as the
+  omnibus "Lilith's Brood"; Butler died in 2006 with no further
+  installments.
+- **Firefall** (Peter Watts): book_count only, 6 -> 2. Wikipedia
+  identifies exactly 2 novels (Blindsight 2006, Echopraxia 2014) as
+  "comprising the Firefall series"; "The Colonel" (2014) is a sub-40-
+  page Tor.com Original novella, a bridge story, not counted, same
+  companion-novella convention as above. Status left 'ongoing' on
+  absence of an explicit completion statement, same convention batch
+  13 used for The Singing Hills Cycle.
+
+**2 confirmed already correct**: The Dresden Files (Jim Butcher --
+ongoing/18 already matches 18 published mainline novels through Twelve
+Months, Jan 2026, with the series openly still planned to run to
+22-25 books); The Vampire Chronicles (Anne Rice -- completed/13
+already matches the full published run, no continuation since Rice's
+2021 death).
+
+**1 new name flagged, not fixed**: Four Masterworks (1895-1898) -- a
+publisher-created omnibus grouping of 4 unrelated standalone H.G. Wells
+novels (The Time Machine, The Island of Doctor Moreau, The Invisible
+Man, The War of the Worlds), sharing no characters or continuity --
+same not-really-a-series shape as the already-flagged Green Mile/
+Windup Universe cases.
+
+**A real author-field contamination bug caught during this batch's own
+research, fixed in the same migration** (per CLAUDE.md's standing
+policy that contamination gets fixed the moment it's found, not just
+at ingestion time, since this exact failure mode has recurred multiple
+times before): "To Kill a Kingdom" (Hundred Kingdoms #1, fixed above)
+had its two audiobook narrators, Jacob York and Stephanie Willis
+(confirmed via AudioFile Magazine's own review byline and the Audible/
+Amazon audiobook listings), merged into the `author` field alongside
+the real author, Alexandra Christo. "The Last Unicorn" (also fixed
+above) had Patrick Rothfuss listed as a co-author; he in fact only
+wrote a new introduction to a later reissue (confirmed via the Penguin
+Random House listing's own title, "...with a new introduction by
+Patrick Rothfuss"), never co-authored the novel. Both corrected to
+their real sole author.
+
+Migration `20260917040000_fix_series_status_book_count_batch14.sql` --
+all 15 `update` statements (13 series fixes + 2 book author fixes)
+tested in a rolled-back transaction first (each matched exactly one
+row, post-update values verified before rollback), applied for real to
+local via the standard raw-psycopg2 method, then pushed to hosted via
+`supabase db push`. Independently re-verified afterward by directly
+querying both local and hosted for every one of the 15 touched rows --
+all match exactly. `series` (484) and `books` (1256) row counts
+unchanged (pure UPDATE, no inserts/deletes), and
+`scripts/check_db_sync.py` confirms local still matches hosted on
+every checked table.
+
+Running total: **213** of 484 series fixed across batches 1-14 (201
+fixed names via the mechanical re-derivation above + 13 fixed this
+batch -- not 200 + 13, since batch 13's own reconstructed total turned
+out to be off by one, corrected here).
+
+**Not reached this batch, carried forward to batch 15**: Todd Family
+(Life After Life -- likely out-of-scope, literary fiction with a
+time-loop, not decided) and Elements of Cadence (A River Enchanted),
+both named in batch 13's tail but not gotten to this time.
+
+docs/TODO.md updated with the full batch detail and a corrected
+"Next (batch 15)" exclude-list pointer (266 checked names + 65 flagged
+names).
