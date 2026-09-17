@@ -17678,3 +17678,39 @@ HIGH_RISK_FIELDS rows remain below 0.6 catalog-wide**, after this
 round's 11 rows moving above threshold and CLDA's two new batches
 today adding some fresh low-confidence rows of their own. Next round
 should pull from that real number whenever CODX is next free for it.
+
+## 2026-09-17 (later) -- third occurrence of the local/hosted tagging drift, fixed; this is now a real pattern worth a process fix, not just a routine check
+
+While doing a routine status/sync check (repo owner asked "where do we
+stand"), found the exact same drift for a THIRD time today: local
+`book_dna` at 1018 vs hosted's 1058 -- CLDA's two newest tagging
+batches (`20260917000000`/`20260917010000`, 40 books, 5 author fixes)
+were pushed to hosted but never applied to local's Postgres. Same root
+cause as this morning's fix and yesterday's original discovery.
+
+Verified all 40 titles across both files exist locally as untagged,
+single rows, before applying (one file's insert/on-conflict-clause
+counts didn't match this time -- 225 inserts vs 90 "on conflict" hits --
+turned out to be a formatting difference, single-line statements vs the
+usual multi-line style, not a real idempotency gap; verified by
+checking actual target-row state directly rather than trusting the
+grep counts). Applied both migrations locally. `book_dna` now matches
+hosted exactly (1,058).
+
+**This has now happened three times in three days** (2026-09-13's
+Batch 5/6, this morning's Batch 20260916 pair, now this afternoon's
+Batch 20260917 pair) -- worth calling what it is: a real, recurring gap
+in the tagging workflow's "apply to both local and hosted" step, not
+three unrelated one-offs. Flagging to the repo owner directly rather
+than just quietly patching it a fourth time when it inevitably recurs
+again. Worth considering: whether CLDA's sessions reliably have local
+Supabase running/reachable at all, or whether the skill's own
+close-out checklist needs the local-apply step made harder to skip.
+
+Current catalog status after this fix: 1,256 total, 1,058 tagged, 198
+untagged, 10 belonging to a partially-tagged series (unlikely to be
+real candidates given the partial-series pool has been dominated by
+known permanent exceptions since 2026-09-16 -- not re-verified this
+pass). 134 `HIGH_RISK_FIELDS` rows below 0.6 confidence catalog-wide
+(up from 85 immediately after Task 9 landed, since new tagging always
+adds some fresh low-confidence rows).
