@@ -1,0 +1,766 @@
+{
+  "fetched_utc": "2026-09-16T21:13:44.687223+00:00",
+  "books": [
+    {
+      "id": "56b77ecb-3932-4bd6-ae85-df9a4bd4f83c",
+      "title": "Accelerando",
+      "author": "Charles Stross",
+      "hardcover_id": 374578
+    },
+    {
+      "id": "6ed87f2b-3890-41ed-a8d1-73859a7b1b78",
+      "title": "Annie Bot",
+      "author": "Sierra Greer",
+      "hardcover_id": 1061553
+    },
+    {
+      "id": "8dc2db0d-56c1-46eb-bc17-f0662405e699",
+      "title": "Congo",
+      "author": "Michael Crichton",
+      "hardcover_id": 380571
+    },
+    {
+      "id": "3843c607-4806-44ea-a0ed-bdca71f4b4fc",
+      "title": "Dreamcatcher",
+      "author": "Stephen King",
+      "hardcover_id": 381512
+    },
+    {
+      "id": "abb82612-6536-4913-8f33-31f52b19a2a6",
+      "title": "Fall or, Dodge in Hell",
+      "author": "Neal Stephenson",
+      "hardcover_id": 434196
+    },
+    {
+      "id": "55fcb2e8-68e9-4b33-bb16-deec382d6418",
+      "title": "Gateway",
+      "author": "Frederik Pohl",
+      "hardcover_id": 97435
+    },
+    {
+      "id": "0e71ef24-9b39-4413-be5a-54925543dfc5",
+      "title": "Gods of Jade and Shadow",
+      "author": "Silvia Moreno-Garcia",
+      "hardcover_id": 428523
+    },
+    {
+      "id": "e4c0e2a5-ab88-4728-98a3-6825d432d640",
+      "title": "Ilium",
+      "author": "Dan Simmons",
+      "hardcover_id": 377360
+    },
+    {
+      "id": "db617cf8-d78c-43b0-bec5-03358e090099",
+      "title": "Legion",
+      "author": "Brandon Sanderson",
+      "hardcover_id": 427735
+    },
+    {
+      "id": "2fc0df0a-e2fd-470a-9d1e-1861c2409c9c",
+      "title": "Lord of Light",
+      "author": "Roger Zelazny",
+      "hardcover_id": 109204
+    },
+    {
+      "id": "c1f3a771-0ac9-4cd4-8b67-03f295b38387",
+      "title": "Pushing Ice",
+      "author": "Alastair Reynolds",
+      "hardcover_id": 127926
+    },
+    {
+      "id": "7a34f8e8-5e53-49d4-820a-3995f10cb3cd",
+      "title": "Shards of Honour",
+      "author": "Lois McMaster Bujold",
+      "hardcover_id": 427370
+    },
+    {
+      "id": "7249fe6d-23ad-4506-9375-5615f0463402",
+      "title": "Shroud",
+      "author": "Adrian Tchaikovsky",
+      "hardcover_id": 1420497
+    },
+    {
+      "id": "37bbc3b3-5b3d-40c5-a784-e098888f45a2",
+      "title": "Six Wakes",
+      "author": "Mur Lafferty",
+      "hardcover_id": 427471
+    },
+    {
+      "id": "d1af1183-9f48-4a24-b074-4dd30f71b76b",
+      "title": "Soulless",
+      "author": "Gail Carriger",
+      "hardcover_id": 33557
+    },
+    {
+      "id": "dd39728a-4410-4014-b81d-6a9d7e4c3fe1",
+      "title": "The Bright Sword",
+      "author": "Lev Grossman",
+      "hardcover_id": 484946
+    },
+    {
+      "id": "a6eee3f0-021e-4315-b3eb-88240dc2c518",
+      "title": "The Deep Sky",
+      "author": "Yume Kitasei",
+      "hardcover_id": 584712
+    },
+    {
+      "id": "dbd686e7-30e2-463a-a0a0-029455eda954",
+      "title": "The Echo Wife",
+      "author": "Sarah Gailey",
+      "hardcover_id": 427729
+    }
+  ],
+  "dna": [
+    {
+      "book_id": "8dc2db0d-56c1-46eb-bc17-f0662405e699",
+      "person": "third_limited",
+      "pov_count": "few",
+      "humor_level": "light",
+      "narrator_reliability": "reliable",
+      "drive": "plot_driven"
+    },
+    {
+      "book_id": "3843c607-4806-44ea-a0ed-bdca71f4b4fc",
+      "person": "third_limited",
+      "pov_count": "several",
+      "humor_level": "moderate",
+      "narrator_reliability": "reliable",
+      "drive": "plot_driven"
+    },
+    {
+      "book_id": "55fcb2e8-68e9-4b33-bb16-deec382d6418",
+      "person": "first",
+      "pov_count": "single",
+      "humor_level": "light",
+      "narrator_reliability": "reliable",
+      "drive": "character_driven"
+    },
+    {
+      "book_id": "e4c0e2a5-ab88-4728-98a3-6825d432d640",
+      "person": "mixed",
+      "pov_count": "several",
+      "humor_level": "light",
+      "narrator_reliability": "reliable",
+      "drive": "worldbuilding_driven"
+    },
+    {
+      "book_id": "db617cf8-d78c-43b0-bec5-03358e090099",
+      "person": "first",
+      "pov_count": "single",
+      "humor_level": "moderate",
+      "narrator_reliability": "reliable",
+      "drive": "character_driven"
+    },
+    {
+      "book_id": "7a34f8e8-5e53-49d4-820a-3995f10cb3cd",
+      "person": "third_limited",
+      "pov_count": "single",
+      "humor_level": "light",
+      "narrator_reliability": "reliable",
+      "drive": "character_driven"
+    },
+    {
+      "book_id": "d1af1183-9f48-4a24-b074-4dd30f71b76b",
+      "person": "third_limited",
+      "pov_count": "single",
+      "humor_level": "heavy",
+      "narrator_reliability": "reliable",
+      "drive": "romance_driven"
+    },
+    {
+      "book_id": "56b77ecb-3932-4bd6-ae85-df9a4bd4f83c",
+      "person": "third_limited",
+      "pov_count": "few",
+      "humor_level": "moderate",
+      "narrator_reliability": "reliable",
+      "drive": "worldbuilding_driven"
+    },
+    {
+      "book_id": "6ed87f2b-3890-41ed-a8d1-73859a7b1b78",
+      "person": "third_limited",
+      "pov_count": "single",
+      "humor_level": "light",
+      "narrator_reliability": "reliable",
+      "drive": "character_driven"
+    },
+    {
+      "book_id": "abb82612-6536-4913-8f33-31f52b19a2a6",
+      "person": "mixed",
+      "pov_count": "several",
+      "humor_level": "moderate",
+      "narrator_reliability": "reliable",
+      "drive": "worldbuilding_driven"
+    },
+    {
+      "book_id": "0e71ef24-9b39-4413-be5a-54925543dfc5",
+      "person": "third_limited",
+      "pov_count": "dual",
+      "humor_level": "light",
+      "narrator_reliability": "reliable",
+      "drive": "character_driven"
+    },
+    {
+      "book_id": "2fc0df0a-e2fd-470a-9d1e-1861c2409c9c",
+      "person": "third_omniscient",
+      "pov_count": "few",
+      "humor_level": "moderate",
+      "narrator_reliability": "reliable",
+      "drive": "plot_driven"
+    },
+    {
+      "book_id": "c1f3a771-0ac9-4cd4-8b67-03f295b38387",
+      "person": "third_limited",
+      "pov_count": "few",
+      "humor_level": "light",
+      "narrator_reliability": "reliable",
+      "drive": "character_driven"
+    },
+    {
+      "book_id": "7249fe6d-23ad-4506-9375-5615f0463402",
+      "person": "first",
+      "pov_count": "dual",
+      "humor_level": "light",
+      "narrator_reliability": "reliable",
+      "drive": "plot_driven"
+    },
+    {
+      "book_id": "37bbc3b3-5b3d-40c5-a784-e098888f45a2",
+      "person": "third_limited",
+      "pov_count": "several",
+      "humor_level": "light",
+      "narrator_reliability": "ambiguous",
+      "drive": "plot_driven"
+    },
+    {
+      "book_id": "dd39728a-4410-4014-b81d-6a9d7e4c3fe1",
+      "person": "third_limited",
+      "pov_count": "few",
+      "humor_level": "moderate",
+      "narrator_reliability": "reliable",
+      "drive": "character_driven"
+    },
+    {
+      "book_id": "a6eee3f0-021e-4315-b3eb-88240dc2c518",
+      "person": "first",
+      "pov_count": "single",
+      "humor_level": "light",
+      "narrator_reliability": "reliable",
+      "drive": "balanced"
+    },
+    {
+      "book_id": "dbd686e7-30e2-463a-a0a0-029455eda954",
+      "person": "first",
+      "pov_count": "single",
+      "humor_level": "light",
+      "narrator_reliability": "reliable",
+      "drive": "character_driven"
+    }
+  ],
+  "confidence": [
+    {
+      "book_id": "56b77ecb-3932-4bd6-ae85-df9a4bd4f83c",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.6,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "56b77ecb-3932-4bd6-ae85-df9a4bd4f83c",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "6ed87f2b-3890-41ed-a8d1-73859a7b1b78",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "6ed87f2b-3890-41ed-a8d1-73859a7b1b78",
+      "field_name": "romance_tone",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "abb82612-6536-4913-8f33-31f52b19a2a6",
+      "field_name": "person",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "abb82612-6536-4913-8f33-31f52b19a2a6",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.6,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "0e71ef24-9b39-4413-be5a-54925543dfc5",
+      "field_name": "pov_count",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "0e71ef24-9b39-4413-be5a-54925543dfc5",
+      "field_name": "romance_tone",
+      "confidence": 0.6,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "0e71ef24-9b39-4413-be5a-54925543dfc5",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.6,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "2fc0df0a-e2fd-470a-9d1e-1861c2409c9c",
+      "field_name": "person",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "2fc0df0a-e2fd-470a-9d1e-1861c2409c9c",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "c1f3a771-0ac9-4cd4-8b67-03f295b38387",
+      "field_name": "pov_count",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "c1f3a771-0ac9-4cd4-8b67-03f295b38387",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "7249fe6d-23ad-4506-9375-5615f0463402",
+      "field_name": "person",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "7249fe6d-23ad-4506-9375-5615f0463402",
+      "field_name": "pov_count",
+      "confidence": 0.4,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "7249fe6d-23ad-4506-9375-5615f0463402",
+      "field_name": "form",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "7249fe6d-23ad-4506-9375-5615f0463402",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "7249fe6d-23ad-4506-9375-5615f0463402",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "37bbc3b3-5b3d-40c5-a784-e098888f45a2",
+      "field_name": "narrator_reliability",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "37bbc3b3-5b3d-40c5-a784-e098888f45a2",
+      "field_name": "scifi_hardness",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "37bbc3b3-5b3d-40c5-a784-e098888f45a2",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "dd39728a-4410-4014-b81d-6a9d7e4c3fe1",
+      "field_name": "pov_count",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "dd39728a-4410-4014-b81d-6a9d7e4c3fe1",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "dd39728a-4410-4014-b81d-6a9d7e4c3fe1",
+      "field_name": "romance_tone",
+      "confidence": 0.2,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "dd39728a-4410-4014-b81d-6a9d7e4c3fe1",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "a6eee3f0-021e-4315-b3eb-88240dc2c518",
+      "field_name": "person",
+      "confidence": 0.6,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "a6eee3f0-021e-4315-b3eb-88240dc2c518",
+      "field_name": "drive",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "a6eee3f0-021e-4315-b3eb-88240dc2c518",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "a6eee3f0-021e-4315-b3eb-88240dc2c518",
+      "field_name": "scifi_hardness",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "a6eee3f0-021e-4315-b3eb-88240dc2c518",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "dbd686e7-30e2-463a-a0a0-029455eda954",
+      "field_name": "timeline",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "dbd686e7-30e2-463a-a0a0-029455eda954",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "8dc2db0d-56c1-46eb-bc17-f0662405e699",
+      "field_name": "person",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "3843c607-4806-44ea-a0ed-bdca71f4b4fc",
+      "field_name": "person",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "55fcb2e8-68e9-4b33-bb16-deec382d6418",
+      "field_name": "narrator_reliability",
+      "confidence": 0.4,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "55fcb2e8-68e9-4b33-bb16-deec382d6418",
+      "field_name": "romance_tone",
+      "confidence": 0.3,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "55fcb2e8-68e9-4b33-bb16-deec382d6418",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.4,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "e4c0e2a5-ab88-4728-98a3-6825d432d640",
+      "field_name": "person",
+      "confidence": 0.6,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "e4c0e2a5-ab88-4728-98a3-6825d432d640",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.3,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "db617cf8-d78c-43b0-bec5-03358e090099",
+      "field_name": "person",
+      "confidence": 0.6,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "db617cf8-d78c-43b0-bec5-03358e090099",
+      "field_name": "narrator_reliability",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "7a34f8e8-5e53-49d4-820a-3995f10cb3cd",
+      "field_name": "drive",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "7a34f8e8-5e53-49d4-820a-3995f10cb3cd",
+      "field_name": "romance_tone",
+      "confidence": 0.6,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "7a34f8e8-5e53-49d4-820a-3995f10cb3cd",
+      "field_name": "worldbuilding_delivery",
+      "confidence": 0.5,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "d1af1183-9f48-4a24-b074-4dd30f71b76b",
+      "field_name": "drive",
+      "confidence": 0.4,
+      "source": "ai_inferred"
+    },
+    {
+      "book_id": "d1af1183-9f48-4a24-b074-4dd30f71b76b",
+      "field_name": "romance_tone",
+      "confidence": 0.3,
+      "source": "ai_inferred"
+    }
+  ],
+  "humor_half_catalog": [
+    {
+      "book_id": "046508d0-8402-4627-881b-e577bc2d34c0",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "046508d0-8402-4627-881b-e577bc2d34c0",
+        "title": "Horns",
+        "author": "Joe Hill",
+        "hardcover_id": 178955
+      }
+    },
+    {
+      "book_id": "ce72d50f-8089-4050-981d-93ab521baaee",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "ce72d50f-8089-4050-981d-93ab521baaee",
+        "title": "NOS4A2",
+        "author": "Joe Hill",
+        "hardcover_id": 263318
+      }
+    },
+    {
+      "book_id": "e0bd49f0-4af6-42f0-9d76-a05620f0333f",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "e0bd49f0-4af6-42f0-9d76-a05620f0333f",
+        "title": "We",
+        "author": "Yevgeny Zamyatin",
+        "hardcover_id": 445735
+      }
+    },
+    {
+      "book_id": "29262f17-0d13-4e15-b915-a3742f2cb1e7",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "29262f17-0d13-4e15-b915-a3742f2cb1e7",
+        "title": "A Wizard’s Guide to Defensive Baking",
+        "author": "T. Kingfisher",
+        "hardcover_id": 2411449
+      }
+    },
+    {
+      "book_id": "6c38e0f9-6199-40c7-be95-593fe4278310",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "6c38e0f9-6199-40c7-be95-593fe4278310",
+        "title": "Zero G",
+        "author": "Dan Wells",
+        "hardcover_id": 463065
+      }
+    },
+    {
+      "book_id": "56b77ecb-3932-4bd6-ae85-df9a4bd4f83c",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "56b77ecb-3932-4bd6-ae85-df9a4bd4f83c",
+        "title": "Accelerando",
+        "author": "Charles Stross",
+        "hardcover_id": 374578
+      }
+    },
+    {
+      "book_id": "6ed87f2b-3890-41ed-a8d1-73859a7b1b78",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "6ed87f2b-3890-41ed-a8d1-73859a7b1b78",
+        "title": "Annie Bot",
+        "author": "Sierra Greer",
+        "hardcover_id": 1061553
+      }
+    },
+    {
+      "book_id": "cb1abbbf-5caf-44b3-9330-531c2a80b2fa",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "cb1abbbf-5caf-44b3-9330-531c2a80b2fa",
+        "title": "Aurora",
+        "author": "Kim Stanley Robinson",
+        "hardcover_id": 372879
+      }
+    },
+    {
+      "book_id": "a78008fe-b39e-4ee1-aca3-500b7fe98b13",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "a78008fe-b39e-4ee1-aca3-500b7fe98b13",
+        "title": "Embassytown",
+        "author": "China Miéville",
+        "hardcover_id": 451118
+      }
+    },
+    {
+      "book_id": "29454d47-1a74-441a-9892-6cc75a328dfb",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "29454d47-1a74-441a-9892-6cc75a328dfb",
+        "title": "Hell Followed with Us",
+        "author": "Andrew Joseph White",
+        "hardcover_id": 454825
+      }
+    },
+    {
+      "book_id": "7249fe6d-23ad-4506-9375-5615f0463402",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "7249fe6d-23ad-4506-9375-5615f0463402",
+        "title": "Shroud",
+        "author": "Adrian Tchaikovsky",
+        "hardcover_id": 1420497
+      }
+    },
+    {
+      "book_id": "dd39728a-4410-4014-b81d-6a9d7e4c3fe1",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "dd39728a-4410-4014-b81d-6a9d7e4c3fe1",
+        "title": "The Bright Sword",
+        "author": "Lev Grossman",
+        "hardcover_id": 484946
+      }
+    },
+    {
+      "book_id": "a6eee3f0-021e-4315-b3eb-88240dc2c518",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "a6eee3f0-021e-4315-b3eb-88240dc2c518",
+        "title": "The Deep Sky",
+        "author": "Yume Kitasei",
+        "hardcover_id": 584712
+      }
+    },
+    {
+      "book_id": "dbd686e7-30e2-463a-a0a0-029455eda954",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "dbd686e7-30e2-463a-a0a0-029455eda954",
+        "title": "The Echo Wife",
+        "author": "Sarah Gailey",
+        "hardcover_id": 427729
+      }
+    },
+    {
+      "book_id": "21d31d89-7acc-4653-a0ca-d5399bb6dbbb",
+      "field_name": "humor_level",
+      "confidence": 0.5,
+      "source": "ai_inferred",
+      "book": {
+        "id": "21d31d89-7acc-4653-a0ca-d5399bb6dbbb",
+        "title": "The Year of the Flood",
+        "author": "Margaret Atwood",
+        "hardcover_id": 385012
+      }
+    }
+  ],
+  "queries": [
+    {
+      "table": "books",
+      "params": {
+        "select": "id,title,author,hardcover_id",
+        "order": "title,id",
+        "limit": "1000",
+        "offset": "0"
+      },
+      "rows": 1000
+    },
+    {
+      "table": "books",
+      "params": {
+        "select": "id,title,author,hardcover_id",
+        "order": "title,id",
+        "limit": "1000",
+        "offset": "1000"
+      },
+      "rows": 256
+    },
+    {
+      "table": "book_dna",
+      "params": {
+        "select": "book_id,person,pov_count,humor_level,narrator_reliability,drive",
+        "book_id": "in.(56b77ecb-3932-4bd6-ae85-df9a4bd4f83c,6ed87f2b-3890-41ed-a8d1-73859a7b1b78,8dc2db0d-56c1-46eb-bc17-f0662405e699,3843c607-4806-44ea-a0ed-bdca71f4b4fc,abb82612-6536-4913-8f33-31f52b19a2a6,55fcb2e8-68e9-4b33-bb16-deec382d6418,0e71ef24-9b39-4413-be5a-54925543dfc5,e4c0e2a5-ab88-4728-98a3-6825d432d640,db617cf8-d78c-43b0-bec5-03358e090099,2fc0df0a-e2fd-470a-9d1e-1861c2409c9c,c1f3a771-0ac9-4cd4-8b67-03f295b38387,7a34f8e8-5e53-49d4-820a-3995f10cb3cd,7249fe6d-23ad-4506-9375-5615f0463402,37bbc3b3-5b3d-40c5-a784-e098888f45a2,d1af1183-9f48-4a24-b074-4dd30f71b76b,dd39728a-4410-4014-b81d-6a9d7e4c3fe1,a6eee3f0-021e-4315-b3eb-88240dc2c518,dbd686e7-30e2-463a-a0a0-029455eda954)"
+      },
+      "rows": 18
+    },
+    {
+      "table": "book_field_confidence",
+      "params": {
+        "select": "book_id,field_name,confidence,source",
+        "book_id": "in.(56b77ecb-3932-4bd6-ae85-df9a4bd4f83c,6ed87f2b-3890-41ed-a8d1-73859a7b1b78,8dc2db0d-56c1-46eb-bc17-f0662405e699,3843c607-4806-44ea-a0ed-bdca71f4b4fc,abb82612-6536-4913-8f33-31f52b19a2a6,55fcb2e8-68e9-4b33-bb16-deec382d6418,0e71ef24-9b39-4413-be5a-54925543dfc5,e4c0e2a5-ab88-4728-98a3-6825d432d640,db617cf8-d78c-43b0-bec5-03358e090099,2fc0df0a-e2fd-470a-9d1e-1861c2409c9c,c1f3a771-0ac9-4cd4-8b67-03f295b38387,7a34f8e8-5e53-49d4-820a-3995f10cb3cd,7249fe6d-23ad-4506-9375-5615f0463402,37bbc3b3-5b3d-40c5-a784-e098888f45a2,d1af1183-9f48-4a24-b074-4dd30f71b76b,dd39728a-4410-4014-b81d-6a9d7e4c3fe1,a6eee3f0-021e-4315-b3eb-88240dc2c518,dbd686e7-30e2-463a-a0a0-029455eda954)"
+      },
+      "rows": 46
+    },
+    {
+      "table": "book_field_confidence",
+      "params": {
+        "select": "book_id,field_name,confidence,source",
+        "field_name": "eq.humor_level",
+        "confidence": "eq.0.5"
+      },
+      "rows": 15
+    }
+  ]
+}

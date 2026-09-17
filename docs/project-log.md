@@ -17604,3 +17604,77 @@ Committed and pushed directly (CLDA has real write access per
 up to date with `origin/main` (the same-day sibling batch, commit
 `8d96980`, was the latest commit on both), so this landed as a plain
 fast-forward with no merge/conflict.
+
+## 2026-09-17 (later) -- CODX's Task 9 QA pass landed: 3 tag corrections, 8 confidence increases, independently re-verified against primary sources
+
+CODX finished Task 9 with a genuinely careful, well-disciplined report
+(`docs/codx-reports/2026-09-17-highrisk-confidence-qa-pass.md`, its own
+clone, plus a companion evidence directory of the exact hosted reads
+used for identity verification). Reviewed all 21 assigned (book, field)
+pairs: **3 likely wrong (corrected), 8 confirmed correct (confidence
+raised), 10 genuinely inconclusive (left unchanged on purpose)** -- a
+legitimate, expected distribution, not a failure to find something on
+the inconclusive ones.
+
+**The three corrections, each with real cited evidence**:
+- *Gateway* (Frederik Pohl) `narrator_reliability`: `reliable` ->
+  `unreliable` -- three independent reviews establish Broadhead's
+  retrospective account is distorted by guilt/self-deception (survivor
+  guilt over the traumatic event underlying his therapy sessions), not
+  just an unpleasant protagonist. CODX itself flagged this as its most
+  interpretive finding, deserving careful review -- it was reviewed
+  carefully, not rubber-stamped.
+- *Fall or, Dodge in Hell* (Neal Stephenson) `person`: `mixed` ->
+  `third_omniscient` -- a study guide's explicit Point of View section
+  identifies an omniscient narrator; different characters/worlds across
+  chapters aren't different grammatical persons.
+- *Gods of Jade and Shadow* (Silvia Moreno-Garcia) `pov_count`: `dual`
+  -> `few` -- two independent reviews identify three recurring
+  viewpoint threads (Casiopea, Martin, Vucub-Kame), fitting the
+  schema's 3-4 bucket.
+
+Also correctly disambiguated *Shroud* (verifying the 2025 Adrian
+Tchaikovsky novel, not John Banville's unrelated 2003 book of the same
+title, before touching any of its three flagged fields) and
+investigated the "nine books all landed at exactly 0.5 humor_level"
+pattern I'd flagged as worth checking: found a real, honest answer --
+5 of 9 explicitly relied on author-style assumptions in the original
+tagging rationale, others recorded genuinely different reasons (missing
+evidence, memory, interpretation) -- a common uncertainty bucket with
+heterogeneous real causes, not an undocumented blanket default.
+
+**Independently re-verified before applying, same discipline as every
+prior CODX proposal**: re-confirmed all 21 current values/confidences
+still matched CODX's snapshot immediately before writing anything (they
+did). WebFetched the actual cited sources for all 3 corrections plus
+the Shroud/Ilium identity checks directly -- confirmed each one really
+says what CODX quoted it as saying (Andrew Gibson's Gateway review,
+BookRags' Fall/Dodge in Hell style guide, Dini Panda Reads' Gods of
+Jade and Shadow review, Orbit's official Shroud excerpt, the Ilium
+ebook preview) -- not just trusted the citations. Confirmed the
+companion evidence directory contains only public catalog metadata (a
+"secret" grep hit was just the word appearing in Congo's own synopsis
+text), safe to commit.
+
+Applied as migration
+`20260917020000_task9_highrisk_confidence_qa_corrections.sql` --
+tested first in a rolled-back local transaction (confirmed exactly the
+intended 14 updates, nothing else touched), then applied for real to
+local and pushed to hosted via `supabase db push`. Every UPDATE is
+conditional on the exact prior value/confidence, so it safely no-ops
+rather than silently overwriting anything if a value changes before
+this runs elsewhere. Permanent record at
+`docs/codx-reviews/codx-highrisk-confidence-qa-pass-2026-09-17.md` plus
+its evidence directory.
+
+This is the genuine first real-world payoff of the recurring
+HIGH_RISK_FIELDS QA task type established yesterday. **Correcting a
+real error in yesterday's own estimate while checking this**: the
+"~161 catalog-wide" figure quoted yesterday conflated each field's
+TOTAL row count with rows actually below the 0.6 threshold (those are
+different numbers -- e.g. `pov_count` has 41 total rows but only some
+of those are below 0.6). Queried it properly this time: **85
+HIGH_RISK_FIELDS rows remain below 0.6 catalog-wide**, after this
+round's 11 rows moving above threshold and CLDA's two new batches
+today adding some fresh low-confidence rows of their own. Next round
+should pull from that real number whenever CODX is next free for it.
