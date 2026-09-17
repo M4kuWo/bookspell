@@ -234,9 +234,24 @@ worth deferring to a later session rather than batching in for
   experiments). Not actionable by engineering work -- actionable by
   recruiting readers, whenever that becomes a priority.
 
-- [ ] **`recommend.py` structural refactor -- proposed by the same GPT
-  review (2026-09-14), not yet started, needs a real scoping decision
-  before any work begins.** The diagnosis is correct and, notably,
+- [x] **`recommend.py` structural refactor -- FULLY LANDED 2026-09-17
+  (both Phase A and Phase B, via CODX Tasks 4-12, each independently
+  verified by CLDO before applying).** Originally proposed by a GPT
+  review (2026-09-14) and left below as the original scoping writeup
+  for historical context -- the plan it describes is, in substance,
+  exactly what shipped. Phase A (canonical `score_candidate()`
+  consolidation across every scoring call site) and Phase B (the
+  `scripts/scoring/` submodule split, B1-B4, ending with the
+  `scripts/recommend.py` shim itself dropped to a 105-line standalone
+  CLI demo) are both complete. See `docs/scoring-test-protocol.md`'s
+  "Phase A"/"Phase B" entries for the step-by-step landing record and
+  `docs/codx-reviews/codx-phase-b-shim-removal-2026-09-17.md` for the
+  final step's full verification detail. The original proposal below
+  is stale in its "not yet started" framing only -- everything else
+  in it (the diagnosis, the file list, the phased approach) held up
+  and is worth keeping as the design rationale.
+
+  The diagnosis is correct and, notably,
   independently corroborated by this project's own very recent history,
   not just a generic "big file is bad" complaint: CODX's first review
   (also 2026-09-14, see `docs/scoring-test-protocol.md`'s entry) found
@@ -340,12 +355,14 @@ worth deferring to a later session rather than batching in for
     uses for algorithm experiments: run `scoring_tests.py`'s full
     scorecard before and after and confirm byte-identical results
     across every rater, not just "it still imports."
-  - **Not started. Needs the repo owner's explicit go-ahead on scope**
-    (just the pipeline/ScoreResult piece, or the full module split too)
-    before any code moves -- this is exactly the kind of large,
-    hard-to-partially-revert change this project's own safety
-    conventions ask to confirm first, not something to just start on
-    the strength of a good diagnosis.
+  - **(Historical note, no longer current) Not started. Needs the repo
+    owner's explicit go-ahead on scope** (just the pipeline/ScoreResult
+    piece, or the full module split too) before any code moves -- this
+    is exactly the kind of large, hard-to-partially-revert change this
+    project's own safety conventions ask to confirm first, not
+    something to just start on the strength of a good diagnosis. **See
+    the `[x] FULLY LANDED` note at the top of this entry -- the go-ahead
+    was given and both phases are now complete.**
 
 - [x] **Catalog-wide trope/content-warning vocabulary gap sweep --
   RUN 2026-09-13 by CLDA.** Full methodology in
