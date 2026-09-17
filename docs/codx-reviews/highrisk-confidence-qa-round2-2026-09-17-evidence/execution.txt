@@ -1,0 +1,11 @@
+HEAD: 3621ecbb412dc42cb931ec25fe6186e54f9f9937
+Hosted snapshot UTC: 2026-09-17T09:05:52.490979+00:00
+Report pair sections and JSON recommendations: 20 / 20
+Section current values/confidences match hosted snapshot: 20 / 20
+Assigned confidences match hosted snapshot: 20 / 20
+Unique exact title + author identities: 14 / 14
+Unchanged inconclusive/mismatch recommendations verified: 11 / 11
+Outcome counts: {"Confirmed correct": 6, "Schema/format mismatch": 4, "Genuinely inconclusive": 7, "Likely wrong": 3}
+git diff --exit-code: exit 0; no output
+git diff --cached --exit-code: exit 0; no output
+SHA-256 comparison of tracked files to HEAD: 342 files, 0 mismatches

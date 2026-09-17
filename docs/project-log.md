@@ -17797,3 +17797,60 @@ authors and series. Verified the correct attribution before finalizing
 rather than shipping a task file with a factual error in it, which
 would have been exactly the kind of confidently-wrong mistake this
 whole QA process exists to catch.
+
+## 2026-09-17 (later still) -- CODX's Task 10 (round 2) landed: 3 more corrections, 6 confidence increases, first real test of the file-based handoff succeeded
+
+CODX finished Task 10 -- and this time it genuinely worked from the new
+`docs/codx-tasks/current-task.md` mechanism after a real terminal
+reset, not the old copy-pasted-prompt path (its own report explicitly
+notes the task brief's embedded baseline commit was slightly stale by
+the time it synced, correctly proceeded anyway since the actual task
+content was unambiguous). First real end-to-end validation of the
+persona-workflow handoff built yesterday.
+
+Reviewed all 20 assigned pairs: **3 likely wrong (corrected), 6
+confirmed correct (confidence raised), 7 genuinely inconclusive, 4
+schema/format mismatches** -- correctly used the new mismatch category
+exactly where hinted (all 3 flagged Cursed Bunny fields plus Quidditch
+Through the Ages), and independently cross-referenced the original
+2026-09-16 batch's own migration comments to confirm Cursed Bunny's
+anthology structure was already a recognized problem at tagging time,
+not a fresh discovery -- a real, careful piece of reasoning, not just
+applying the category because it was suggested.
+
+**The three corrections, each independently re-verified against the
+actual cited source text**:
+- *Translation State* (Ann Leckie) `person`: `third_limited` ->
+  `mixed` -- two independent reviews explicitly identify Qven's
+  first-person chapters against Enae/Reet's third-person chapters.
+- *Dance of Thieves* (Mary E. Pearson) `magic_system_hardness`: `na` ->
+  `soft` -- book-specific accounts identify real, unexplained
+  supernatural perception (the Gift, a seer, encounters with the dead),
+  neither pure SF nor magic-free.
+- *How to Become the Dark Lord and Die Trying* (Django Wexler)
+  `romance_heat_intensity`: `moderate` -> `closed_door` -- two
+  independent reviews explicitly describe fade-to-black sexual
+  encounters. CODX itself flagged this as the most boundary-sensitive
+  correction, needing scene-level confirmation -- it got exactly that
+  before being applied, not a rubber stamp.
+
+**Independently re-verified before applying, same discipline as every
+prior CODX proposal**: ran `scripts/check_db_sync.py` first (clean),
+re-confirmed all 9 changing values/confidences still matched CODX's
+snapshot, then WebFetched the actual cited sources for all 3
+corrections directly -- confirmed each one really says what CODX quoted
+it as saying (Dear Author's Translation State review, Are You My
+Book's Dance of Thieves review, Shannon Fallon's Dark Lord review).
+Tested the migration in a rolled-back local transaction first
+(confirmed exactly the intended 9 updates), applied to local, pushed to
+hosted via `supabase db push`, verified hosted directly. Confirmed the
+evidence directory contains only public catalog metadata (another
+"secret" grep false-positive, this time from Book of Night's own
+synopsis).
+
+Permanent record: `docs/codx-reviews/codx-highrisk-confidence-qa-round2-2026-09-17.md`
+plus its evidence directory. `docs/codx-tasks/current-task.md` reset to
+a holding-pattern note. Across both rounds so far: 6 tag corrections,
+14 confidence increases, all independently verified against primary
+sources before landing -- a real, growing track record for this
+recurring task type.

@@ -961,18 +961,25 @@ worth deferring to a later session rather than batching in for
   as tagging), for independent research-based verification -- a real
   check against confidently-wrong tagging that self-review under time
   pressure structurally can't catch. **Round 1 (Task 9) landed
-  2026-09-17**: 3 tag corrections, 8 confidence increases, all
-  independently re-verified by CLDO against primary sources before
-  applying -- see `docs/project-log.md`'s 2026-09-17 "CODX's Task 9 QA
-  pass landed" entry and
-  `docs/codx-reviews/codx-highrisk-confidence-qa-pass-2026-09-17.md`
-  for the full record. **85 `HIGH_RISK_FIELDS` rows remain below 0.6
-  catalog-wide as of 2026-09-17** (query fresh each round, don't trust
-  this number as it ages -- an earlier same-day estimate of "~161" was
-  a real error, conflating each field's total row count with rows
-  actually below threshold). Next round: whenever CODX is next free for
-  it, not urgent -- a low-confidence field is already correctly
-  discounted by the scoring engine, not actively causing harm.
+  2026-09-17**: 3 tag corrections, 8 confidence increases -- see
+  `docs/codx-reviews/codx-highrisk-confidence-qa-pass-2026-09-17.md`.
+  **Round 2 (Task 10) landed 2026-09-17**: 3 more corrections, 6 more
+  confidence increases, plus a new "schema/format mismatch" finding
+  category (used correctly for a short-story collection and an
+  in-universe fake textbook, both genuinely not shaped like the fields
+  being checked) -- see
+  `docs/codx-reviews/codx-highrisk-confidence-qa-round2-2026-09-17.md`.
+  Both rounds independently re-verified by CLDO against primary sources
+  (actual cited review text, not just trusted citations) before
+  applying. **Running total across both rounds: 6 corrections, 14
+  confidence increases.** Round 2 was also the first genuine end-to-end
+  test of the file-based task handoff (`docs/codx-tasks/current-task.md`)
+  after a real CODX terminal reset -- it worked. **125 `HIGH_RISK_FIELDS`
+  rows remain below 0.6 catalog-wide as of 2026-09-17** (query fresh
+  each round, don't trust this number as it ages). Next round: whenever
+  CODX is next free for it, not urgent -- a low-confidence field is
+  already correctly discounted by the scoring engine, not actively
+  causing harm.
 - [ ] **MOVED to P3, 2026-09-11** -- folded into the demoted
   dramatized-audio-edition item there (Throne of Glass 2-9, Dresden
   Files 6-14, Murderbot's 2 prequels -- same "wait for the producer"
