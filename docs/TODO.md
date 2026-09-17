@@ -797,9 +797,18 @@ worth deferring to a later session rather than batching in for
 
   **Every production caller of the original stage sequence now goes
   through `score_candidate()`** — `recommend()`, `explain_match()`,
-  `scoring_tests._full_score()`, and `audit_book_score()`. Next real
-  step, when the repo owner is ready to schedule it: Phase B
-  (extracting into `scripts/scoring/` submodules) per the plan above.
+  `scoring_tests._full_score()`, and `audit_book_score()`.
+
+  **Phase B started, 2026-09-17 (CODX's Task 11)** — assigned the
+  first real Phase B step: split `scripts/recommend.py` into
+  `scripts/scoring/` submodules, pure code movement, zero logic
+  change, with the exact required-re-export surface for
+  `api/main.py`/`scoring_tests.py` computed by grepping both files'
+  real usage rather than guessed. See
+  `docs/codx-tasks/current-task.md` for the full brief (includes a
+  flagged real circular-import risk in the original 8-file sketch
+  below, and why the scoring core needs to stay together in one
+  `pipeline.py` rather than split further).
 
   Old note, superseded by the above but kept for history: **Not done
   yet, and not part of "setup" — actually running Codex
@@ -955,31 +964,10 @@ worth deferring to a later session rather than batching in for
 
 ## P2 (ongoing/routine, not new decisions)
 
-- [ ] **Recurring HIGH_RISK_FIELDS confidence QA pass (CODX), established
-  2026-09-17.** Periodically hand CODX the lowest-confidence
-  `HIGH_RISK_FIELDS` rows catalog-wide (a batch of 15-20, same cadence
-  as tagging), for independent research-based verification -- a real
-  check against confidently-wrong tagging that self-review under time
-  pressure structurally can't catch. **Round 1 (Task 9) landed
-  2026-09-17**: 3 tag corrections, 8 confidence increases -- see
-  `docs/codx-reviews/codx-highrisk-confidence-qa-pass-2026-09-17.md`.
-  **Round 2 (Task 10) landed 2026-09-17**: 3 more corrections, 6 more
-  confidence increases, plus a new "schema/format mismatch" finding
-  category (used correctly for a short-story collection and an
-  in-universe fake textbook, both genuinely not shaped like the fields
-  being checked) -- see
-  `docs/codx-reviews/codx-highrisk-confidence-qa-round2-2026-09-17.md`.
-  Both rounds independently re-verified by CLDO against primary sources
-  (actual cited review text, not just trusted citations) before
-  applying. **Running total across both rounds: 6 corrections, 14
-  confidence increases.** Round 2 was also the first genuine end-to-end
-  test of the file-based task handoff (`docs/codx-tasks/current-task.md`)
-  after a real CODX terminal reset -- it worked. **125 `HIGH_RISK_FIELDS`
-  rows remain below 0.6 catalog-wide as of 2026-09-17** (query fresh
-  each round, don't trust this number as it ages). Next round: whenever
-  CODX is next free for it, not urgent -- a low-confidence field is
-  already correctly discounted by the scoring engine, not actively
-  causing harm.
+- [ ] **MOVED to P3, 2026-09-17** -- see the "Recurring HIGH_RISK_FIELDS
+  confidence QA pass" entry there. Two rounds landed, real value
+  proven, deliberately paused for now (token-budget reasons, not
+  because it stopped being worth doing) in favor of Phase B.
 - [ ] **MOVED to P3, 2026-09-11** -- folded into the demoted
   dramatized-audio-edition item there (Throne of Glass 2-9, Dresden
   Files 6-14, Murderbot's 2 prequels -- same "wait for the producer"
@@ -2817,6 +2805,40 @@ worth deferring to a later session rather than batching in for
 
 ## P3 (blocked or parked -- check the blocker before picking up)
 
+- [ ] **Recurring HIGH_RISK_FIELDS confidence QA pass (CODX), established
+  2026-09-17, paused 2026-09-17.** Periodically hand CODX the
+  lowest-confidence `HIGH_RISK_FIELDS` rows catalog-wide (a batch of
+  15-20), for independent research-based verification -- a real check
+  against confidently-wrong tagging that self-review under time
+  pressure structurally can't catch. **Round 1 (Task 9) landed**: 3 tag
+  corrections, 8 confidence increases -- see
+  `docs/codx-reviews/codx-highrisk-confidence-qa-pass-2026-09-17.md`.
+  **Round 2 (Task 10) landed**: 3 more corrections, 6 more confidence
+  increases, plus a new "schema/format mismatch" finding category
+  (used correctly for a short-story collection and an in-universe fake
+  textbook) -- see
+  `docs/codx-reviews/codx-highrisk-confidence-qa-round2-2026-09-17.md`.
+  Both rounds independently re-verified by CLDO against primary
+  sources before applying. **Running total: 6 corrections, 14
+  confidence increases.** Round 2 was also the first genuine
+  end-to-end test of the file-based task handoff after a real CODX
+  terminal reset -- it worked. 125 `HIGH_RISK_FIELDS` rows remain below
+  0.6 catalog-wide as of 2026-09-17 (query fresh, don't trust this
+  number as it ages).
+
+  **Paused deliberately, not because it stopped being worth doing**:
+  the repo owner noticed real CODX token/budget consumption from two
+  research-heavy rounds back to back (many web fetches + a long report
+  per book, per round) and asked to be more deliberate about spend.
+  This is genuinely open-ended (the backlog never reaches zero -- new
+  tagging keeps adding to it) and a low-confidence field is already
+  correctly discounted by the scoring engine, not actively causing
+  harm -- so pausing it costs nothing urgent. **The blocker to check
+  before resuming**: none structural, just a judgment call on whether
+  it's a better use of CODX's current budget than whatever else is
+  queued (Phase B, another code-review pass, etc.) -- ask the repo
+  owner rather than resuming by default just because a prior round
+  landed clean.
 - [ ] **DEMOTED from P1 to P3, 2026-09-11 -- dramatized-audio edition
   data (GraphicAudio/BBC Audio/Sub-task B Audible Originals), see
   `.claude/skills/tag-audiobook-editions/SKILL.md`.** Repo owner's

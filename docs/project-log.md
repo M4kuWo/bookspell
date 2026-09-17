@@ -17854,3 +17854,51 @@ a holding-pattern note. Across both rounds so far: 6 tag corrections,
 14 confidence increases, all independently verified against primary
 sources before landing -- a real, growing track record for this
 recurring task type.
+
+## 2026-09-17 (later still) -- paused the confidence QA pass on token-budget grounds, queued Phase B (CODX's Task 11) instead
+
+Repo owner flagged real CODX token/budget consumption (a screenshot
+showing 27%/28% of the 5h/weekly limits remaining after two research-
+heavy QA rounds back to back) and asked how many more rounds were
+actually needed. Answered honestly: none are strictly needed --
+low-confidence tags are already correctly discounted by the scoring
+engine, the backlog never truly reaches zero since new tagging keeps
+adding to it, and this task type (many web fetches + a long report per
+round) is inherently more expensive than most of what CODX does.
+Recommended pausing it in favor of something with a real finish line.
+Repo owner agreed and asked to move to Phase B instead.
+
+**Moved the confidence QA pass entry from P2 to P3** in `docs/TODO.md`,
+framed explicitly as paused-not-abandoned, with the real reasoning on
+record (token budget, not diminishing value) so a future session
+doesn't either resume it by default or forget it existed.
+
+**Did the Phase B planning work myself, with my own tokens, so CODX's
+task is pure mechanical execution rather than research/design**:
+grepped every `R.\w+` access across both real consumers (`api/main.py`,
+`scripts/scoring_tests.py`) to get the exact, authoritative
+required-re-export surface -- far larger than "the public API" alone
+(reaches deep into private helpers like `_resolve_profile`,
+`_nominal_field_separation`, `_audit_attribute_ordinal`, and several
+module-level constants). Read the full function list in
+`scripts/recommend.py` and found a real structural risk before handing
+anything off: the original 8-file sketch in `docs/TODO.md`'s Phase B
+plan (`prevalence.py`/`dealbreakers.py`/`series.py`/etc.) would create
+a genuine circular import between the scoring core and a standalone
+`dealbreakers.py`, since `score_candidate()` needs the veto/dealbreaker
+functions directly while those functions need `explain_book()` back
+from the core. Resolved by keeping the whole tightly-coupled scoring
+core (`score_book`, `explain_book`, `_iter_book_factors`, the
+`_apply_*` stage functions, `dealbreaker_flags`,
+`validated_dealbreaker_fields`, `score_candidate`) together in one
+`pipeline.py`, with pure series-data functions split out separately
+into `series.py` where they have no such coupling.
+
+Queued as Task 11 in `docs/codx-tasks/current-task.md`: split
+`scripts/recommend.py` into `scripts/scoring/` submodules per the
+revised map above, presented as a starting proposal CODX should verify
+and adjust against the real call graph, not a rigid mandate -- with the
+exact required-re-export list, the circular-import reasoning, and the
+validation bar (AST-diff per moved function, byte-identical canonical
+suite, both real consumers' actual call paths exercised) all spelled
+out explicitly so this stays a bounded, low-research-cost task.
