@@ -438,6 +438,15 @@ worth deferring to a later session rather than batching in for
   smaller and more contained than the `explain_match()` fix, worth
   doing either independently or together.
 
+  **UPDATE 2026-09-19: queued as next up, deliberately not started.**
+  Repo owner had ~3% of his weekly token budget left this session --
+  agreed to hold off rather than start a scoring-engine change (which
+  needs the full byte-identical-scorecard verification above, not a
+  quick edit) that could get interrupted mid-way and left
+  half-verified. Nothing new investigated this session; the profiling
+  and fix shape above are still the plan, unchanged. Pick this up
+  first next session with a full budget.
+
 - [x] **Catalog-wide audiobook edition data gaps: missing
   `runtime_minutes`, and no `release_date` field at all -- raised
   by the repo owner 2026-09-18, confirmed and quantified. Schema half
