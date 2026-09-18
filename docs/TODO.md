@@ -3478,9 +3478,10 @@ worth deferring to a later session rather than batching in for
   review` NOR the (newly-built) v1 app's book-info modal could actually
   read any of this data until `20260913100000`/`20260913110000` fixed
   it -- all this real collection work has been invisible to every
-  consumer since the table existed. Also found (not fixed): some
-  GraphicAudio full-cast rows are mislabeled `edition_type = 'standard'`
-  (see the data-quality entry further down in this P3 section). None of
+  consumer since the table existed. Also found (not fixed at the time;
+  swept 2026-09-18, no confirmed cases -- see the data-quality entry
+  further down in this P3 section): some GraphicAudio full-cast rows
+  were suspected mislabeled `edition_type = 'standard'`. None of
   this changes the P3 reasoning above (known candidate
   pools for genuinely NEW editions are still exhausted) -- it's a
   data-visibility/quality fix, not new sourcing work.
@@ -3780,18 +3781,43 @@ worth deferring to a later session rather than batching in for
   and were deliberately left null rather than guessed at -- a real,
   small remaining backfill opportunity if someone wants to make a
   per-book call on which edition's runtime should count.
-- [ ] **Data quality: some `audiobook_editions` rows for GraphicAudio
-  full-cast dramatizations are mislabeled `edition_type = 'standard'`
-  instead of `'dramatized_full_cast'`** -- noticed 2026-09-13 while
-  wiring the app's book-info modal to this table (e.g. "A Court of Frost
-  and Starlight" has a 24-narrator GraphicAudio row tagged `standard`
-  sitting alongside its real single-narrator standard edition). Not
-  fixed here -- flagging only, since telling a genuine full-cast
-  dramatization apart from a real single/dual-narrator "standard"
-  edition by narrator-count heuristic alone risks getting real edge
-  cases wrong (some legitimate standard editions do use 2-3 narrators).
-  Whoever owns `audiobook_editions`' data collection should sweep for
-  this rather than the app layer silently reclassifying it.
+- [x] **Data quality: swept for GraphicAudio full-cast rows mislabeled
+  `edition_type = 'standard'` -- DONE 2026-09-18, none found currently.**
+  Originally noticed 2026-09-13 (e.g. "A Court of Frost and Starlight"
+  supposedly had a 24-narrator GraphicAudio row tagged `standard`). Ran
+  the actual sweep against local Postgres (confirmed in sync with
+  hosted via `check_db_sync.py` first): (1) zero `standard` rows have
+  `graphicaudio` anywhere in `production_company`/`source_url`; (2) the
+  5 `standard` rows mentioning `bbc` are all genuine BBC Audiobooks
+  Ltd/America single-narrator straight narrations (Neverwhere, Prince
+  Caspian, Dawn Treader, Brave New World, The Hobbit) -- a real,
+  separate BBC imprint from BBC Radio drama, correctly `standard`; (3)
+  the ACOFAS row itself is currently `dramatized_full_cast` with the
+  full 24-narrator GraphicAudio cast -- confirmed via
+  `20260908090000_audiobook_editions_graphicaudio_batch2.sql`, it was
+  inserted correctly on 2026-09-08, 5 days *before* the 09-13 note
+  claimed it was mislabeled, and no migration has ever updated its
+  `edition_type`. Best guess: the 09-13 session hit this project's
+  documented recurring local-Postgres-drift bug (see CLAUDE.md) and was
+  looking at a local copy that hadn't yet picked up batch2 -- not a
+  real hosted data issue. (4) A broader narrator-count>=4 heuristic
+  sweep turned up 16 `standard` rows (American Gods, the Dune series,
+  Harry Potter and the Order of the Phoenix, The Handmaid's Tale,
+  etc.) -- checked each: all are mainstream publishers (Macmillan
+  Audio, Random House Audio, Recorded Books, Audible Studios, Hachette
+  Audio, Bolinda, Pottermore, W. F. Howes), none GraphicAudio/BBC Radio
+  drama. Web-checked the most dramatization-flavored one (The
+  Handmaid's Tale's Elisabeth Moss/Ann Dowd/Bradley Whitford edition):
+  it's multiple readers each narrating separate sections straight
+  through, not simultaneous voice-acted dialogue with sound design --
+  the real distinction this schema's `dramatized_full_cast` value is
+  for. Reclassifying these would have repeated exactly the false-positive
+  mistake this entry originally warned against, so left as `standard`.
+  **Conclusion: no confirmed mislabeled rows exist in the catalog right
+  now.** Re-check this after any future GraphicAudio/BBC batch
+  (`tag-audiobook-editions` Sub-task A) in case a future insert
+  reintroduces the mistake -- this is a one-time sweep, not a
+  standing guarantee.
 - [x] **`audiobook_editions` had RLS disabled and no grant to EITHER
   `anon` or `authenticated`** until fixed 2026-09-13
   (`20260913100000_expose_audiobook_editions_to_app.sql` for

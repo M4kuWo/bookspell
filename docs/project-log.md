@@ -18841,3 +18841,47 @@ rush through right as the repo owner is about to switch terminals.
 Logged as a real, well-scoped P1 item in docs/TODO.md with the exact
 fix shape (compute the profile bundle once per request, reuse it
 across every `explain_match()` call) ready to pick up next session.
+
+## 2026-09-18 -- GraphicAudio `edition_type` mislabeling sweep: no confirmed cases found
+
+Ran the sweep `docs/TODO.md` had been flagging since 2026-09-13
+(GraphicAudio full-cast dramatizations mislabeled `edition_type =
+'standard'`). `check_db_sync.py` confirmed local matched hosted first.
+Query for `standard` rows with `graphicaudio` in `production_company`/
+`source_url`: zero matches. The 5 `standard` rows mentioning `bbc` are
+all genuine BBC Audiobooks Ltd/America single-narrator straight
+narrations (Neverwhere, Prince Caspian, Dawn Treader, Brave New World,
+The Hobbit) -- a real, separate imprint from BBC Radio drama, correctly
+`standard`.
+
+The specific example the 09-13 note cited ("A Court of Frost and
+Starlight") turned out to already be correctly `dramatized_full_cast`
+with its full 24-narrator GraphicAudio cast -- traced to
+`20260908090000_audiobook_editions_graphicaudio_batch2.sql`, which
+inserted it correctly 5 days *before* the note was written, and no
+migration has ever changed that row's `edition_type` since. Best guess:
+the 09-13 session hit this project's own documented recurring
+local-Postgres-drift bug and was looking at a stale local copy that
+hadn't yet picked up batch2 -- not a real hosted data issue that
+persisted until now.
+
+A broader narrator-count>=4 heuristic pass turned up 16 `standard` rows
+(American Gods, the Dune series, Harry Potter and the Order of the
+Phoenix, The Handmaid's Tale, etc.), all from mainstream publishers
+(Macmillan Audio, Random House Audio, Recorded Books, Audible Studios,
+Hachette Audio, Bolinda, Pottermore, W. F. Howes) rather than
+GraphicAudio/BBC Radio drama. Web-checked the most dramatization-
+flavored one (The Handmaid's Tale's Elisabeth Moss/Ann Dowd/Bradley
+Whitford edition): it's multiple readers each narrating separate
+sections straight through, not simultaneous voice-acted dialogue with
+sound design -- the real distinction `dramatized_full_cast` is for.
+Left all 16 as `standard` -- reclassifying them would have repeated
+exactly the narrator-count false-positive this entry originally warned
+against.
+
+**Conclusion: no confirmed mislabeled rows exist in the catalog right
+now.** Marked done in `docs/TODO.md`, with a note to re-check after any
+future GraphicAudio/BBC batch under `tag-audiobook-editions` Sub-task A
+in case a future insert reintroduces the mistake -- this was a one-time
+sweep, not a standing guarantee. No migration needed since nothing
+needed changing.
