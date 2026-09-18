@@ -126,6 +126,51 @@ worth deferring to a later session rather than batching in for
   rotate `SUPABASE_SECRET_KEY` per the hygiene note above, (d) a real
   mobile-viewport pass per (5) above.
 
+  **UPDATE 2026-09-18, later -- (2) resolved, a real account created for
+  the repo owner, (c) dropped.** `supabase config push` re-run per the
+  repo owner's explicit go-ahead: printed "Remote Auth config is up to
+  date" -- the site_url/redirect-URL change had already reached hosted
+  by some earlier point, so this was a genuine no-op, not a fresh
+  overwrite risk. **(2) is done, not half-done.**
+  **A real account created for the repo owner** (his explicit request,
+  to skip re-entering 143 already-known ratings one by one through the
+  UI): signed up via the real `/auth/v1/signup` endpoint (same path any
+  real user goes through, not a synthetic bypass) using his own real
+  email; password shared with him directly, out-of-band, never written
+  to any file. `data/ratings/mathias.json`'s 143 ratings + `rated_date`/
+  `review` (only full-precision `YYYY-MM-DD` dates carried over, not
+  the coarser `YYYY-MM`/`YYYY` ones, since the `ratings.rated_date`
+  column is a real `date` and a fabricated day-of-month would be false
+  precision) + `format_preference: "audiobook"` backfilled directly via
+  migration `20260918161106_backfill_mathias_real_account_ratings.sql`
+  -- **deliberately NOT the usual dual-environment catalog-migration
+  pattern** (this is real, hosted-only per-user data tied to a specific
+  Auth identity that has no local equivalent to sync to, unlike
+  catalog/schema data). Tested first in a rolled-back transaction
+  against a temporary throwaway local `auth.users` row with the same
+  email (143/143 rows inserted correctly, exact rating-label breakdown
+  matched, review text with an embedded literal semicolon correctly
+  preserved as a single valid statement), then pushed for real via
+  `supabase db push` and independently re-verified against genuine
+  hosted (via `supabase db query --linked`, not `.env`'s `DATABASE_URL`
+  -- see the correction note in project-log.md's 2026-09-18 entry for
+  why that distinction matters here) -- 143 ratings, `format_preference
+  = 'audiobook'` confirmed live on hosted. **He still needs to confirm
+  the account via the email Supabase just sent** (`enable_confirmations
+  = true` on hosted, correctly -- this wasn't bypassed) before he can
+  actually sign in with the password he was given.
+  **(c) SUPABASE_SECRET_KEY rotation -- DROPPED, not fixed, per the
+  repo owner's explicit 2026-09-18 call**: still early development
+  stage, the key's only ever been pasted in chat once or twice with no
+  actual misuse, and rotation will happen anyway as a matter of course
+  once the project moves past this early stage -- not worth doing as
+  its own isolated action right now.
+  **(5) mobile-viewport pass -- still open, repo owner will test
+  directly on his own phone** rather than via in-session browser
+  automation, since that automation hit a real, reproducible tooling
+  limitation this session (see the entry above) that a second session
+  independently reproduced rather than resolved.
+
   **UPDATE 2026-09-18, CLDO (desktop verification pass)**: did a real,
   live, logged-in walkthrough of the deployed app at
   `https://m4kuwo.github.io/bookspell/app/` -- NOT a substitute for (b)

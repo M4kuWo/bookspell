@@ -18336,3 +18336,123 @@ pending auth-config change to hosted (`config.toml`'s `site_url`/
 and rotating `SUPABASE_SECRET_KEY` (also unclear whether this session
 has Render deploy access to update the corresponding env var
 afterward, which rotating without updating would break the live API).
+
+## 2026-09-18 (later): auth config resolved, a real account created for the repo owner with his 143 ratings backfilled, SUPABASE_SECRET_KEY rotation dropped, and a methodology correction on this repo's own `.env`
+
+Following up directly on the repo owner's explicit instructions after
+the desktop verification pass above: the `kurinman+test` account is
+confirmed disposable test data (his own words: "no reason to take
+anything done by him seriously"), the pending auth-config push was
+approved, `SUPABASE_SECRET_KEY` rotation was explicitly deprioritized,
+and he asked for a real account seeded with his existing 143 ratings
+so he doesn't have to re-enter them one by one through the UI.
+
+**A real methodology correction, caught before it caused any actual
+harm but worth recording plainly**: this repo's own `.env` file's
+`DATABASE_URL` was assumed to point at hosted Postgres during the
+2026-09-17 series batch 14 verification (its "LOCAL vs HOSTED" spot
+checks used it as the "hosted" side). It does not -- it's set to
+`postgresql://postgres:postgres@127.0.0.1:54322/postgres`, the LOCAL
+dev database, discovered when a direct insert against it hit a foreign-
+key violation for an `auth.users` row that had just been created on
+REAL hosted via the Auth REST API. That means those specific per-row
+psycopg2 comparisons weren't a genuine cross-environment check --
+they were comparing local Postgres against itself. **This did not
+produce a wrong outcome**: `scripts/check_db_sync.py` (which reaches
+hosted correctly, via `supabase db query --linked`, not `.env`) had
+already independently confirmed the aggregate row counts matched, and
+a fresh direct check via the same correct CLI method today confirmed
+the batch 14 series values are genuinely correct on hosted. But the
+extra verification step taken at the time added false confidence
+rather than real confirmation, and the underlying assumption (`.env`'s
+`DATABASE_URL` = hosted) is wrong and shouldn't be repeated. **The real
+mechanism for reaching genuine hosted Postgres from this environment is
+the Supabase CLI** (`supabase db push`, `supabase db query --linked`,
+`supabase migration list --linked`) via its own stored link/login
+state, NOT a `DATABASE_URL` env var read from a file -- consistent with
+CLAUDE.md's own instruction that the hosted password/connection string
+is shared out-of-band and exported as a session-scoped shell variable,
+never committed to a file. Nothing was corrected in `.env` itself
+(it's gitignored, local-only, and presumably intentional for whoever
+set it that way); this is a process note for future sessions, not a
+repo change.
+
+**Auth config -- (2) resolved, not half-done.** Re-ran
+`supabase config push` per the repo owner's go-ahead: it printed
+"Remote Auth config is up to date," meaning the pending site_url/
+redirect-URL change had already reached hosted at some earlier point
+(likely applied directly via the dashboard, per the alternative this
+entry's original text offered) -- a genuine no-op, not a fresh
+overwrite of the kind CLAUDE.md's own incident history warns about.
+
+**A real account created for the repo owner.** Signed up via the real,
+public `/auth/v1/signup` REST endpoint using the same publishable anon
+key `app/shared.js` already ships client-side -- the same path any
+real rater's signup goes through, not an admin bypass (no service-role
+key was available or used). Used his own real email. Generated a
+strong random password and will share it with him directly in chat,
+never written to any tracked file. Response confirmed
+`auth.users.id = 204b1507-372b-407a-93bf-e2cac613c92d`,
+`confirmation_sent_at` set -- hosted's `enable_confirmations = true` is
+intact (not bypassed), so he still needs to click the email Supabase
+just sent before he can actually sign in with the password.
+
+**143 ratings + profile backfilled**, sourced verbatim from
+`data/ratings/mathias.json` (the same file every `scoring_tests.py`
+scenario already uses) -- `format_preference: "audiobook"` into a new
+`profiles` row, and every `rating`/`rated_date`/`review` into `ratings`.
+Only full-precision `YYYY-MM-DD` dates from the sibling `rated_dates`
+object were carried over (23 of them); the coarser `YYYY-MM`/`YYYY`
+entries were left `null` rather than fabricating a day-of-month, since
+`ratings.rated_date` is a real `date` column and false precision would
+misrepresent what's actually known.
+
+**Deliberately NOT the usual dual-environment catalog-migration
+pattern** -- this is real, hosted-only per-user data tied to a specific
+Supabase Auth identity that simply has no local equivalent to sync to
+(local Postgres's own `auth.users` is an empty dev stub, not a mirror
+of hosted's real users). Generated the migration
+(`20260918161106_backfill_mathias_real_account_ratings.sql`)
+programmatically from the JSON file rather than hand-transcribing
+titles (same discipline as every title-scoped migration in this
+project), referencing the target user via
+`(select id from auth.users where email = ...)` rather than a hardcoded
+UUID, for the same reason books are referenced via a title subselect
+rather than a raw UUID.
+
+**Tested before applying**: first in a rolled-back transaction against
+LOCAL Postgres, with a temporary throwaway `auth.users` row (same
+email) inserted purely for the test and rolled back along with
+everything else -- caught and fixed one real bug in the TEST SCRIPT
+itself along the way (not the migration): a naive `';'.split(';')`
+parser mis-split a single valid `insert` statement at a literal
+semicolon that happens to appear inside one of the real review texts
+("...before hand; This is the first book...") -- valid SQL, since it's
+safely inside a quoted string literal, just invisible to a splitter
+that doesn't understand quoting. Fixed by executing the whole file in
+one `cur.execute()` call instead (psycopg2's simple query protocol
+handles this correctly, same reasoning as the project's documented
+`E''`-escape-vs-prepared-statements distinction elsewhere in
+CLAUDE.md) -- confirmed 143/143 rows inserted, exact rating-label
+breakdown matching (70 loved/39 liked/10 it_was_okay/15 disliked/9
+hated), before rolling back and applying for real.
+
+Applied via `supabase db push`, independently re-verified against
+genuine hosted via `supabase db query --linked` (not `.env`, per the
+correction above): 143 ratings and `format_preference = 'audiobook'`
+confirmed live. `supabase migration list --linked` confirms
+`20260918161106` has both a `local` and `remote` entry, no tracking
+gap.
+
+**SUPABASE_SECRET_KEY rotation -- dropped, per the repo owner's
+explicit call**: still early development stage, pasted in chat once or
+twice with no actual misuse, not worth doing in isolation right now --
+will happen anyway once the project moves past this stage. Removed
+from docs/TODO.md's P0 next-steps list rather than left open
+indefinitely.
+
+**Mobile-viewport testing -- still open**, repo owner will test
+directly on his own phone using the account/password from this entry,
+rather than continuing to fight the in-session browser-automation
+limitation documented above (independently reproduced this session,
+not resolved).
