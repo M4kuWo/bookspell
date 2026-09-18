@@ -18502,3 +18502,81 @@ chat, never written to any tracked file (same handling as the original
 password). He still needs to confirm the NEW email this time -- a
 fresh confirmation email went out to the gmail address on signup --
 before he can sign in.
+
+## 2026-09-18 (later still): two real bugs caught by the repo owner's own real mobile click-through, both fixed
+
+The repo owner did the real mobile-viewport pass himself (this
+session's own browser-automation resize tooling never worked, see the
+two entries above) and reported two real, concrete bugs with
+screenshots -- exactly the kind of finding the automation limitation
+had been blocking.
+
+**Bug 1: the top nav bar required a horizontal scroll to reach the
+account avatar, which was cut off on load.** Root cause: `nav.top` was
+a single flex row (logo, "Recommendations", "My ratings", a flex-grow
+spacer, the theme toggle, the avatar) with `overflow-x: auto` on the
+WHOLE row. On a screen narrow enough that the row's total content
+width exceeds the viewport, the spacer just collapses to zero and the
+entire row scrolls as one unit, starting from the left -- so the
+avatar (the last, most functionally important element, since it's the
+only way to sign out) sits off-screen until the user manually scrolls
+right. Confirmed by reconstructing the exact old markup at a simulated
+320px width (the narrowest common phone width) via `javascript_tool`
+injection against a local static server serving the real edited files
+(not the live deployed version, and not real device/window resizing,
+since that tooling still doesn't work in this environment) --
+reproduced the bug exactly (toggle+avatar cut off to a sliver).
+
+**Fix**: split `nav.top` into two separate flex items --
+`.nav-links` (logo + the two nav links, `flex: 1 1 auto; min-width: 0;
+overflow-x: auto`) and `.nav-controls` (theme toggle + avatar,
+`flex: 0 0 auto`), removing the old `.nav-spacer` entirely (no longer
+needed -- `.nav-links` growing to fill available space has the same
+right-alignment effect). Only `.nav-links` can ever overflow/scroll
+now; `.nav-controls` is a sibling flex item entirely outside that
+scroll area, so it can never be scrolled out of view regardless of how
+narrow the screen is. `min-width: 0` on `.nav-links` is load-bearing --
+without it, a flex item's `overflow-x` is silently ignored (flex items
+default to a minimum size no smaller than their content) and the
+PARENT row overflows instead, which is exactly the original bug.
+Updated `shared.js`'s `renderNav()` to emit the new two-group markup.
+Verified the fix at the same simulated 320px width: "My ratings" now
+correctly gets clipped/scrollable instead, while the toggle and avatar
+stay fully visible -- confirmed against both the new AND a
+side-by-side reconstruction of the old markup at the identical width,
+so the improvement isn't just asserted, it's a real before/after
+comparison.
+
+**Bug 2: some book cover thumbnails showed a broken-image icon instead
+of real cover art** (repo owner's examples: The Desert Spear, The
+Gunslinger). Investigated whether this was app-level (a rendering bug)
+or catalog-level (bad data) -- confirmed catalog-level: both books'
+`cover_url` pointed at Hardcover's asset CDN under an older
+`/books/<id>/...` path pattern that now returns a real HTTP 403 when
+fetched directly (checked with `curl`, not assumed). A random sample of
+other books' `cover_url` values (using `/edition/`, `/editions/`, or
+`/external_data/` paths) all returned 200 -- confirming this was an
+isolated legacy-path problem, not a systemic frontend bug or a
+catalog-wide CDN outage. Counted exactly 7 of 1256 books using the
+broken `/books/` path (863 use `/edition(s)/`, 305 use
+`/external_data/`, both fine).
+
+Looked up a real, working replacement image URL for each of the 7
+directly against Hardcover's own GraphQL API (`books_by_pk(id)
+.editions[].image.url` -- the same underlying data source
+`scripts/ingest-seed-catalog.js` already uses for ingestion), and
+verified every replacement with a real HTTP request returning 200
+before writing it anywhere. One book (The Girl with the Dragon Tattoo)
+turned up a second, separate wrinkle along the way: the numeric id
+embedded in its old broken URL does NOT correspond to its own Hardcover
+book id at all -- querying that id directly returned an unrelated
+Portuguese-title book record. Found its real book id via a fresh
+Hardcover search instead and used one of that book's own editions.
+Applied via migration `20260918180000_fix_broken_cover_url_books_path.sql`
+(dual-environment, unlike the two per-user-account migrations above --
+this is real shared catalog data both local and hosted care about, the
+normal case) -- tested in a rolled-back local transaction first
+(7/7 statements matched exactly one row), applied to local, pushed to
+hosted via `supabase db push`, and independently re-verified against
+genuine hosted (`supabase db query --linked`) that all 7 rows now carry
+the corrected, working URL.

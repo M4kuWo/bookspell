@@ -255,6 +255,35 @@ worth deferring to a later session rather than batching in for
   var afterward, which rotating without updating would break the live
   API).
 
+  **UPDATE 2026-09-18, even later -- (5) DONE: the repo owner did the
+  real mobile-viewport pass himself and found 2 real bugs, both fixed
+  same-session.** (1) The top nav bar required a horizontal scroll to
+  reach the account avatar, which was cut off on load -- root cause was
+  `nav.top`'s single flex row using `overflow-x: auto` on the WHOLE row
+  (logo, links, a flex-grow spacer, theme toggle, avatar) instead of
+  scoping the scroll to just the part that needs it, so the avatar (the
+  only sign-out control) could sit off-screen on a narrow phone. Fixed
+  by splitting into `.nav-links` (scrollable, `flex: 1 1 auto; min-
+  width: 0`) and `.nav-controls` (fixed, `flex: 0 0 auto`, never inside
+  the scroll area) -- reproduced the exact bug and verified the fix at
+  a simulated 320px width via `javascript_tool` injection against a
+  local static server (real resize_window/device-toolbar tooling still
+  doesn't work in this environment, see above -- this was the best
+  available substitute, and it DID catch a real before/after
+  difference, unlike the earlier CSS-only review). (2) Some book cover
+  thumbnails showed a broken-image icon -- confirmed catalog-level, not
+  app-level: 7 of 1256 books had a `cover_url` on Hardcover's now-403ing
+  legacy `/books/<id>/...` asset path. Fixed via a real migration
+  (`20260918180000_fix_broken_cover_url_books_path.sql`) using working
+  replacement URLs looked up directly against Hardcover's own GraphQL
+  API and verified with a real HTTP 200 before writing, applied to both
+  local and hosted per the normal catalog-migration convention (unlike
+  the two per-user-account migrations above, this one IS shared catalog
+  data). See docs/project-log.md's matching 2026-09-18 entry for full
+  detail on both, including a second data-quality wrinkle found along
+  the way (one book's cover-URL id didn't even match its own Hardcover
+  book id).
+
 ## P1
 
 - [ ] **External AI consultation, first real precedent -- the repo

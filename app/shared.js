@@ -358,19 +358,27 @@ function renderNav(active, session) {
   const nav = document.getElementById('top-nav');
   if (!nav) return;
   const name = session ? displayNameFor(session) : '';
-  nav.innerHTML = `<img src="logo.svg" alt="Bookspell" width="26" height="26" style="flex:0 0 auto;">` +
-    items.map(([href, label]) =>
-    `<a href="${href}" class="${active === href ? 'active' : ''}">${label}</a>`
-  ).join('') + `
-    <span class="nav-spacer"></span>
-    <button class="theme-toggle" id="theme-toggle-btn" title="Toggle dark/light" type="button">◐</button>
-    <div class="account-menu">
-      <button class="avatar-btn" id="account-btn" type="button" title="${escapeAttr(name)}">${escapeHtml(initials(name))}</button>
-      <div class="account-dropdown" id="account-dropdown" hidden>
-        <div class="who">${escapeHtml(name)}</div>
-        <button type="button" id="sign-out-btn">Sign out</button>
+  // `.nav-links` and `.nav-controls` are two SEPARATE flex items (see
+  // shared.css) so the account avatar/theme toggle can never scroll out
+  // of view when the logo+links overflow a narrow screen -- only
+  // `.nav-links` itself scrolls internally in that case.
+  nav.innerHTML = `
+    <span class="nav-links">
+      <img src="logo.svg" alt="Bookspell" width="26" height="26" style="flex:0 0 auto;">
+      ${items.map(([href, label]) =>
+        `<a href="${href}" class="${active === href ? 'active' : ''}">${label}</a>`
+      ).join('')}
+    </span>
+    <span class="nav-controls">
+      <button class="theme-toggle" id="theme-toggle-btn" title="Toggle dark/light" type="button">◐</button>
+      <div class="account-menu">
+        <button class="avatar-btn" id="account-btn" type="button" title="${escapeAttr(name)}">${escapeHtml(initials(name))}</button>
+        <div class="account-dropdown" id="account-dropdown" hidden>
+          <div class="who">${escapeHtml(name)}</div>
+          <button type="button" id="sign-out-btn">Sign out</button>
+        </div>
       </div>
-    </div>
+    </span>
   `;
   document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
   const dropdown = document.getElementById('account-dropdown');

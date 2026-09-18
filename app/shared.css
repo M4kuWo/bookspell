@@ -117,10 +117,26 @@ nav.top {
   display: flex;
   align-items: center;
   gap: 6px;
-  overflow-x: auto;
   padding-bottom: 10px;
   margin-bottom: 8px;
   border-bottom: 1px solid var(--line);
+}
+/* Scrolls internally if the logo+links don't fit a narrow screen --
+   `.nav-controls` (theme toggle + account avatar) is a SEPARATE flex
+   item outside this scroll area, not part of the same overflow-x row,
+   so it can never get scrolled out of view. `min-width: 0` is required
+   for a flex item to be allowed to shrink below its content's natural
+   width at all -- without it, overflow-x on a flex child is silently
+   ignored and the whole nav.top row overflows instead (the original
+   bug, confirmed live on a real phone 2026-09-18: the avatar sat off-
+   screen and needed a horizontal scroll of the ENTIRE bar to reach). */
+nav.top .nav-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 nav.top a {
   flex: 0 0 auto;
@@ -133,7 +149,12 @@ nav.top a {
   white-space: nowrap;
 }
 nav.top a.active { background: var(--accent); color: #fff; }
-nav.top .nav-spacer { flex: 1 1 auto; }
+nav.top .nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
 
 .theme-toggle {
   flex: 0 0 auto;
