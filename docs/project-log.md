@@ -18456,3 +18456,49 @@ directly on his own phone using the account/password from this entry,
 rather than continuing to fight the in-session browser-automation
 limitation documented above (independently reproduced this session,
 not resolved).
+
+## 2026-09-18 (later still): repo owner's account moved from his work-domain email to his real personal email
+
+The account created above used `mathias.kurin@onebeat-cs.com` (the only
+email on file) by default -- the repo owner asked for it to be his real
+personal email, `kurinman@gmail.com`, instead.
+
+Rather than attempt a self-service email-change flow (not really
+usable here anyway: the account had never been confirmed or logged
+into yet, and hosted's `double_confirm_changes = true` would require
+confirming from BOTH the old and new inboxes for an in-place change),
+signed up a fresh account at the personal email via the same real
+`/auth/v1/signup` endpoint used originally, then re-ran the same
+ratings/profile backfill for the new `auth.users.id`
+(`16977c74-4432-41c4-aa15-494f38e31351`) and cleared the OLD account's
+`profiles`/`ratings` rows so no stale duplicate data lingers under the
+wrong email -- migration
+`20260918170000_move_mathias_account_to_personal_email.sql`.
+
+Same test-before-apply discipline as the original backfill: dry-run
+first against LOCAL Postgres with two temporary throwaway `auth.users`
+rows (one per email) and the old account deliberately pre-seeded with a
+dummy profile + rating row specifically to prove the cleanup delete
+actually removes it, not just that the new-account insert works.
+Confirmed 143 ratings landed on the new account and zero remained on
+the old one, rolled back, then applied for real via `supabase db push`
+and independently re-verified against genuine hosted (via
+`supabase db query --linked`): 143 ratings + `format_preference =
+'audiobook'` on the new account, 0 ratings and 0 profile rows left on
+the old one.
+
+**The old work-email `auth.users` row itself was deliberately left in
+place, not deleted.** It was never confirmed or logged into, so it's
+functionally inert either way, and deleting a row directly from
+Supabase's own managed `auth` schema via raw SQL wasn't attempted --
+that schema has its own internal dependencies (identities, sessions,
+etc.) that Supabase's own Admin API is the correct, supported way to
+manage, not a hand-written `DELETE`. The repo owner can remove it
+himself from the Supabase dashboard (Authentication -> Users) in two
+clicks if he wants it gone.
+
+New password generated and shared with the repo owner directly in
+chat, never written to any tracked file (same handling as the original
+password). He still needs to confirm the NEW email this time -- a
+fresh confirmation email went out to the gmail address on signup --
+before he can sign in.

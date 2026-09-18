@@ -171,6 +171,29 @@ worth deferring to a later session rather than batching in for
   limitation this session (see the entry above) that a second session
   independently reproduced rather than resolved.
 
+  **UPDATE 2026-09-18, later still -- account moved to the repo owner's
+  real personal email.** The account created above used his work-domain
+  email by default (the only one on file); he asked for it to be his
+  personal `kurinman@gmail.com` instead. Signed up a fresh account at
+  that email via the same real signup endpoint, re-ran the same
+  ratings/profile backfill for the new account, and cleared the OLD
+  (work-email) account's `profiles`/`ratings` rows so no stale duplicate
+  data lingers under the wrong email -- migration
+  `20260918170000_move_mathias_account_to_personal_email.sql`, same
+  test-before-apply discipline as the original backfill (rolled-back
+  local dry run first, confirmed 143 ratings landed on the new account
+  and zero remained on the old one, then applied for real and
+  independently re-verified against hosted). **The old work-email
+  `auth.users` row itself was deliberately left in place** -- it was
+  never confirmed or logged into, so it's inert, and deleting a row
+  directly from Supabase's own managed auth schema via raw SQL is out
+  of scope for this session; the repo owner can remove it himself from
+  the Supabase dashboard (Authentication -> Users) in two clicks if he
+  wants it gone, which is safer than a raw `DELETE FROM auth.users`.
+  New password shared with him directly in chat, not written to any
+  file. He still needs to confirm via the NEW email this time before
+  signing in.
+
   **UPDATE 2026-09-18, CLDO (desktop verification pass)**: did a real,
   live, logged-in walkthrough of the deployed app at
   `https://m4kuwo.github.io/bookspell/app/` -- NOT a substitute for (b)
