@@ -191,6 +191,7 @@ function ensureModalEl() {
 function closeModal() {
   const overlay = document.getElementById('book-info-overlay');
   if (overlay) overlay.hidden = true;
+  document.body.style.overflow = '';
 }
 
 async function showBookInfo(bookId) {
@@ -198,6 +199,7 @@ async function showBookInfo(bookId) {
   const box = document.getElementById('book-info-box');
   box.innerHTML = '<div class="empty-state">Loading…</div>';
   overlay.hidden = false;
+  document.body.style.overflow = 'hidden';
 
   const [{ data: book }, { data: dna }, { data: tropeRows }, { data: cwRows }, { data: editions }] = await Promise.all([
     sb.from('books').select('title, author, synopsis, page_count, publication_year, cover_url, position_in_series, series(name, status), universe(name)').eq('id', bookId).maybeSingle(),
@@ -336,6 +338,7 @@ function showRecommendationExplanation(r) {
     ` : ''}
   `;
   overlay.hidden = false;
+  document.body.style.overflow = 'hidden';
   document.getElementById('modal-close-btn').addEventListener('click', closeModal);
 }
 

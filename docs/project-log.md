@@ -18952,3 +18952,78 @@ query --linked` instead, all correct. Local now sits at 1035/1058
 1-row gap is the same pre-existing drift from the 2026-09-13 batch-1
 migration already documented and deferred then, not something this
 backfill caused. `docs/TODO.md` marked done.
+
+## 2026-09-18 -- Repo owner's 3 real findings: WoT production-company question, modal scroll UX, suggest-a-book check
+
+Repo owner spotted a real discrepancy screenshotting two book-info
+modals and asked about it directly, reported a UI bug, and asked to
+verify a real "suggest a book" submission. All three real, all handled
+this session.
+
+**1. Why does The Great Hunt's Kramer/Reading edition say 'Audio
+Renaissance' while The Dragon Reborn's says 'Macmillan Audio' for the
+SAME narrator pair?** Investigated before assuming either a mistake or
+a shrug -- checked our own two rows' `source_url`s first: Great Hunt's
+points at Hardcover edition id 2005618 (a low, early id), Dragon
+Reborn's at 32638915 (a much newer id) -- different edition catalog
+entries, not a copy-paste duplicate. Web search confirmed real-world
+history: Macmillan Audio's own WoT audiobooks page states the series
+"is currently published by MacMillan Audio, formerly Audio
+Renaissance" -- the SAME Kramer/Reading recordings were originally
+released under the Audio Renaissance imprint (~2004) and later
+relisted/reissued under Macmillan Audio after the rename. **Verdict:
+not a tagging mistake** -- it genuinely reflects which vintage of each
+book's Hardcover edition listing our data was sourced from, not a
+production change between books or a mislabel. While checking this,
+did find one real, separate, small issue worth fixing while already in
+this data: 3 `production_company` values needed normalizing to match
+every other row for the same real imprint --  a bare `'Macmillan'`
+(The Great Hunt's Rosamund Pike edition, A Gathering of Shadows) and a
+trailing-space `'Macmillan Audio '` (What Moves the Dead). Verified
+both books are genuinely Macmillan Audio via web search (not a
+different real Macmillan sub-imprint like Macmillan Digital Audio/
+Macmillan Young Listeners, which are real and left untouched) before
+normalizing, not a blind string replace. Migration
+`20260918233000_normalize_macmillan_audio_production_company.sql`,
+tested in a rolled-back transaction, applied to local and hosted,
+verified matching (100/4/3 Macmillan Audio/Digital Audio/Young
+Listeners rows on both sides).
+
+**2. Book-info modal: scrolling to the bottom bled into the page
+behind it, and the close button scrolled out of reach.** Root cause of
+the first part: `.modal-box` has its own `overflow-y: auto`, but
+nothing stopped the browser's default scroll-chaining once that
+scroller hit its own boundary -- the wheel event just continued to the
+next scrollable ancestor (the page behind the overlay). Fixed with
+`overscroll-behavior: contain` on `.modal-box`, plus a body-scroll lock
+(`document.body.style.overflow = 'hidden'` while the modal's open,
+reset in `closeModal()`) as a second layer. Root cause of the second
+part: `.modal-header` (title + close button) was just a normal
+in-flow child of the scrolling `.modal-box`, so it scrolled away with
+everything else. Fixed with `position: sticky; top: 0` plus a matching
+`background: var(--surface)` so it doesn't show scrolled content
+behind it -- no seam, since the area above it while stuck is
+`.modal-box`'s own top padding, same color. **Verified in a real
+browser, not just read as correct**: since testing the actual
+dashboard needs a login (magic-link email, no headless path), built a
+throwaway standalone harness using the real `shared.css` against mock
+overlay/modal-box markup with enough content to scroll, served locally,
+driven via Chrome automation. Confirmed: scrolling to the bottom and
+continuing no longer moves the page behind it, the header now stays
+pinned while scrolled to the very bottom, and the close button is
+clickable (and actually closes the modal) from that scrolled position.
+`app/shared.css`/`app/shared.js` changes only, no schema/data touched.
+
+**3. Suggest-a-book test submission -- found it.** Queried
+`book_suggestions` directly (hosted): "The Traitor God" by Cameron
+Johnston (Age of Tyranny #1), note "This is part of the Age of Tyranny
+series. book 1.", `status = 'open'`. Confirmed not yet in `books` --
+a real, genuine catalog gap (grimdark fantasy, in v1 scope), not
+ingested here (that's a `tag-catalog-batch`-shaped task, not attempted
+in this session). **Real UX/product gap noticed while looking**:
+`book_suggestions` has a `status` column (defaults `'open'`) but
+nothing in this codebase ever reads or surfaces it -- no admin view
+anywhere, in `app/` or `tools/`, to review incoming suggestions; the
+only way to see one right now is querying the table directly, which is
+how this one was found. Flagged in `docs/TODO.md`, not built this
+session.

@@ -358,13 +358,21 @@ nav.top .nav-controls {
   max-width: 560px;
   max-height: 85vh;
   overflow-y: auto;
+  /* Without this, scrolling the wheel/trackpad past this box's own
+     bottom (or top) chains into the page behind the overlay instead of
+     just stopping -- the browser's default overscroll behavior treats
+     a nested scroller's boundary as "pass it on," not "stop here." */
+  overscroll-behavior: contain;
   border-radius: 14px 14px 0 0;
   padding: 18px;
 }
 @media (min-width: 640px) {
   .modal-box { border-radius: 14px; }
 }
-.modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px; }
+/* Sticky so the close button stays reachable without scrolling back up
+   -- top: 0 docks it against .modal-box's own top padding edge, which
+   is the same --surface color, so there's no visible seam. */
+.modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px; position: sticky; top: 0; background: var(--surface); z-index: 1; }
 .modal-title { font-weight: 700; font-size: 1.1rem; }
 .modal-author { color: var(--ink-soft); font-size: 0.85rem; margin-bottom: 14px; }
 /* The real cover, shown at a real size once you've tapped a 40x58

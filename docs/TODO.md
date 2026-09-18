@@ -314,6 +314,62 @@ worth deferring to a later session rather than batching in for
   the modal showing a full, sharp, correctly-proportioned cover) before
   being trusted, not just assumed to work from the code alone.
 
+  **UPDATE 2026-09-18, later still -- 2 real bugs from the repo owner
+  fixed, 1 real data question resolved (not a bug), 1 real
+  suggest-a-book submission checked.**
+  (1) Book-info modal scrolling: reaching the bottom and continuing to
+  scroll bled into the page BEHIND the overlay (default browser
+  scroll-chaining once `.modal-box`'s own `overflow-y: auto` hit its
+  boundary), and the close button scrolled out of reach since
+  `.modal-header` was just a normal in-flow child of that same
+  scroller. Fixed both: `overscroll-behavior: contain` on `.modal-box`
+  (stops the chaining) plus a body-scroll lock while the modal's open
+  as a second layer; `position: sticky; top: 0` on `.modal-header` with
+  a matching `background: var(--surface)` (no visible seam -- the area
+  above it while stuck is the box's own top padding, same color).
+  Testing the real dashboard needs a login this session couldn't
+  complete headlessly (magic-link email) -- verified instead with a
+  throwaway standalone harness using the real `shared.css` against mock
+  overlay/box markup, driven via Chrome automation: confirmed no more
+  scroll-through past the bottom, header stays pinned while scrolled
+  all the way down, and the close button is clickable (and actually
+  closes the modal) from that scrolled position.
+  (2) The repo owner asked whether The Great Hunt's Kramer/Reading
+  edition being 'Audio Renaissance' while The Dragon Reborn's is
+  'Macmillan Audio' (same narrator pair) was a mistake. Checked, not
+  guessed: the two rows' `source_url`s point at genuinely different
+  Hardcover edition ids (an old one for Great Hunt, a much newer one
+  for Dragon Reborn), and web search confirmed Macmillan Audio's own
+  WoT page states the imprint is "currently published by MacMillan
+  Audio, formerly Audio Renaissance" -- real edition-history, not a
+  mislabel. Did find and fix one real, separate, small thing while
+  looking: 3 `production_company` values normalized to match every
+  other row for the same imprint (a bare `'Macmillan'` x2, a
+  trailing-space `'Macmillan Audio '` x1) -- each verified via web
+  search as genuinely Macmillan Audio first, not blindly replaced.
+  Migration `20260918233000_normalize_macmillan_audio_production_company.sql`.
+  (3) Found the repo owner's test "suggest a book" submission in
+  `book_suggestions` (queried directly, no admin UI exists to see this
+  -- see the new P1 entry below): "The Traitor God" by Cameron Johnston
+  (Age of Tyranny #1), genuinely not yet in `books` -- a real catalog
+  gap, in scope (grimdark fantasy), not ingested this session (that's
+  `tag-catalog-batch`-shaped work).
+  Full detail on all of this in `docs/project-log.md`'s matching
+  2026-09-18 entry.
+
+- [ ] **`book_suggestions` has no admin-facing view anywhere -- found
+  2026-09-18 while checking a real test submission.** The table has a
+  real `status` column (`open` by default) but nothing in `app/` or
+  `tools/` ever reads it; the only way to see an incoming suggestion
+  right now is querying the table directly. Not a data-quality problem
+  (RLS/grants weren't checked for this table specifically, note for
+  whoever picks this up), just a real, currently-invisible product gap
+  -- suggestions go into a black hole with no way for the repo owner to
+  browse/triage them short of SQL. Needs a small admin view (could live
+  in `tools/catalog-review` alongside its other repo-owner-facing
+  surfaces, or a new page) listing open suggestions with a way to mark
+  them reviewed/actioned. Not scoped further than that; not started.
+
 ## P1
 
 - [ ] **`/recommendations` is genuinely slow, and a real cause is found
