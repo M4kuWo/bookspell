@@ -363,10 +363,21 @@ worth deferring to a later session rather than batching in for
   `book_suggestions` (queried directly, no admin UI exists to see this
   -- see the new P1 entry below): "The Traitor God" by Cameron Johnston
   (Age of Tyranny #1), genuinely not yet in `books` -- a real catalog
-  gap, in scope (grimdark fantasy), not ingested this session (that's
-  `tag-catalog-batch`-shaped work).
+  gap, in scope (grimdark fantasy).
   Full detail on all of this in `docs/project-log.md`'s matching
   2026-09-18 entry.
+
+  **UPDATE 2026-09-19: ingested, tagged, and added to the repo owner's
+  Liked books, at his request.** New series "Age of Tyranny" created
+  (hardcover id 8472). Tagged from real research across ~5 independent
+  reviews, not genre pattern-matching -- confirmed the magic system is
+  soft (not hard, despite grimdark-genre convention often trending
+  hard) and the book is self-contained/non-cliffhanger despite being
+  book 1 of an ongoing series. Also found and recorded a real
+  audiobook edition (Tantor Audio, Paul Woodson, 14h2m) while
+  researching `audiobook_length`. `book_suggestions.status` updated
+  from `open` to `tagged` (an existing, real enum value). Full detail
+  in `docs/project-log.md`'s 2026-09-19 entry.
 
 - [ ] **`book_suggestions` has no admin-facing view anywhere -- found
   2026-09-18 while checking a real test submission.** The table has a

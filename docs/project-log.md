@@ -19058,3 +19058,73 @@ and checked visually in the browser, both scrolled and mid-transition.
 No overlap or clipping showed up in practice. Also checked both themes
 via `data-theme` -- readable white-on-green in both. `app/shared.css`
 only, no JS/schema/data changes.
+
+## 2026-09-19 -- Ingested and tagged "The Traitor God"; added to the repo owner's Liked books
+
+Followed through on the repo owner's real suggest-a-book test
+submission from 2026-09-18 (book_suggestions id
+2aaac6b1-a32c-407e-bbce-fd083560c2f6): "The Traitor God" by Cameron
+Johnston, Age of Tyranny #1 -- confirmed genuinely missing and in
+scope (grimdark SFF), so ingested, tagged, and added to his ratings
+at his request ("shouldn't be too taxing" for a single book).
+
+**Ingestion**: `scripts/ingest-targeted-titles-2.js`'s pattern, single
+book (new `scripts/ingest-traitor-god.js`). Hardcover id 480938,
+series "Age of Tyranny" (hardcover id 8472, 2 books so far, ongoing --
+new series row created). Ran against local first, then generated
+`20260919000000_ingest_the_traitor_god.sql` from the real captured
+field values (title/author/synopsis/etc., hardcover_id-scoped ON
+CONFLICT DO NOTHING, same as the 147/299-book expansion migrations)
+rather than running the JS script directly against hosted --
+CLAUDE.md's rule against raw-connection hosted writes applies to
+ingestion the same as any other change. Self-hosted the cover per the
+2026-09-18 ingestion rule (`scripts/lib/self-host-cover.js`) instead of
+storing Hardcover's own CDN URL. Tested in a rolled-back transaction
+(confirmed idempotent no-op against local, already applied there),
+pushed to hosted, verified matching via `check_db_sync.py`.
+
+**Tagging**: real research, not pattern-matched from grimdark
+convention -- cross-checked ~5 independent reviews (FanFiAddict,
+Fantasy-Hive, Hippogriff's Aerie, SF&F Reviews, Hobbleit) specifically
+for every HIGH_RISK_FIELDS entry this applies to. Two real findings
+worth noting: the magic system is confirmed SOFT (dramatic, addictive
+effects described atmospherically, no explained rule taxonomy) despite
+grimdark magic systems often trending hard -- didn't assume either
+way; and the book is confirmed non-cliffhanger/self-contained ("no
+cliffhangers," per Fantasy-Hive) even though it's book 1 of an ongoing
+series, which matters since narrative_closure/ends_on_cliffhanger are
+exactly the kind of field a genre-convention guess could get backwards.
+`drive` (character_driven) and `stakes_scope` (regional) were the two
+calls where evidence was suggestive but not fully definitive -- flagged
+via `book_field_confidence` at 0.6 rather than guessed silently. 6
+tropes (noir_detective_structure, revenge, anti_hero,
+powerful_artifact_macguffin, high_fantasy_setting, corruption_arc), 3
+content warnings (torture -- central_theme, not a spoiler since it's
+in the book's own synopsis; body_horror; substance_abuse -- magic use
+is literally, mechanically addictive in-text, not just a vague
+power-corrupts theme). Batch density check: 6 tropes/1 book and 3
+CWs/1 book, both above the catalog average (5.37/1.70) -- no
+under-tagging concern for a single-book batch.
+
+**A real audiobook edition found and recorded while researching
+`audiobook_length`** (not usually part of per-book tagging, but cheap
+and already verified): Tantor Audio, narrated by Paul Woodson, 14h2m --
+confirmed directly via Audible's own listing, not guessed. Added a real
+`audiobook_editions` row rather than leaving it for a future bulk pass
+to rediscover.
+
+Migration `20260919010000_tag_the_traitor_god.sql` (book_dna, tropes,
+content warnings, confidence, audiobook edition), tested in a
+rolled-back transaction, applied to local then hosted, verified
+matching.
+
+**Added to ratings** (hosted only, per this project's established
+per-user-data convention -- local Postgres has no matching real
+Supabase Auth user to sync against): `rating = 'liked'`, confirmed the
+account first (`format_preference: 'audiobook'` matches the repo
+owner's own known preference, not a stray test account). Also updated
+the originating `book_suggestions` row's `status` from `'open'` to
+`'tagged'` (a real, already-defined enum value on that column) -- the
+book_suggestions admin-view gap flagged 2026-09-18 is still open, but
+at least this row's own status is now accurate for whenever that view
+gets built.
