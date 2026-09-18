@@ -19027,3 +19027,34 @@ anywhere, in `app/` or `tools/`, to review incoming suggestions; the
 only way to see one right now is querying the table directly, which is
 how this one was found. Flagged in `docs/TODO.md`, not built this
 session.
+
+## 2026-09-19 -- modal sticky header: gave it a real background color
+
+Follow-up to yesterday's sticky-header fix: the repo owner tried it and
+said it now blends visually with whatever's scrolled underneath it
+once stuck, since it matched `--surface` exactly. Asked for a real
+background, using "the My ratings button green" -- that's the
+`nav.top a.active` green (`var(--accent)`, `#35573b` light /
+`#6fa877` dark), not `--liked` (a different, brighter green used for
+rating pills).
+
+Made the header a real edge-to-edge bar rather than an inset colored
+patch: negative margins (`-18px` top/left/right, matching
+`.modal-box`'s own padding) bleed it to the box's full width and top
+edge, with matching `border-radius: 14px 14px 0 0` so the top corners
+stay clean in both the mobile bottom-sheet and desktop centered-dialog
+layouts. Set `color: #fff` on the header with a slightly dimmed
+`rgba(255,255,255,0.82)` for the author subtitle, for contrast against
+the green.
+
+Worried before testing that the negative top margin (-18px) exceeding
+`.modal-cover-row`'s own `margin-bottom` (14px) would make the sticky
+header overlap the last 4px of a book's cover image once stuck (margin
+collapsing between a positive and negative margin sums them, which
+would put the two boxes 4px into each other) -- rather than trust that
+hand-calculation, extended the same standalone test harness from
+yesterday's fix to include a mock `.modal-cover-row` before the header
+and checked visually in the browser, both scrolled and mid-transition.
+No overlap or clipping showed up in practice. Also checked both themes
+via `data-theme` -- readable white-on-green in both. `app/shared.css`
+only, no JS/schema/data changes.

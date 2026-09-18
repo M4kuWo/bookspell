@@ -370,10 +370,26 @@ nav.top .nav-controls {
   .modal-box { border-radius: 14px; }
 }
 /* Sticky so the close button stays reachable without scrolling back up
-   -- top: 0 docks it against .modal-box's own top padding edge, which
-   is the same --surface color, so there's no visible seam. */
-.modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px; position: sticky; top: 0; background: var(--surface); z-index: 1; }
+   -- top: 0 docks it against .modal-box's own top padding edge. A
+   real background (the same green as the "My ratings" nav button,
+   --accent) instead of just matching --surface, so the bar reads as
+   a distinct, persistent piece of UI rather than blending into
+   whatever content happens to be scrolled underneath it. Negative
+   margins bleed it to the box's full width/top edge so the color
+   reads as a bar, not a floating badge inset from the corners. */
+.modal-header {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+  position: sticky; top: 0;
+  margin: -18px -18px 4px -18px;
+  padding: 14px 18px 10px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 14px 14px 0 0;
+  z-index: 1;
+}
 .modal-title { font-weight: 700; font-size: 1.1rem; }
+.modal-header .modal-author { color: rgba(255,255,255,0.82); }
+.modal-header .modal-close { color: #fff; }
 .modal-author { color: var(--ink-soft); font-size: 0.85rem; margin-bottom: 14px; }
 /* The real cover, shown at a real size once you've tapped a 40x58
    .thumb to get here -- on its own centered row, not squeezed next to

@@ -334,6 +334,17 @@ worth deferring to a later session rather than batching in for
   scroll-through past the bottom, header stays pinned while scrolled
   all the way down, and the close button is clickable (and actually
   closes the modal) from that scrolled position.
+  **UPDATE 2026-09-19**: repo owner tried it and said the header still
+  visually blends with scrolled content since it matched `--surface`
+  exactly -- asked for a real background using "the My ratings button
+  green" (`nav.top a.active`'s `var(--accent)`, not `--liked`). Made it
+  a real edge-to-edge bar (negative margins matching the box's own
+  padding, matching top border-radius) with white text for contrast.
+  Worried the negative top margin would overlap a book's cover image by
+  a few px once stuck (margin-collapse math said so) -- didn't trust
+  the hand-calculation, extended the same test harness with a mock
+  cover row and checked visually instead; no overlap in practice, in
+  either theme. `app/shared.css` only.
   (2) The repo owner asked whether The Great Hunt's Kramer/Reading
   edition being 'Audio Renaissance' while The Dragon Reborn's is
   'Macmillan Audio' (same narrator pair) was a mistake. Checked, not
