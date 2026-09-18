@@ -19128,3 +19128,13 @@ the originating `book_suggestions` row's `status` from `'open'` to
 book_suggestions admin-view gap flagged 2026-09-18 is still open, but
 at least this row's own status is now accurate for whenever that view
 gets built.
+
+## 2026-09-19 -- Removed a mistaken rating: Children of Time
+
+Repo owner said he hadn't actually read "Children of Time" (Adrian
+Tchaikovsky) despite having a `liked` rating on file for it -- a data-
+entry mistake, not a re-rating. Confirmed the row was really on his
+account first (queried by user_id + title/author, not assumed), then
+deleted it directly against hosted (row-scoped, per-user data --
+no local-sync step needed, same convention as the Liked-books add
+yesterday). No dependent rows to check (ratings has none).
