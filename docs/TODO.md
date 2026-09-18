@@ -316,6 +316,88 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
+- [ ] **`/recommendations` is genuinely slow, and a real cause is found
+  and profiled -- raised by the repo owner 2026-09-18, NOT yet fixed
+  (deliberately left for next session, mid-way through switching
+  terminals).** Confirmed this is not just Render's free-tier cold
+  start (already surfaced to the user via the "waking up" loading
+  state) -- there's a real, structural inefficiency in the scoring
+  code itself, measured directly rather than guessed at:
+  - `recommend()` alone is fast: ~0.17s to score the entire ~1058-book
+    catalog for a real 143-rating profile (measured locally).
+  - **`explain_match()` redundantly re-resolves the ENTIRE profile
+    (`_resolve_profile`, `validated_dealbreaker_fields`,
+    `compute_series_dna`, `build_prevalence_lookup`,
+    `user_calibrated_poor_threshold`) from scratch on every single
+    call**, instead of reusing what `recommend()` already computed for
+    the same request. `api/main.py`'s `/recommendations` endpoint calls
+    it once per result. Measured: 10 calls add ~0.42s on top of
+    `recommend()`'s 0.17s; at `top_n=100` (see below) that redundant
+    setup work alone balloons the total to **3.26s locally** -- before
+    accounting for Render's actually-constrained free-tier CPU, which
+    is presumably where the real felt slowness compounds.
+  - **`app/dashboard.html`'s "Get recommendations" button fires 3
+    parallel full requests per click** (genre = '', 'fantasy', 'sci_fi'
+    -- one per tab), each independently paying the full redundant setup
+    cost above with no sharing between them. Whenever ANY filter
+    (audiobook availability / series status) is active, each of those
+    3 requests also asks for `top_n=50` instead of 10 (`app/
+    dashboard.html`'s `FILTERED_POOL_SIZE`), compounding the redundant-
+    `explain_match()` cost 5x on top of the 3x from the parallel genre
+    requests.
+
+  **The fix, not yet built**: compute the profile/series-DNA/
+  prevalence/threshold bundle ONCE per request and pass it into every
+  `explain_match()` call for that request instead of letting each one
+  recompute it independently -- pure performance work, same math, same
+  output, nothing about the scoring ALGORITHM changes. Still needs the
+  same care as any scoring-engine change per CLAUDE.md: verify
+  byte-identical output via `scripts/scoring_tests.py`'s scorecard
+  before/after, not just "it's faster now." The 3-parallel-genre-
+  requests pattern is a separate, `app/dashboard.html`-side fix (share
+  one computed profile/pool across all 3 genre views client-side, or
+  restructure the endpoint to return all 3 genres in one call) --
+  smaller and more contained than the `explain_match()` fix, worth
+  doing either independently or together.
+
+- [ ] **Catalog-wide audiobook edition data gaps: missing
+  `runtime_minutes`, and no `release_date` field at all yet -- raised
+  by the repo owner 2026-09-18, confirmed and quantified, not yet
+  fixed.** Prompted by the same Dragon Reborn report as the P3 entry
+  further down (two `standard` editions with no `runtime_minutes` on
+  one of them). Repo owner guessed this was specifically worse for
+  secondary (non-first) editions -- **checked directly, and that's not
+  quite right**: `runtime_minutes` is missing on 210 of 795 (26%)
+  primary/first editions and 76 of 258 (29%) secondary editions --
+  roughly the same rate, not a secondary-editions-specific problem.
+  The REAL catalog-wide number: **306 of 1123 `audiobook_editions` rows
+  (27%) are missing `runtime_minutes`** -- a genuine, broad gap, just
+  not shaped the way it was guessed. Multi-part (GraphicAudio-style)
+  editions are the real outlier: 39 of 47 rows with `parts_total` set
+  (83%) are missing runtime, which makes sense (an in-progress
+  multi-part release genuinely has no fixed total yet).
+  **`release_date` doesn't exist as a column at all yet** on
+  `audiobook_editions` -- confirmed Hardcover's own `editions` type DOES
+  have this field (used already, with real caveats, in the Dragon
+  Reborn P3 entry below), so sourcing it is feasible, just not built.
+  **Repo owner's explicit design call for multi-part editions**: don't
+  store a single `release_date` -- store a RANGE (first part's release
+  date through the last part's release date), so a reader can see e.g.
+  "released 2019-2023" for an in-progress GraphicAudio production
+  rather than one misleading single date. **Proposed shape, not built**:
+  add `runtime_minutes` research to the standing `tag-audiobook-
+  editions` backlog (306 rows, real research work, not automatable --
+  see the Dragon Reborn entry on why blindly trusting Hardcover's own
+  fields isn't safe); add two new columns,
+  `release_date_start`/`release_date_end` (a single-release edition
+  has both set to the same date; a multi-part one has genuinely
+  different start/end, with `release_date_end` left null until
+  `release_status = 'fully_released'`). Needs
+  `docs/schema/book-dna.schema.yaml`/`.claude/skills/tag-audiobook-
+  editions/SKILL.md` updated in the same session as the migration, per
+  CLAUDE.md's standing rule for schema changes -- not done yet, this is
+  the scoping only.
+
 - [x] **Self-host book cover images instead of hotlinking Hardcover's
   CDN -- DONE 2026-09-18, same day it was raised.** Raised by the repo
   owner, prompted directly by the broken-`/books/`-path cover_url

@@ -18787,3 +18787,57 @@ Logged as a real, not-yet-built idea (a new `release_date` column +
 real per-edition research, not an automated field copy) in
 docs/TODO.md rather than building something on data just shown to be
 untrustworthy.
+
+## 2026-09-18 (later still): quantified the catalog-wide audiobook-edition data gap, and found + profiled a real recommendation-speed bug -- both logged, neither fixed yet
+
+Two more real findings from the repo owner's own usage, at the end of
+a long session -- both investigated and quantified properly rather
+than guessed at, deliberately left unfixed for a fresh session to pick
+up (mid-way through switching terminals).
+
+**Audiobook edition data gap, quantified**: repo owner guessed missing
+`runtime_minutes` was specifically worse on secondary editions.
+Checked directly rather than assumed: 210 of 795 (26%) primary
+editions and 76 of 258 (29%) secondary editions are missing it --
+roughly the same rate, not a secondary-editions-specific pattern.
+Catalog-wide: 306 of 1123 rows (27%) missing `runtime_minutes`. The
+real outlier is multi-part (GraphicAudio-style) editions specifically:
+39 of 47 rows with `parts_total` set (83%) are missing runtime, which
+makes sense for an in-progress release with no fixed total yet.
+Confirmed `release_date` doesn't exist as a column on
+`audiobook_editions` at all (Hardcover's own `editions` type has it,
+per the Dragon Reborn investigation above, but nothing here stores it
+yet). Repo owner's explicit design call: for multi-part editions, store
+a RANGE (first part's release date through the last part's), not a
+single misleading date. Logged as a real, scoped-but-not-built P1 item
+in docs/TODO.md -- proposed shape is `release_date_start`/
+`release_date_end` columns plus adding the 306-row runtime gap to the
+standing `tag-audiobook-editions` research backlog. Not built this
+session.
+
+**Recommendation-speed bug, found and profiled, not yet fixed**:
+repo owner reported the app feels slow generating recommendations.
+Profiled the real scoring code directly (not guessed at): `recommend()`
+alone scores the whole ~1058-book catalog in ~0.17s locally, genuinely
+fast. The real cost is `explain_match()` -- it redundantly re-resolves
+the ENTIRE profile (`_resolve_profile`, `validated_dealbreaker_fields`,
+`compute_series_dna`, `build_prevalence_lookup`,
+`user_calibrated_poor_threshold`) from scratch on EVERY call, instead
+of reusing what `recommend()` already computed for the same request.
+`api/main.py`'s `/recommendations` endpoint calls it once per result.
+Measured: 10 calls add ~0.42s on top of `recommend()`'s own 0.17s; at
+`top_n=100` (which the frontend actually requests whenever any filter
+is active) that redundant setup cost alone reaches **3.26s locally**,
+before Render's actually-constrained free-tier CPU even enters into
+it. Separately found `app/dashboard.html`'s "Get recommendations"
+button fires 3 full parallel requests per click (one per genre tab),
+each paying that redundant cost independently with zero sharing
+between them -- and when any filter is active, each of those 3 also
+requests `top_n=50` instead of 10, compounding it further. **Not
+fixed**: this touches the scoring engine, which per CLAUDE.md needs
+the same "verify byte-identical output via scripts/scoring_tests.py's
+scorecard" discipline as any other scoring change, not something to
+rush through right as the repo owner is about to switch terminals.
+Logged as a real, well-scoped P1 item in docs/TODO.md with the exact
+fix shape (compute the profile bundle once per request, reuse it
+across every `explain_match()` call) ready to pick up next session.
