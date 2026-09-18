@@ -126,6 +126,67 @@ worth deferring to a later session rather than batching in for
   rotate `SUPABASE_SECRET_KEY` per the hygiene note above, (d) a real
   mobile-viewport pass per (5) above.
 
+  **UPDATE 2026-09-18, CLDO (desktop verification pass)**: did a real,
+  live, logged-in walkthrough of the deployed app at
+  `https://m4kuwo.github.io/bookspell/app/` -- NOT a substitute for (b)
+  above (that still needs the repo owner personally), but real
+  end-to-end verification that the app itself works. Found the browser
+  already had a persisted session for a `kurinman+test` account.
+  **Verified working, live, with zero console errors**: the Render
+  cold-start "waking up the recommendation engine" loading state fires
+  and resolves correctly; `/recommendations` returns real, correctly-
+  scored results (score/match-label/summary all present and sensible);
+  the "Why this recommendation?" expansion (matches/mismatches
+  breakdown) renders correctly; the book-info modal (the one with the
+  documented `:not([hidden])` CSS fix) opens and renders full Book DNA
+  + audiobook edition data correctly; catalog search on the rate-books
+  page returns both series-level and book-level results correctly; the
+  rating-entry form (label/format/date pickers) opens correctly for an
+  unrated book; the import page loads with correct instructions.
+  **A real discrepancy found, needs the repo owner's input**: the
+  `kurinman+test` account's "My ratings" list is NOT throwaway/
+  placeholder data -- it has specific, plausible-looking rated-dates
+  ("16 years, 2 months ago," "5 days ago") and format tags matching
+  real reading history, not synthetic test values. This conflicts with
+  this entry's own prior description of only "a throwaway admin-created
+  test user" having been used. **Deliberately did NOT test the
+  Goodreads-CSV-import flow against this account** even with a small
+  synthetic fixture (the kind `import_goodreads.py`'s own `__main__`
+  self-check uses) -- `api/main.py`'s upsert (`on conflict... do
+  update set rating=excluded.rating, rated_date=coalesce(...)`) would
+  silently overwrite this account's real-looking `rated_date`/`review`
+  values with fake fixture data for any matching title, which is a real
+  risk of destroying real data, not just adding test noise. Needs the
+  repo owner to confirm whether this account is safe to write-test
+  against or should be left untouched (and if so, whether a separate,
+  genuinely disposable account should be created for future write
+  testing instead).
+  **(5) still NOT done, and for the same reason as before**: attempted
+  the mobile-viewport pass again this session and hit the exact same
+  Chrome-automation limitation the earlier attempt described above --
+  `resize_window` reported success twice (390x844, then 780x1600) but
+  `window.innerWidth` never actually changed from the desktop value
+  (1728) when checked directly via `javascript_tool`; Chrome's own
+  device-toolbar keyboard shortcut had no effect either. This is a tool/
+  environment limitation, not an app bug, and it's now recurred across
+  two separate sessions -- filed as feedback (SendFeedback) rather than
+  retried a third way. **Substituted a CSS-level code review instead**
+  (not equivalent to a live click-through, but real evidence): confirmed
+  a proper `<meta name="viewport">` tag on every page, a fluid
+  `max-width: 560px` container (not a fixed desktop width), mobile-first
+  `flex-wrap` defaults that only switch to `nowrap` above a 640px
+  breakpoint, and a deliberate bottom-sheet-style modal on mobile
+  (`align-items: flex-end`, top-only border-radius) that becomes a
+  centered dialog above 640px. This is consistent with mobile-conscious
+  design, but a genuine live narrow-viewport click-through is still
+  owed and NOT confirmed working.
+  **Did NOT attempt** (production-affecting, needs the repo owner's
+  explicit go-ahead first, not something to do unilaterally): the (2)
+  auth-config push, and (c) `SUPABASE_SECRET_KEY` rotation (also unclear
+  whether CLDO has Render deploy access to update the corresponding env
+  var afterward, which rotating without updating would break the live
+  API).
+
 ## P1
 
 - [ ] **External AI consultation, first real precedent -- the repo

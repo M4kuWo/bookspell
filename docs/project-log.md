@@ -18266,3 +18266,73 @@ scoring/testing approach has no specific plan for yet. Not solved here
 coming in, and the recruiting pitch itself already leans into it by
 explicitly asking for disliked/hated books, not just favorites, to
 counteract the skew at the collection stage.
+
+## 2026-09-18: v1 app desktop verification pass -- real end-to-end success, one real data-safety catch, mobile-viewport tooling failure recurs
+
+Picked up the P0 v1 web app's still-open verification item (item 5 of
+its build order, "a real mobile-viewport pass," plus general app
+verification) using `claude-in-chrome` browser automation against the
+real deployed app at `https://m4kuwo.github.io/bookspell/app/`.
+
+**Desktop flow verified working end-to-end, live, zero console
+errors**: found the browser already had a persisted session for a
+`kurinman+test` account. Confirmed working: the Render cold-start
+"waking up the recommendation engine" loading state fires and resolves
+correctly; `/recommendations` returns real, correctly-scored results;
+the "Why this recommendation?" matches/mismatches expansion renders
+correctly; the book-info modal (the one with the documented
+`:not([hidden])` CSS fix from 2026-09-13) opens and renders full Book
+DNA + audiobook edition data correctly; catalog search returns both
+series- and book-level results; the manual rating-entry form (label/
+format/date pickers) opens correctly; the import page loads with
+correct instructions. This is real confirmation the backend, auth
+session persistence, and frontend are actually working together live,
+not just individually smoke-tested the way the 2026-09-13 entries left
+things.
+
+**A real discrepancy caught, needs the repo owner's input**: the
+`kurinman+test` account's "My ratings" list is NOT throwaway/
+placeholder data as this project's docs had assumed -- it has specific,
+plausible rated-dates ("16 years, 2 months ago," "5 days ago") and
+format tags consistent with real reading history. Deliberately did NOT
+run even a small synthetic Goodreads-import test against this account
+as a result: `api/main.py`'s upsert
+(`on conflict... do update set rating=excluded.rating,
+rated_date=coalesce(excluded.rated_date, ratings.rated_date)`) would
+silently overwrite this account's real-looking `rated_date`/`review`
+values with fake fixture data for any matching title -- a real risk of
+destroying real data, not just adding harmless test noise. Flagged in
+docs/TODO.md rather than resolved unilaterally; needs the repo owner to
+say whether this account is safe to write-test against.
+
+**Mobile-viewport testing hit the exact same tooling wall as the
+2026-09-13 attempt, confirmed independently this session**: tried
+`resize_window` twice (390x844, then 780x1600 to rule out a units
+mismatch) -- both calls reported success, but `window.innerWidth`
+never actually changed from the original desktop value (1728),
+confirmed directly via `javascript_tool` both times. Also tried
+Chrome's own device-toolbar keyboard shortcut (cmd+shift+i then
+cmd+shift+m) with no visible effect. This is a real, reproducible
+environment/tool limitation recurring across two independent sessions
+now, not an app bug -- filed as product feedback (SendFeedback) rather
+than burning more attempts on the same failing approach. **Substituted
+a CSS-level code review** (real evidence, but explicitly not equivalent
+to a live click-through): every app page has a correct
+`<meta name="viewport">` tag; `.wrap` is a fluid `max-width: 560px`
+container, not a fixed desktop width; `.genre-toggle`/`.rating-row`
+default to `flex-wrap: wrap` and only switch to `nowrap` above a 640px
+breakpoint; the modal is a deliberate bottom-sheet on mobile
+(`align-items: flex-end`, top-only border-radius) that becomes a
+centered dialog above 640px. Consistent with genuine mobile-conscious
+design, but a real live narrow-viewport click-through is still owed --
+docs/TODO.md's P0 entry updated to reflect this precisely rather than
+claim the gap is closed.
+
+**Deliberately not attempted this session** (production-affecting,
+needs the repo owner's explicit go-ahead, not something to do
+unilaterally per this project's own risk conventions): pushing the
+pending auth-config change to hosted (`config.toml`'s `site_url`/
+`additional_redirect_urls`, still local-only per the 2026-09-13 entry),
+and rotating `SUPABASE_SECRET_KEY` (also unclear whether this session
+has Render deploy access to update the corresponding env var
+afterward, which rotating without updating would break the live API).
