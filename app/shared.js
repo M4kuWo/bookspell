@@ -252,8 +252,9 @@ async function showBookInfo(bookId) {
   }).join('');
 
   box.innerHTML = `
+    ${book.cover_url ? `<div class="modal-cover-row"><img class="modal-cover" src="${escapeAttr(book.cover_url)}" alt=""></div>` : ''}
     <div class="modal-header">
-      <div>
+      <div style="flex:1 1 auto;">
         <div class="modal-title">${escapeHtml(book.title)}</div>
         <div class="modal-author">${escapeHtml(book.author || '')}${book.publication_year ? ` · ${book.publication_year}` : ''}${book.page_count ? ` · ${book.page_count}pp` : ''}</div>
       </div>

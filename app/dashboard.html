@@ -390,7 +390,7 @@ function renderResults(results) {
   resultsArea.innerHTML = results.map((r, i) => `
     <div class="rec-card">
       <div class="rec-head with-thumb">
-        ${r.cover_url ? `<img class="thumb" src="${escapeAttr(r.cover_url)}" alt="" loading="lazy">` : ''}
+        ${r.cover_url && r.book_id ? `<img class="thumb" src="${escapeAttr(r.cover_url)}" alt="" loading="lazy" data-info="${r.book_id}" style="cursor:pointer;">` : (r.cover_url ? `<img class="thumb" src="${escapeAttr(r.cover_url)}" alt="" loading="lazy">` : '')}
         <div style="flex:1 1 auto;">
           <div class="rec-title">${escapeHtml(r.title)}</div>
           <div class="rec-author">${escapeHtml(r.author)}</div>

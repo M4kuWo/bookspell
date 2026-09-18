@@ -18580,3 +18580,100 @@ normal case) -- tested in a rolled-back local transaction first
 hosted via `supabase db push`, and independently re-verified against
 genuine hosted (`supabase db query --linked`) that all 7 rows now carry
 the corrected, working URL.
+
+## 2026-09-18 (later still): image resolution upgrade, click-to-zoom cover art, and two new roadmap items -- all from the repo owner's own review of the cover fix
+
+The repo owner reviewed the cover-thumbnail fix above and raised three
+real points in one message: (1) suspected the emergency replacement
+URLs were thumbnail-resolution, not real cover art; (2) objected to
+depending on Hardcover's live CDN at all, given it had just proven
+unreliable, and asked for images to be self-hosted; (3) asked for
+tapping a cover to see the full art, plus a roadmap idea (multiple
+cover-art variants per book, e.g. American vs. British editions).
+
+**(1) confirmed and fixed.** Checked actual pixel dimensions of the 7
+emergency picks: 323x500 to 500x409, genuinely thumbnail-class, not
+because that's all that exists but because the first non-403 candidate
+was picked rather than the best one. Re-queried each book's full
+edition list from Hardcover's GraphQL API (`editions { image { url
+width height } }`), sorted by width*height, and picked the largest
+verified-working (real HTTP 200) option. **A real trap caught along the
+way**: resolution metadata alone isn't trustworthy -- one Kingdom of
+Copper edition record claimed 1600x2416 but pointed at the exact same
+dead `/books/439240/...` URL fixed in the prior migration (403
+regardless of what the metadata says), so every final candidate was
+re-verified with a real HTTP request, not just picked by the biggest
+reported width*height. 6 of 7 books upgraded meaningfully: The Desert
+Spear (333x500 -> 1650x2475), The Girl with the Dragon Tattoo (323x500
+-> 483x716), Ignite Me (355x500 -> 1691x2560), The Kingdom of Copper
+(357x500 -> 1251x1889), Mortal Engines (313x500 -> 1575x2400). The
+Gunslinger was untouched (already 1400x1400, the best real option).
+Winter's best available option across every edition Hardcover has on
+file for that title is still only 500x409 -- not an oversight, genuinely
+the ceiling for that book right now. Applied via
+`20260918190000_upgrade_cover_url_resolution.sql`, same discipline as
+the original fix: rolled-back local dry run first (6/6 statements
+matched exactly one row), applied to local, pushed to hosted, verified
+against genuine hosted.
+
+**(2) not fixed yet, logged as a real, scoped P1 roadmap item instead**
+(`docs/TODO.md`): self-hosting cover images (download once at ingestion
+time -- plus a one-time backfill for the ~1250 already-ingested books
+-- into a storage backend this project controls, likely Supabase
+Storage, rather than only ever storing Hardcover's own live URL). Real
+open questions logged rather than guessed at: exact storage backend/
+bucket layout, whether to store two sizes (thumbnail + full) given the
+click-to-zoom feature below now means the same URL serves both a small
+list thumbnail and a large modal view, real storage-cost math before
+committing, and whether to fold the "always pick the best resolution"
+fix from (1) into the backfill pass rather than preserving today's
+picks. Not started -- this is a real infrastructure decision, not a
+same-session fix.
+
+**(3a) click-to-zoom, built.** `showBookInfo()`'s modal already fetched
+`book.cover_url` in its query but never rendered it -- added a real,
+prominent cover display (`.modal-cover`, `max-width: 200px`,
+`object-fit: contain` so the whole image shows at its real aspect
+ratio rather than getting cropped into the list `.thumb`'s fixed 40x58
+box, since the entire point of tapping through is actually seeing the
+cover) on its own centered row above the title/author. Wired every
+`.thumb` image across the app to open this same modal on click: two
+locations (dashboard.html's recommendation cards, rate.html's my-
+ratings list) already had a generic `[data-info]` click-delegation
+handler at the container level, so adding the attribute directly to
+the `<img>` was enough. The other two (rate.html's search results and
+series-book list) needed real care: their thumbnails sit inside a row
+that already does something else on click (picks the book for rating
+via a `[data-id]` handler), so a naive `data-info` attribute would have
+fired BOTH handlers. Used a distinct `data-thumb-info` attribute with
+`e.stopPropagation()` in its own click handler inside `wireResultRows()`
+(the function both of those render paths already call), verified by
+testing both interactions side by side against a local static server
+serving the real edited files -- not just reasoned about, actually
+clicked through both paths to confirm neither broke the other. Also
+confirmed visually via screenshot that a real cover (The Desert Spear,
+using its newly-upgraded 1650x2475 URL from fix (1) above) renders
+sharp and correctly-proportioned in the new modal layout.
+
+**(3b) not built, logged as a real "not urgent" roadmap idea instead**
+(`docs/schema/book-dna.md`'s Future fields backlog): multiple cover-art
+variants per book (the repo owner's example: Stormlight Archive's
+American vs. British covers), with a prev/next control in the now-
+existing cover display to page through them. Proposed shape (a real
+`book_covers` join table) sketched but explicitly not scoped further --
+the repo owner named the real tradeoff himself (more variants means
+more images to store, which matters more once/if (2) above actually
+happens) and said this isn't scheduled, just worth remembering.
+
+Everything from this session (batch 14, TODO/rater-recruiting notes,
+the app-verification pass, both accounts, and all of today's app fixes)
+was merged to `main` directly at the repo owner's explicit request,
+after he corrected a real misunderstanding on CLDO's part: `gh` (the
+GitHub CLI, used only for opening PRs) not being authenticated in this
+environment is unrelated to `git push` access, which has worked
+throughout this session via plain git and always could have reached
+`main` directly -- CLDO's earlier hesitation to push to `main` was its
+own default background-job caution, not a real technical limitation,
+and this repo's own established convention (seen throughout this
+session's own git log) is direct-to-`main` commits in a live,
+supervised session like this one.

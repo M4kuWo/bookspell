@@ -367,6 +367,23 @@ nav.top .nav-controls {
 .modal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 4px; }
 .modal-title { font-weight: 700; font-size: 1.1rem; }
 .modal-author { color: var(--ink-soft); font-size: 0.85rem; margin-bottom: 14px; }
+/* The real cover, shown at a real size once you've tapped a 40x58
+   .thumb to get here -- on its own centered row, not squeezed next to
+   the title text, since the point of tapping the thumbnail is actually
+   seeing the cover, not a marginally bigger icon. Deliberately NOT
+   object-fit: cover like .thumb (that crops to a fixed box; this shows
+   the whole image at its own aspect ratio -- covers aren't all the
+   same shape, and cropping would defeat "see the full cover art"). */
+.modal-cover-row { display: flex; justify-content: center; margin-bottom: 14px; }
+.modal-cover {
+  max-width: 200px;
+  max-height: 300px;
+  width: auto; height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  background: var(--line);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
 .modal-close { background: none; border: none; color: var(--ink-soft); font-size: 1.3rem; padding: 0 4px; line-height: 1; }
 .dna-section-title { font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin: 18px 0 8px; cursor: pointer; }
 .dna-section-title:first-of-type { margin-top: 0; }

@@ -1526,6 +1526,27 @@ Deliberately deferred, not in v0.1:
   `publication_year = 2030` placeholder for the latter) — nothing to
   read or tag. Skip these too; re-check once actually published.
 
+- **Multiple cover-art variants per book, browsable from the book-info
+  modal.** Repo owner's idea, 2026-09-18, prompted by fixing a batch of
+  broken `cover_url` values — right now `books.cover_url` is a single
+  value per book, but a real book often has genuinely different cover
+  art across releases (his example: The Stormlight Archive's American
+  vs. British editions look nothing alike). Proposed shape: a real
+  `book_covers` (or similar) join table — `book_id`, `image_url`,
+  maybe `edition_label`/`region` — with the book-info modal (which as
+  of 2026-09-18 already shows one large cover, see the "click a
+  thumbnail to see the full cover" fix in `app/shared.js`) gaining a
+  simple prev/next control to page through variants when more than one
+  exists. **Explicitly not urgent** (repo owner's own words) — noted
+  for the roadmap, not scheduled. Also explicitly flagged as a real
+  storage-cost tradeoff by the repo owner himself: more variants means
+  more images to store, which matters more once/if the separate
+  self-hosting-images idea (see `docs/TODO.md`'s P1, added the same
+  day) actually happens, since hotlinking has no storage cost but
+  self-hosting does. Not scoped further than this — needs a real
+  decision on how many variants are worth sourcing per book (all
+  known editions vs. just a curated couple) before any schema work
+  starts.
 - **`solarpunk`** (setting_worldbuilding) — flagged during trope research
   as real but weaker/niche; not added.
 - **Retroactive tagging of `elves`/`dwarves`/`fae_or_fairies`/`orcs`/

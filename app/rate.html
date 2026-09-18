@@ -164,7 +164,7 @@ function renderSearchResults(seriesList, universeList, books) {
   }
   html += books.map((b) => `
     <div class="result-row with-thumb" data-id="${b.id}" data-title="${escapeAttr(b.title)}" data-author="${escapeAttr(b.author || '')}">
-      ${b.cover_url ? `<img class="thumb" src="${escapeAttr(b.cover_url)}" alt="" loading="lazy">` : ''}
+      ${b.cover_url ? `<img class="thumb" src="${escapeAttr(b.cover_url)}" alt="" loading="lazy" data-thumb-info="${b.id}" style="cursor:pointer;">` : ''}
       <span class="result-title" style="flex:1 1 auto;">${escapeHtml(b.title)}</span>
       <span class="result-author">${escapeHtml(b.author || '')}</span>
     </div>
@@ -183,6 +183,12 @@ function wireResultRows() {
   });
   resultsEl.querySelectorAll('[data-universe]').forEach((row) => {
     row.addEventListener('click', () => showUniverseSeries(row.dataset.universe, row.dataset.name));
+  });
+  // Thumbnails sit inside a [data-id] row (which picks the book for
+  // rating on click) -- stopPropagation so tapping the cover opens the
+  // book-info modal instead of also triggering the parent row's pick.
+  resultsEl.querySelectorAll('[data-thumb-info]').forEach((img) => {
+    img.addEventListener('click', (e) => { e.stopPropagation(); showBookInfo(img.dataset.thumbInfo); });
   });
 }
 
@@ -219,7 +225,7 @@ async function showSeriesBooks(seriesId, seriesName) {
     <div class="result-row" data-back="1" style="cursor:pointer;"><span class="result-title">← Back to search</span></div>
     ${(books || []).map((b) => `
       <div class="result-row with-thumb" data-id="${b.id}" data-title="${escapeAttr(b.title)}" data-author="${escapeAttr(b.author || '')}">
-        ${b.cover_url ? `<img class="thumb" src="${escapeAttr(b.cover_url)}" alt="" loading="lazy">` : ''}
+        ${b.cover_url ? `<img class="thumb" src="${escapeAttr(b.cover_url)}" alt="" loading="lazy" data-thumb-info="${b.id}" style="cursor:pointer;">` : ''}
         <span class="result-title" style="flex:1 1 auto;">${b.position_in_series ? `#${b.position_in_series} · ` : ''}${escapeHtml(b.title)}</span>
         ${ratedMap.has(b.id) ? `<span class="pill ${ratedMap.get(b.id)}">${RATING_LABELS[ratedMap.get(b.id)]}</span>` : '<span class="result-author">Not rated</span>'}
         <button type="button" class="icon-btn" title="Book info" data-series-info="${b.id}">ⓘ</button>
@@ -403,7 +409,7 @@ async function loadMyRatings() {
   }
   container.innerHTML = data.map((r) => `
     <div class="my-rating-row with-thumb">
-      ${r.books?.cover_url ? `<img class="thumb" src="${escapeAttr(r.books.cover_url)}" alt="" loading="lazy">` : ''}
+      ${r.books?.cover_url ? `<img class="thumb" src="${escapeAttr(r.books.cover_url)}" alt="" loading="lazy" data-info="${r.book_id}" style="cursor:pointer;">` : ''}
       <div style="flex:1 1 auto;">
         <div class="my-rating-title">${escapeHtml(r.books?.title || '(unknown title)')}</div>
         <div class="my-rating-author">${escapeHtml(r.books?.author || '')} · <span class="pill ${r.rating}">${RATING_LABELS[r.rating]}</span>${r.format ? ` · ${titleCase(r.format)}` : ''}${r.rated_date ? ` · <span title="${escapeAttr(r.rated_date)}">${escapeHtml(formatRelativeDate(r.rated_date))}</span>` : ''}</div>

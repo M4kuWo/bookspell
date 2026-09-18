@@ -284,7 +284,80 @@ worth deferring to a later session rather than batching in for
   the way (one book's cover-URL id didn't even match its own Hardcover
   book id).
 
+  **UPDATE 2026-09-18, even later still -- two follow-ups from the repo
+  owner's own review of the cover-thumbnail fix.** (1) He correctly
+  suspected the emergency replacement URLs were thumbnail-resolution,
+  not real cover art -- confirmed directly (the picks ranged 323x500 to
+  500x409px) and fixed via a second migration,
+  `20260918190000_upgrade_cover_url_resolution.sql`: re-queried every
+  affected book's full edition list from Hardcover, sorted by
+  width*height, and picked the largest one that ALSO verified with a
+  real HTTP 200 (resolution metadata alone isn't trustworthy -- one
+  "1600x2416" candidate turned out to be the exact same dead `/books/`
+  URL from before). 6 of 7 books upgraded meaningfully (up to
+  1691x2560); Winter's best real option across all its editions is
+  still only 500x409 -- not a mistake, genuinely the best Hardcover has
+  for that title. (2) He also asked for tapping a cover thumbnail to
+  show the full cover art -- built via the existing `showBookInfo()`
+  modal (already fetched `cover_url` but never displayed it): added a
+  real, prominent cover image to the modal (`max-width: 200px`,
+  `object-fit: contain` so it shows the whole image at its real aspect
+  ratio rather than cropping it like the list `.thumb` does), and wired
+  every `.thumb` image across the app (dashboard recommendation cards,
+  rate.html's search results/series list/my-ratings list) to open that
+  modal on click. Two of the four locations needed `stopPropagation()`
+  since their thumbnail sits inside a row that already does something
+  else on click (picks the book for rating) -- verified this doesn't
+  break existing click behavior by testing both the info-click and the
+  original row-click paths against a local static server serving the
+  real edited files. Both fixes verified visually (a real screenshot of
+  the modal showing a full, sharp, correctly-proportioned cover) before
+  being trusted, not just assumed to work from the code alone.
+
 ## P1
+
+- [ ] **Self-host book cover images instead of hotlinking Hardcover's
+  CDN -- raised by the repo owner 2026-09-18, prompted directly by the
+  broken-`/books/`-path cover_url incident the same day (see the P0
+  entry above).** Right now every `books.cover_url` is a live hotlink
+  to `assets.hardcover.app`, so the app is fully dependent on Hardcover
+  continuing to serve that exact URL forever -- which just broke for 7
+  books when Hardcover apparently retired an old asset path, with no
+  warning and no way for this project to have seen it coming. The repo
+  owner's read is correct: this is a real reliability dependency this
+  project doesn't need to carry, not a one-off fluke (Hardcover's asset
+  URLs have already changed shape at least once in this catalog's
+  history, going by how many different path patterns exist across
+  already-ingested books -- `/books/`, `/edition/`, `/editions/`,
+  `/external_data/`).
+
+  **Rough shape, not fully scoped yet**: download each book's cover
+  image once (at ingestion time going forward, plus a one-time backfill
+  for the ~1250 already-ingested books) and store it in a storage
+  backend this project actually controls (Supabase Storage is the
+  obvious first candidate, already used for the rest of this project's
+  infrastructure) rather than only ever storing Hardcover's own URL.
+  `cover_url` would then point at OUR storage, with Hardcover's URL
+  used only as the one-time fetch source during ingestion, never
+  depended on again afterward.
+
+  **Real open questions, not decided**: (a) exact storage backend and
+  bucket layout: (b) whether to keep the original resolution or
+  generate/store two sizes (small for list thumbnails, larger for the
+  book-info modal's cover display added 2026-09-18 -- right now both
+  reuse the same URL, which works but means a phone downloads the same
+  full-size image twice, once scaled down by CSS for the thumbnail list
+  and once at full size when clicked); (c) real storage-cost math for
+  ~1250+ images before committing to a backend/tier; (d) whether to
+  additionally pick the BEST available resolution per book while
+  backfilling (see the 2026-09-18 "upgrade_cover_url_resolution"
+  migration -- several books' stored images turned out to be much
+  lower-resolution than other real options Hardcover had on file for
+  the same book, simply because nobody had checked before), since this
+  backfill pass is a natural point to fix that too rather than
+  preserving today's arbitrary picks. **Not started** -- needs a real
+  scoping/cost decision before any code moves, same posture as any
+  other large infrastructure change in this project.
 
 - [ ] **External AI consultation, first real precedent -- the repo
   owner had ChatGPT (its "Astra" model) do a full, independent
