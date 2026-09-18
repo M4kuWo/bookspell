@@ -316,48 +316,75 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
-- [ ] **Self-host book cover images instead of hotlinking Hardcover's
-  CDN -- raised by the repo owner 2026-09-18, prompted directly by the
-  broken-`/books/`-path cover_url incident the same day (see the P0
-  entry above).** Right now every `books.cover_url` is a live hotlink
-  to `assets.hardcover.app`, so the app is fully dependent on Hardcover
-  continuing to serve that exact URL forever -- which just broke for 7
-  books when Hardcover apparently retired an old asset path, with no
-  warning and no way for this project to have seen it coming. The repo
-  owner's read is correct: this is a real reliability dependency this
-  project doesn't need to carry, not a one-off fluke (Hardcover's asset
-  URLs have already changed shape at least once in this catalog's
-  history, going by how many different path patterns exist across
-  already-ingested books -- `/books/`, `/edition/`, `/editions/`,
-  `/external_data/`).
+- [x] **Self-host book cover images instead of hotlinking Hardcover's
+  CDN -- DONE 2026-09-18, same day it was raised.** Raised by the repo
+  owner, prompted directly by the broken-`/books/`-path cover_url
+  incident the same day (see the P0 entry above). Real storage-cost
+  math was worked out first (a random 25-book sample averaged ~134KB/
+  cover; extrapolated to ~160-170MB for the full catalog, confirmed
+  directly afterward -- the real download totaled 313MB across all
+  1254 images, since the sample undershot a bit) and Supabase's current
+  published pricing checked directly (free tier: 1GB storage/5GB
+  egress; Pro: 100GB storage/250GB egress for $25/mo) -- concluded
+  storage was never going to be the real constraint at this catalog
+  size even with future variants, so no separate scoping/cost delay was
+  actually needed once those numbers were in hand. Repo owner decided:
+  stay on Supabase, one image per book for now (multiple cover-art
+  variants explicitly deferred, see `docs/schema/book-dna.md`'s Future
+  fields backlog).
 
-  **Rough shape, not fully scoped yet**: download each book's cover
-  image once (at ingestion time going forward, plus a one-time backfill
-  for the ~1250 already-ingested books) and store it in a storage
-  backend this project actually controls (Supabase Storage is the
-  obvious first candidate, already used for the rest of this project's
-  infrastructure) rather than only ever storing Hardcover's own URL.
-  `cover_url` would then point at OUR storage, with Hardcover's URL
-  used only as the one-time fetch source during ingestion, never
-  depended on again afterward.
+  **What shipped**: a new `book-covers` Supabase Storage bucket
+  (public read, write restricted to the CLI's own linked-project
+  access -- migration `20260918200000_create_book_covers_storage_bucket.sql`),
+  all 1254 existing covers downloaded from their old Hardcover URLs and
+  bulk-uploaded via `supabase storage cp -r`, and `books.cover_url`
+  repointed at the new bucket for every one of them. A reusable helper,
+  `scripts/lib/self-host-cover.js`'s `selfHostCoverImage()`, for any
+  NEW ingestion script to call going forward (documented as a mandatory
+  ingestion step in CLAUDE.md, same status as the existing author-
+  contamination check) -- the 3 existing `scripts/ingest-*.js` files
+  were deliberately NOT touched, since they're one-off scripts from
+  already-completed rounds that won't run again as-is.
 
-  **Real open questions, not decided**: (a) exact storage backend and
-  bucket layout: (b) whether to keep the original resolution or
-  generate/store two sizes (small for list thumbnails, larger for the
-  book-info modal's cover display added 2026-09-18 -- right now both
-  reuse the same URL, which works but means a phone downloads the same
-  full-size image twice, once scaled down by CSS for the thumbnail list
-  and once at full size when clicked); (c) real storage-cost math for
-  ~1250+ images before committing to a backend/tier; (d) whether to
-  additionally pick the BEST available resolution per book while
-  backfilling (see the 2026-09-18 "upgrade_cover_url_resolution"
-  migration -- several books' stored images turned out to be much
-  lower-resolution than other real options Hardcover had on file for
-  the same book, simply because nobody had checked before), since this
-  backfill pass is a natural point to fix that too rather than
-  preserving today's arbitrary picks. **Not started** -- needs a real
-  scoping/cost decision before any code moves, same posture as any
-  other large infrastructure change in this project.
+  **Two real mistakes made and caught during this same session, not
+  shipped silently**: (1) the first repointing migration hardcoded
+  LOCAL Postgres's own book UUIDs in its `WHERE id = ...` clauses --
+  exactly the mistake CLAUDE.md's own "reference via a title subselect,
+  never a raw UUID" rule exists to prevent, caught immediately by
+  verifying against real hosted afterward (only 166 of 1254 rows had
+  actually updated) rather than trusting `db push`'s report, and fixed
+  with a follow-up migration keyed on (title, author) instead. (2) 6 of
+  those title+author lookups STILL failed on hosted, for a genuinely
+  separate reason: local's `author` field was stale/contaminated for
+  those exact 6 books (translator/narrator/cover-artist names still
+  appended) while hosted already had the clean value from an earlier
+  fix that evidently never made it back to local -- a real, separate
+  local/hosted drift bug, flagged below as its own item rather than
+  silently patched over.
+  Full pipeline, both mistakes, and the fixes in
+  `docs/project-log.md`'s 2026-09-18 entries.
+
+- [x] **Local/hosted `books.author` field drift -- FOUND AND FIXED
+  2026-09-18, same session.** Found as a side effect of the cover-image
+  backfill above (6 books' title+author join failed on hosted), not
+  from a dedicated audit -- but immediately followed up with a real,
+  complete scan (`select title, author from books` on both local and
+  hosted, diffed all 1254 titles) rather than leaving the scope
+  guessed-at. **Confirmed exactly those same 6 and no others
+  catalog-wide**: Acceptance, The Eyre Affair, The Shadow of the Wind,
+  Doomsday Book, Nine Princes in Amber, Shadows for Silence in the
+  Forests of Hell -- all had a contaminated multi-name `author` value
+  on LOCAL Postgres (translator/narrator/cover-artist names still
+  appended, e.g. local's "Carlos Ruiz Zafon, Lucia Graves" vs. hosted's
+  already-clean "Carlos Ruiz Zafón") while HOSTED already had the
+  correct single-author value, from some earlier contamination fix that
+  evidently never made it back to local -- the same general failure
+  mode CLAUDE.md's "Database & migrations" section already documents
+  for catalog DATA drift (a fix landing on hosted but never applied
+  locally), just on the `author` FIELD specifically rather than missing
+  rows. Fixed directly on local via the standard raw-psycopg2 method
+  (no migration file needed -- hosted was already correct, this was
+  purely catching local up to it, not a new hosted-bound change).
 
 - [ ] **External AI consultation, first real precedent -- the repo
   owner had ChatGPT (its "Astra" model) do a full, independent
@@ -3375,6 +3402,32 @@ worth deferring to a later session rather than batching in for
   this changes the P3 reasoning above (known candidate
   pools for genuinely NEW editions are still exhausted) -- it's a
   data-visibility/quality fix, not new sourcing work.
+  **UPDATE (2026-09-18)**: repo owner noticed a real UX gap on The
+  Dragon Reborn's book-info modal -- two `standard` editions both
+  labeled just "Standard — Macmillan Audio," with nothing to tell them
+  apart (they're genuinely different: Kate Reading/Michael Kramer's
+  long-running narration, 25h, vs. Rosamund Pike's 2023 celebrity
+  re-recording tied to the Amazon TV adaptation, no runtime on file).
+  **Confirmed the missing runtime is a real, genuine data gap, not a
+  display bug**: Hardcover's own `editions.audio_seconds` field is
+  `null` for Rosamund Pike's edition too (verified directly against
+  Hardcover's GraphQL API) -- we're not hiding a value we actually
+  have. **A real per-edition `release_date` DOES exist on Hardcover's
+  `editions` type and could disambiguate editions like this one, but
+  it's not reliable enough to pull automatically**: Rosamund Pike's
+  edition's `release_date` on Hardcover is `1991-10-15` (matching the
+  print novel's own original publication date, not a real audiobook
+  release date) -- confirmed via a live web search that the real
+  release was June 2023 (it won a 2024 Audie Award). Blindly trusting
+  Hardcover's `release_date` field would display a confidently WRONG
+  date here, the exact "confidently wrong, not uncertain" failure shape
+  CLAUDE.md's tagging-quality section already warns about for Book DNA
+  fields -- the same discipline should apply to this field too. **Not
+  built** -- would need a new `audiobook_editions.release_date` column
+  plus a real per-edition research/verification step (fits
+  `.claude/skills/tag-audiobook-editions/SKILL.md`'s existing manual-
+  research convention, not an automated Hardcover-field copy), not
+  scoped further than that.
   **Full history kept below, not deleted** (moved here from P1
   2026-09-11):
   **Progress as of 2026-09-08: Steps A1a + A1b done for GraphicAudio,

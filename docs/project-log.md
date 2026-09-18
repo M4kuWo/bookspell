@@ -18677,3 +18677,113 @@ own default background-job caution, not a real technical limitation,
 and this repo's own established convention (seen throughout this
 session's own git log) is direct-to-`main` commits in a live,
 supervised session like this one.
+
+## 2026-09-18 (later still): book covers self-hosted end to end -- two real mistakes made and caught, a real local/hosted author-field drift found and fixed, and a genuine audiobook-edition data gap confirmed
+
+Following up on the repo owner's explicit decision (stay on Supabase,
+one image per book, variants deferred): built the actual self-hosting
+pipeline the same session, plus investigated a real UX report on The
+Dragon Reborn's audiobook editions.
+
+**Storage decision math, done before building anything**: sampled 25
+real covers, averaging ~134KB each; extrapolated to ~160-170MB for the
+full 1254-book catalog. Checked Supabase's current published pricing
+directly (`supabase.com/pricing`, not a blog aggregator): free tier
+includes 1GB storage/5GB egress; Pro ($25/mo) includes 100GB storage/
+250GB egress. Concluded storage was never going to be the real
+constraint at this catalog's size, even generously accounting for
+future cover-art variants -- no separate cost-scoping delay was needed
+once these numbers were in hand.
+
+**What shipped**: a new `book-covers` Supabase Storage bucket (public
+read via `storage.buckets.public = true`, write access restricted to
+the Supabase CLI's own linked-project storage API -- no anon/
+authenticated write policy added, matching every other write path in
+this project's read-only-to-the-public shape) --
+`20260918200000_create_book_covers_storage_bucket.sql`. Downloaded all
+1254 books' existing cover images from their Hardcover URLs (10-way
+parallel download, 1253/1254 succeeded first try, the one transient DNS
+failure retried manually -- real total 313MB, a bit higher than the
+sample-based estimate but still comfortably under the free tier).
+Bulk-uploaded via `supabase storage cp -r` (confirmed via a real test
+upload + HTTP fetch of the public URL before committing to the full
+batch) -- verified all 1254 objects landed via the bucket's own
+listing, not just trusted the CLI's summary. Built a reusable helper,
+`scripts/lib/self-host-cover.js`'s `selfHostCoverImage(sourceUrl,
+bookId)`, for future ingestion scripts to call instead of storing
+Hardcover's URL directly -- documented as a mandatory ingestion step in
+CLAUDE.md, same status as the existing author-contamination check.
+Deliberately did NOT edit the 3 existing `scripts/ingest-*.js` files --
+they're one-off scripts from already-completed ingestion rounds and
+won't run again as-is (this project's own pattern has been a fresh
+script per round each time), so editing dead code would have protected
+nothing real.
+
+**Mistake 1, caught immediately by verifying against real hosted**: the
+first `cover_url`-repointing migration
+(`20260918210000_point_cover_url_at_self_hosted_storage.sql`) keyed its
+UPDATEs off LOCAL Postgres's own book UUIDs -- exactly the mistake
+CLAUDE.md's own "reference via a title subselect, never a raw UUID"
+rule exists to prevent. `db push` reported success (a WHERE clause
+matching zero rows isn't a SQL error), but querying real hosted
+afterward showed only 166 of 1254 rows had actually changed -- the ones
+where local and hosted UUIDs happened to coincide (confirmed directly:
+'The Way of Kings' shares the same UUID on both sides, 'Butcher &
+Blackbird' does not -- `6738693f-...` locally vs `4d9f7ef2-...` on
+hosted). Fixed with a follow-up migration
+(`20260918220000_fix_cover_url_storage_pointer_titlematch.sql`) keyed
+on (title, author) instead, confirmed unique across the whole catalog
+first (zero duplicate (title, author) pairs) before trusting it as a
+join key.
+
+**Mistake 2's real cause, found while verifying the fix for mistake
+1**: even the (title, author)-keyed migration left exactly 6 books
+still un-updated on hosted (1248 of 1254, not all 1254). Investigated
+rather than assumed it was another instance of the same bug: local's
+`author` field was genuinely stale/contaminated for those exact 6
+books (translator/narrator/cover-artist names still appended, e.g.
+"Carlos Ruiz Zafon, Lucia Graves" -- Lucia Graves is the English
+translator) while hosted already had the clean, correct value from an
+apparent earlier contamination fix that never made it back to local.
+Fixed the remaining 6 cover_url pointers by title alone
+(`20260918230000_fix_cover_url_storage_pointer_remaining6.sql`, using
+hosted's own real author values fetched directly rather than guessed).
+Final verification: 1254 of 1256 books point at storage (the other 2
+never had a cover_url at all, confirmed not a new gap), spot-checked
+one real URL's actual HTTP response, not just the DB value.
+
+**Then treated the author-drift discovery as a real bug worth actually
+scoping, not just patching around**: dumped every one of the 1254
+matched titles' `author` field from both local and hosted and diffed
+them directly, rather than leaving "scope unknown" in the TODO entry.
+Confirmed exactly those same 6 books and zero others catalog-wide have
+this drift. Fixed local's `author` field directly for all 6 (no
+migration needed -- hosted was already correct; this was purely
+catching local up to it, via the standard raw-psycopg2 method).
+
+**Separately, investigated a real report on The Dragon Reborn's
+audiobook editions** (two `standard` entries both labeled "Standard —
+Macmillan Audio" with nothing to tell them apart, and a missing runtime
+on one of them). Confirmed both are genuinely real, different editions
+(Kate Reading/Michael Kramer's long-running narration vs. Rosamund
+Pike's 2023 celebrity re-recording tied to the Amazon TV adaptation).
+**Confirmed the missing runtime is real, not a display bug**:
+Hardcover's own `audio_seconds` field is null for the Pike edition too,
+verified directly against their GraphQL API -- checked via the OTHER
+edition too, whose `audio_seconds: 90000` exactly matches our stored
+`runtime_minutes: 1500`, confirming this Hardcover field really is the
+correct source and really is genuinely absent for the Pike edition, not
+a bug on our side. **Also checked whether Hardcover's `release_date`
+field could disambiguate editions like this automatically, and found a
+real reliability trap before recommending it**: Hardcover's editions
+DO have a `release_date` field, and it IS populated for the Pike
+edition (`1991-10-15`) -- but that's the print novel's own original
+publication date, not a real audiobook release date. A live web search
+confirmed the real release was June 2023 (it won a 2024 Audie Award).
+Blindly trusting this field would display a confidently wrong date,
+not an uncertain one -- the same failure shape CLAUDE.md's tagging
+section already has a standing policy against for Book DNA fields.
+Logged as a real, not-yet-built idea (a new `release_date` column +
+real per-edition research, not an automated field copy) in
+docs/TODO.md rather than building something on data just shown to be
+untrustworthy.

@@ -450,6 +450,30 @@ repo) so it's discoverable from either side.
   when a name "looks like" a contributor. This is a mandatory ingestion
   step, the same way the trope/CW density self-check below is mandatory
   for tagging — not an audit someone else runs afterward.
+- **Never store Hardcover's own cover-image URL directly in
+  `books.cover_url` — self-host it instead**, via
+  `scripts/lib/self-host-cover.js`'s `selfHostCoverImage(sourceUrl,
+  bookId)` (downloads the image, uploads it to this project's own
+  `book-covers` Supabase Storage bucket, returns our own public URL).
+  Decided 2026-09-18 after Hardcover's asset CDN broke for 7 already-
+  ingested books with zero warning (an old `/books/<id>/...` path
+  pattern started 403ing) — hotlinking makes this app's own image
+  display depend on a third party's URL staying stable forever, which
+  already proved false once. All 1254 already-ingested books were
+  backfilled the same day (see `docs/project-log.md`'s 2026-09-18
+  entries for the full pipeline, including two real mistakes caught
+  and fixed during it: a migration that hardcoded LOCAL Postgres's own
+  book UUIDs, which don't match hosted's for the same book, and picking
+  the first working replacement URL rather than the highest-resolution
+  one). One image per book for now — multiple cover-art variants (e.g.
+  US vs UK editions) are a deliberately-deferred future idea, see
+  `docs/schema/book-dna.md`'s Future fields backlog. The 3 existing
+  `scripts/ingest-*.js` files were deliberately NOT updated to call
+  this helper — they're one-off scripts from already-completed
+  ingestion rounds and won't run again as-is (this project's own
+  pattern is a fresh script per ingestion round, not reusing an old
+  one) — but any NEW ingestion script must call it instead of using
+  `doc.image?.url` directly.
 - **A tagging batch must self-check its own trope/content-warning
   density BEFORE the session ends — this is not an after-the-fact audit
   for someone else to catch later.** This has already gone wrong twice:
