@@ -3778,17 +3778,38 @@ worth deferring to a later session rather than batching in for
   Hardcover's own audiobook-edition data or another real source, not
   guessed) before this is usable -- not undertaken yet, scope/size
   unassessed.
-- [ ] **`audiobook_editions.audiobook_length` backfilled from real edition
+- [x] **`audiobook_editions.audiobook_length` backfilled from real edition
   runtime data 2026-09-13** (864 -> 904 of 941 tagged books, migration
   `20260913090000_backfill_audiobook_length_from_editions.sql`) --
   mechanical, using docs/schema/book-dna.schema.yaml's own documented
   hour thresholds, scoped to the 40 books with exactly one unambiguous
-  'standard'-edition runtime. **18 more books have multiple 'standard'
-  rows with genuinely different runtimes** (different narrators/
-  publishers/abridgements -- e.g. two legitimate different narrations)
-  and were deliberately left null rather than guessed at -- a real,
-  small remaining backfill opportunity if someone wants to make a
-  per-book call on which edition's runtime should count.
+  'standard'-edition runtime. 18 more books at the time had multiple
+  'standard' rows with differing runtimes and were deliberately left
+  null rather than guessed at.
+  **UPDATE (2026-09-18): remainder backfilled, no judgment call needed
+  after all.** Re-ran the query against the catalog's current state --
+  found 14 books still null with multiple standard-edition runtimes
+  (not 18; the catalog/tagging state has moved since 2026-09-13).
+  Computed each one's `audiobook_length` bucket programmatically for
+  EVERY one of its runtimes rather than eyeballing hours, and every
+  single one landed in the same bucket regardless of which edition's
+  runtime was used (e.g. Foundation's 517min/536min are both
+  8.6h/8.9h -- both 'standard'; The Eye of the World's 1794min/1975min
+  are both comfortably 'epic'). **None of the 14 actually straddle a
+  bucket boundary** -- so there was never a real "which edition is
+  canonical" question for this set, just an enum coarse enough not to
+  care which standard edition you pick. Migration
+  `20260918232000_backfill_audiobook_length_remaining_14.sql`, tested
+  in a rolled-back transaction first (37 -> 23 null locally, matching
+  the 14-row update), applied to local then hosted via `supabase db
+  push` (clean, `db push --dry-run` afterward confirms hosted is fully
+  up to date), spot-checked 5 of the 14 rows directly on hosted via
+  `supabase db query --linked` to confirm the real values landed, not
+  just that the push succeeded. Local now shows 1035/1058 populated,
+  hosted 1036/1058 -- that 1-row gap is the SAME pre-existing drift
+  from the 2026-09-13 batch 1 migration already noted and deferred back
+  then, not something this backfill introduced or something to chase
+  down here.
 - [x] **Data quality: swept for GraphicAudio full-cast rows mislabeled
   `edition_type = 'standard'` -- DONE 2026-09-18, none found currently.**
   Originally noticed 2026-09-13 (e.g. "A Court of Frost and Starlight"

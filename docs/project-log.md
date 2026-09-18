@@ -18915,3 +18915,40 @@ now-null-everywhere release-date columns as bounded-batch backfill
 work for future sessions) in the same session, per CLAUDE.md's rule for
 schema changes. `docs/TODO.md` marked done for the schema half, with
 the backfill work explicitly left open.
+
+## 2026-09-18 -- `audiobook_length` backfill remainder: turned out not to need a judgment call
+
+Followed up on the 2026-09-13 migration's deliberately-deferred 18
+books (multiple `standard`-edition runtimes, left null rather than
+guessed at). Re-querying against the catalog's current state found 14
+books in that situation now, not 18 -- the tagging/catalog state has
+moved since then, expected.
+
+Before writing any UPDATE, computed each book's `audiobook_length`
+bucket programmatically for EVERY one of its candidate runtimes
+(`docs/schema/book-dna.schema.yaml`'s short<8h/standard 8-15h/long
+15-25h/epic 25h+ thresholds), rather than eyeballing hours by hand --
+this is exactly the kind of mechanical-but-checkable step CLAUDE.md
+warns can go quietly wrong. Result: **all 14 land in the same bucket
+regardless of which standard edition's runtime is used** -- e.g.
+Foundation's two editions (517min/536min, both ~8.6-8.9h) are both
+comfortably 'standard'; The Eye of the World's (1794min/1975min,
+~29.9h/32.9h) are both comfortably 'epic'. None straddle a bucket
+boundary. So the "which edition is canonical" question the original
+migration was worried about never actually arises for this set --
+the enum is coarse enough not to care.
+
+Generated `20260918232000_backfill_audiobook_length_remaining_14.sql`
+from the query output (never hand-transcribed titles, per this
+project's standing rule after the apostrophe-mismatch incident),
+tested in a rolled-back transaction (37 -> 23 null locally, matching
+the 14-row update), applied to local directly then hosted via
+`supabase db push` (clean; `db push --dry-run` afterward confirms
+hosted fully up to date). Since this is a pure UPDATE with no row-count
+change, `check_db_sync.py` wouldn't have caught a real gap here --
+spot-checked 5 of the 14 rows directly on hosted via `supabase db
+query --linked` instead, all correct. Local now sits at 1035/1058
+`audiobook_length` populated, hosted at 1036/1058 -- confirmed that
+1-row gap is the same pre-existing drift from the 2026-09-13 batch-1
+migration already documented and deferred then, not something this
+backfill caused. `docs/TODO.md` marked done.
