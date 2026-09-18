@@ -1492,6 +1492,21 @@ Deliberately deferred, not in v0.1:
   audio, or another source entirely). Not scoped further than that;
   revisit once the current sourcing effort is further along.
 
+  **UPDATE (2026-09-18): added `release_date_start`/`release_date_end`**
+  (migration `20260918231000_audiobook_editions_release_date_range.sql`),
+  prompted by a repo-owner report that a `release_date` field was
+  missing entirely. Deliberately a RANGE, not a single date -- a
+  single-release edition gets both columns set to the same date, but a
+  multi-part dramatized release (GraphicAudio's Wind and Truth again
+  being the concrete example, 5 parts over ~4 months) genuinely has a
+  different start and end, and `release_date_end` should stay null
+  until `release_status = 'fully_released'` rather than guess an end
+  date for a release still in progress. Schema only -- every existing
+  row has both columns null; populating them (along with the separately
+  tracked 306-row `runtime_minutes` gap, see `docs/TODO.md`) is real
+  per-row research queued to `.claude/skills/tag-audiobook-editions/
+  SKILL.md`, not attempted in this pass.
+
 - **A real way to model omnibus/compilation editions**, distinct from
   the individual volumes they collect. Surfaced 2026-09-07 while
   checking partially-tagged series for the catalog-completion TODO:

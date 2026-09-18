@@ -360,10 +360,12 @@ worth deferring to a later session rather than batching in for
   smaller and more contained than the `explain_match()` fix, worth
   doing either independently or together.
 
-- [ ] **Catalog-wide audiobook edition data gaps: missing
-  `runtime_minutes`, and no `release_date` field at all yet -- raised
-  by the repo owner 2026-09-18, confirmed and quantified, not yet
-  fixed.** Prompted by the same Dragon Reborn report as the P3 entry
+- [x] **Catalog-wide audiobook edition data gaps: missing
+  `runtime_minutes`, and no `release_date` field at all -- raised
+  by the repo owner 2026-09-18, confirmed and quantified. Schema half
+  DONE 2026-09-18 (same session); data-backfill half is real research
+  work, queued to `tag-audiobook-editions`, not attempted here.**
+  Prompted by the same Dragon Reborn report as the P3 entry
   further down (two `standard` editions with no `runtime_minutes` on
   one of them). Repo owner guessed this was specifically worse for
   secondary (non-first) editions -- **checked directly, and that's not
@@ -384,19 +386,25 @@ worth deferring to a later session rather than batching in for
   store a single `release_date` -- store a RANGE (first part's release
   date through the last part's release date), so a reader can see e.g.
   "released 2019-2023" for an in-progress GraphicAudio production
-  rather than one misleading single date. **Proposed shape, not built**:
-  add `runtime_minutes` research to the standing `tag-audiobook-
-  editions` backlog (306 rows, real research work, not automatable --
-  see the Dragon Reborn entry on why blindly trusting Hardcover's own
-  fields isn't safe); add two new columns,
-  `release_date_start`/`release_date_end` (a single-release edition
-  has both set to the same date; a multi-part one has genuinely
-  different start/end, with `release_date_end` left null until
-  `release_status = 'fully_released'`). Needs
-  `docs/schema/book-dna.schema.yaml`/`.claude/skills/tag-audiobook-
-  editions/SKILL.md` updated in the same session as the migration, per
-  CLAUDE.md's standing rule for schema changes -- not done yet, this is
-  the scoping only.
+  rather than one misleading single date.
+  **UPDATE (2026-09-18): schema built.** Migration
+  `20260918231000_audiobook_editions_release_date_range.sql` adds
+  `release_date_start`/`release_date_end` (both date, nullable) to
+  `audiobook_editions` -- tested in a rolled-back transaction first,
+  applied to local directly and hosted via `supabase db push` (clean,
+  `supabase migration list --linked` confirms local/remote match), row
+  counts re-verified equal after via `check_db_sync.py`. No backfill in
+  this migration -- populating either column needs real per-row
+  research (Hardcover's `editions` type carries a release-date field
+  but with real caveats per the Dragon Reborn entry below), not
+  guessed at here. Both `docs/schema/book-dna.md` and
+  `.claude/skills/tag-audiobook-editions/SKILL.md` updated in this same
+  session per CLAUDE.md's standing rule (see each file's own updated
+  sections). **Still open, queued to `tag-audiobook-editions`'s
+  standing research backlog, not done in this session**: the actual
+  306-row `runtime_minutes` backfill, and researching real
+  `release_date_start`/`release_date_end` values for any row (every
+  row currently has both columns null).
 
 - [x] **Self-host book cover images instead of hotlinking Hardcover's
   CDN -- DONE 2026-09-18, same day it was raised.** Raised by the repo

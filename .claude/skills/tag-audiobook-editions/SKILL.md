@@ -127,7 +127,12 @@ hours if that's what's given), `release_status`
 (`fully_released`/`in_progress`/`announced`), `parts_released`/
 `parts_total` (episodic dramatized releases -- e.g. GraphicAudio's Wind
 and Truth released across 5 parts over ~4 months; check whether the
-match you're researching is fully out yet, don't assume), `source_url`,
+match you're researching is fully out yet, don't assume),
+`release_date_start`/`release_date_end` (added 2026-09-18 -- a
+single-release edition gets both set to the SAME date; a multi-part
+one gets a genuinely different start/end, and `release_date_end` stays
+NULL until you've confirmed `release_status = 'fully_released'` --
+don't guess an end date for a release still in progress), `source_url`,
 `last_verified_date` (today's date -- this column exists specifically
 so a future session can tell whether a row needs re-checking rather
 than trusting a stale status indefinitely, same pattern as
@@ -136,14 +141,30 @@ than trusting a stale status indefinitely, same pattern as
 ```sql
 insert into audiobook_editions
   (book_id, edition_type, narrators, production_company, runtime_minutes,
-   release_status, parts_released, parts_total, source_url, last_verified_date)
+   release_status, parts_released, parts_total, release_date_start,
+   release_date_end, source_url, last_verified_date)
 select b.id, 'dramatized_full_cast', array['Narrator One','Narrator Two'],
   'GraphicAudio', 720, 'fully_released', null, null,
+  '2024-03-01', '2024-03-01',
   'https://...', current_date
 from books b
 where (b.title, b.author) = ('Exact Title', 'Exact Author')
 on conflict do nothing;
 ```
+
+**Standing backlog, separate from new matches above**: 306 of 1123
+existing `audiobook_editions` rows are missing `runtime_minutes`
+(confirmed 2026-09-18, see `docs/TODO.md`), and every row has
+`release_date_start`/`release_date_end` still null since those columns
+are brand new. Backfilling either on an EXISTING row is the same kind
+of research as a new match above, just against a row that already
+exists -- `update audiobook_editions set runtime_minutes = ...,
+last_verified_date = current_date where id = '...'` (scoped by `id` or
+by a `book_id` subselect, never unscoped), not a fresh insert. Treat
+this the same bounded-batch way as new matches (don't try to clear 306
+rows in one session) and don't blindly trust Hardcover's own
+runtime/release-date fields without a real per-row check -- see the
+Dragon Reborn entry in `docs/TODO.md` for a concrete example of why.
 
 Cap each session at **10-15 confirmed matches**, then stop and report,
 same discipline as `tag-catalog-batch`'s per-book batches -- even

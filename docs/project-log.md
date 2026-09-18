@@ -18885,3 +18885,33 @@ future GraphicAudio/BBC batch under `tag-audiobook-editions` Sub-task A
 in case a future insert reintroduces the mistake -- this was a one-time
 sweep, not a standing guarantee. No migration needed since nothing
 needed changing.
+
+## 2026-09-18 -- `audiobook_editions.release_date_start`/`release_date_end` schema built
+
+Built the schema half of the 2026-09-18 runtime_minutes/release_date
+TODO entry (the data-backfill half -- the 306-row `runtime_minutes`
+gap, and researching real dates for any row -- stays queued to
+`tag-audiobook-editions`, not attempted here). Added
+`release_date_start`/`release_date_end` (both nullable `date`) to
+`audiobook_editions` per the repo owner's design call: a range, not a
+single date, so an in-progress multi-part GraphicAudio-style release
+can show "2019-2023" honestly instead of one misleading date. A
+single-release edition gets both columns set to the same date; a
+multi-part one gets a genuinely different start/end, with
+`release_date_end` staying null until `release_status =
+'fully_released'`.
+
+Migration `20260918231000_audiobook_editions_release_date_range.sql`
+(`add column if not exists`, idempotent), tested in a rolled-back
+transaction first, applied to local directly then hosted via `supabase
+db push` (clean apply, `supabase migration list --linked` confirms
+every local/remote pair matches including the new one), row counts
+re-verified equal via `check_db_sync.py` afterward. Updated
+`docs/schema/book-dna.md`'s `audiobook_editions` future-fields entry
+and `.claude/skills/tag-audiobook-editions/SKILL.md`'s Step A2 (new
+columns added to the research checklist and example INSERT, plus a new
+"standing backlog" note pointing at the 306-row runtime gap and the
+now-null-everywhere release-date columns as bounded-batch backfill
+work for future sessions) in the same session, per CLAUDE.md's rule for
+schema changes. `docs/TODO.md` marked done for the schema half, with
+the backfill work explicitly left open.
