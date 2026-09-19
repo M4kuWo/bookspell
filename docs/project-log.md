@@ -19171,3 +19171,37 @@ genuinely the diagnosed bottleneck, not a look-alike. Canonical
 Left open, on purpose: `app/dashboard.html`'s 3-parallel-genre-requests
 pattern (a separate, smaller, frontend-only piece per the original
 TODO entry).
+
+## 2026-09-20, later -- dashboard-side speed fix landed too
+
+Repo owner asked for the remaining piece right after the backend fix
+above. Genre can't be collapsed into one shared computation (each of
+''/fantasy/sci_fi genuinely re-runs `_resolve_profile()`/prevalence/
+threshold with a different genre argument), so this piece's savings
+are about round-trip/DB-read count, not per-genre scoring cost: 3
+separate `/recommendations` calls each redundantly re-queried
+`ratings`/`user_rules`/`profiles` over their own DB connection
+(`get_catalog()` was already process-cached, so that part wasn't
+really 3x).
+
+Extracted `/recommendations`' own body verbatim into `_score_genre()`
+(confirmed via direct diff against the pre-refactor body -- only the
+return shape differs, which each caller handles), added
+`GET /recommendations/all`, which loads catalog/ratings/rules/
+format-preference once and calls `_score_genre()` 3x. `app/
+dashboard.html` now makes one fetch instead of three; `resultsByGenre`
+keeps the identical shape, so every downstream step (thumbnails,
+filters, render, cache) needed no changes.
+
+Verified with FastAPI's real `TestClient` against local Postgres (a
+throwaway venv with the pinned `api/requirements.txt`, since this
+project's own environment doesn't carry `fastapi`/`httpx` --
+`require_user_id` monkeypatched to bypass auth, since it's a plain
+function call inside each route body, not a `Depends()`):
+`/recommendations/all`'s 3 genre lists exactly match 3 separate
+`/recommendations` calls at both `top_n=10` and `50`, and
+`/recommendations`' own single-genre response shape and bad-genre 400
+are both unchanged. In-process timing (fake user, empty ratings): 3x
+calls 0.376s/0.274s vs. one consolidated call 0.230s/0.224s -- real
+production savings should read larger, since this local measurement
+has no actual network latency to remove 2 of 3 round-trips' worth of.

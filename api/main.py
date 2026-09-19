@@ -144,24 +144,15 @@ def rule_targets():
     return scoring_rules.list_user_rule_targets(catalog)
 
 
-@app.get("/recommendations")
-def recommendations(genre: str = None, top_n: int = 10, authorization: str = Header(default=None)):
-    user_id = require_user_id(authorization)
-    catalog = get_catalog()
-    ratings = _load_user_ratings(user_id, catalog)
-    user_rules = _load_user_rules(user_id)
-    format_preference = _load_format_preference(user_id)
-
-    if genre not in (None, "fantasy", "sci_fi"):
-        raise HTTPException(status_code=400, detail="genre must be 'fantasy', 'sci_fi', or omitted")
-    # recommend() already scores the whole catalog every call regardless
-    # of top_n (only the final truncation differs) -- this is not a
-    # scoring-engine change, just exposing a parameter scoring/api.py
-    # already supports. Bounded so a client filtering post-hoc (e.g. the
-    # audiobook-availability filters) can ask for a bigger pool without
-    # the endpoint returning the entire catalog.
-    top_n = max(1, min(top_n, 100))
-
+def _score_genre(catalog, ratings, user_rules, format_preference, genre, top_n):
+    """Shared by /recommendations and /recommendations/all -- one
+    genre's full ranked+explained result list. Pulled out unchanged from
+    /recommendations' own body (2026-09-20) so /recommendations/all can
+    call it 3x (once per genre -- each genre is a genuinely different
+    scored pool, not just a client-side filter of one shared pool, since
+    recommend()/explain_match_with_profile() take genre into their own
+    prevalence/threshold calculations) against catalog/ratings/rules/
+    format_preference loaded ONCE, instead of duplicating this logic."""
     results = api.recommend(
         catalog, ratings, top_n=top_n, genre=genre,
         user_rules=user_rules, format_preference=format_preference,
@@ -194,7 +185,59 @@ def recommendations(genre: str = None, top_n: int = 10, authorization: str = Hea
             "mismatches": detail["mismatches"],
             "dealbreaker_flags": detail["dealbreaker_flags"],
         })
+    return out
+
+
+@app.get("/recommendations")
+def recommendations(genre: str = None, top_n: int = 10, authorization: str = Header(default=None)):
+    user_id = require_user_id(authorization)
+    catalog = get_catalog()
+    ratings = _load_user_ratings(user_id, catalog)
+    user_rules = _load_user_rules(user_id)
+    format_preference = _load_format_preference(user_id)
+
+    if genre not in (None, "fantasy", "sci_fi"):
+        raise HTTPException(status_code=400, detail="genre must be 'fantasy', 'sci_fi', or omitted")
+    # recommend() already scores the whole catalog every call regardless
+    # of top_n (only the final truncation differs) -- this is not a
+    # scoring-engine change, just exposing a parameter scoring/api.py
+    # already supports. Bounded so a client filtering post-hoc (e.g. the
+    # audiobook-availability filters) can ask for a bigger pool without
+    # the endpoint returning the entire catalog.
+    top_n = max(1, min(top_n, 100))
+
+    out = _score_genre(catalog, ratings, user_rules, format_preference, genre, top_n)
     return {"results": out}
+
+
+@app.get("/recommendations/all")
+def recommendations_all(top_n: int = 10, authorization: str = Header(default=None)):
+    """Same per-genre result shape as /recommendations, for all 3 genre
+    views (''/fantasy/sci_fi) in ONE request -- added 2026-09-20 so
+    app/dashboard.html's "Get recommendations" click can make a single
+    round-trip instead of 3 parallel /recommendations calls. Genre still
+    can't be collapsed into one shared computation (see _score_genre()'s
+    docstring), so this doesn't reduce the scoring work itself -- it
+    eliminates 2 of the 3 redundant catalog/ratings/rules/format-
+    preference DB round-trips and FastAPI request overheads the 3
+    separate calls each paid independently (get_catalog() was already
+    process-cached across requests, so that part wasn't 3x -- the
+    per-user Postgres queries in _load_user_ratings()/_load_user_rules()/
+    _load_format_preference() were the real redundant cost, run 3
+    times over 3 separate DB connections for data that doesn't depend
+    on genre at all)."""
+    user_id = require_user_id(authorization)
+    catalog = get_catalog()
+    ratings = _load_user_ratings(user_id, catalog)
+    user_rules = _load_user_rules(user_id)
+    format_preference = _load_format_preference(user_id)
+    top_n = max(1, min(top_n, 100))
+
+    return {
+        "": _score_genre(catalog, ratings, user_rules, format_preference, None, top_n),
+        "fantasy": _score_genre(catalog, ratings, user_rules, format_preference, "fantasy", top_n),
+        "sci_fi": _score_genre(catalog, ratings, user_rules, format_preference, "sci_fi", top_n),
+    }
 
 
 @app.post("/import/goodreads")

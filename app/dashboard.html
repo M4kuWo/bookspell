@@ -297,17 +297,15 @@ document.getElementById('get-recs-btn').addEventListener('click', async () => {
   try {
     const genres = ['', 'fantasy', 'sci_fi'];
     const topN = anyFilterActive ? FILTERED_POOL_SIZE : DISPLAY_COUNT;
-    const responses = await Promise.all(genres.map((g) => {
-      const params = new URLSearchParams();
-      if (g) params.set('genre', g);
-      params.set('top_n', topN);
-      return apiFetch(`/recommendations?${params}`);
-    }));
-    for (let i = 0; i < genres.length; i++) {
-      const res = responses[i];
-      if (!res.ok) continue;
-      const { results } = await res.json();
-      resultsByGenre[genres[i]] = results;
+    // One request for all 3 genre views instead of 3 parallel
+    // /recommendations calls -- each genre is still a genuinely
+    // different scored pool server-side (see api/main.py's
+    // _score_genre()), so this doesn't change what gets computed, only
+    // how many round-trips/redundant per-user DB reads it takes to get
+    // it (see docs/TODO.md's 2026-09-18 entry).
+    const res = await apiFetch(`/recommendations/all?top_n=${topN}`);
+    if (res.ok) {
+      resultsByGenre = await res.json();
     }
     if (!resultsByGenre[currentGenre]) {
       resultsArea.innerHTML = `<div class="empty-state">Couldn't get recommendations. Try again in a moment.</div>`;

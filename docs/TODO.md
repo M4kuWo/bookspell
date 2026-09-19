@@ -468,9 +468,52 @@ worth deferring to a later session rather than batching in for
   `scripts/scoring_tests.py` suite clean both times it was rerun. Full
   writeup in `docs/scoring-test-protocol.md`'s matching entry (that's
   the source of truth per CLAUDE.md's rule for scoring changes -- this
-  bullet is a pointer, not a duplicate). **Still open**: the
-  `app/dashboard.html` 3-parallel-genre-requests piece described above
-  -- separate, smaller, frontend-only, not attempted this session.
+  bullet is a pointer, not a duplicate).
+
+  **UPDATE 2026-09-20, same day: dashboard-side piece also landed.**
+  Genre still can't be collapsed into one shared computation (each of
+  ''/fantasy/sci_fi is a genuinely different scored pool -- its own
+  `_resolve_profile()`/prevalence/threshold run), so this doesn't
+  reduce the per-genre scoring work itself. What it removes: the 3
+  separate HTTP round-trips `app/dashboard.html`'s "Get recommendations"
+  click made, and the 3x redundant Postgres reads inside them
+  (`_load_user_ratings()`/`_load_user_rules()`/`_load_format_preference()`
+  don't depend on genre at all, but were being re-queried once per
+  parallel request over 3 separate DB connections -- `get_catalog()`
+  was already process-cached, so that part wasn't actually 3x).
+  New `GET /recommendations/all` endpoint (`api/main.py`) loads
+  catalog/ratings/rules/format-preference ONCE, then calls a newly
+  extracted `_score_genre()` helper 3x (one call per genre) --
+  `_score_genre()` is `/recommendations`' own body, moved verbatim
+  (confirmed via a direct diff against the pre-refactor body: the only
+  difference is the return shape, `{"results": out}` vs bare `out`,
+  which the callers handle) into a function both endpoints share, not
+  a rewrite. `/recommendations` itself is unchanged behavior, now just
+  calling that shared helper. `app/dashboard.html` now makes one
+  `/recommendations/all` fetch instead of 3 parallel `/recommendations`
+  fetches; every downstream step (thumbnail attach, audiobook/series
+  filters, render, sessionStorage cache) is untouched since
+  `resultsByGenre` keeps the exact same `{'': [...], fantasy: [...],
+  sci_fi: [...]}` shape either way.
+  Verified with FastAPI's real `TestClient` (a from-scratch venv with
+  the pinned `api/requirements.txt`, since this repo's own environment
+  doesn't have `fastapi`/`httpx` installed) against local Postgres,
+  auth bypassed by monkeypatching `require_user_id` (it's a plain
+  function call inside each route body, not a `Depends()`, so
+  `app.dependency_overrides` doesn't apply here) -- confirmed
+  `/recommendations/all`'s 3 genre lists are byte-identical to 3
+  separate `/recommendations` calls (`top_n=10` and `50`, both an exact
+  dict match), `/recommendations`' own single-genre response shape and
+  its existing bad-genre 400 are both unchanged. Real timing (fake
+  user, empty ratings -- a cold-start profile, not the ~7.5x case from
+  the backend fix above, since this piece's savings come from
+  round-trip/DB-read count, not per-genre scoring cost): 3x
+  `/recommendations` calls 0.376s/0.274s vs. one `/recommendations/all`
+  call 0.230s/0.224s in-process -- real production savings should be
+  larger than that understates, since a local `TestClient` has no
+  actual network latency to remove 2 of 3 round-trips' worth of.
+  `app/dashboard.html`'s inline script re-parsed clean via Node after
+  the edit.
 
 - [x] **Catalog-wide audiobook edition data gaps: missing
   `runtime_minutes`, and no `release_date` field at all -- raised
