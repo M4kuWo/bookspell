@@ -19205,3 +19205,38 @@ are both unchanged. In-process timing (fake user, empty ratings): 3x
 calls 0.376s/0.274s vs. one consolidated call 0.230s/0.224s -- real
 production savings should read larger, since this local measurement
 has no actual network latency to remove 2 of 3 round-trips' worth of.
+
+## 2026-09-20, later still -- CODX Task 13 queued: independent review of both recommendation-engine fixes
+
+Repo owner asked for a second opinion on the two fixes above (`fcf8f65`,
+`e8281c2`) -- CODX hasn't had a task since Task 12 (`d6cd2db`,
+2026-09-17), and these are exactly the kind of code-review/independent-
+verification work CODX is scoped for.
+
+`docs/codx-tasks/current-task.md` overwritten with Task 13: review both
+commits, independently re-verify correctness (own harness against a
+different rater/genre/top_n sample than this session's, not a re-run of
+this session's own numbers), and give a real verdict -- agree or room
+for improvement -- rather than a rubber stamp. Flagged one specific,
+real concern for CODX's own opinion rather than deciding it myself: the
+old 3-independent-`/recommendations`-requests dashboard code rendered
+whichever genres succeeded even if one failed; the new single
+`/recommendations/all` request is all-or-nothing -- worth fixing (catch
+each genre's `_score_genre()` call individually, return partial results)
+or an acceptable trade-off? Also asked CODX to check for a third
+resolve-once-more opportunity (`recommend()` still resolves its own
+profile bundle separately from the explain-loop's `resolve_explain_profile()`
+-- 2 resolves per request now, not a true 1) and judge whether
+collapsing that is worth the larger blast radius it would need.
+
+Gave explicit data-access guidance up front rather than let CODX
+discover the wall itself: `CODX_READONLY_DATABASE_URL` covers the
+catalog-only comparison, but `/recommendations`/`/recommendations/all`
+endpoint testing needs `ratings`/`user_rules`/`profiles`, which
+`codx_readonly` deliberately excludes -- pointed CODX at monkeypatching
+the `_load_user_*` functions with a `data/ratings/*.json` rater's data
+instead of querying real tables (a better test for this purpose anyway:
+deterministic and isolates the code path under review), plus the
+isolated-venv `fastapi`/`httpx` setup and the `require_user_id`
+monkeypatch trick (it's a plain function call, not a `Depends()`) this
+session's own verification already worked out.
