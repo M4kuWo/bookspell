@@ -1,0 +1,50 @@
+[
+  {
+    "genre": null,
+    "top_n": 7,
+    "returned": 7,
+    "ranking_seconds": 0.1556627918034792,
+    "second_bundle_seconds": 0.013865542132407427,
+    "explain_loop_seconds": 0.0010451250709593296
+  },
+  {
+    "genre": null,
+    "top_n": 100,
+    "returned": 100,
+    "ranking_seconds": 0.1551922089420259,
+    "second_bundle_seconds": 0.013722334057092667,
+    "explain_loop_seconds": 0.014427000191062689
+  },
+  {
+    "genre": "fantasy",
+    "top_n": 7,
+    "returned": 7,
+    "ranking_seconds": 0.10584683297201991,
+    "second_bundle_seconds": 0.012591167353093624,
+    "explain_loop_seconds": 0.0009519169107079506
+  },
+  {
+    "genre": "fantasy",
+    "top_n": 100,
+    "returned": 100,
+    "ranking_seconds": 0.10476166708394885,
+    "second_bundle_seconds": 0.012618917040526867,
+    "explain_loop_seconds": 0.014430083334445953
+  },
+  {
+    "genre": "sci_fi",
+    "top_n": 7,
+    "returned": 7,
+    "ranking_seconds": 0.07156304130330682,
+    "second_bundle_seconds": 0.011330708395689726,
+    "explain_loop_seconds": 0.0008923751302063465
+  },
+  {
+    "genre": "sci_fi",
+    "top_n": 100,
+    "returned": 100,
+    "ranking_seconds": 0.07032654155045748,
+    "second_bundle_seconds": 0.01189879234880209,
+    "explain_loop_seconds": 0.012925666756927967
+  }
+]

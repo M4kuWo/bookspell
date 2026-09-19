@@ -1,0 +1,1 @@
+READ-ONLY catalog snapshot: 1059 scored rows; 868584 bytes; SHA256 631e8f5e87ab531f7a501f7630d5d70c6a9040309dd4f66b75599b6e13ba87f7

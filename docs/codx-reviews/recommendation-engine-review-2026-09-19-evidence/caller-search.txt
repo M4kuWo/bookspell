@@ -1,0 +1,291 @@
+tools/dogfood/app.py:174:    recs = api.recommend(catalog, ratings, top_n=top_n, genre=genre, user_rules=st.session_state.rules,
+docs/codx-tasks/current-task.md:24:  `explain_match()` (`scripts/scoring/api.py`) recomputed its entire
+docs/codx-tasks/current-task.md:31:  once) out of `explain_match()`, which is now a 2-line wrapper over
+docs/codx-tasks/current-task.md:74:   `explain_match()`'s output is unchanged before/after `fcf8f65` for a
+docs/codx-tasks/current-task.md:103:   also calls `explain_match()` (unaffected by design, but confirm
+docs/codx-tasks/current-task.md:105:   caller of `explain_match()`, `recommend()`, or anything in
+docs/codx-tasks/current-task.md:132:  `explain_match()`/`explain_match_with_profile()` comparisons in
+api/main.py:87:    """{title: rating_label} -- the raw shape recommend()/explain_match()
+api/main.py:156:    results = api.recommend(
+api/main.py:161:    # below, instead of explain_match() re-resolving this same profile/
+api/main.py:182:            # directly rather than re-deriving them, since explain_match()
+docs/schema/book-dna.md:1815:  silence when a reader is on the fence about DNFing; (2) `explain_match()`
+api/README.md:21:  lists behind that summary (same data `explain_match()` always
+docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md:16:Only `explain_match()` changes. The broader TODO shorthand mentioning
+docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md:72:for explanation). The old public `explain_match(..., top_n=None)` therefore
+docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md:83:This is corrected solely in `explain_match()`: for an explicit None, set the
+docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md:114:220:    same order recommend()/explain_match() apply them. Centralized here
+docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md:115:228:    explain_match()/audit_book_score() now compute and pass by default
+docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md:116:305:    now real production behavior (explain_match() uses the same
+docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md:117:755:# explain_match() and, via run_held_out_test()/run_ablation_held_out()
+docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md:123:`explain_match()`. The before/after canonical suite is therefore only a
+docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md:132:the REAL public `explain_match()` functions on both. No profile-preparation
+docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md:1445:@@ -3524,39 +3524,39 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
+scripts/scoring/pipeline.py:663:    policy="ranking" (A3, 2026-09-16); `explain_match()` via
+docs/scoring-test-protocol.md:40:mismatch in `explain_match()`, but the overall score still lands as a
+docs/scoring-test-protocol.md:144:`explain_match()` shows almost no real mismatch against her profile.
+docs/scoring-test-protocol.md:587:wired into `explain_match()`'s return value as two new keys
+docs/scoring-test-protocol.md:703:changes rankings, not just an explanation) and `explain_match()`. If a
+docs/scoring-test-protocol.md:821:Verified live end-to-end through `explain_match()`/`recommend()`
+docs/scoring-test-protocol.md:1337:`explain_match()` for the human-readable trajectory caveat text --
+docs/scoring-test-protocol.md:1403:**LANDED**: wired into `recommend()`, `explain_match()`, and
+docs/scoring-test-protocol.md:2231:first rather than assuming: `recommend()`, `explain_match()`,
+docs/scoring-test-protocol.md:2469:`explain_match()`/`audit_book_score()`) for whenever a field/user pair
+docs/scoring-test-protocol.md:2487:`explain_match()`/`audit_book_score()` -- default now excludes
+docs/scoring-test-protocol.md:2737:blend and user rules), not `explain_match()`'s narrower base+veto+
+docs/scoring-test-protocol.md:2739:1.0 for ranking while `explain_match()` calls the identical book a "Poor
+docs/scoring-test-protocol.md:2819:nothing calls the new function yet -- `recommend()`, `explain_match()`,
+docs/scoring-test-protocol.md:2928:(`R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy", ...)`,
+docs/scoring-test-protocol.md:2942:Landed as-is. Next: A4 (migrate `explain_match()`/`explain_book()` to
+docs/scoring-test-protocol.md:2947:## A4: `explain_match()` migrated onto `score_candidate()` -- LANDED (2026-09-16, proposed by CODX, independently verified and applied by CLDO)
+docs/scoring-test-protocol.md:2949:Implements Phase A step 4 from `docs/TODO.md`: `explain_match()` now
+docs/scoring-test-protocol.md:2960:cycle, so this is purely a caller-side change inside `explain_match()`.
+docs/scoring-test-protocol.md:2965:18 insertions/18 deletions, inside `explain_match()` alone.
+docs/scoring-test-protocol.md:2968:migration passing `top_n=top_n` verbatim breaks `explain_match(...,
+docs/scoring-test-protocol.md:2976:`explain_match()`: when `top_n is None`, it computes `len(weights) +
+docs/scoring-test-protocol.md:2989:`scripts/scoring_tests.py` never actually calls `explain_match()`
+docs/scoring-test-protocol.md:2995:harness: the REAL original and migrated `explain_match()` functions
+docs/scoring-test-protocol.md:3175:`explain_match()`, not A5's `_full_score()`. Validated instead with a
+docs/scoring-test-protocol.md:3209:through `score_candidate()`** -- `recommend()`, `explain_match()`,
+docs/scoring-test-protocol.md:3287:`recommend()`, `explain_match()`, and `audit_book_score()` through both
+docs/scoring-test-protocol.md:3372:`explain_match()` (`scripts/scoring/api.py`) still recomputes the full
+docs/scoring-test-protocol.md:3378:changed what `explain_match()` does AFTER that resolution (delegating
+docs/scoring-test-protocol.md:3381:**The fix**: extracted the post-resolution half of `explain_match()`
+docs/scoring-test-protocol.md:3388:`explain_match()` itself is now a two-line wrapper
+docs/scoring-test-protocol.md:3395:it, instead of `explain_match()` per result. `score_candidate()`,
+docs/scoring-test-protocol.md:3397:untouched -- this is purely `explain_match()`'s own internal wiring
+docs/scoring-test-protocol.md:3401:third): (1) direct comparison of OLD `explain_match()` (git HEAD,
+docs/scoring-test-protocol.md:3404:`explain_match()`, across 4 real raters x 3 genres x 3 `top_n` values
+docs/scoring-test-protocol.md:3407:pre-resolved bundle, against OLD `explain_match()`'s output for the
+docs/scoring-test-protocol.md:3420:A4's own finding this suite still never calls `explain_match()`
+scripts/scoring/profile.py:295:    """Shared by recommend() and explain_match(): resolves rating titles
+scripts/scoring/api.py:174:    `explain_match()` derives internally on every call. A caller that
+scripts/scoring/api.py:205:    """Same explanation `explain_match()` produces, but takes an
+scripts/scoring/api.py:206:    already-resolved profile bundle (everything `explain_match()` would
+scripts/scoring/api.py:210:    instead of re-deriving it. `explain_match()` itself is unchanged and
+scripts/scoring/api.py:218:    scan otherwise repeated per call. See `explain_match()`'s own
+scripts/scoring/api.py:262:def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, top_n=5, format_preference=None):
+scripts/scoring/feedback.py:47:    dict for recommend()/explain_match(). Only TROPE selections translate
+scripts/scoring/constants.py:200:# Scope: this only affects recommend()'s ranking. explain_match() is
+scripts/scoring/constants.py:588:# NOT wired into recommend()/explain_match() yet) -----------------------
+scripts/scoring/constants.py:626:# NOT wired into recommend()/explain_match()/audit_book_score() -- see
+scripts/scoring/constants.py:731:# production scoring path (2026-09-04). recommend()/explain_match() never
+scripts/scoring/constants.py:736:# 0-1 score -- a superset of what explain_match() surfaces (which only
+scripts/recommend.py:34:4. explain_match() surfaces WHY a book scored the way it did, in
+scripts/recommend.py:73:    results = api.recommend(catalog, ratings, top_n=15)
+scripts/recommend.py:81:    explanation = api.explain_match(catalog, ratings, top_pick)
+scripts/recommend.py:90:    explanation = api.explain_match(catalog, ratings, "The Restaurant at the End of the Universe")
+scripts/recommend.py:99:    explanation = api.explain_match(catalog, ratings, "Royal Assassin")
+docs/codx-reviews/codx-a3-recommend-migration-proposal-2026-09-16.md:21:as are `explain_match()`, `audit_book_score()`, calibration and all stage
+docs/codx-reviews/codx-a3-recommend-migration-proposal-2026-09-16.md:723:    with contextlib.redirect_stdout(output):result=module.recommend(catalog,ratings,**kw)
+docs/TODO.md:406:  - **`explain_match()` redundantly re-resolves the ENTIRE profile
+docs/TODO.md:424:    `explain_match()` cost 5x on top of the 3x from the parallel genre
+docs/TODO.md:429:  `explain_match()` call for that request instead of letting each one
+docs/TODO.md:438:  smaller and more contained than the `explain_match()` fix, worth
+docs/TODO.md:452:  anything -- it did; A4 only changed what `explain_match()` does after
+docs/TODO.md:456:  `scripts/scoring/api.py`; `explain_match()` itself is now a 2-line
+docs/TODO.md:460:  old-vs-new `explain_match()` direct comparison (1,440 calls, 0
+docs/TODO.md:461:  mismatches), the new function against old `explain_match()` given an
+docs/TODO.md:865:  canonical scoring entry point that `recommend()`, `explain_match()`,
+docs/TODO.md:892:      a book (`recommend()`'s loop, `explain_match()`,
+docs/TODO.md:909:    - A4. Migrate `explain_match()`/`explain_book()` to build on the
+docs/TODO.md:1290:  (including cold-start blend + user rules), not `explain_match()`'s
+docs/TODO.md:1347:  **A4 LANDED, 2026-09-16** — CODX's Task 6: `explain_match()` now
+docs/TODO.md:1352:  migration silently truncated `explain_match(..., top_n=None)`
+docs/TODO.md:1358:  `explain_match()` alone. Also verified up front that
+docs/TODO.md:1359:  `scoring_tests.py` never actually calls `explain_match()` anywhere,
+docs/TODO.md:1368:  "A4: `explain_match()` migrated onto `score_candidate()`" entry and
+docs/TODO.md:1410:  through `score_candidate()`** — `recommend()`, `explain_match()`,
+docs/TODO.md:1436:  `recommend()`/`explain_match()`/`audit_book_score()` through both the
+docs/codx-reports/2026-09-16-a3-recommend-migration-proposal.md:21:as are `explain_match()`, `audit_book_score()`, calibration and all stage
+docs/codx-reports/2026-09-16-a3-recommend-migration-proposal.md:723:    with contextlib.redirect_stdout(output):result=module.recommend(catalog,ratings,**kw)
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:90:recommend() includes cold start and rules, while explain_match() does not. api/main.py takes the numerical score from the former and the match_label from the latter. This is more than redundant work: it can present a label describing a different number.
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:204:The trajectory header says EXPERIMENTAL / NOT wired into recommend()/explain_match() despite actual calls in production and the protocol's landed entry. It should not be used as evidence of runtime scope.
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:1173:print('Cold-start score:',R.recommend(cat,{},top_n=1)[0][0],'explanation:',R.explain_match(cat,{},'Gateway')['score'],R.explain_match(cat,{},'Gateway')['match_label'])
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:1291:api/main.py:171:        detail = R.explain_match(catalog, ratings, title, genre=genre, format_preference=format_preference)
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:1304:2742:# NOT wired into recommend()/explain_match() yet) -----------------------
+docs/codx-reports/2026-09-16-a4-explain-match-migration-proposal.md:16:Only `explain_match()` changes. The broader TODO shorthand mentioning
+docs/codx-reports/2026-09-16-a4-explain-match-migration-proposal.md:72:for explanation). The old public `explain_match(..., top_n=None)` therefore
+docs/codx-reports/2026-09-16-a4-explain-match-migration-proposal.md:83:This is corrected solely in `explain_match()`: for an explicit None, set the
+docs/codx-reports/2026-09-16-a4-explain-match-migration-proposal.md:114:220:    same order recommend()/explain_match() apply them. Centralized here
+docs/codx-reports/2026-09-16-a4-explain-match-migration-proposal.md:115:228:    explain_match()/audit_book_score() now compute and pass by default
+docs/codx-reports/2026-09-16-a4-explain-match-migration-proposal.md:116:305:    now real production behavior (explain_match() uses the same
+docs/codx-reports/2026-09-16-a4-explain-match-migration-proposal.md:117:755:# explain_match() and, via run_held_out_test()/run_ablation_held_out()
+docs/codx-reports/2026-09-16-a4-explain-match-migration-proposal.md:123:`explain_match()`. The before/after canonical suite is therefore only a
+docs/codx-reports/2026-09-16-a4-explain-match-migration-proposal.md:132:the REAL public `explain_match()` functions on both. No profile-preparation
+docs/codx-reports/2026-09-16-a4-explain-match-migration-proposal.md:1445:@@ -3524,39 +3524,39 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
+docs/codx-reviews/codx-a5-full-score-migration-proposal-2026-09-16.md:12:The protocol's “A4: explain_match() migrated onto score_candidate()” entry,
+docs/codx-reviews/codx-a5-full-score-migration-proposal-2026-09-16.md:26:AST-equal. This includes the canonical scorer, recommend(), explain_match(),
+scripts/scoring_tests.py:232:    same order recommend()/explain_match() apply them. Centralized here
+scripts/scoring_tests.py:240:    explain_match()/audit_book_score() now compute and pass by default
+scripts/scoring_tests.py:321:    now real production behavior (explain_match() uses the same
+scripts/scoring_tests.py:771:# explain_match() and, via run_held_out_test()/run_ablation_held_out()
+scripts/scoring_tests.py:1027:    baseline = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy")
+scripts/scoring_tests.py:1033:    no_ya = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+scripts/scoring_tests.py:1040:    less_romance = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+docs/codx-reports/2026-09-15-recommend-refactor-audit.md:90:recommend() includes cold start and rules, while explain_match() does not. api/main.py takes the numerical score from the former and the match_label from the latter. This is more than redundant work: it can present a label describing a different number.
+docs/codx-reports/2026-09-15-recommend-refactor-audit.md:204:The trajectory header says EXPERIMENTAL / NOT wired into recommend()/explain_match() despite actual calls in production and the protocol's landed entry. It should not be used as evidence of runtime scope.
+docs/codx-reports/2026-09-15-recommend-refactor-audit.md:1173:print('Cold-start score:',R.recommend(cat,{},top_n=1)[0][0],'explanation:',R.explain_match(cat,{},'Gateway')['score'],R.explain_match(cat,{},'Gateway')['match_label'])
+docs/codx-reports/2026-09-15-recommend-refactor-audit.md:1291:api/main.py:171:        detail = R.explain_match(catalog, ratings, title, genre=genre, format_preference=format_preference)
+docs/codx-reports/2026-09-15-recommend-refactor-audit.md:1304:2742:# NOT wired into recommend()/explain_match() yet) -----------------------
+docs/project-log.md:1540:mechanism, `explain_match()`.
+docs/project-log.md:1565:`_resolve_profile()` helper so `explain_match()` reuses the exact same
+docs/project-log.md:1567:`explain_match()` works on ANY book in the catalog, not just
+docs/project-log.md:1611:X, and features/also has Y." `explain_match()` now returns `summary`/
+docs/project-log.md:1661:- `explain_match()` extended with a `series_note` field -- point 2, pulls
+docs/project-log.md:2307:now that it's real data instead of a synthetic test. `explain_match()`
+docs/project-log.md:2987:explain the dislike -- `explain_match()` finds almost no real mismatch.
+docs/project-log.md:3264:unchanged) and `explain_match()` (the only place in `recommend.py` that
+docs/project-log.md:3286:end-to-end via `explain_match()` directly (not just the test harness):
+docs/project-log.md:3417:`scripts/recommend.py`, wired into `explain_match()` as two new,
+docs/project-log.md:3508:`recommend()` and `explain_match()`. When a book mismatches on a field
+docs/project-log.md:3561:Verified live end-to-end through `explain_match()`/`recommend()`
+docs/project-log.md:3933:NOT touching `explain_match()`, which still gives a reader's real
+docs/project-log.md:4741:final 0-1 score -- a superset of what `explain_match()` already
+docs/project-log.md:4747:of the production scoring path, `recommend()`/`explain_match()` never
+docs/project-log.md:4852:`explain_match()`'s human-readable trajectory text. A real,
+docs/project-log.md:5079:`explain_match()`/`audit_book_score()` pipeline. Honest finding: it
+docs/project-log.md:6678:through `recommend()`, `explain_match()`, `audit_book_score()`,
+docs/project-log.md:7002:`build_profile()`/`_resolve_profile()`/`recommend()`/`explain_match()`/
+docs/project-log.md:12029:`GET /recommendations` (auth'd, calls `recommend()`/`explain_match()`),
+docs/project-log.md:14834:`dealbreaker_flags` -- itemized detail `explain_match()` already
+docs/project-log.md:16048:`explain_match()`'s narrower one (F1), and the canonical benchmark
+docs/project-log.md:16513:`R.recommend()` with real ratings/genre/rules (not just lower-level
+docs/project-log.md:16528:`explain_match()`/`explain_book()` onto `score_candidate(..., policy=
+docs/project-log.md:16532:## 2026-09-16 (later still) -- CODX's Task 6 landed: explain_match() migrated onto score_candidate(), a real edge case caught before finalizing, independently re-verified and applied
+docs/project-log.md:16539:`explain_match()` now calls `score_candidate(..., policy="explanation")`
+docs/project-log.md:16544:task is purely a caller-side change inside `explain_match()`.
+docs/project-log.md:16548:`explain_match(..., top_n=None)`. The original `explain_book()` treats
+docs/project-log.md:16555:`explain_match()`: an explicit, provably-sufficient upper bound
+docs/project-log.md:16560:`scripts/scoring_tests.py` never actually calls `explain_match()`
+docs/project-log.md:16567:and migrated `explain_match()` invoked side by side across all 978
+docs/project-log.md:16588:`docs/scoring-test-protocol.md`'s new "A4: `explain_match()` migrated
+docs/project-log.md:17156:`score_candidate()`** -- `recommend()`, `explain_match()`,
+docs/project-log.md:17964:interpreter. Directly executed `recommend()`/`explain_match()`/
+docs/project-log.md:18822:fast. The real cost is `explain_match()` -- it redundantly re-resolves
+docs/project-log.md:18843:across every `explain_match()` call) ready to pick up next session.
+docs/project-log.md:19151:accurate. `explain_match()` still recomputed the full profile bundle on
+docs/project-log.md:19155:`scripts/scoring/api.py`, with `explain_match()` reduced to a thin
+docs/project-log.md:19160:refactor by inspection: old-vs-new `explain_match()` (1,440 calls, 0
+docs/project-log.md:19161:mismatches), the new function against old `explain_match()` given an
+docs/codx-reports/2026-09-16-a5-full-score-migration-proposal.md:12:The protocol's “A4: explain_match() migrated onto score_candidate()” entry,
+docs/codx-reports/2026-09-16-a5-full-score-migration-proposal.md:26:AST-equal. This includes the canonical scorer, recommend(), explain_match(),
+docs/codx-reports/2026-09-16-a2-canonical-scorer-proposal.md:23:`recommend()`, `explain_match()`, `audit_book_score()`, and the complete
+docs/codx-reports/2026-09-16-a2-canonical-scorer-proposal.md:93:uses `describe_series_trajectory()` exactly as `explain_match()` does.
+docs/codx-reports/2026-09-16-a2-canonical-scorer-proposal.md:553:    eq(reconstructed[:10],O.recommend(catalog,ratings,top_n=10,genre=genre,recent_history=history,diversity=diversity,
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:218:-# Scope: this only affects recommend()'s ranking. explain_match() is
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:2708:-# NOT wired into recommend()/explain_match() yet) -----------------------
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:2876:-# NOT wired into recommend()/explain_match()/audit_book_score() -- see
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:2936:-    """Shared by recommend() and explain_match(): resolves rating titles
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:3234:-    policy="ranking" (A3, 2026-09-16); `explain_match()` via
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:3556:-def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, top_n=5, format_preference=None):
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:3691:-    dict for recommend()/explain_match(). Only TROPE selections translate
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:3751:-# production scoring path (2026-09-04). recommend()/explain_match() never
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:3756:-# 0-1 score -- a superset of what explain_match() surfaces (which only
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:4356:+def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, top_n=5, format_preference=None):
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:5106:+# Scope: this only affects recommend()'s ranking. explain_match() is
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:5494:+# NOT wired into recommend()/explain_match() yet) -----------------------
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:5532:+# NOT wired into recommend()/explain_match()/audit_book_score() -- see
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:5637:+# production scoring path (2026-09-04). recommend()/explain_match() never
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:5642:+# 0-1 score -- a superset of what explain_match() surfaces (which only
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:6696:+    dict for recommend()/explain_match(). Only TROPE selections translate
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:7408:+    policy="ranking" (A3, 2026-09-16); `explain_match()` via
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:7961:+    """Shared by recommend() and explain_match(): resolves rating titles
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:34:4. explain_match() surfaces WHY a book scored the way it did, in
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:260:# Scope: this only affects recommend()'s ranking. explain_match() is
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:2744:# NOT wired into recommend()/explain_match() yet) -----------------------
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:2912:# NOT wired into recommend()/explain_match()/audit_book_score() -- see
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:2972:    """Shared by recommend() and explain_match(): resolves rating titles
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:3265:    policy="ranking" (A3, 2026-09-16); `explain_match()` via
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:3491:def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, top_n=5, format_preference=None):
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:3623:    dict for recommend()/explain_match(). Only TROPE selections translate
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:3683:# production scoring path (2026-09-04). recommend()/explain_match() never
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:3688:# 0-1 score -- a superset of what explain_match() surfaces (which only
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:4012:    explanation = explain_match(catalog, ratings, top_pick)
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:4021:    explanation = explain_match(catalog, ratings, "The Restaurant at the End of the Universe")
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/recommend.before.py:4030:    explanation = explain_match(catalog, ratings, "Royal Assassin")
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/implement.py:49:main=re.sub(r'\brecommend\(', 'api.recommend(', main)
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/implement.py:50:main=re.sub(r'\bexplain_match\(', 'api.explain_match(', main)
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/api/main.py:87:    """{title: rating_label} -- the raw shape recommend()/explain_match()
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/api/main.py:165:    results = R.recommend(
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/api/main.py:171:        detail = R.explain_match(catalog, ratings, title, genre=genre, format_preference=format_preference)
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/api/main.py:183:            # directly rather than re-deriving them, since explain_match()
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/implement.py:49:main=re.sub(r'\brecommend\(', 'api.recommend(', main)
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/implement.py:50:main=re.sub(r'\bexplain_match\(', 'api.explain_match(', main)
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:66:     """{title: rating_label} -- the raw shape recommend()/explain_match()
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:102:-    results = R.recommend(
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:103:+    results = api.recommend(
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:109:-        detail = R.explain_match(catalog, ratings, title, genre=genre, format_preference=format_preference)
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:110:+        detail = api.explain_match(catalog, ratings, title, genre=genre, format_preference=format_preference)
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:508:+    results = api.recommend(catalog, ratings, top_n=15)
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:516:-    explanation = explain_match(catalog, ratings, top_pick)
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:517:+    explanation = api.explain_match(catalog, ratings, top_pick)
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:525:-    explanation = explain_match(catalog, ratings, "The Restaurant at the End of the Universe")
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:526:+    explanation = api.explain_match(catalog, ratings, "The Restaurant at the End of the Universe")
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:534:-    explanation = explain_match(catalog, ratings, "Royal Assassin")
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:535:+    explanation = api.explain_match(catalog, ratings, "Royal Assassin")
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:642:     now real production behavior (explain_match() uses the same
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:725: # explain_match() and, via run_held_out_test()/run_ablation_held_out()
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:908:-    baseline = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy")
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:909:+    baseline = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy")
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:915:-    no_ya = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:916:+    no_ya = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:923:-    less_romance = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:924:+    less_romance = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:1136:-    recs = R.recommend(catalog, ratings, top_n=top_n, genre=genre, user_rules=st.session_state.rules,
+docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch:1137:+    recs = api.recommend(catalog, ratings, top_n=top_n, genre=genre, user_rules=st.session_state.rules,
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:66:     """{title: rating_label} -- the raw shape recommend()/explain_match()
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:102:-    results = R.recommend(
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:103:+    results = api.recommend(
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:109:-        detail = R.explain_match(catalog, ratings, title, genre=genre, format_preference=format_preference)
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:110:+        detail = api.explain_match(catalog, ratings, title, genre=genre, format_preference=format_preference)
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:508:+    results = api.recommend(catalog, ratings, top_n=15)
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:516:-    explanation = explain_match(catalog, ratings, top_pick)
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:517:+    explanation = api.explain_match(catalog, ratings, top_pick)
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:525:-    explanation = explain_match(catalog, ratings, "The Restaurant at the End of the Universe")
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:526:+    explanation = api.explain_match(catalog, ratings, "The Restaurant at the End of the Universe")
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:534:-    explanation = explain_match(catalog, ratings, "Royal Assassin")
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:535:+    explanation = api.explain_match(catalog, ratings, "Royal Assassin")
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:642:     now real production behavior (explain_match() uses the same
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:725: # explain_match() and, via run_held_out_test()/run_ablation_held_out()
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:908:-    baseline = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy")
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:909:+    baseline = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy")
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:915:-    no_ya = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:916:+    no_ya = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:923:-    less_romance = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:924:+    less_romance = api.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:1136:-    recs = R.recommend(catalog, ratings, top_n=top_n, genre=genre, user_rules=st.session_state.rules,
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/proposal.patch:1137:+    recs = api.recommend(catalog, ratings, top_n=top_n, genre=genre, user_rules=st.session_state.rules,
+docs/codx-reviews/codx-a2-canonical-scorer-proposal-2026-09-16.md:23:`recommend()`, `explain_match()`, `audit_book_score()`, and the complete
+docs/codx-reviews/codx-a2-canonical-scorer-proposal-2026-09-16.md:93:uses `describe_series_trajectory()` exactly as `explain_match()` does.
+docs/codx-reviews/codx-a2-canonical-scorer-proposal-2026-09-16.md:553:    eq(reconstructed[:10],O.recommend(catalog,ratings,top_n=10,genre=genre,recent_history=history,diversity=diversity,
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/scripts/recommend.py:34:4. explain_match() surfaces WHY a book scored the way it did, in
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/scripts/recommend.py:414:    explanation = explain_match(catalog, ratings, top_pick)
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/scripts/recommend.py:423:    explanation = explain_match(catalog, ratings, "The Restaurant at the End of the Universe")
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/scripts/recommend.py:432:    explanation = explain_match(catalog, ratings, "Royal Assassin")
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/tools/dogfood/app.py:164:    recs = R.recommend(catalog, ratings, top_n=top_n, genre=genre, user_rules=st.session_state.rules,
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/scripts/scoring_tests.py:220:    same order recommend()/explain_match() apply them. Centralized here
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/scripts/scoring_tests.py:228:    explain_match()/audit_book_score() now compute and pass by default
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/scripts/scoring_tests.py:309:    now real production behavior (explain_match() uses the same
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/scripts/scoring_tests.py:759:# explain_match() and, via run_held_out_test()/run_ablation_held_out()
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/scripts/scoring_tests.py:1015:    baseline = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy")
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/scripts/scoring_tests.py:1021:    no_ya = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+docs/codx-reports/2026-09-17-phase-b-shim-removal-evidence/before/scripts/scoring_tests.py:1028:    less_romance = R.recommend(catalog, REAL_RATINGS, top_n=20, genre="fantasy",
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:218:-# Scope: this only affects recommend()'s ranking. explain_match() is
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:2708:-# NOT wired into recommend()/explain_match() yet) -----------------------
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:2876:-# NOT wired into recommend()/explain_match()/audit_book_score() -- see
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:2936:-    """Shared by recommend() and explain_match(): resolves rating titles
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:3234:-    policy="ranking" (A3, 2026-09-16); `explain_match()` via
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:3556:-def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, top_n=5, format_preference=None):
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:3691:-    dict for recommend()/explain_match(). Only TROPE selections translate
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:3751:-# production scoring path (2026-09-04). recommend()/explain_match() never
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:3756:-# 0-1 score -- a superset of what explain_match() surfaces (which only
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:4356:+def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, top_n=5, format_preference=None):
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:5106:+# Scope: this only affects recommend()'s ranking. explain_match() is
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:5494:+# NOT wired into recommend()/explain_match() yet) -----------------------
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:5532:+# NOT wired into recommend()/explain_match()/audit_book_score() -- see
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:5637:+# production scoring path (2026-09-04). recommend()/explain_match() never
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:5642:+# 0-1 score -- a superset of what explain_match() surfaces (which only
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:6696:+    dict for recommend()/explain_match(). Only TROPE selections translate
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:7408:+    policy="ranking" (A3, 2026-09-16); `explain_match()` via
+docs/codx-reports/2026-09-17-phase-b-module-split-evidence/proposal.patch:7961:+    """Shared by recommend() and explain_match(): resolves rating titles

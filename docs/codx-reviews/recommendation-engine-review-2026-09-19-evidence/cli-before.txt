@@ -1,0 +1,51 @@
+Loaded 1059 books.
+
+Ratings: {'The Golden Compass': 'liked', 'The Lies of Locke Lamora': 'liked', 'The Eye of the World': 'liked', 'Kings of Paradise': 'liked', 'Prince of Thorns': 'liked', 'The Way of Kings': 'liked', 'Bird Box': 'disliked', "Assassin's Apprentice": 'disliked', 'We Are Legion (We Are Bob)': 'disliked', 'Interview with the Vampire': 'disliked', 'The Poppy War': 'disliked', 'Circe': 'disliked', 'Dark Matter': 'disliked', 'He Who Fights with Monsters': 'disliked'}
+
+0.910  The Jasmine Throne (Tasha Suri)
+       top factors: [('trope:hidden_talent_prodigy', 0.336), ('trope:court_intrigue', 0.296), ('pace_shape', 0.294), ('book_length', 0.231), ('magic_system_hardness', 0.22)]
+0.899  Black Sun (Rebecca Roanhorse)
+       top factors: [('trope:prophecy', 0.454), ('trope:ancient_evil_awakens', 0.301), ('trope:court_intrigue', 0.296), ('pace_shape', 0.294), ('magic_system_hardness', 0.22)]
+0.895  The Shadow of the Gods (John Gwynne)
+       top factors: [('trope:revenge', 0.446), ('trope:multiple_fantasy_species', 0.336), ('book_length', 0.329), ('trope:ancient_evil_awakens', 0.301), ('pace_shape', 0.294)]
+0.889  The Bone Ships (RJ Barker)
+       top factors: [('pace_shape', 0.294), ('trope:underdog_rising', 0.242), ('emotional_resolution', 0.216), ('emotional_register', 0.165), ('worldbuilding_density', 0.164)]
+0.888  Tigana (Guy Gavriel Kay)
+       top factors: [('trope:revenge', 0.446), ('trope:epic_quest', 0.441), ('book_length', 0.329), ('trope:court_intrigue', 0.296), ('pace_shape', 0.294)]
+0.884  Kings of Ash (Richard Nell)
+       top factors: [('trope:hidden_talent_prodigy', 0.336), ('trope:court_intrigue', 0.296), ('pace_shape', 0.294), ('book_length', 0.231), ('magic_system_hardness', 0.22)]
+0.881  The Book Eaters (Sunyi Dean)
+       top factors: [('trope:revenge', 0.446), ('trope:hidden_talent_prodigy', 0.336), ('pace_shape', 0.294), ('emotional_register', 0.248), ('trope:underdog_rising', 0.242)]
+0.866  Slewfoot: A Tale of Bewitchery (Brom)
+       top factors: [('trope:revenge', 0.446), ('trope:ancient_evil_awakens', 0.301), ('pace_shape', 0.294), ('emotional_register', 0.248), ('magic_system_hardness', 0.22)]
+0.858  The Lord of the Rings (J.R.R. Tolkien)
+       top factors: [('trope:prophecy', 0.454), ('trope:epic_quest', 0.441), ('trope:multiple_fantasy_species', 0.336), ('trope:medieval_european_setting', 0.321), ('trope:reluctant_hero', 0.318)]
+0.850  Daughter of the Empire (Raymond E. Feist, Janny Wurts)
+       top factors: [('book_length', 0.329), ('trope:court_intrigue', 0.296), ('trope:underdog_rising', 0.242), ('magic_system_hardness', 0.22), ('emotional_resolution', 0.216)]
+0.847  She Who Became the Sun (Shelley Parker-Chan)
+       top factors: [('pace_shape', 0.294), ('magic_system_hardness', 0.22), ('emotional_resolution', 0.216), ('pov_count', 0.19), ('person', 0.18)]
+0.841  The Rage of Dragons (Evan Winter)
+       top factors: [('trope:revenge', 0.446), ('pace_shape', 0.294), ('trope:underdog_rising', 0.242), ('emotional_resolution', 0.216), ('person', 0.18)]
+0.839  Red Seas Under Red Skies (Scott Lynch)
+       top factors: [('trope:revenge', 0.446), ('book_length', 0.329), ('trope:court_intrigue', 0.296), ('magic_system_hardness', 0.22), ('emotional_resolution', 0.216)]
+0.839  Children of Blood and Bone (Tomi Adeyemi)
+       top factors: [('trope:revenge', 0.446), ('trope:epic_quest', 0.441), ('book_length', 0.329), ('trope:chosen_one', 0.308), ('pace_shape', 0.294)]
+0.838  Of Blood and Fire (Ryan  Cahill)
+       top factors: [('trope:prophecy', 0.454), ('trope:epic_quest', 0.441), ('book_length', 0.329), ('trope:chosen_one', 0.308), ('trope:ancient_evil_awakens', 0.301)]
+
+--- explanation layer demo ---
+
+Why 'The Jasmine Throne' was recommended:
+  Strong match (0.91)
+  The book features hidden talent prodigy, court intrigue, a slow burn building to a fast finish, an epic length, and a soft, mysterious magic system.
+
+Why a genuinely poor-scoring book (bottom of the full ranked list) scores poorly:
+  Poor match (0.212)
+  The book is told with third-person omniscient narration, and features moderate worldbuilding density.
+  However, the book is told with framing device narrative form, and also has ambiguous emotional resolution, an uneven pace, and comfort read emotional register.
+  ⚠ Possible dealbreaker: ambiguous emotional resolution and framing device narrative form.
+
+Dealbreaker-flag demo -- a book that mostly matches this profile but hits a known dislike:
+  Poor match (0.427)
+  The book features major character death, medieval european setting, court intrigue, gut punch emotional register, and an epic length.
+  ⚠ Possible dealbreaker: tragic emotional resolution and framing device narrative form.

@@ -1,0 +1,18 @@
+{
+  "all": {
+    "require_user_id": 1,
+    "get_catalog": 1,
+    "_load_user_ratings": 1,
+    "_load_user_rules": 1,
+    "_load_format_preference": 1
+  },
+  "three_singles": {
+    "require_user_id": 3,
+    "get_catalog": 3,
+    "_load_user_ratings": 3,
+    "_load_user_rules": 3,
+    "_load_format_preference": 3
+  },
+  "single_profile_resolves": 2,
+  "all_profile_resolves": 6
+}

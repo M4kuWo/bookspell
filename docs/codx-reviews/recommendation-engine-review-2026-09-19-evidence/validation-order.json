@@ -1,0 +1,49 @@
+[
+  {
+    "ratings": {},
+    "old": [
+      "error",
+      "ValueError",
+      "'Missing target' not found in catalog"
+    ],
+    "new": [
+      "error",
+      "ValueError",
+      "'Missing target' not found in catalog"
+    ],
+    "old_stdout": "",
+    "new_stdout": ""
+  },
+  {
+    "ratings": {
+      "Missing reader title": "liked"
+    },
+    "old": [
+      "error",
+      "ValueError",
+      "'Missing target' not found in catalog"
+    ],
+    "new": [
+      "error",
+      "ValueError",
+      "'Missing target' not found in catalog"
+    ],
+    "old_stdout": "",
+    "new_stdout": "WARNING: not found in catalog: ['Missing reader title']\n"
+  },
+  {
+    "ratings": null,
+    "old": [
+      "error",
+      "ValueError",
+      "'Missing target' not found in catalog"
+    ],
+    "new": [
+      "error",
+      "AttributeError",
+      "'NoneType' object has no attribute 'items'"
+    ],
+    "old_stdout": "",
+    "new_stdout": ""
+  }
+]

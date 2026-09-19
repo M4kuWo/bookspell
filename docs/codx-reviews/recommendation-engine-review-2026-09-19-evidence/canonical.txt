@@ -1,0 +1,389 @@
+=== Scenario 1: real-rater held-out validation ===
+    Warbreaker                   loved        0.772 Strong match   OK
+    A Clash of Kings             loved        0.608 Good match     OK
+    Rhythm of War                loved        0.664 Good match     OK
+    The Wise Man's Fear          hated        0.431 Poor match     OK
+    Royal Assassin               disliked     0.420 Poor match     OK
+    Skyward                      disliked     0.454 Poor match     OK
+    Eragon                       it_was_okay  0.539 Poor match     SOFT-MISS
+    Interview with the Vampire   disliked     0.551 Good match     MISS
+    The Last Wish                liked        0.717 Good match     OK
+    Old Man's War                liked        0.460 Poor match     MISS
+    Assassin's Quest             disliked     0.530 Poor match     OK
+  held-out: 8/11 correct, 2 wrong, 1 soft-miss
+
+=== Scenario 1b: real-rater held-out validation, REAL format_preference (2026-09-15, F3 fix) ===
+    Warbreaker                   loved        0.772 Strong match   OK
+    A Clash of Kings             loved        0.609 Good match     OK
+    Rhythm of War                loved        0.665 Good match     OK
+    The Wise Man's Fear          hated        0.432 Poor match     OK
+    Royal Assassin               disliked     0.421 Poor match     OK
+    Skyward                      disliked     0.453 Poor match     OK
+    Eragon                       it_was_okay  0.532 Poor match     SOFT-MISS
+    Interview with the Vampire   disliked     0.549 Mixed match    MISS
+    The Last Wish                liked        0.716 Good match     OK
+    Old Man's War                liked        0.463 Poor match     MISS
+    Assassin's Quest             disliked     0.530 Poor match     OK
+  held-out, format_preference=audiobook: 8/11 correct, 2 wrong, 1 soft-miss
+
+=== Scenario 2: WEIGHT_CAP domination check ===
+  current formula: person mismatch=0.298  pov_count mismatch=0.000  max_trope weight=0.429
+
+=== Scenario 3: sparse-data check (original 16-book list) ===
+    Warbreaker                   loved        0.684 Good match     OK
+    A Clash of Kings             loved        0.713 Good match     OK
+    Rhythm of War                loved        0.670 Good match     OK
+    The Wise Man's Fear          hated        0.510 Poor match     OK
+    Royal Assassin               disliked     0.486 Poor match     OK
+    Skyward                      disliked     0.371 Poor match     OK
+    Eragon                       it_was_okay  0.488 Poor match     SOFT-MISS
+    The Last Wish                liked        0.420 Poor match     MISS
+    Assassin's Quest             disliked     0.606 Good match     MISS
+  sparse (16 ratings): 6/9 correct, 2 wrong, 1 soft-miss
+
+=== Scenario 4: second rater (Osnat) -- held-out validation (30 usable ratings) ===
+    A Court of Wings and Ruin    loved        0.838 Strong match   OK
+    Harry Potter and the Half-Blood Prince loved        0.857 Strong match   OK
+    Harry Potter and the Goblet of Fire it_was_okay  0.748 Good match     SOFT-MISS
+    Divergent                    liked        0.721 Good match     OK
+    Iron Flame                   it_was_okay  0.726 Good match     SOFT-MISS
+    Daughter of No Worlds        hated        0.602 Good match     MISS
+    Magic Burns                  hated        0.884 Strong match   MISS
+  Osnat held-out: 3/7 correct, 2 wrong, 2 soft-miss
+
+=== Scenario 4b: third rater (Dandan) -- held-out validation (32 ratings) ===
+    The Path of Daggers          hated        0.060 Poor match     OK
+    The Way of Kings             it_was_okay  0.374 Mixed match    OK
+    Words of Radiance            loved        0.469 Mixed match    MISS
+    Mistborn: The Final Empire   it_was_okay  0.437 Mixed match    OK
+    The Hero of Ages             it_was_okay  0.227 Mixed match    OK
+    Ender's Shadow               loved        0.726 Good match     OK
+    Shadows of Self              loved        0.216 Mixed match    MISS
+  Dandan held-out: 5/7 correct, 2 wrong, 0 soft-miss
+
+=== Scenario 4c: fourth rater (Gabriel) -- leave-one-out (7 ratings, too few for held-out) ===
+  Gabriel leave-one-out:
+    Light Bringer                       true=it_was_okay  0.274 (Mixed match) OK
+    Harry Potter and the Chamber of Secrets true=liked        0.649 (Good match) OK
+    Before They Are Hanged              true=liked        0.648 (Good match) OK
+    Red Rising                          true=disliked     0.688 (Good match) MISS
+    Golden Son                          true=loved        0.154 (Poor match) MISS
+    Morning Star                        true=liked        0.265 (Mixed match) MISS
+    The Dragon Reborn                   true=liked        0.514 (Mixed match) MISS
+
+=== Scenario 5: series/author-isolated held-out (no series or author memory) ===
+    Warbreaker                   loved        0.750 Good match     OK
+    A Clash of Kings             loved        0.600 Good match     OK
+    Rhythm of War                loved        0.616 Good match     OK
+    The Wise Man's Fear          hated        0.480 Poor match     OK
+    Royal Assassin               disliked     0.557 Good match     MISS
+    Skyward                      disliked     0.446 Poor match     OK
+    Eragon                       it_was_okay  0.569 Good match     SOFT-MISS
+    Interview with the Vampire   disliked     0.562 Good match     MISS
+    The Last Wish                liked        0.719 Good match     OK
+    Old Man's War                liked        0.443 Poor match     MISS
+    Assassin's Quest             disliked     0.738 Good match     MISS
+  Mathias, series-isolated: 6/11 correct, 4 wrong, 1 soft-miss
+    Warbreaker                   loved        0.593 Good match     OK
+    A Clash of Kings             loved        0.554 Good match     OK
+    Rhythm of War                loved        0.454 Poor match     MISS
+    The Wise Man's Fear          hated        0.490 Poor match     OK
+    Royal Assassin               disliked     0.580 Good match     MISS
+    Skyward                      disliked     0.378 Poor match     OK
+    Eragon                       it_was_okay  0.515 Poor match     SOFT-MISS
+    Interview with the Vampire   disliked     0.494 Poor match     OK
+    The Last Wish                liked        0.650 Good match     OK
+    Old Man's War                liked        0.404 Poor match     MISS
+    Assassin's Quest             disliked     0.688 Good match     MISS
+  Mathias, author-isolated: 6/11 correct, 4 wrong, 1 soft-miss
+    A Court of Wings and Ruin    loved        0.737 Good match     OK
+    Harry Potter and the Half-Blood Prince loved        0.811 Strong match   OK
+    Harry Potter and the Goblet of Fire it_was_okay  0.593 Good match     SOFT-MISS
+    Divergent                    liked        0.652 Good match     OK
+    Iron Flame                   it_was_okay  0.550 Good match     SOFT-MISS
+    Daughter of No Worlds        hated        0.575 Good match     MISS
+    Magic Burns                  hated        0.854 Strong match   MISS
+  Osnat, series-isolated: 3/7 correct, 2 wrong, 2 soft-miss
+
+=== Benchmark scorecard ===
+  Test                              n    Bucket acc.        Pairwise acc.      Loved recall       Hated reject.    
+  -----------------------------------------------------------------------------------------------------------------
+  Mathias -- full (132 ratings)     11   73% OK             84% OK             80% OK             80% OK           
+  Mathias -- sparse (16 ratings)    9    67% OK             73% OK             75% OK             75% OK           
+  Mathias -- series-isolated        11   55% OK             71% OK             80% OK             40% OK           
+  Mathias -- author-isolated        11   55% OK             56% OK             60% (target 65%)   60% OK           
+  Osnat -- full (30 ratings)        7    43% (target 55%)   61% (target 70%)   100% OK            0% (target 40%)  
+  Osnat -- series-isolated          7    43% OK             67% OK             100% OK            0% (target 25%)  
+  Dandan -- full (32 ratings)       7    71% OK             80% OK             33% (target 75%)   100% OK          
+  Gabriel -- LOO (7 ratings)        7    43% (target 45%)   20% (target 60%)   40% (target 65%)   0% (target 30%)  
+
+=== Scenario 6: DNA ablation (post-hoc field-group zeroing) ===
+  Baseline (nothing removed):
+    Mathias, full    bucket_accuracy=73%  pairwise_accuracy=84%  loved_recall=80%  hated_rejection=80%
+    Mathias, sparse  bucket_accuracy=67%  pairwise_accuracy=73%  loved_recall=75%  hated_rejection=75%
+    Osnat, full      bucket_accuracy=43%  pairwise_accuracy=61%  loved_recall=100%  hated_rejection=0%
+
+  Group removed       Base              Bucket acc.      Pairwise acc.    Loved recall     Hated reject.  
+  --------------------------------------------------------------------------------------------------------
+  tropes              Mathias, full     73% (+0pp)       82% (-2pp)       80% (+0pp)       80% (+0pp)     
+  tropes              Mathias, sparse   67% (+0pp)       83% (+10pp)      100% (+25pp)     50% (-25pp)    
+  tropes              Osnat, full       43% (+0pp)       22% (-39pp)      100% (+0pp)      0% (+0pp)      
+  pace                Mathias, full     73% (+0pp)       80% (-4pp)       80% (+0pp)       80% (+0pp)     
+  pace                Mathias, sparse   67% (+0pp)       70% (-3pp)       75% (+0pp)       75% (+0pp)     
+  pace                Osnat, full       43% (+0pp)       61% (+0pp)       100% (+0pp)      0% (+0pp)      
+  tone                Mathias, full     82% (+9pp)       87% (+2pp)       80% (+0pp)       100% (+20pp)   
+  tone                Mathias, sparse   67% (+0pp)       80% (+7pp)       75% (+0pp)       75% (+0pp)     
+  tone                Osnat, full       43% (+0pp)       61% (+0pp)       100% (+0pp)      0% (+0pp)      
+  pov_structure       Mathias, full     64% (-9pp)       82% (-2pp)       80% (+0pp)       60% (-20pp)    
+  pov_structure       Mathias, sparse   56% (-11pp)      67% (-7pp)       75% (+0pp)       50% (-25pp)    
+  pov_structure       Osnat, full       43% (+0pp)       61% (+0pp)       100% (+0pp)      0% (+0pp)      
+  stakes_drive        Mathias, full     73% (+0pp)       87% (+2pp)       80% (+0pp)       80% (+0pp)     
+  stakes_drive        Mathias, sparse   67% (+0pp)       77% (+3pp)       75% (+0pp)       75% (+0pp)     
+  stakes_drive        Osnat, full       43% (+0pp)       72% (+11pp)      100% (+0pp)      0% (+0pp)      
+  content_intensity   Mathias, full     82% (+9pp)       80% (-4pp)       80% (+0pp)       100% (+20pp)   
+  content_intensity   Mathias, sparse   67% (+0pp)       73% (+0pp)       75% (+0pp)       75% (+0pp)     
+  content_intensity   Osnat, full       43% (+0pp)       61% (+0pp)       100% (+0pp)      0% (+0pp)      
+  craft_density       Mathias, full     73% (+0pp)       84% (+0pp)       80% (+0pp)       80% (+0pp)     
+  craft_density       Mathias, sparse   67% (+0pp)       77% (+3pp)       75% (+0pp)       75% (+0pp)     
+  craft_density       Osnat, full       43% (+0pp)       67% (+6pp)       100% (+0pp)      0% (+0pp)      
+  magic_scifi         Mathias, full     73% (+0pp)       89% (+4pp)       80% (+0pp)       80% (+0pp)     
+  magic_scifi         Mathias, sparse   67% (+0pp)       70% (-3pp)       75% (+0pp)       75% (+0pp)     
+  magic_scifi         Osnat, full       43% (+0pp)       61% (+0pp)       100% (+0pp)      0% (+0pp)      
+
+=== Scenario 7: Poor-match threshold diagnostic ===
+  Base              Threshold variant             Bucket acc.    Pairwise acc.  Loved recall   Hated reject.
+  ----------------------------------------------------------------------------------------------------------
+  Mathias, full     fixed 0.35 (old default)      45%            84%            80%            0%           
+  Mathias, full     fixed 0.40                    45%            84%            80%            0%           
+  Mathias, full     fixed 0.45                    64%            84%            80%            40%          
+  Mathias, full     fixed 0.50                    73%            84%            80%            60%          
+  Mathias, full     fixed 0.54                    73%            84%            80%            80%          
+  Mathias, full     calibrated (0.540) -- LANDED  73%            84%            80%            80%          
+
+  Mathias, sparse   fixed 0.35 (old default)      44%            73%            75%            0%           
+  Mathias, sparse   fixed 0.40                    56%            73%            75%            25%          
+  Mathias, sparse   fixed 0.45                    56%            73%            75%            25%          
+  Mathias, sparse   fixed 0.50                    56%            73%            75%            50%          
+  Mathias, sparse   fixed 0.54                    67%            73%            75%            75%          
+  Mathias, sparse   calibrated (0.540) -- LANDED  67%            73%            75%            75%          
+
+  Osnat, full       fixed 0.35 (old default)      43%            61%            100%           0%           
+  Osnat, full       fixed 0.40                    43%            61%            100%           0%           
+  Osnat, full       fixed 0.45                    43%            61%            100%           0%           
+  Osnat, full       fixed 0.50                    43%            61%            100%           0%           
+  Osnat, full       fixed 0.54                    43%            61%            100%           0%           
+  Osnat, full       calibrated (0.385) -- LANDED  43%            61%            100%           0%           
+
+  No-negative-signal fallback check (repo owner's caveat):
+    119 all-positive ratings (no disliked/hated) -> calibrated threshold = 0.350 (falls back to default, as intended)
+
+=== Scenario 8: dealbreaker-flag sanity check (fixed threshold, all 4 raters) ===
+  Mathias: false-positive rate 0/5 (flagged on a liked/loved book) -- true-positive rate 0/5 (flagged on a disliked/hated book)
+  Osnat: false-positive rate 1/3 (flagged on a liked/loved book) -- true-positive rate 0/2 (flagged on a disliked/hated book)
+    Harry Potter and the Goblet of Fire true=it_was_okay  -> dragons
+    Divergent                           true=liked        -> slow burn romance
+    Iron Flame                          true=it_was_okay  -> dragons
+  Dandan: false-positive rate 3/3 (flagged on a liked/loved book) -- true-positive rate 1/1 (flagged on a disliked/hated book)
+    The Path of Daggers                 true=hated        -> court intrigue; an uneven pace
+    The Way of Kings                    true=it_was_okay  -> court intrigue
+    Words of Radiance                   true=loved        -> court intrigue
+    Mistborn: The Final Empire          true=it_was_okay  -> heist; shapeshifters
+    The Hero of Ages                    true=it_was_okay  -> shapeshifters
+    Ender's Shadow                      true=loved        -> an uneven pace
+    Shadows of Self                     true=loved        -> flintlock fantasy setting; court intrigue; shapeshifters; a consistent pace throughout; noir detective structure
+  Gabriel (LOO): false-positive rate 4/5 (flagged on a liked/loved book) -- true-positive rate 0/1 (flagged on a disliked/hated book)
+    Light Bringer                       true=it_was_okay  -> space opera; rebellion against empire; revenge; mixed narrative person; soft science fiction
+    Before They Are Hanged              true=liked        -> a cliffhanger ending
+    Golden Son                          true=loved        -> space opera; rebellion against empire; dystopia; major character death; underdog rising
+    Morning Star                        true=liked        -> space opera; rebellion against empire; major character death; hard science-fiction rigor
+    The Dragon Reborn                   true=liked        -> a hard, rules-based magic system
+
+=== Scenario 9: dealbreaker-flag sanity check (statistically validated, all 4 raters) ===
+  Mathias: false-positive rate 0/5 (flagged on a liked/loved book) -- true-positive rate 0/5 (flagged on a disliked/hated book)
+  Osnat: false-positive rate 1/3 (flagged on a liked/loved book) -- true-positive rate 0/2 (flagged on a disliked/hated book)
+    Harry Potter and the Goblet of Fire true=it_was_okay  -> dragons
+    Divergent                           true=liked        -> slow burn romance
+    Iron Flame                          true=it_was_okay  -> dragons
+  Dandan: false-positive rate 3/3 (flagged on a liked/loved book) -- true-positive rate 1/1 (flagged on a disliked/hated book)
+    The Path of Daggers                 true=hated        -> court intrigue; an uneven pace
+    The Way of Kings                    true=it_was_okay  -> court intrigue
+    Words of Radiance                   true=loved        -> court intrigue
+    Mistborn: The Final Empire          true=it_was_okay  -> heist; shapeshifters
+    The Hero of Ages                    true=it_was_okay  -> shapeshifters
+    Ender's Shadow                      true=loved        -> an uneven pace
+    Shadows of Self                     true=loved        -> flintlock fantasy setting; court intrigue; shapeshifters; a consistent pace throughout; noir detective structure
+  Gabriel (LOO): false-positive rate 4/5 (flagged on a liked/loved book) -- true-positive rate 0/1 (flagged on a disliked/hated book)
+    Light Bringer                       true=it_was_okay  -> space opera; rebellion against empire; revenge; mixed narrative person; soft science fiction
+    Before They Are Hanged              true=liked        -> a cliffhanger ending
+    Golden Son                          true=loved        -> space opera; rebellion against empire; dystopia; major character death; underdog rising
+    Morning Star                        true=liked        -> space opera; rebellion against empire; major character death; hard science-fiction rigor
+    The Dragon Reborn                   true=liked        -> a hard, rules-based magic system
+
+=== Scenario 10: learning curve (accuracy vs. rating-history size) ===
+  Mathias (held-out set fixed at 11 books, up to 15 random samples per size):
+    Train size   Pairwise acc.    Bucket acc.    Repeats
+    10           69%              36%            15
+    32           70%              41%            15
+    54           75%              57%            15
+    76           75%              62%            15
+    98           80%              68%            15
+    120          81%              70%            15
+    132          84%              73%            1
+
+=== Scenario 11: diversity curve (accuracy vs. author variety, size held fixed) ===
+  Mathias (fixed train size=40, 40 random samples, varying only in how many distinct authors happen to appear):
+    Pearson r (distinct authors vs. pairwise accuracy): +0.081
+    Pearson r (distinct authors vs. bucket accuracy):   +0.076
+    Author-diversity tercile     n_authors range    Pairwise acc.    Bucket acc.
+    Low                          18-23              69%              47%
+    Mid                          23-25              72%              54%
+    High                         25-29              72%              54%
+
+=== Scenario 12: contrastive pairs (near-identical DNA, opposite ratings) ===
+  Mathias: 1 contrastive pair(s) found (DNA similarity >= 0.85, rating gap >= 1.0)
+
+    The Grey Bastards (loved, held-out score 0.6785) vs The True Bastards (hated, held-out score 0.6934)  [MISS -- model can't distinguish these]
+      DNA similarity: 0.859
+      Field differences: {'drive': ('plot_driven', 'character_driven')}
+      Tropes only in 'The Grey Bastards': ['multiple_fantasy_species']
+      Tropes only in 'The True Bastards': ['court_intrigue']
+
+  Mathias summary: model correctly ranked 0/1 contrastive pairs.
+  Osnat: 1 contrastive pair(s) found (DNA similarity >= 0.85, rating gap >= 1.0)
+
+    Magic Bites (liked, held-out score 0.8224) vs Magic Burns (hated, held-out score 0.8488)  [MISS -- model can't distinguish these]
+      DNA similarity: 0.917
+      Field differences: NONE -- fully identical on every measured field
+      Tropes only in 'Magic Burns': ['found_family', 'war_story']
+
+  Osnat summary: model correctly ranked 0/1 contrastive pairs.
+  Dandan: 17 contrastive pair(s) found (DNA similarity >= 0.85, rating gap >= 1.0)
+
+    A Crown of Swords (it_was_okay, held-out score 0.0338) vs The Path of Daggers (hated, held-out score 0.0228)  [OK]
+      DNA similarity: 0.957
+      Field differences: {'book_length': ('epic', 'long')}
+      Tropes only in 'A Crown of Swords': ['found_family']
+
+    The Shadow Rising (loved, held-out score -0.0176) vs A Crown of Swords (it_was_okay, held-out score -0.0637)  [OK]
+      DNA similarity: 0.952
+      Field differences: {'overall_pace': ('medium', 'slow'), 'violence_frequency': ('frequent', 'occasional')}
+      Tropes only in 'The Shadow Rising': ['coming_of_age']
+
+    The Great Hunt (loved, held-out score 0.0431) vs The Dragon Reborn (it_was_okay, held-out score -0.0232)  [OK]
+      DNA similarity: 0.927
+      Field differences: {'darkness': ('moderate', 'dark'), 'pace_shape': ('consistent', 'uneven')}
+      Tropes only in 'The Great Hunt': ['powerful_artifact_macguffin']
+
+    The Fires of Heaven (disliked, held-out score -0.0557) vs Lord of Chaos (loved, held-out score -0.0079)  [OK]
+      DNA similarity: 0.925
+      Field differences: {'emotional_register': ('gut_punch', 'tense'), 'violence_intensity': ('moderate', 'graphic'), 'pace_shape': ('uneven', 'slow_burn_to_fast_finish')}
+      Tropes only in 'Lord of Chaos': ['found_family']
+
+    The Shadow Rising (loved, held-out score 0.0585) vs The Path of Daggers (hated, held-out score 0.0207)  [OK]
+      DNA similarity: 0.913
+      Field differences: {'overall_pace': ('medium', 'slow'), 'violence_frequency': ('frequent', 'occasional'), 'book_length': ('epic', 'long')}
+      Tropes only in 'The Shadow Rising': ['coming_of_age', 'found_family']
+
+    Lord of Chaos (loved, held-out score -0.038) vs A Crown of Swords (it_was_okay, held-out score -0.0643)  [OK]
+      DNA similarity: 0.91
+      Field differences: {'overall_pace': ('medium', 'slow'), 'violence_frequency': ('frequent', 'occasional'), 'violence_intensity': ('graphic', 'moderate'), 'personal_stakes': ('life_threatening', 'high'), 'pace_shape': ('slow_burn_to_fast_finish', 'uneven')}
+      Tropes only in 'Lord of Chaos': ['major_character_death']
+
+    The Shadow Rising (loved, held-out score -0.0373) vs The Fires of Heaven (disliked, held-out score -0.0534)  [OK]
+      DNA similarity: 0.897
+      Field differences: {'emotional_register': ('tense', 'gut_punch'), 'personal_stakes': ('high', 'life_threatening')}
+      Tropes only in 'The Shadow Rising': ['coming_of_age', 'found_family']
+      Tropes only in 'The Fires of Heaven': ['major_character_death']
+
+    The Dragon Reborn (it_was_okay, held-out score -0.024) vs The Shadow Rising (loved, held-out score -0.0176)  [OK]
+      DNA similarity: 0.891
+      Field differences: {'violence_frequency': ('occasional', 'frequent'), 'book_length': ('long', 'epic'), 'drive': ('plot_driven', 'balanced')}
+      Tropes only in 'The Shadow Rising': ['coming_of_age', 'war_story']
+
+    The Fires of Heaven (disliked, held-out score -0.0559) vs Knife of Dreams (loved, held-out score 0.0151)  [OK]
+      DNA similarity: 0.889
+      Field differences: {'overall_pace': ('medium', 'fast'), 'emotional_register': ('gut_punch', 'tense'), 'violence_intensity': ('moderate', 'graphic'), 'pace_shape': ('uneven', 'slow_burn_to_fast_finish')}
+      Tropes only in 'Knife of Dreams': ['found_family', 'last_minute_rescue']
+
+    The Dragon Reborn (it_was_okay, held-out score 0.0637) vs The Path of Daggers (hated, held-out score 0.0228)  [OK]
+      DNA similarity: 0.887
+      Field differences: {'overall_pace': ('medium', 'slow'), 'drive': ('plot_driven', 'balanced')}
+      Tropes only in 'The Dragon Reborn': ['found_family']
+      Tropes only in 'The Path of Daggers': ['war_story']
+
+    The Fires of Heaven (disliked, held-out score -0.0562) vs The Gathering Storm (loved, held-out score 0.0538)  [OK]
+      DNA similarity: 0.881
+      Field differences: {'violence_intensity': ('moderate', 'graphic'), 'pace_shape': ('uneven', 'slow_burn_to_fast_finish')}
+      Tropes only in 'The Gathering Storm': ['found_family', 'redemption_arc', 'shadow_self_confrontation']
+
+    The Path of Daggers (hated, held-out score 0.0261) vs Winter's Heart (liked, held-out score 0.0882)  [OK]
+      DNA similarity: 0.876
+      Field differences: {'overall_pace': ('slow', 'medium'), 'violence_frequency': ('occasional', 'frequent'), 'violence_intensity': ('moderate', 'graphic'), 'personal_stakes': ('high', 'life_threatening'), 'pace_shape': ('uneven', 'slow_burn_to_fast_finish'), 'emotional_resolution': ('bittersweet', 'happy')}
+      Tropes only in 'Winter's Heart': ['redemption_arc']
+
+    A Crown of Swords (it_was_okay, held-out score -0.0646) vs Knife of Dreams (loved, held-out score -0.0138)  [OK]
+      DNA similarity: 0.874
+      Field differences: {'overall_pace': ('slow', 'fast'), 'violence_frequency': ('occasional', 'frequent'), 'violence_intensity': ('moderate', 'graphic'), 'personal_stakes': ('high', 'life_threatening'), 'pace_shape': ('uneven', 'slow_burn_to_fast_finish')}
+      Tropes only in 'Knife of Dreams': ['last_minute_rescue', 'major_character_death']
+
+    Lord of Chaos (loved, held-out score 0.006) vs The Path of Daggers (hated, held-out score 0.0213)  [MISS -- model can't distinguish these]
+      DNA similarity: 0.871
+      Field differences: {'overall_pace': ('medium', 'slow'), 'violence_frequency': ('frequent', 'occasional'), 'violence_intensity': ('graphic', 'moderate'), 'personal_stakes': ('life_threatening', 'high'), 'book_length': ('epic', 'long'), 'pace_shape': ('slow_burn_to_fast_finish', 'uneven')}
+      Tropes only in 'Lord of Chaos': ['found_family', 'major_character_death']
+
+    The Fires of Heaven (disliked, held-out score -0.0509) vs Winter's Heart (liked, held-out score -0.0126)  [OK]
+      DNA similarity: 0.855
+      Field differences: {'emotional_register': ('gut_punch', 'tense'), 'violence_intensity': ('moderate', 'graphic'), 'book_length': ('epic', 'long'), 'pace_shape': ('uneven', 'slow_burn_to_fast_finish'), 'emotional_resolution': ('bittersweet', 'happy')}
+      Tropes only in 'The Fires of Heaven': ['major_character_death']
+      Tropes only in 'Winter's Heart': ['redemption_arc']
+
+    A Crown of Swords (it_was_okay, held-out score -0.0647) vs The Gathering Storm (loved, held-out score 0.0242)  [OK]
+      DNA similarity: 0.854
+      Field differences: {'overall_pace': ('slow', 'medium'), 'emotional_register': ('tense', 'gut_punch'), 'violence_frequency': ('occasional', 'frequent'), 'violence_intensity': ('moderate', 'graphic'), 'personal_stakes': ('high', 'life_threatening'), 'pace_shape': ('uneven', 'slow_burn_to_fast_finish')}
+      Tropes only in 'The Gathering Storm': ['major_character_death', 'redemption_arc', 'shadow_self_confrontation']
+
+    The Great Hunt (loved, held-out score 0.0431) vs A Crown of Swords (it_was_okay, held-out score -0.0621)  [OK]
+      DNA similarity: 0.852
+      Field differences: {'overall_pace': ('medium', 'slow'), 'darkness': ('moderate', 'dark'), 'book_length': ('long', 'epic'), 'pace_shape': ('consistent', 'uneven'), 'drive': ('plot_driven', 'balanced')}
+      Tropes only in 'The Great Hunt': ['powerful_artifact_macguffin']
+      Tropes only in 'A Crown of Swords': ['war_story']
+
+  Dandan summary: model correctly ranked 16/17 contrastive pairs.
+  Gabriel: 0 contrastive pair(s) found (DNA similarity >= 0.85, rating gap >= 1.0)
+
+=== Scenario 13: user-adjustable rules (none of X / less of X) ===
+  parse trope key: OK
+  parse valid ordinal field:value: OK
+  parse valid nominal field:value: OK
+  reject invalid ordinal value: OK
+  reject unknown field: OK
+  normalize None is empty: OK
+  normalize {} is empty: OK
+WARNING: unrecognized user rule key(s), ignored: ['not_a_real_field:x']
+  normalize drops bad keys, keeps good ones: OK
+  normalize applies default strength: OK
+  normalize respects explicit strength: OK
+  no rules is a guaranteed no-op: OK
+  no rules is a no-op even with {}: OK
+  exclude exact-matches and flags excluded: OK
+  exclude leaves non-matching book untouched: OK
+  reduce applies correct multiplicative discount: OK
+  reduce leaves non-matching book untouched: OK
+  multiple matching reduce rules stack multiplicatively: OK
+  target list non-empty: OK
+  target list includes a known field_value: OK
+  target list includes a known trope: OK
+  target list never invents unused values: OK
+  sanity: baseline top-20 fantasy contains at least one YA book: OK
+  exclude age_category:ya removes all YA from real recommend() output: OK
+  reduce drive:romance_driven lowers its representation in top-20 (2 -> 0): OK
+  All user-rules tests passed.
+
+=== Scenario 14: confidence-floor regression checks (CODX Task 1/2 findings, 2026-09-14/15) ===
+  audit_attribute_ordinal: neutral-only evidence doesn't crash: OK
+  audit_attribute_ordinal: neutral rating excluded from both sides: OK
+  nominal_field_separation: confidence-zeroed tags don't satisfy the sample gate: OK
+  trope_separation: confidence-zeroed hits don't count as evidence either way: OK
+  compute_series_dna: confidence-zeroed endpoint excluded from trajectory: OK
+  experimental profile/scoring builders remain uncalled outside their own definitions: OK
+  All confidence-floor regression checks passed.

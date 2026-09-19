@@ -1,0 +1,70 @@
+{
+  "raters": [
+    "gabriel",
+    "dandan",
+    "mathias_goodreads"
+  ],
+  "titles": [
+    "Endymion",
+    "The Power",
+    "The Tombs of Atuan",
+    "Flowers for Algernon",
+    "The Last Murder at the End of the World",
+    "Odd Thomas",
+    "Gods of Jade and Shadow",
+    "These Violent Delights",
+    "Nexus",
+    "Cemetery Boys",
+    "The Book of Life",
+    "Gardens of the Moon",
+    "The Traitor God",
+    "Cursed Bunny",
+    "Quidditch Through the Ages"
+  ],
+  "contexts": [
+    [
+      null,
+      null,
+      null
+    ],
+    [
+      "fantasy",
+      "audiobook",
+      null
+    ],
+    [
+      "sci_fi",
+      "print",
+      null
+    ],
+    [
+      null,
+      "mixed",
+      {
+        "found_family": -0.8,
+        "overall_pace": 0.7
+      }
+    ],
+    [
+      "fantasy",
+      "print",
+      {
+        "romance_tone": -0.4
+      }
+    ],
+    [
+      "sci_fi",
+      "mixed",
+      {
+        "space_opera": 0.5
+      }
+    ]
+  ],
+  "top_n": [
+    -1,
+    0,
+    1,
+    7,
+    null
+  ]
+}

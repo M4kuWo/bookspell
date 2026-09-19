@@ -1,0 +1,1 @@
+PASS _score_genre extraction AST-identical to intermediate route from results assignment through out-building; only return wrapping differs

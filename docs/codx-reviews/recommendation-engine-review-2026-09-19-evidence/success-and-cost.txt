@@ -1,0 +1,2 @@
+PASS 1350 successful explanation returns (no matching-exception false positives)
+Recorded 6 illustrative CPU-side timings; no deployment/network latency claim

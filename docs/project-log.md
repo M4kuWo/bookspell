@@ -19240,3 +19240,74 @@ deterministic and isolates the code path under review), plus the
 isolated-venv `fastapi`/`httpx` setup and the `require_user_id`
 monkeypatch trick (it's a plain function call, not a `Depends()`) this
 session's own verification already worked out.
+
+## 2026-09-19, later -- CODX Task 13 landed: real second finding, one fix applied
+
+CODX's report:
+`docs/codx-reviews/codx-recommendation-engine-review-2026-09-19.md`
+(evidence in the matching `-evidence/` directory alongside it, minus
+its 868KB catalog pickle -- reproducible from the read-only role, not
+needed as a permanent artifact). **Verdict: keep both optimizations,
+no scoring-math regression, no successful-response regression** --
+independently confirmed with a fresh harness (different raters/titles/
+`top_n` values than this session's own, per the task brief's ask), a
+real fault-injection test through both HTTP routes AND the actual
+dashboard JS handler executed in Node's VM, and function-call-count
+instrumentation. Two real findings, both genuinely new (not things
+this session's own verification had caught):
+
+**1. Confirmed, real, fixed**: `explain_match()`'s title validation
+had silently moved to AFTER profile resolution in the `fcf8f65`
+extraction -- an unknown title now paid the full resolution cost (and
+printed `_resolve_profile`'s own "not found in catalog" warning)
+before raising the same `ValueError`, instead of failing fast and
+cheap like before. Independently reproduced directly (called
+`explain_match()` with a bogus title, confirmed the warning printed
+before the exception) before trusting the report. Fixed by validating
+title membership at the top of `explain_match()`, before calling
+`resolve_explain_profile()` -- `explain_match_with_profile()` keeps its
+own validation too, for a caller that calls it directly with a
+precomputed bundle. Re-ran the full verification suite afterward
+(explain_match old-vs-new: 1,440 calls; explain_match_with_profile vs
+old explain_match: 360 calls; canonical `scripts/scoring_tests.py`) --
+all still clean, this fix touches only the unknown-title failure path.
+
+**2. Confirmed real, deliberately NOT fixed yet**: `/recommendations/all`
+is genuinely all-or-nothing where the old 3-independent-requests
+dashboard code rendered whichever genres succeeded -- CODX proved this
+via fault injection through real TestClient routes (one genre forced
+to fail, whole endpoint 500s) AND by running the actual old and new
+dashboard click-handler source in Node's VM with a failing sci-fi
+response, confirming the old handler still rendered fantasy while the
+new one shows nothing. Also confirmed, importantly, that **no naturally
+occurring genre-only exception exists today** -- empty/thin/invalid
+rating profiles, an empty catalog, and various edge cases all still
+return successful consolidated responses; this is a latent resilience
+gap, not an active bug. CODX proposed a concrete fix shape (a partial-
+success envelope, e.g. `{"results_by_genre": ..., "errors_by_genre":
+...}`, catching each genre's `_score_genre()` call individually) but
+correctly declined to implement it unilaterally, since it's a real
+API/UI response-shape decision, not an obvious bug fix. Left for the
+repo owner to decide whether/how to shape that contract -- queued as
+the leading candidate for CODX's next task once decided.
+
+Also independently re-confirmed the deferred "recommend() and
+resolve_explain_profile() both still resolve the profile bundle" note
+from the task brief -- CODX measured the second resolution at ~11-14ms
+against ~70-156ms total ranking cost (illustrative single-sample
+timings, not a benchmark), agreeing collapsing it isn't worth the
+larger refactor it'd need right now. Minor code-quality opinions (keep
+the bundle as a dict, not a dataclass; `_score_genre()`'s location in
+`api/main.py` is correct; an early-return-before-explaining on an empty
+result list would be a small, low-priority optimization) noted, not
+acted on.
+
+One thing CODX's report flagged as a documentation gap was actually a
+mistake in the task brief itself, not a real doc omission: the brief
+implied the dashboard-side fix had its own `docs/scoring-test-protocol.md`
+entry the way the profile-resolution fix does -- it doesn't, because
+it isn't a scoring-math change (that doc's own remit); it's correctly
+logged in `project-log.md`/`TODO.md` only. No action needed beyond this
+note.
+
+`docs/codx-tasks/current-task.md` reset to a holding-pattern note.

@@ -1,0 +1,228 @@
+{
+  "success": {
+    "before": {
+      "calls": [
+        "/recommendations?top_n=10",
+        "/recommendations?genre=fantasy&top_n=10",
+        "/recommendations?genre=sci_fi&top_n=10"
+      ],
+      "results": {
+        "": [
+          {
+            "title": "All"
+          }
+        ],
+        "fantasy": [
+          {
+            "title": "Fantasy"
+          }
+        ],
+        "sci_fi": [
+          {
+            "title": "SF"
+          }
+        ]
+      },
+      "renders": [
+        [
+          {
+            "title": "Fantasy"
+          }
+        ]
+      ],
+      "message": "",
+      "loading": "none"
+    },
+    "after": {
+      "calls": [
+        "/recommendations/all?top_n=10"
+      ],
+      "results": {
+        "": [
+          {
+            "title": "All"
+          }
+        ],
+        "fantasy": [
+          {
+            "title": "Fantasy"
+          }
+        ],
+        "sci_fi": [
+          {
+            "title": "SF"
+          }
+        ]
+      },
+      "renders": [
+        [
+          {
+            "title": "Fantasy"
+          }
+        ]
+      ],
+      "message": "",
+      "loading": "none"
+    }
+  },
+  "filtered": {
+    "before": {
+      "calls": [
+        "/recommendations?top_n=50",
+        "/recommendations?genre=fantasy&top_n=50",
+        "/recommendations?genre=sci_fi&top_n=50"
+      ],
+      "results": {
+        "": [
+          {
+            "title": "All"
+          }
+        ],
+        "fantasy": [
+          {
+            "title": "Fantasy"
+          }
+        ],
+        "sci_fi": [
+          {
+            "title": "SF"
+          }
+        ]
+      },
+      "renders": [
+        [
+          {
+            "title": "SF"
+          }
+        ]
+      ],
+      "message": "",
+      "loading": "none"
+    },
+    "after": {
+      "calls": [
+        "/recommendations/all?top_n=50"
+      ],
+      "results": {
+        "": [
+          {
+            "title": "All"
+          }
+        ],
+        "fantasy": [
+          {
+            "title": "Fantasy"
+          }
+        ],
+        "sci_fi": [
+          {
+            "title": "SF"
+          }
+        ]
+      },
+      "renders": [
+        [
+          {
+            "title": "SF"
+          }
+        ]
+      ],
+      "message": "",
+      "loading": "none"
+    }
+  },
+  "other_genre_500": {
+    "before": {
+      "calls": [
+        "/recommendations?top_n=10",
+        "/recommendations?genre=fantasy&top_n=10",
+        "/recommendations?genre=sci_fi&top_n=10"
+      ],
+      "results": {
+        "": [
+          {
+            "title": "All"
+          }
+        ],
+        "fantasy": [
+          {
+            "title": "Fantasy"
+          }
+        ]
+      },
+      "renders": [
+        [
+          {
+            "title": "Fantasy"
+          }
+        ]
+      ],
+      "message": "",
+      "loading": "none"
+    },
+    "after": {
+      "calls": [
+        "/recommendations/all?top_n=10"
+      ],
+      "results": {},
+      "renders": [],
+      "message": "<div class=\"empty-state\">Couldn't get recommendations. Try again in a moment.</div>",
+      "loading": "none"
+    }
+  },
+  "current_genre_500": {
+    "before": {
+      "calls": [
+        "/recommendations?top_n=10",
+        "/recommendations?genre=fantasy&top_n=10",
+        "/recommendations?genre=sci_fi&top_n=10"
+      ],
+      "results": {
+        "": [
+          {
+            "title": "All"
+          }
+        ],
+        "fantasy": [
+          {
+            "title": "Fantasy"
+          }
+        ]
+      },
+      "renders": [],
+      "message": "<div class=\"empty-state\">Couldn't get recommendations. Try again in a moment.</div>",
+      "loading": "none"
+    },
+    "after": {
+      "calls": [
+        "/recommendations/all?top_n=10"
+      ],
+      "results": {},
+      "renders": [],
+      "message": "<div class=\"empty-state\">Couldn't get recommendations. Try again in a moment.</div>",
+      "loading": "none"
+    }
+  },
+  "network_rejection": {
+    "before": {
+      "calls": [
+        "/recommendations?top_n=10",
+        "/recommendations?genre=fantasy&top_n=10",
+        "/recommendations?genre=sci_fi&top_n=10"
+      ],
+      "results": {},
+      "renders": [],
+      "message": "<div class=\"empty-state\">Couldn't reach the recommendation service. It may still be waking up — try again in a moment.</div>",
+      "loading": "none"
+    },
+    "after": {
+      "calls": [
+        "/recommendations/all?top_n=10"
+      ],
+      "results": {},
+      "renders": [],
+      "message": "<div class=\"empty-state\">Couldn't reach the recommendation service. It may still be waking up — try again in a moment.</div>",
+      "loading": "none"
+    }
+  }
+}

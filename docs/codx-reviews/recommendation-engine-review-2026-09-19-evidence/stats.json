@@ -1,0 +1,18 @@
+{
+  "counts": {
+    "wrapper_results": 1350,
+    "wrapper_stdout": 1350,
+    "manual_bundle_no_map": 1350,
+    "manual_bundle_with_map": 1350,
+    "bundle_not_mutated": 18,
+    "edge_result": 40,
+    "http_old_intermediate": 36,
+    "http_old_current": 36,
+    "http_all_vs_singles": 12,
+    "thin_http_success": 10,
+    "http_validation": 4,
+    "http_auth_missing": 2
+  },
+  "mismatches": 0,
+  "comparison_sha256": "2c88f0e768002fff035b8c12558db5c3701b8db28fada2d24f9bf00cf7f0bfcd"
+}

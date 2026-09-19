@@ -515,6 +515,29 @@ worth deferring to a later session rather than batching in for
   `app/dashboard.html`'s inline script re-parsed clean via Node after
   the edit.
 
+  **UPDATE 2026-09-19, CODX Task 13 review landed: one real bug fixed,
+  one real design question still open.** Full detail in
+  `docs/codx-reviews/codx-recommendation-engine-review-2026-09-19.md`
+  and `docs/project-log.md`'s matching entry. CODX independently
+  verified both fixes above with a fresh harness -- no scoring-math or
+  successful-response regression -- and found two real, new things:
+  (1) `explain_match()`'s title validation had silently moved to AFTER
+  profile resolution in the `fcf8f65` extraction, so a bad title paid
+  full resolution cost before failing instead of failing fast -- fixed
+  same-session, re-verified clean. (2) `/recommendations/all` is
+  genuinely all-or-nothing where the old per-genre-independent requests
+  would show whichever succeeded -- confirmed real via fault injection
+  through both the HTTP routes and the actual dashboard JS handler, but
+  ALSO confirmed no naturally-occurring genre-only failure exists today
+  (empty/thin/invalid profiles all still succeed) -- a latent
+  resilience gap, not an active bug. **Still open, needs a repo-owner
+  decision, not a CLDO unilateral call**: whether/how to add partial-
+  success handling (CODX's proposed shape: catch each genre's
+  `_score_genre()` individually, return an envelope like
+  `{"results_by_genre": ..., "errors_by_genre": ...}`, keep healthy
+  tabs usable when only one fails) -- this is a real API/UI response-
+  contract change, queued as CODX's likely next task once decided.
+
 - [x] **Catalog-wide audiobook edition data gaps: missing
   `runtime_minutes`, and no `release_date` field at all -- raised
   by the repo owner 2026-09-18, confirmed and quantified. Schema half

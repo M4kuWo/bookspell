@@ -1,0 +1,29 @@
+{
+  "": {
+    "single_statuses": {
+      "": 500,
+      "fantasy": 200,
+      "sci_fi": 200
+    },
+    "all_status": 500,
+    "all_body": "Internal Server Error"
+  },
+  "fantasy": {
+    "single_statuses": {
+      "": 200,
+      "fantasy": 500,
+      "sci_fi": 200
+    },
+    "all_status": 500,
+    "all_body": "Internal Server Error"
+  },
+  "sci_fi": {
+    "single_statuses": {
+      "": 200,
+      "fantasy": 200,
+      "sci_fi": 500
+    },
+    "all_status": 500,
+    "all_body": "Internal Server Error"
+  }
+}
