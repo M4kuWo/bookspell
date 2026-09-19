@@ -19311,3 +19311,25 @@ logged in `project-log.md`/`TODO.md` only. No action needed beyond this
 note.
 
 `docs/codx-tasks/current-task.md` reset to a holding-pattern note.
+
+## 2026-09-19, later still -- CODX Task 14 queued: implement its own proposed partial-failure fix
+
+Repo owner decided (asked directly which of "fix now"/"leave it"/
+"queue for CODX" for the all-or-nothing `/recommendations/all` gap
+Task 13 found) to have CODX implement the fix itself, since its own
+report already scoped the exact shape.
+
+`docs/codx-tasks/current-task.md` now holds Task 14: implement the
+partial-success envelope CODX's own Task 13 report proposed
+(`results_by_genre`/`errors_by_genre`, each genre error-tracked
+per-genre, no exception details exposed), on both `api/main.py`
+(wrap each `_score_genre()` call individually, decide/justify the
+all-3-fail response) and `app/dashboard.html` (consume the new
+envelope, keep healthy tabs usable when only one genre fails, show a
+real per-tab error state, don't cache a failed genre as an empty
+success). `/recommendations` itself stays untouched -- this envelope
+is `/recommendations/all`-specific. Quoted CODX's own proposed spec
+back to it as the task's decided shape (not open for re-design), and
+pointed it at extending its own existing Task 13 evidence
+(`dashboard_check.cjs`) rather than rebuilding the Node-VM dashboard-
+handler test harness from scratch.
