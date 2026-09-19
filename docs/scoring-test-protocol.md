@@ -3362,3 +3362,69 @@ Landed as-is. **Phase B is now fully complete (B1-B4)**:
 `scripts/recommend.py` is a genuine, minimal CLI demo script; the real
 engine lives entirely under `scripts/scoring/`, and every real consumer
 imports from it directly.
+
+## `/recommendations` redundant profile-resolution fix -- LANDED (2026-09-20, CLDO)
+
+Implements the fix `docs/TODO.md`'s 2026-09-18 entry scoped but
+deliberately left for a later session (queued 2026-09-19 pending a
+token-budget reset). Confirmed the diagnosis still held against the
+CURRENT code (post Phase A/B refactors) before touching anything:
+`explain_match()` (`scripts/scoring/api.py`) still recomputes the full
+profile bundle (`_resolve_profile`, `validated_dealbreaker_fields`,
+`compute_series_dna`, `build_prevalence_lookup`,
+`user_calibrated_poor_threshold`) on every call, and
+`api/main.py`'s `/recommendations` still calls it once per result (up
+to `top_n=100`) with identical inputs each time -- A4 (2026-09-16) only
+changed what `explain_match()` does AFTER that resolution (delegating
+to `score_candidate()`), not the resolution itself.
+
+**The fix**: extracted the post-resolution half of `explain_match()`
+into a new function, `explain_match_with_profile()`, that takes the
+already-resolved bundle instead of re-deriving it; added
+`resolve_explain_profile()`, which computes that bundle once and
+returns it as a dict shaped to match `explain_match_with_profile()`'s
+keyword names exactly (so a caller does
+`explain_match_with_profile(catalog, title, **bundle)`).
+`explain_match()` itself is now a two-line wrapper
+(`resolve_explain_profile()` then `explain_match_with_profile()`) --
+its own public signature, behavior, and per-call cost are completely
+unchanged; it's still the right function for a caller (e.g.
+`scripts/recommend.py`'s CLI demo) explaining one book in isolation.
+`api/main.py`'s `/recommendations` now calls `resolve_explain_profile()`
+ONCE before its result loop and `explain_match_with_profile()` inside
+it, instead of `explain_match()` per result. `score_candidate()`,
+`recommend()`, `explain_book()`, and every other scoring function are
+untouched -- this is purely `explain_match()`'s own internal wiring
+plus one caller.
+
+**Verification** (both failure scenarios CLAUDE.md requires, plus a
+third): (1) direct comparison of OLD `explain_match()` (git HEAD,
+loaded as a separate `scoring_old` package copy to avoid this
+project's own documented split-import identity trap) against NEW
+`explain_match()`, across 4 real raters x 3 genres x 3 `top_n` values
+(including `None`) x 40 real catalog titles -- 1,440 calls, 0
+mismatches. (2) `explain_match_with_profile()`, fed a manually
+pre-resolved bundle, against OLD `explain_match()`'s output for the
+same effective inputs -- 360 calls, 0 mismatches, proving the extracted
+function is a faithful split and not just a wrapper that happens to
+still call the old path. (3) The exact substitution `api/main.py` makes
+(bundle-once-then-loop vs. explain_match-per-iteration), reproducing
+its real `out` list construction end-to-end against 4 raters x 3
+genres x 3 `top_n` (10/50/100) = 36 combinations -- 0 mismatches, AND
+real measured timing: avg 1.032s -> 0.137s, max (top_n=100) 3.112s ->
+0.205s -- the max figure lands almost exactly on the ~3.26s this
+project's own profiling predicted for that case, confirming this is
+genuinely the same bottleneck being fixed, not a coincidentally similar
+one. Canonical `scripts/scoring_tests.py` suite run twice (after each
+of the two edits to `api.py`), both clean, no regressions -- though per
+A4's own finding this suite still never calls `explain_match()`
+directly, so it's confirming the REST of the scoring path is untouched,
+not independently validating this specific fix (the 3 comparisons above
+carry that weight). `scripts/recommend.py`'s CLI demo also run directly,
+completes cleanly.
+
+Landed as-is. The `app/dashboard.html`-side fix (3 parallel full
+genre requests per "Get recommendations" click, each paying whatever
+`recommend()`'s own cost is independently) remains open, per the
+original TODO entry -- a separate, smaller, frontend-only piece, not
+attempted in this session.

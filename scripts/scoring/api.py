@@ -169,6 +169,96 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     return scored[:top_n]
 
 
+def resolve_explain_profile(catalog, ratings, genre=None, fatigue_overrides=None, format_preference=None):
+    """Computes the same profile/series-DNA/prevalence/threshold bundle
+    `explain_match()` derives internally on every call. A caller that
+    needs to explain MANY books against the same user/genre/rating-set
+    in one request (e.g. `/recommendations` explaining every result)
+    should call this ONCE and pass the result into
+    `explain_match_with_profile()` for each book, instead of paying
+    this cost per book -- see that function's own docstring for why.
+    Returns a dict whose keys match `explain_match_with_profile()`'s
+    keyword parameter names exactly, so a caller can do
+    `explain_match_with_profile(catalog, title, **bundle)`."""
+    centroid, weights, id_to_magnitude, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides, format_preference)
+    validated = validated_dealbreaker_fields(catalog, id_to_magnitude)
+    series_dna = compute_series_dna(catalog)
+    field_prevalence, trope_prevalence = build_prevalence_lookup(catalog, genre)
+    poor_threshold = user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
+                                                     field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
+    return {
+        "centroid": centroid,
+        "weights": weights,
+        "id_to_magnitude": id_to_magnitude,
+        "validated": validated,
+        "series_dna": series_dna,
+        "field_prevalence": field_prevalence,
+        "trope_prevalence": trope_prevalence,
+        "poor_threshold": poor_threshold,
+        "title_to_id": {b["title"]: bid for bid, b in catalog.items()},
+    }
+
+
+def explain_match_with_profile(catalog, title, centroid, weights, id_to_magnitude,
+                                validated, series_dna, field_prevalence, trope_prevalence,
+                                poor_threshold, top_n=5, title_to_id=None):
+    """Same explanation `explain_match()` produces, but takes an
+    already-resolved profile bundle (everything `explain_match()` would
+    otherwise compute fresh via `_resolve_profile()`,
+    `validated_dealbreaker_fields()`, `compute_series_dna()`,
+    `build_prevalence_lookup()`, `user_calibrated_poor_threshold()`)
+    instead of re-deriving it. `explain_match()` itself is unchanged and
+    still recomputes this bundle every call -- this is for a caller that
+    needs to explain MANY books against the SAME user/genre/rating-set
+    in one request (e.g. `/recommendations` explaining every result),
+    where recomputing an identical bundle once per book is pure waste.
+    `title_to_id` is likewise an optional precomputed `{title: book_id}`
+    map, for the same reason -- pass one in if you're calling this in a
+    loop, since rebuilding it from `catalog` is itself an O(catalog)
+    scan otherwise repeated per call. See `explain_match()`'s own
+    docstring for the return shape -- identical here, since this IS the
+    same computation, just with its inputs supplied instead of derived."""
+    if title_to_id is None:
+        title_to_id = {b["title"]: bid for bid, b in catalog.items()}
+    if title not in title_to_id:
+        raise ValueError(f"{title!r} not found in catalog")
+    book_id = title_to_id[title]
+    book = catalog[book_id]
+
+    if top_n is None:
+        # explain_book() treats [:None] as unlimited; score_candidate() uses
+        # None for its default limit. Each scalar/trope supplies at most one
+        # row per evidence list, so this bound preserves the unlimited view.
+        top_n = len(weights) + len(weights.get("tropes", {}))
+    result = score_candidate(
+        catalog, book_id, centroid, weights, id_to_magnitude,
+        policy="explanation", validated_fields=validated, series_dna=series_dna,
+        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence,
+        poor_threshold=poor_threshold, top_n=top_n
+    )
+    score = result["scores"]["final"]
+    matches, mismatches = result["matches"], result["mismatches"]
+    flags = result["dealbreaker_flags"]
+    series_note = result["series_note"]
+
+    matches_labeled = [(label, p) for label, _ in matches if (p := describe(label, book))]
+    mismatches_labeled = [(label, p) for label, _ in mismatches if (p := describe(label, book))]
+    flags_labeled = [(label, p) for label, _ in flags if (p := describe(label, book))]
+
+    return {
+        "title": title,
+        "score": round(score, 3),
+        "match_label": result["match_label"],
+        "matches": [p for _, p in matches_labeled],
+        "mismatches": [p for _, p in mismatches_labeled],
+        "summary": natural_sentence(matches_labeled, positive=True),
+        "mismatch_summary": natural_sentence(mismatches_labeled, positive=False),
+        "dealbreaker_flags": [p for _, p in flags_labeled],
+        "dealbreaker_summary": dealbreaker_sentence(flags_labeled),
+        "series_note": series_note,
+    }
+
+
 def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, top_n=5, format_preference=None):
     """Why does/doesn't `title` match this user's profile, in readable
     language? Works for ANY book in the catalog, not just ones
@@ -204,49 +294,11 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
     compute_series_dna()/describe_series_trajectory()), "" if the book
     isn't part of a multi-book series or nothing shifts meaningfully --
     most series stay consistent, so this is the common case, not a
-    bug."""
-    title_to_id = {b["title"]: bid for bid, b in catalog.items()}
-    if title not in title_to_id:
-        raise ValueError(f"{title!r} not found in catalog")
-    book_id = title_to_id[title]
-    book = catalog[book_id]
+    bug.
 
-    centroid, weights, id_to_magnitude, _ = _resolve_profile(catalog, ratings, genre, fatigue_overrides, format_preference)
-    validated = validated_dealbreaker_fields(catalog, id_to_magnitude)
-    series_dna = compute_series_dna(catalog)
-    field_prevalence, trope_prevalence = build_prevalence_lookup(catalog, genre)
-    poor_threshold = user_calibrated_poor_threshold(catalog, id_to_magnitude, centroid, weights,
-                                                     field_prevalence=field_prevalence, trope_prevalence=trope_prevalence)
-    if top_n is None:
-        # explain_book() treats [:None] as unlimited; score_candidate() uses
-        # None for its default limit. Each scalar/trope supplies at most one
-        # row per evidence list, so this bound preserves the unlimited view.
-        top_n = len(weights) + len(weights.get("tropes", {}))
-    result = score_candidate(
-        catalog, book_id, centroid, weights, id_to_magnitude,
-        policy="explanation", validated_fields=validated, series_dna=series_dna,
-        field_prevalence=field_prevalence, trope_prevalence=trope_prevalence,
-        poor_threshold=poor_threshold, top_n=top_n
-    )
-    score = result["scores"]["final"]
-    matches, mismatches = result["matches"], result["mismatches"]
-    flags = result["dealbreaker_flags"]
-    series_note = result["series_note"]
-
-    matches_labeled = [(label, p) for label, _ in matches if (p := describe(label, book))]
-    mismatches_labeled = [(label, p) for label, _ in mismatches if (p := describe(label, book))]
-    flags_labeled = [(label, p) for label, _ in flags if (p := describe(label, book))]
-
-    return {
-        "title": title,
-        "score": round(score, 3),
-        "match_label": result["match_label"],
-        "matches": [p for _, p in matches_labeled],
-        "mismatches": [p for _, p in mismatches_labeled],
-        "summary": natural_sentence(matches_labeled, positive=True),
-        "mismatch_summary": natural_sentence(mismatches_labeled, positive=False),
-        "dealbreaker_flags": [p for _, p in flags_labeled],
-        "dealbreaker_summary": dealbreaker_sentence(flags_labeled),
-        "series_note": series_note,
-    }
+    Recomputes the full profile bundle every call -- see
+    explain_match_with_profile() if you need to explain many books
+    against the same profile in one request."""
+    bundle = resolve_explain_profile(catalog, ratings, genre, fatigue_overrides, format_preference)
+    return explain_match_with_profile(catalog, title, top_n=top_n, **bundle)
 

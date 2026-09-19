@@ -166,9 +166,17 @@ def recommendations(genre: str = None, top_n: int = 10, authorization: str = Hea
         catalog, ratings, top_n=top_n, genre=genre,
         user_rules=user_rules, format_preference=format_preference,
     )
+    # Computed ONCE and reused for every explain_match_with_profile() call
+    # below, instead of explain_match() re-resolving this same profile/
+    # series-DNA/prevalence/threshold bundle from scratch per result --
+    # was the real cost behind /recommendations feeling slow (see
+    # docs/TODO.md's 2026-09-18 entry: ~0.42s per 10 calls, ballooning to
+    # ~3.26s total at top_n=100). Byte-identical output either way --
+    # this is the same computation, just done once instead of N times.
+    explain_bundle = api.resolve_explain_profile(catalog, ratings, genre=genre, format_preference=format_preference)
     out = []
     for score, title, author, contributions in results:
-        detail = api.explain_match(catalog, ratings, title, genre=genre, format_preference=format_preference)
+        detail = api.explain_match_with_profile(catalog, title, **explain_bundle)
         out.append({
             "title": title,
             "author": author,

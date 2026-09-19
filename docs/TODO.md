@@ -394,10 +394,10 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
-- [ ] **`/recommendations` is genuinely slow, and a real cause is found
-  and profiled -- raised by the repo owner 2026-09-18, NOT yet fixed
-  (deliberately left for next session, mid-way through switching
-  terminals).** Confirmed this is not just Render's free-tier cold
+- [x] **`/recommendations` is genuinely slow, and a real cause is found
+  and profiled -- raised by the repo owner 2026-09-18. Backend fix
+  LANDED 2026-09-20; the smaller dashboard-side piece is still open.**
+  Confirmed this is not just Render's free-tier cold
   start (already surfaced to the user via the "waking up" loading
   state) -- there's a real, structural inefficiency in the scoring
   code itself, measured directly rather than guessed at:
@@ -446,6 +446,31 @@ worth deferring to a later session rather than batching in for
   half-verified. Nothing new investigated this session; the profiling
   and fix shape above are still the plan, unchanged. Pick this up
   first next session with a full budget.
+
+  **UPDATE 2026-09-20: backend fix LANDED.** Re-confirmed the diagnosis
+  still held against current code (post Phase A/B) before touching
+  anything -- it did; A4 only changed what `explain_match()` does after
+  resolving the bundle, not the resolution itself. Extracted
+  `explain_match_with_profile()` (takes an already-resolved bundle) and
+  `resolve_explain_profile()` (computes it once) in
+  `scripts/scoring/api.py`; `explain_match()` itself is now a 2-line
+  wrapper over both, its own behavior/cost per call unchanged.
+  `api/main.py`'s `/recommendations` now resolves the bundle once
+  before its result loop instead of once per result. Verified 3 ways:
+  old-vs-new `explain_match()` direct comparison (1,440 calls, 0
+  mismatches), the new function against old `explain_match()` given an
+  equivalent manually-resolved bundle (360 calls, 0 mismatches), and
+  the exact bundle-once-vs-per-iteration substitution `api/main.py`
+  makes, reproducing its real `out` list end-to-end (36 rater/genre/
+  top_n combos, 0 mismatches) -- with real measured timing: avg 1.032s
+  -> 0.137s, max (top_n=100) 3.112s -> 0.205s, landing almost exactly
+  on the ~3.26s this entry's own profiling predicted. Canonical
+  `scripts/scoring_tests.py` suite clean both times it was rerun. Full
+  writeup in `docs/scoring-test-protocol.md`'s matching entry (that's
+  the source of truth per CLAUDE.md's rule for scoring changes -- this
+  bullet is a pointer, not a duplicate). **Still open**: the
+  `app/dashboard.html` 3-parallel-genre-requests piece described above
+  -- separate, smaller, frontend-only, not attempted this session.
 
 - [x] **Catalog-wide audiobook edition data gaps: missing
   `runtime_minutes`, and no `release_date` field at all -- raised

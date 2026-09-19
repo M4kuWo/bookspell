@@ -19138,3 +19138,36 @@ account first (queried by user_id + title/author, not assumed), then
 deleted it directly against hosted (row-scoped, per-user data --
 no local-sync step needed, same convention as the Liked-books add
 yesterday). No dependent rows to check (ratings has none).
+
+## 2026-09-20 -- `/recommendations` speed fix landed
+
+Picked up the fix queued 2026-09-19 (held for a token-budget reset).
+Full technical writeup lives in `docs/scoring-test-protocol.md`'s
+matching entry, per CLAUDE.md's rule that scoring changes get logged
+there, not just here -- this entry is the short version.
+
+Re-verified the 2026-09-18 diagnosis against current code before
+touching anything (Phase A/B had refactored the internals since): still
+accurate. `explain_match()` still recomputed the full profile bundle on
+every call; `/recommendations` still called it once per result. Fixed
+by extracting `explain_match_with_profile()` (takes a pre-resolved
+bundle) and `resolve_explain_profile()` (computes it once) in
+`scripts/scoring/api.py`, with `explain_match()` reduced to a thin
+wrapper over both -- its own behavior unchanged. `api/main.py` now
+resolves the bundle once before its result loop.
+
+Verified with three real comparisons rather than trusting the
+refactor by inspection: old-vs-new `explain_match()` (1,440 calls, 0
+mismatches), the new function against old `explain_match()` given an
+equivalent bundle (360 calls, 0 mismatches), and the exact
+bundle-once-vs-per-iteration substitution `api/main.py` makes,
+end-to-end (36 combos, 0 mismatches) -- plus real timing: avg 1.032s
+-> 0.137s, max (top_n=100) 3.112s -> 0.205s, landing almost exactly on
+the ~3.26s the original profiling predicted, confirming this is
+genuinely the diagnosed bottleneck, not a look-alike. Canonical
+`scripts/scoring_tests.py` suite clean both times it was rerun.
+`scripts/recommend.py`'s CLI demo also run directly, clean.
+
+Left open, on purpose: `app/dashboard.html`'s 3-parallel-genre-requests
+pattern (a separate, smaller, frontend-only piece per the original
+TODO entry).
