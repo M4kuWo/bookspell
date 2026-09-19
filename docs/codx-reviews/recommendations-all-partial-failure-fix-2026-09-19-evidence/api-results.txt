@@ -1,0 +1,5 @@
+PASS 36 single-genre HTTP responses byte-identical; SHA256 dbd6105c9106a08bab1b76de71d71c0ab6d7beca9cea477bc2e7710284d5caba; 3 all-success envelopes preserve original lists
+PASS all 8 genre-failure subsets: surviving real lists exact, status 200/500 correct, shared inputs loaded once, one server log per failure, no exception text in responses
+PASS empty successful list plus two failures returns HTTP 200
+PASS shared-load failures remain HTTP 500 before scoring; auth 401, bad genre 400, invalid limit 422 and single-genre error propagation preserved
+PASS every other API function AST unchanged, including single-genre route and scoring helper

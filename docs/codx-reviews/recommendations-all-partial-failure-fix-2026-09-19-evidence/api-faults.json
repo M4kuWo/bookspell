@@ -1,0 +1,107 @@
+[
+  {
+    "failed": [],
+    "status": 200,
+    "results_keys": [
+      "",
+      "fantasy",
+      "sci_fi"
+    ],
+    "errors": {}
+  },
+  {
+    "failed": [
+      "sci_fi"
+    ],
+    "status": 200,
+    "results_keys": [
+      "",
+      "fantasy"
+    ],
+    "errors": {
+      "sci_fi": "temporarily_unavailable"
+    }
+  },
+  {
+    "failed": [
+      "fantasy"
+    ],
+    "status": 200,
+    "results_keys": [
+      "",
+      "sci_fi"
+    ],
+    "errors": {
+      "fantasy": "temporarily_unavailable"
+    }
+  },
+  {
+    "failed": [
+      "fantasy",
+      "sci_fi"
+    ],
+    "status": 200,
+    "results_keys": [
+      ""
+    ],
+    "errors": {
+      "fantasy": "temporarily_unavailable",
+      "sci_fi": "temporarily_unavailable"
+    }
+  },
+  {
+    "failed": [
+      ""
+    ],
+    "status": 200,
+    "results_keys": [
+      "fantasy",
+      "sci_fi"
+    ],
+    "errors": {
+      "": "temporarily_unavailable"
+    }
+  },
+  {
+    "failed": [
+      "",
+      "sci_fi"
+    ],
+    "status": 200,
+    "results_keys": [
+      "fantasy"
+    ],
+    "errors": {
+      "": "temporarily_unavailable",
+      "sci_fi": "temporarily_unavailable"
+    }
+  },
+  {
+    "failed": [
+      "",
+      "fantasy"
+    ],
+    "status": 200,
+    "results_keys": [
+      "sci_fi"
+    ],
+    "errors": {
+      "": "temporarily_unavailable",
+      "fantasy": "temporarily_unavailable"
+    }
+  },
+  {
+    "failed": [
+      "",
+      "sci_fi",
+      "fantasy"
+    ],
+    "status": 500,
+    "results_keys": [],
+    "errors": {
+      "": "temporarily_unavailable",
+      "fantasy": "temporarily_unavailable",
+      "sci_fi": "temporarily_unavailable"
+    }
+  }
+]

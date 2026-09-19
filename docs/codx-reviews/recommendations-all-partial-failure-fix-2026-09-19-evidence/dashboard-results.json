@@ -1,0 +1,106 @@
+[
+  {
+    "case": "success",
+    "filtered": false,
+    "rendered": 10
+  },
+  {
+    "case": "success",
+    "filtered": true,
+    "rendered": 10
+  },
+  {
+    "case": "partial",
+    "failed": "",
+    "selected": "",
+    "reloadPreservedError": true,
+    "healthyTabsWork": true,
+    "retryClearedError": true
+  },
+  {
+    "case": "partial",
+    "failed": "",
+    "selected": "fantasy",
+    "reloadPreservedError": true,
+    "healthyTabsWork": true,
+    "retryClearedError": true
+  },
+  {
+    "case": "partial",
+    "failed": "",
+    "selected": "sci_fi",
+    "reloadPreservedError": true,
+    "healthyTabsWork": true,
+    "retryClearedError": true
+  },
+  {
+    "case": "partial",
+    "failed": "fantasy",
+    "selected": "",
+    "reloadPreservedError": true,
+    "healthyTabsWork": true,
+    "retryClearedError": true
+  },
+  {
+    "case": "partial",
+    "failed": "fantasy",
+    "selected": "fantasy",
+    "reloadPreservedError": true,
+    "healthyTabsWork": true,
+    "retryClearedError": true
+  },
+  {
+    "case": "partial",
+    "failed": "fantasy",
+    "selected": "sci_fi",
+    "reloadPreservedError": true,
+    "healthyTabsWork": true,
+    "retryClearedError": true
+  },
+  {
+    "case": "partial",
+    "failed": "sci_fi",
+    "selected": "",
+    "reloadPreservedError": true,
+    "healthyTabsWork": true,
+    "retryClearedError": true
+  },
+  {
+    "case": "partial",
+    "failed": "sci_fi",
+    "selected": "fantasy",
+    "reloadPreservedError": true,
+    "healthyTabsWork": true,
+    "retryClearedError": true
+  },
+  {
+    "case": "partial",
+    "failed": "sci_fi",
+    "selected": "sci_fi",
+    "reloadPreservedError": true,
+    "healthyTabsWork": true,
+    "retryClearedError": true
+  },
+  {
+    "case": "all-failed",
+    "reloadError": true
+  },
+  {
+    "case": "empty-success"
+  },
+  {
+    "case": "request-failure",
+    "network": true
+  },
+  {
+    "case": "request-failure",
+    "status": 401
+  },
+  {
+    "case": "request-failure",
+    "status": 500
+  },
+  {
+    "case": "legacy-cache/user-isolation/invalidation"
+  }
+]

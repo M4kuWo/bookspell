@@ -530,13 +530,26 @@ worth deferring to a later session rather than batching in for
   through both the HTTP routes and the actual dashboard JS handler, but
   ALSO confirmed no naturally-occurring genre-only failure exists today
   (empty/thin/invalid profiles all still succeed) -- a latent
-  resilience gap, not an active bug. **Still open, needs a repo-owner
-  decision, not a CLDO unilateral call**: whether/how to add partial-
-  success handling (CODX's proposed shape: catch each genre's
-  `_score_genre()` individually, return an envelope like
-  `{"results_by_genre": ..., "errors_by_genre": ...}`, keep healthy
-  tabs usable when only one fails) -- this is a real API/UI response-
-  contract change, queued as CODX's likely next task once decided.
+  resilience gap, not an active bug.
+
+  **UPDATE 2026-09-19, later: CODX Task 14 landed -- partial-failure
+  gap fixed.** Repo owner decided to have CODX implement its own
+  proposed fix. `/recommendations/all` now returns
+  `{"results_by_genre": {...}, "errors_by_genre": {...}}` -- each
+  genre's `_score_genre()` call runs in its own try/except, HTTP 200
+  when at least one genre succeeds (a genuinely empty list still
+  counts as success), HTTP 500 with the same envelope shape only when
+  all three fail. `app/dashboard.html` keeps healthy tabs fully usable
+  when only one genre fails, shows a real per-tab error state, and
+  never caches a failed genre as an empty success. `_score_genre()`
+  and `/recommendations` itself are untouched. CLDO independently
+  re-verified before landing (own fault-injection test against the
+  real FastAPI app, not a re-run of CODX's harness): all-success,
+  one-genre-fails, and all-fail all matched the report exactly. Full
+  detail in
+  `docs/codx-reviews/codx-recommendations-all-partial-failure-fix-2026-09-19.md`
+  and `docs/project-log.md`'s matching entry. Both halves of the
+  original `/recommendations` slowness/resilience work are now closed.
 
 - [x] **Catalog-wide audiobook edition data gaps: missing
   `runtime_minutes`, and no `release_date` field at all -- raised

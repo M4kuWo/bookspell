@@ -12,13 +12,11 @@ Run locally: `DATABASE_URL=... SUPABASE_JWKS_URL=... uvicorn main:app --reload`
 import os
 import sys
 import tempfile
-import logging
 
 import jwt
 import psycopg2
 from fastapi import FastAPI, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from jwt import PyJWKClient
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
@@ -214,10 +212,8 @@ def recommendations(genre: str = None, top_n: int = 10, authorization: str = Hea
 
 @app.get("/recommendations/all")
 def recommendations_all(top_n: int = 10, authorization: str = Header(default=None)):
-    """All 3 genre views (''/fantasy/sci_fi) in ONE request, with
-    successful lists in results_by_genre and safe failure markers in
-    errors_by_genre. Partial success is HTTP 200; all failed is HTTP 500.
-    Added 2026-09-20 so
+    """Same per-genre result shape as /recommendations, for all 3 genre
+    views (''/fantasy/sci_fi) in ONE request -- added 2026-09-20 so
     app/dashboard.html's "Get recommendations" click can make a single
     round-trip instead of 3 parallel /recommendations calls. Genre still
     can't be collapsed into one shared computation (see _score_genre()'s
@@ -237,22 +233,11 @@ def recommendations_all(top_n: int = 10, authorization: str = Header(default=Non
     format_preference = _load_format_preference(user_id)
     top_n = max(1, min(top_n, 100))
 
-    results_by_genre, errors_by_genre = {}, {}
-    for key, genre in (("", None), ("fantasy", "fantasy"), ("sci_fi", "sci_fi")):
-        try:
-            results_by_genre[key] = _score_genre(
-                catalog, ratings, user_rules, format_preference, genre, top_n
-            )
-        except Exception:
-            logging.getLogger(__name__).exception("Recommendation scoring failed for genre %r", key)
-            errors_by_genre[key] = "temporarily_unavailable"
-
-    envelope = {"results_by_genre": results_by_genre, "errors_by_genre": errors_by_genre}
-    # An empty successful list still counts as success. Only a complete
-    # scoring failure is HTTP 500; keep its body safe and shaped identically.
-    if not results_by_genre:
-        return JSONResponse(status_code=500, content=envelope)
-    return envelope
+    return {
+        "": _score_genre(catalog, ratings, user_rules, format_preference, None, top_n),
+        "fantasy": _score_genre(catalog, ratings, user_rules, format_preference, "fantasy", top_n),
+        "sci_fi": _score_genre(catalog, ratings, user_rules, format_preference, "sci_fi", top_n),
+    }
 
 
 @app.post("/import/goodreads")

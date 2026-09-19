@@ -19333,3 +19333,55 @@ back to it as the task's decided shape (not open for re-design), and
 pointed it at extending its own existing Task 13 evidence
 (`dashboard_check.cjs`) rather than rebuilding the Node-VM dashboard-
 handler test harness from scratch.
+
+## 2026-09-19, later still -- CODX Task 14 landed: partial-failure envelope
+
+CODX's report/patch:
+`docs/codx-reviews/codx-recommendations-all-partial-failure-fix-2026-09-19.md`
+(evidence alongside it). Implemented exactly the spec handed to it: in
+`api/main.py`'s `recommendations_all()`, each of the 3 `_score_genre()`
+calls now runs in its own try/except, logging the exception server-side
+(Python's standard `logging`, since no existing print/logger convention
+existed to match) and recording only a safe `"temporarily_unavailable"`
+marker in `errors_by_genre` -- never exception text or a traceback.
+Shared catalog/ratings/rules/format-preference loading stays OUTSIDE
+that boundary, so a real shared-load failure still fails the whole
+request normally, before any scoring happens. Response is
+`{"results_by_genre": {...}, "errors_by_genre": {...}}`, HTTP 200 when
+at least one genre succeeds (including a genuinely-empty-but-successful
+list), HTTP 500 with the SAME envelope shape when all three fail (own,
+justified call: "empty results is a scoring failure, not a successful
+empty recommendation set"). `_score_genre()` and `/recommendations`
+itself are both completely untouched.
+
+`app/dashboard.html`: new `errorsByGenre` alongside `resultsByGenre`,
+a `renderCurrentGenre()` helper used everywhere a tab renders (initial
+cache restore, tab-click, post-fetch) so a failed tab shows its own
+"Couldn't load X recommendations" message while healthy tabs stay
+fully usable, and a real "click to retry" state when all three fail.
+New `clearRecsState()` (resets both dicts + the session cache) used at
+all 3 existing invalidation points, so a stale error or stale success
+never survives a genuine retry or filter change. Cache round-trips a
+failed genre as a real error, never as a silently-empty success.
+
+**Independently re-verified before landing, not trusted at face
+value**: applied the patch to a clean local checkout (`git apply
+--check` clean, matches the report's claimed 61 insertions/26
+deletions exactly), confirmed `api/main.py`/`app/dashboard.html` both
+still parse (Python AST, Node script parse), confirmed via the diff's
+own hunks that `_score_genre()` and `/recommendations` are genuinely
+untouched (not just claimed). Then wrote a fresh, independent fault-
+injection test (not a re-run of CODX's own harness) against the real
+FastAPI app with real scoring: all-success returns 200 with real
+non-empty lists for all 3 genres; injecting a failure into `fantasy`
+alone returns 200 with `fantasy` correctly absent from
+`results_by_genre` and present in `errors_by_genre` as
+`"temporarily_unavailable"`, while `''`/`sci_fi` still carry real,
+non-stubbed scored results; injecting a failure into all 3 returns 500
+with the same envelope shape, empty results, all 3 marked errored;
+`/recommendations`'s own single-genre behavior confirmed unaffected
+throughout. All matched CODX's report exactly.
+
+Report/evidence copied to `docs/codx-reviews/`. `docs/codx-tasks/
+current-task.md` reset to a holding-pattern note -- nothing queued for
+CODX right now.

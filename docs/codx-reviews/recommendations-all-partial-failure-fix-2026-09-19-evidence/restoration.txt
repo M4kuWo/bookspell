@@ -1,0 +1,3 @@
+PASS all 477 tracked files SHA256 match HEAD bf345d0f2a97bc2fb4f8447d00d5939e37817245
+PASS index and tracked working tree clean
+PASS proposal.patch applies cleanly with git apply --check

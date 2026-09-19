@@ -1,0 +1,41 @@
+Recommendation scoring failed for genre 'fantasy'
+Traceback (most recent call last):
+  File "/Users/mathiaskurin/Documents/bookspell-codex/api/main.py", line 241, in recommendations_all
+    results_by_genre[key] = _score_genre(
+                            ~~~~~~~~~~~~^
+        catalog, ratings, user_rules, format_preference, genre, top_n
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1167, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1171, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1230, in _execute_mock_call
+    raise result
+RuntimeError: private
+Recommendation scoring failed for genre 'sci_fi'
+Traceback (most recent call last):
+  File "/Users/mathiaskurin/Documents/bookspell-codex/api/main.py", line 241, in recommendations_all
+    results_by_genre[key] = _score_genre(
+                            ~~~~~~~~~~~~^
+        catalog, ratings, user_rules, format_preference, genre, top_n
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1167, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1171, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1230, in _execute_mock_call
+    raise result
+RuntimeError: private
+PASS 36 single-genre HTTP responses byte-identical; SHA256 dbd6105c9106a08bab1b76de71d71c0ab6d7beca9cea477bc2e7710284d5caba; 3 all-success envelopes preserve original lists
+PASS all 8 genre-failure subsets: surviving real lists exact, status 200/500 correct, shared inputs loaded once, one server log per failure, no exception text in responses
+PASS empty successful list plus two failures returns HTTP 200
+PASS shared-load failures remain HTTP 500 before scoring; auth 401, bad genre 400, invalid limit 422 and single-genre error propagation preserved
+PASS every other API function AST unchanged, including single-genre route and scoring helper

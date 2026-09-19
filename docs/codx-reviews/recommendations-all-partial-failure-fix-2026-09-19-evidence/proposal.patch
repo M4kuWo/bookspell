@@ -1,0 +1,198 @@
+diff --git a/api/main.py b/api/main.py
+index de26e42..7665804 100644
+--- a/api/main.py
++++ b/api/main.py
+@@ -12,11 +12,13 @@ Run locally: `DATABASE_URL=... SUPABASE_JWKS_URL=... uvicorn main:app --reload`
+ import os
+ import sys
+ import tempfile
++import logging
+ 
+ import jwt
+ import psycopg2
+ from fastapi import FastAPI, Header, HTTPException, UploadFile
+ from fastapi.middleware.cors import CORSMiddleware
++from fastapi.responses import JSONResponse
+ from jwt import PyJWKClient
+ 
+ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
+@@ -212,8 +214,10 @@ def recommendations(genre: str = None, top_n: int = 10, authorization: str = Hea
+ 
+ @app.get("/recommendations/all")
+ def recommendations_all(top_n: int = 10, authorization: str = Header(default=None)):
+-    """Same per-genre result shape as /recommendations, for all 3 genre
+-    views (''/fantasy/sci_fi) in ONE request -- added 2026-09-20 so
++    """All 3 genre views (''/fantasy/sci_fi) in ONE request, with
++    successful lists in results_by_genre and safe failure markers in
++    errors_by_genre. Partial success is HTTP 200; all failed is HTTP 500.
++    Added 2026-09-20 so
+     app/dashboard.html's "Get recommendations" click can make a single
+     round-trip instead of 3 parallel /recommendations calls. Genre still
+     can't be collapsed into one shared computation (see _score_genre()'s
+@@ -233,11 +237,22 @@ def recommendations_all(top_n: int = 10, authorization: str = Header(default=Non
+     format_preference = _load_format_preference(user_id)
+     top_n = max(1, min(top_n, 100))
+ 
+-    return {
+-        "": _score_genre(catalog, ratings, user_rules, format_preference, None, top_n),
+-        "fantasy": _score_genre(catalog, ratings, user_rules, format_preference, "fantasy", top_n),
+-        "sci_fi": _score_genre(catalog, ratings, user_rules, format_preference, "sci_fi", top_n),
+-    }
++    results_by_genre, errors_by_genre = {}, {}
++    for key, genre in (("", None), ("fantasy", "fantasy"), ("sci_fi", "sci_fi")):
++        try:
++            results_by_genre[key] = _score_genre(
++                catalog, ratings, user_rules, format_preference, genre, top_n
++            )
++        except Exception:
++            logging.getLogger(__name__).exception("Recommendation scoring failed for genre %r", key)
++            errors_by_genre[key] = "temporarily_unavailable"
++
++    envelope = {"results_by_genre": results_by_genre, "errors_by_genre": errors_by_genre}
++    # An empty successful list still counts as success. Only a complete
++    # scoring failure is HTTP 500; keep its body safe and shaped identically.
++    if not results_by_genre:
++        return JSONResponse(status_code=500, content=envelope)
++    return envelope
+ 
+ 
+ @app.post("/import/goodreads")
+diff --git a/app/dashboard.html b/app/dashboard.html
+index 0cb6460..33146ac 100644
+--- a/app/dashboard.html
++++ b/app/dashboard.html
+@@ -87,9 +87,10 @@ let session, currentGenre = '', ruleTargets = [];
+ // Keyed by genre ('' = Both, 'fantasy', 'sci_fi') -- populated once per
+ // "Get recommendations" click, then switching genre tabs just re-renders
+ // from here instead of re-fetching (each pool is scored against a
+-// genre-scoped catalog/threshold, so it's 3 real fetches up front, not
+-// one fetch filtered 3 ways client-side).
++// genre-scoped catalog/threshold, computed in one request rather than
++// one shared pool filtered 3 ways client-side).
+ let resultsByGenre = {};
++let errorsByGenre = {};
+ 
+ // Item #5 -- switching to "My ratings" and back used to lose whatever
+ // was just fetched, since this is a plain static multi-page site (a
+@@ -111,6 +112,7 @@ function saveRecsCache() {
+       audiobookMode: document.getElementById('audiobook-filter').value,
+       seriesStatusMode: document.getElementById('series-status-filter').value,
+       resultsByGenre,
++      errorsByGenre,
+     }));
+   } catch (e) { /* private mode / storage unavailable -- just skip caching */ }
+ }
+@@ -123,6 +125,26 @@ function loadRecsCache() {
+   } catch (e) { return null; }
+ }
+ 
++function clearRecsState() {
++  resultsByGenre = {};
++  errorsByGenre = {};
++  try { sessionStorage.removeItem(RECS_CACHE_KEY); } catch (e) { /* storage unavailable */ }
++}
++
++function renderCurrentGenre() {
++  const area = document.getElementById('results-area');
++  if (resultsByGenre[currentGenre]) {
++    renderResults(resultsByGenre[currentGenre]);
++  } else if (Object.keys(errorsByGenre).length === 3) {
++    area.innerHTML = '<div class="empty-state">Couldn\'t load recommendations. Click "Get recommendations" to try again.</div>';
++  } else if (errorsByGenre[currentGenre]) {
++    const label = { '': 'Both genres', fantasy: 'Fantasy', sci_fi: 'Sci-Fi' }[currentGenre];
++    area.innerHTML = `<div class="empty-state">Couldn't load ${label} recommendations. Click "Get recommendations" to try again.</div>`;
++  } else {
++    area.innerHTML = '<div class="empty-state">Click "Get recommendations" to load this view.</div>';
++  }
++}
++
+ (async () => {
+   session = await requireAuth();
+   if (!session) return;
+@@ -133,11 +155,12 @@ function loadRecsCache() {
+   const cached = loadRecsCache();
+   if (cached) {
+     resultsByGenre = cached.resultsByGenre || {};
++    errorsByGenre = cached.errorsByGenre || {};
+     currentGenre = cached.currentGenre || '';
+     document.getElementById('audiobook-filter').value = cached.audiobookMode || '';
+     document.getElementById('series-status-filter').value = cached.seriesStatusMode || '';
+     document.querySelectorAll('#genre-toggle button').forEach((b) => b.classList.toggle('active', b.dataset.genre === currentGenre));
+-    if (resultsByGenre[currentGenre]) renderResults(resultsByGenre[currentGenre]);
++    renderCurrentGenre();
+   }
+ })();
+ 
+@@ -146,14 +169,8 @@ document.querySelectorAll('#genre-toggle button').forEach((btn) => {
+     document.querySelectorAll('#genre-toggle button').forEach((b) => b.classList.remove('active'));
+     btn.classList.add('active');
+     currentGenre = btn.dataset.genre;
+-    if (resultsByGenre[currentGenre]) {
+-      renderResults(resultsByGenre[currentGenre]);
+-      saveRecsCache();
+-    } else if (Object.keys(resultsByGenre).length > 0) {
+-      // A filter changed since the last fetch invalidated the cache, or
+-      // this tab just hasn't loaded yet for some other reason.
+-      document.getElementById('results-area').innerHTML = '<div class="empty-state">Click "Get recommendations" to load this view.</div>';
+-    }
++    renderCurrentGenre();
++    saveRecsCache();
+   });
+ });
+ 
+@@ -246,7 +263,7 @@ async function addRule(ruleKey, ruleType, strength) {
+   showToast('Filter added.');
+   ruleSearch.value = '';
+   ruleResultsEl.style.display = 'none';
+-  resultsByGenre = {}; // stale until "Get recommendations" is clicked again
++  clearRecsState(); // stale until "Get recommendations" is clicked again
+   loadCurrentRules();
+ }
+ 
+@@ -269,7 +286,7 @@ async function loadCurrentRules() {
+   }).join('');
+   container.querySelectorAll('[data-remove]').forEach((b) => b.addEventListener('click', async () => {
+     await sb.from('user_rules').delete().eq('id', b.dataset.remove);
+-    resultsByGenre = {};
++    clearRecsState();
+     loadCurrentRules();
+   }));
+ }
+@@ -293,7 +310,7 @@ document.getElementById('get-recs-btn').addEventListener('click', async () => {
+   const anyFilterActive = Boolean(audiobookMode || seriesStatusMode);
+   loading.style.display = 'flex';
+   resultsArea.innerHTML = '';
+-  resultsByGenre = {};
++  clearRecsState();
+   try {
+     const genres = ['', 'fantasy', 'sci_fi'];
+     const topN = anyFilterActive ? FILTERED_POOL_SIZE : DISPLAY_COUNT;
+@@ -304,20 +321,23 @@ document.getElementById('get-recs-btn').addEventListener('click', async () => {
+     // how many round-trips/redundant per-user DB reads it takes to get
+     // it (see docs/TODO.md's 2026-09-18 entry).
+     const res = await apiFetch(`/recommendations/all?top_n=${topN}`);
+-    if (res.ok) {
+-      resultsByGenre = await res.json();
+-    }
+-    if (!resultsByGenre[currentGenre]) {
++    // Complete scoring failure uses the same envelope with HTTP 500.
++    // Shared/auth failures have no envelope and remain request-level errors.
++    if (!res.ok && res.status !== 500) {
+       resultsArea.innerHTML = `<div class="empty-state">Couldn't get recommendations. Try again in a moment.</div>`;
+       return;
+     }
++    const envelope = await res.json();
++    if (!envelope.results_by_genre || !envelope.errors_by_genre) throw new Error('Missing recommendation envelope');
++    resultsByGenre = envelope.results_by_genre;
++    errorsByGenre = envelope.errors_by_genre;
+     await attachThumbnails(resultsByGenre);
+     if (audiobookMode) await applyAudiobookFilter(resultsByGenre, audiobookMode);
+     applySeriesStatusFilter(resultsByGenre, seriesStatusMode);
+     for (const g of genres) {
+       if (resultsByGenre[g]) resultsByGenre[g] = resultsByGenre[g].slice(0, DISPLAY_COUNT);
+     }
+-    renderResults(resultsByGenre[currentGenre]);
++    renderCurrentGenre();
+     saveRecsCache();
+   } catch (e) {
+     resultsArea.innerHTML = `<div class="empty-state">Couldn't reach the recommendation service. It may still be waking up — try again in a moment.</div>`;
