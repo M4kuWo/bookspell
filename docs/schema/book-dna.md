@@ -1335,6 +1335,17 @@ don't re-derive it from the log):
   permanent occupation with no home body to return to at all) — a real,
   related, but mechanically different concept, not a second occurrence
   of the existing entry. One occurrence only.
+- **Trope**: a family/castle society bound by an exhaustive, unbroken
+  book of ceremonial ritual observance that dictates daily life down to
+  the smallest gesture, where deviation from the prescribed ritual is
+  itself a central source of dramatic tension — distinct from
+  `court_intrigue` (political scheming among people, not
+  observance-as-law) and `caste_or_faction_stratified_society` (a formal
+  caste-sorting mechanism, not a ritual-observance regime). Found
+  2026-09-20 (CLDA, catalog tagging batch 8) on Mervyn Peake's *Titus
+  Groan* — the Groan family's entire existence is governed by
+  Gormenghast's "Book" of ritual, tracked and enforced by the Master of
+  Ritual (Sourdust). One occurrence only; watch for a second.
 
 **Promoted / resolved**:
 - **`caste_or_faction_stratified_society`** — promoted 2026-09-13 (sweep

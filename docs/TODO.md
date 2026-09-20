@@ -1918,6 +1918,29 @@ worth deferring to a later session rather than batching in for
   `20260920020000_catalog_tagging_batch7_20books.sql`. **158 untagged
   books remain catalog-wide** (queried fresh 2026-09-20) -- one more
   disjoint batch (8) is already queued to run right after this one.
+  **Batch 8 (2026-09-20, later still, CLDA session): 20 more books
+  tagged**, own-merits (partial-series pool still fully exhausted) --
+  This Woven Kingdom, Three Parts Dead, Titus Groan, Trail of Lightning,
+  Trigger Warning: Short Fictions and Disturbances, Vampire Academy, Vita
+  Nostra, Wanderers, Warcross, When Among Crows, When the Moon Hits Your
+  Eye, When Women Were Dragons, Winter's Orbit, Witchcraft for Wayward
+  Girls, The Historian, The Cabin at the End of the World, The Last House
+  on Needless Street, Water Moon, What You Are Looking for Is in the
+  Library, The Bone Clocks. See project-log.md's 2026-09-20 "catalog
+  tagging batch 8" entry for full detail (4 author-contamination fixes
+  verified against Hardcover's `cached_contributors` data -- The
+  Historian, When the Moon Hits Your Eye, What You Are Looking for Is in
+  the Library all pre-flagged, plus a 4th not-pre-flagged catch on Titus
+  Groan/Anthony Burgess's foreword credit; HIGH_RISK_FIELDS catches on
+  The Cabin at the End of the World's `narrator_reliability: ambiguous`
+  and The Last House on Needless Street's unreliable/mixed narration; one
+  new single-occurrence vocabulary gap flagged on Titus Groan's
+  ritual-bound castle society; density self-check at 4.30 tropes/book and
+  1.35 CWs/book vs. a fresh 5.34/1.70 catalog average, both within/at the
+  skill's tolerance and traced to this batch's own genre mix rather than
+  under-tagging). Migration
+  `20260920030000_catalog_tagging_batch8_20books.sql`. **138 untagged
+  books remain catalog-wide** (queried fresh 2026-09-20).
 
   **DONE 2026-09-16 (CLDA).** Tagged all 20/20 of the pre-screened
   standalone batch: Accelerando, Alien Clay, Annie Bot, Aurora, Diaspora,

@@ -19719,3 +19719,136 @@ repair --status applied --db-url ... 20260920020000`), verified via
 `remote` entry for the version, no other unpaired-local drift found.
 No duplicate migration timestamps beyond the already-known, already-
 documented `20260911110000` `.sql`/`.tsv` false positive.
+
+## 2026-09-20, later still -- catalog tagging batch 8 (CLDA, 20 books)
+
+Tagged 20 more books from the round-4 expansion pool, self-screened by the
+session that dispatched this batch (all verified untagged, unique-title,
+no overlap with batches 6/7 (`2bc1f8d`/`2fad711`) before starting): This
+Woven Kingdom, Three Parts Dead, Titus Groan, Trail of Lightning, Trigger
+Warning: Short Fictions and Disturbances, Vampire Academy, Vita Nostra,
+Wanderers, Warcross, When Among Crows, When the Moon Hits Your Eye, When
+Women Were Dragons, Winter's Orbit, Witchcraft for Wayward Girls, The
+Historian, The Cabin at the End of the World, The Last House on Needless
+Street, Water Moon, What You Are Looking for Is in the Library, The Bone
+Clocks. Step 1.5 check: live `book_dna` columns (42 total) matched the
+skill's mandatory list plus the 5 excluded Tier B audiobook columns plus
+`book_id`/`genre`/`created_at`/`updated_at` exactly -- zero drift since
+batch 7. All 20 tagged on their own merits -- the partial-series pool
+remains fully exhausted catalog-wide, re-confirmed again this session.
+
+**Author-contamination checks (all 3 pre-flagged, plus one caught by this
+session's own routine multi-name check)**: verified against Hardcover's
+`cached_contributors` GraphQL data, not assumed. *The Historian*'s
+`author` field carries Justine Eyre and Paul Michael as `contribution:
+"Narrator"` -- audiobook narrators, not co-authors; real author is
+Elizabeth Kostova alone. *When the Moon Hits Your Eye*'s `author` field
+carries Wil Wheaton -- confirmed via Hardcover's search endpoint as
+`contribution: "Narrator"`; real author is John Scalzi alone. *What You
+Are Looking for Is in the Library*'s `author` field carries Alison Watts
+(`contribution: "Translator"`) and Rohan Eason (`contribution:
+"Illustrator"`); real author is Michiko Aoyama alone. **A fourth,
+not-pre-flagged catch**: *Titus Groan*'s `author` field carries Anthony
+Burgess -- Hardcover confirms `contribution: "Foreword"` on one edition
+(he wrote an introduction to a later printing, never co-authored the
+novel); real author is Mervyn Peake alone. None of these four books'
+`books.author` rows were edited by this migration (out of this skill's
+scope -- flagged here for a separate authorship-fix pass, same as prior
+batches' contamination catches).
+
+**Web-search budget note**: this session's shared `WebSearch` budget was
+already fully exhausted (200/200) before any query for this batch could
+run, confirmed via direct tool response. Relied on real knowledge for
+most titles plus Hardcover's own GraphQL `search` endpoint (a separate
+budget from WebSearch, worked throughout) for the two least-familiar,
+newest titles -- *When Among Crows* (Veronica Roth, 2024 novella) and
+*Water Moon* (Samantha Sotto, 2025) -- pulling real jacket-copy plot
+descriptions rather than guessing from author reputation alone. Wikipedia/
+Goodreads WebFetch attempts for both 404'd (too new/niche to have pages
+yet); Hardcover's search endpoint had real data for both.
+
+**HIGH_RISK_FIELDS**: applied per the skill's list on every book. Real
+catches worth flagging: *The Cabin at the End of the World*'s
+`narrator_reliability: ambiguous` is a genuine, well-evidenced tag (not a
+default) -- the entire book's tension turns on whether the intruders'
+apocalyptic visions are real prophecy or coercion/delusion, textbook
+"deliberately withholds what's needed to judge either way." *The Last
+House on Needless Street*'s `narrator_reliability: unreliable` (Ted's
+dissociative-identity-driven narration, a defining, well-documented
+device of the book) and `person: mixed` (first-person Ted/Olivia-the-cat
+sections vs. third-person Dee sections) are both real structural facts,
+recorded with `person` at confidence 0.5 since the exact per-thread split
+wasn't independently re-verified this session. *Winter's Orbit*'s `drive:
+romance_driven` is a real judgment call (confidence 0.5) following the
+skill's own `romance_driven` methodology -- the arranged-marriage
+relationship is genuinely the book's central engine, not just a strong
+supporting thread, even though political intrigue runs alongside it.
+Person/pov_count on 3 newer or less-mainstream titles (*When Among
+Crows*, *When the Moon Hits Your Eye*, *Vita Nostra*'s `age_category`)
+recorded at confidence 0.4-0.6 rather than asserted at full confidence,
+reflecting genuine lower certainty on less-familiar titles rather than a
+shortcut -- 43 `book_field_confidence` rows total this batch.
+
+**romance_tone/worldbuilding_delivery**: left null throughout except
+*Vita Nostra*'s `worldbuilding_delivery: woven` (confidence 0.5) -- the
+book is deliberately, constantly confusing because almost nothing about
+the Institute's true nature is ever explained to Sasha or the reader,
+matching the documented Gideon the Ninth/Gardens of the Moon "confusing
+because NOTHING is explained is a woven candidate, not exposition_dump"
+pattern already in `docs/schema/book-dna.md`. Every other book's
+romance/worldbuilding presentation evidence (including *Winter's Orbit*,
+where genre reputation alone would suggest `understated`) wasn't solid
+enough to clear this project's strict scene-level evidence bar without a
+working WebSearch budget, so left null per standing policy.
+
+**Vocabulary gap tracker**: checked every open entry in
+`docs/schema/book-dna.md`'s "Flagged single-occurrence vocabulary gaps"
+tracker against this batch. One direct, deliberate check worth recording:
+*What You Are Looking for Is in the Library* was checked against the open
+`magical_archive_guardian` gap (Spellshop/Sorcery of Thorns) given the
+surface similarity of a librarian character (Komachi) -- correctly
+excluded, since Komachi is not fleeing or expelled from an official
+institution while covertly carrying a custodial duty forward; she runs a
+normal, current, unremarkable community-center library. No other open
+gap hit a second occurrence in this batch. **One new single-book gap
+found and added to the tracker's Open list**: *Titus Groan*'s
+Gormenghast is governed by an exhaustive, unbroken book of ceremonial
+ritual observance that dictates the family/castle's daily life down to
+the smallest gesture -- distinct from `court_intrigue` (political
+scheming among people, not observance-as-law) and
+`caste_or_faction_stratified_society` (formal caste sorting, not a
+ritual-observance regime). One occurrence only; watch for a second.
+
+**Density self-check**: catalog average queried fresh at 5.34
+tropes/book, 1.70 CWs/book (1099 tagged books, before this batch). This
+batch: 86 tropes/20 books = 4.30/book (~19.5% below catalog average,
+within the skill's ~20% tolerance), 27 CWs/20 books = 1.35/book (~20.6%
+below, right at the tolerance boundary). Reviewed for rushing/fatigue
+before accepting rather than assuming it's fine: the shortfall traces
+to this batch's own genre mix, not decline across sub-batches -- a
+short-story collection (*Trigger Warning*, legitimately thinner per-book
+since no single story gets deep tagging) and two deliberately gentle,
+light-worldbuilding magical-realism books (*Water Moon*, *What You Are
+Looking for Is in the Library*) pull the average down, matching this
+catalog's own existing precedent for the same subgenre (*Before the
+Coffee Gets Cold*: 2 tropes, 0 content warnings, confirmed via direct
+query) rather than under-tagging. Several thin candidates were
+double-checked and genuinely enriched rather than left as an excuse
+(*Titus Groan* gained `coming_of_age`, *Warcross* gained `twist_ending`,
+*Water Moon* gained `long_journey`, *Witchcraft for Wayward Girls* gained
+`underdog_rising`) before accepting the final numbers.
+
+Migration `20260920030000_catalog_tagging_batch8_20books.sql` -- every
+INSERT tested in a rolled-back transaction first (confirmed 20/20
+book_dna rows, all 31/33 mandatory non-exception columns filled per book
+-- the 2 exceptions, `romance_tone`/`worldbuilding_delivery`, correctly
+null except Vita Nostra's `worldbuilding_delivery` -- before committing
+for real), then applied to hosted via raw psycopg2 autocommit per this
+project's working-from-hosted convention for `tag-catalog-batch`. Hosted
+migration-tracking repaired separately (`supabase migration repair
+--status applied --db-url ... 20260920030000`), verified via `supabase
+migration list --db-url ...` showing both a `local` and `remote` entry
+for the version, no other unpaired-local drift found. No duplicate
+migration timestamps beyond the already-known, already-documented
+`20260911110000` `.sql`/`.tsv` false positive. 1119 book_dna rows total
+catalog-wide after this batch; 138 untagged books remain.
