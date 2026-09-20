@@ -19463,3 +19463,31 @@ Ender's Game specifically to exercise the content-warnings path
 (`genocide`/`child_death`, both `reveals_spoiler`, correctly hidden
 until revealed alongside its own spoiler trope/DNA fields). No schema
 or migration change -- `app/shared.js` only.
+
+## 2026-09-20, later still -- CODX Task 15 queued: minimal CI (budget-scoped small)
+
+Repo owner flagged token budgets: CODX ~5% left, CLDA ~25% left, both
+resetting tomorrow -- CLDA to keep batching until she runs out, CODX
+needs something genuinely small today. Confirmed via `ls .github/`
+that this repo has zero CI, the real gap the 2026-09-14 external-AI-
+consultation review flagged (rated higher priority than the review
+itself implied, given multiple semi-autonomous sessions now pushing
+real changes without a live human reviewing every one).
+
+Scoped Task 15 deliberately small: one new `.github/workflows/ci.yml`
+doing exactly three checks with zero database/service-container setup
+(explicitly out of scope for this task -- real future work, not
+today's budget-constrained slice): a Python syntax check across
+`scripts/`/`api/`, a JS syntax check across every `app/*.html`'s
+inline script (reusing this session's own extract-and-`new
+Function()` technique, as a small standalone Node script), and the
+duplicate-migration-timestamp check CLAUDE.md already documents doing
+by hand. Explicitly told CODX not to attempt a real `scoring_tests.py`
+CI run, linting, or branch-protection changes -- all real but
+out-of-budget scope creep for this task. Two real judgment calls left
+to CODX with reasoning required in its report: `py_compile` vs
+`compileall` for clearer failure output, and how to handle the one
+known real duplicate-timestamp pair
+(`20260911110000_*.sql`/`.tsv`, harmless, already documented) without
+either crashing the check or silently special-casing it away from a
+genuinely new future collision.
