@@ -1876,6 +1876,26 @@ worth deferring to a later session rather than batching in for
   tagged yet) all start cold. CLDA's next batch should pick from either
   pool per `tag-catalog-batch`'s normal build order, not hunt for a
   completion shortcut that isn't there anymore.
+  **Batch 6 (2026-09-20, CLDA session): 20 more books tagged**, own-merits
+  (partial-series pool still fully exhausted, confirmed again this
+  session) -- Aurora Rising, Automatic Noodle, Dauntless, Gild, Let the
+  Right One In, My Heart Is a Chainsaw, Neon Gods, Orbital, Phantasma,
+  Spark of the Everflame, The Bridge Kingdom, The Darkest Minds, The
+  Darkness That Comes Before, The Deep, The Dispatcher, The Ex Hex, The
+  Fold, The Gilded Ones, The Girl Who Fell Beneath the Sea, The
+  Hurricane Wars. See project-log.md's 2026-09-20 "catalog tagging
+  batch 6" entry for full detail (2 author-contamination checks against
+  Hardcover -- one real fix on The Fold, one confirmed-not-contamination
+  on The Deep; density self-check caught and corrected a thin first
+  draft before finishing; romance_tone/worldbuilding_delivery left null
+  on all 20 rather than guessed, since this session's web-search budget
+  was exhausted before verification could run). Migration
+  `20260920010000_catalog_tagging_batch6_20books.sql`. **178 untagged
+  books remain catalog-wide** (queried fresh 2026-09-20; the drop from
+  278 on 2026-09-16 reflects this batch plus other sessions' work in the
+  interim, not just this one) -- two more disjoint batches (7, 8) are
+  already queued to run right after this one per the same session's
+  instructions.
 
   **DONE 2026-09-16 (CLDA).** Tagged all 20/20 of the pre-screened
   standalone batch: Accelerando, Alien Clay, Annie Bot, Aurora, Diaspora,

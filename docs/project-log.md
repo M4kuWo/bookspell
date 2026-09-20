@@ -19491,3 +19491,113 @@ known real duplicate-timestamp pair
 (`20260911110000_*.sql`/`.tsv`, harmless, already documented) without
 either crashing the check or silently special-casing it away from a
 genuinely new future collision.
+
+## 2026-09-20, later still -- catalog tagging batch 6 (CLDA, 20 books)
+
+Tagged 20 books from the round-4 expansion pool, self-screened (all
+verified untagged, unique-title, in scope before starting): Aurora
+Rising, Automatic Noodle, Dauntless, Gild, Let the Right One In, My
+Heart Is a Chainsaw, Neon Gods, Orbital, Phantasma, Spark of the
+Everflame, The Bridge Kingdom, The Darkest Minds, The Darkness That
+Comes Before, The Deep, The Dispatcher, The Ex Hex, The Fold, The
+Gilded Ones, The Girl Who Fell Beneath the Sea, The Hurricane Wars.
+Step 1.5 check: live `book_dna` columns matched the skill's mandatory
+list exactly, no drift since the last batch. All 20 are book #1 of
+their series (or standalone) and every one of those series currently
+has zero other tagged books -- expected, the round-4 partial-series
+pool is fully exhausted catalog-wide (confirmed 2026-09-16), so this
+batch is pure own-merits tagging, no series completions to report.
+
+**Author-contamination checks (both flagged books), via Hardcover
+`cached_contributors`**: *The Fold* (hardcover_id 427496) -- "Ray
+Porter" carried `contribution: "Narrator"` explicitly, confirmed
+contamination, author field fixed to plain "Peter Clines" in this
+migration. *The Deep* (hardcover_id 118594) -- all 4 credited
+contributors (Rivers Solomon, Daveed Diggs, William Hutson, Jonathan
+Snipes) carry `contribution: null`, i.e. no narrator/illustrator/
+translator role attached the way Ray Porter's was -- consistent with
+the real-world fact that this novella is a direct adaptation of
+clipping.'s song of the same name, with all three band members
+credited as genuine co-creators of the underlying work. Left all 4
+names in the author field, not treated as contamination.
+
+**HIGH_RISK_FIELDS**: applied targeted checks per the skill's list
+(`person`, `pov_count`, `narrator_reliability`, `magic_system_hardness`,
+`overall_pace`, `romance_heat_intensity`, `drive`, `stakes_scope`,
+`narrative_closure`, `humor_level`) via own knowledge; this session's
+web-search budget was already exhausted catalog-wide before verification
+searches could run (shared session limit, not specific to this batch),
+so instead of skipping the check, every genuinely uncertain HIGH_RISK
+call was recorded in `book_field_confidence` rather than asserted at
+full confidence: Aurora Rising (`pov_count`, `person` -- 0.6, alternating
+first-person squad-of-7 structure), My Heart Is a Chainsaw (`person` --
+0.6, close third vs. first; `narrator_reliability` -- 0.5, Jade's
+horror-movie-lens narration is genuinely disputable between reliable-
+with-bias and unreliable), Orbital (`person` -- 0.6, its roaming
+collective perspective across 6 astronauts reads as third_omniscient
+rather than discrete third_limited chapters but isn't a clean-cut call),
+The Darkness That Comes Before (`magic_system_hardness` -- 0.5, tagged
+`soft` on the same book-1-epistemic-limited convention as Wheel of Time:
+the Gnosis/Anagogic schools exist but book 1 doesn't yet show the reader
+their rules), Gild (`drive` -- 0.5, `romance_driven` vs. a plot/political-
+intrigue read is a real judgment call).
+
+**`romance_tone`/`worldbuilding_delivery` left NULL on all 20 books,
+deliberately** -- the skill's evidence standard for these two fields
+requires real, findable, presentation-specific research (not genre
+reputation), and with the search budget exhausted this session, tagging
+either field from memory alone would have repeated the exact failure
+mode already caught twice on this project (confidently-wrong tone calls
+from pattern-matching genre reputation). Null is the documented correct,
+honest outcome when that evidence isn't available -- flagging here so
+a future batch with search budget available knows these 20 are real
+backfill candidates, not skipped through oversight.
+
+**Density self-check**: catalog average queried fresh at 5.37
+tropes/book, 1.70 CWs/book (1059 tagged books). First draft of this
+batch came in thin on tropes (3.85/book, ~28% below average) --
+caught before finishing, not after: went back through the batch's
+thinner books and added additional real, defensible tropes (not
+padding) to Dauntless, Let the Right One In, My Heart Is a Chainsaw,
+Neon Gods, Phantasma, The Darkest Minds, The Ex Hex, The Fold, The
+Gilded Ones, The Girl Who Fell Beneath the Sea, Spark of the Everflame.
+Final batch: 90 tropes/20 books = 4.5/book (~16% below catalog average,
+within the skill's ~20% tolerance), 42 CWs/20 books = 2.1/book (above
+catalog average, no concern). *Orbital* is a legitimate zero-trope/
+zero-CW outlier -- literary, plotless, no invented-world furniture or
+genre tropes to tag (six real astronauts' contemplative day on the
+real ISS) -- not rushing, a real reflection of the book.
+
+**Genre-scope judgment calls, flagged for awareness rather than left
+silent**: *My Heart Is a Chainsaw* tagged `fantasy` on its folkloric
+"Lake Witch" supernatural undertone (the Indian Lake Trilogy leans more
+overtly into that mythology in its later books) -- a real but genuine
+borderline call, similar in kind to *Holly*'s still-open scope question,
+not force-tagged past a clear line. *Orbital* tagged `sci_fi` on its
+real-ISS space setting despite being closer to literary realism than
+speculative fiction (Booker Prize winner, no invented technology/
+aliens/future) -- kept in scope since it was already in the
+self-screened pool and the hard-SF-realism precedent (The Martian,
+Project Hail Mary) supports it, but flagging the judgment call rather
+than asserting it's clean-cut.
+
+No new vocabulary gaps found against the "Flagged single-occurrence
+vocabulary gaps" tracker in `docs/schema/book-dna.md` -- checked each
+book's plot mechanics against every currently-Open entry there (first-
+contact-via-natural-evolution, skinchanging/body-possession variants,
+remote-piloted surrogate, magical-archive-guardian, etc.); none of the
+20 books hit any of them, and none of the 20 surfaced a new single-book
+gap of their own.
+
+Migration `20260920010000_catalog_tagging_batch6_20books.sql` --
+tested in a rolled-back transaction first (confirmed 20/20 book_dna
+rows created, `The Fold` author fix applied, before committing for
+real), then applied to hosted via raw psycopg2 autocommit per this
+project's working-from-hosted convention for `tag-catalog-batch`.
+Hosted migration-tracking repaired separately (`supabase migration
+repair --status applied --db-url ... 20260920010000`), verified via
+`supabase migration list --db-url ...` (not `--linked`, no linked
+project in this environment) showing both a `local` and `remote` entry
+for the version. No duplicate migration timestamps beyond the already-
+known, already-documented `20260911110000` `.sql`/`.tsv` false
+positive.
