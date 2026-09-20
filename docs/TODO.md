@@ -1896,6 +1896,28 @@ worth deferring to a later session rather than batching in for
   interim, not just this one) -- two more disjoint batches (7, 8) are
   already queued to run right after this one per the same session's
   instructions.
+  **Batch 7 (2026-09-20, later, CLDA session): 20 more books tagged**,
+  own-merits (partial-series pool still fully exhausted) -- The
+  Invisible Library, The Killing Moon, The Knight and the Moth, The
+  Library of the Unwritten, The Lions of Al-Rassan, The Luminous Dead,
+  The Mask of Mirrors, The Ninth Rain, The Paper Magician, The Prison
+  Healer, The Quantum Thief, The Queen of the Tearling, The Raven
+  Scholar, The Raven Tower, The Reality Dysfunction, The Rise and Fall
+  of D.O.D.O., The River Has Roots, The Strain, The Tommyknockers, The
+  Unbroken. See project-log.md's 2026-09-20 "catalog tagging batch 7"
+  entry for full detail (this session's WebSearch budget was fully
+  exhausted at the start -- confirmed via tool response, not assumed --
+  so verification leaned on WebFetch against Wikipedia/Goodreads for the
+  least-familiar titles instead; one real `worldbuilding_delivery: woven`
+  tag landed with genuine presentation-level evidence on The Quantum
+  Thief, every other romance_tone/worldbuilding_delivery left null;
+  HIGH_RISK_FIELDS catches on The Raven Tower's narrator_reliability and
+  The Quantum Thief's person/narrator_reliability; 77 book_field_
+  confidence rows recorded, reflecting real uncertainty on 3 newer 2025
+  titles rather than a shortcut). Migration
+  `20260920020000_catalog_tagging_batch7_20books.sql`. **158 untagged
+  books remain catalog-wide** (queried fresh 2026-09-20) -- one more
+  disjoint batch (8) is already queued to run right after this one.
 
   **DONE 2026-09-16 (CLDA).** Tagged all 20/20 of the pre-screened
   standalone batch: Accelerando, Alien Clay, Annie Bot, Aurora, Diaspora,

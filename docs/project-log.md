@@ -19601,3 +19601,121 @@ project in this environment) showing both a `local` and `remote` entry
 for the version. No duplicate migration timestamps beyond the already-
 known, already-documented `20260911110000` `.sql`/`.tsv` false
 positive.
+
+## 2026-09-20, later still -- catalog tagging batch 7 (CLDA, 20 books)
+
+Tagged 20 more books from the round-4 expansion pool, self-screened
+(all verified untagged, unique-title, no overlap with batch 6/
+`2bc1f8d`, none in the known permanent-skip categories) before
+starting: The Invisible Library, The Killing Moon, The Knight and the
+Moth, The Library of the Unwritten, The Lions of Al-Rassan, The
+Luminous Dead, The Mask of Mirrors, The Ninth Rain, The Paper
+Magician, The Prison Healer, The Quantum Thief, The Queen of the
+Tearling, The Raven Scholar, The Raven Tower, The Reality Dysfunction,
+The Rise and Fall of D.O.D.O., The River Has Roots, The Strain, The
+Tommyknockers, The Unbroken. Step 1.5 check: live `book_dna` columns
+(42 total) matched the skill's mandatory list plus the 5 excluded Tier
+B audiobook columns plus `book_id`/`genre`/`created_at`/`updated_at`
+exactly -- zero drift since batch 6. All 20 are book #1 of their
+series (or standalone); *The Lions of Al-Rassan* is nominally book 4
+of "Sarantine Universe" in this catalog's series grouping but is the
+only book from that series present at all, so this is pure own-merits
+tagging -- confirmed again this session that the partial-series-
+completion pool is fully exhausted catalog-wide.
+
+**Web-search budget note**: this session's shared `WebSearch` budget
+was already fully exhausted (200/200) before any query for this batch
+could run, confirmed via direct tool response, not assumed. Switched
+to `WebFetch` against Wikipedia/Goodreads for the books with the
+thinnest personal knowledge (a separate budget, worked for roughly
+two-thirds of attempts, several 404s on pages that don't exist under
+the URL guessed) -- used it to verify structural facts on *The Raven
+Scholar*, *The River Has Roots*, *The Knight and the Moth*, *The Raven
+Tower*, *The Quantum Thief*, *The Reality Dysfunction*, *The Rise and
+Fall of D.O.D.O.*, *The Strain*, *The Tommyknockers*, *The Mask of
+Mirrors*, *The Paper Magician*, *The Queen of the Tearling* (partial),
+and *The Lions of Al-Rassan*. Real, useful catches from this pass:
+confirmed *The Raven Tower* uses a genuine first-person/second-person
+mixed narrative voice with a nature-deity narrator (Ann Leckie), that
+*The Rise and Fall of D.O.D.O.* is a true multi-format epistolary
+novel (Diachronicle plus journal entries/chat transcripts/redacted
+sections), that *The Killing Moon* resolves its own plot fully
+(`narrative_closure: self_contained`, not a cliffhanger into book 2),
+and that *The Quantum Thief* is explicitly written with "no
+info-dumps or convenient explanations" -- real, specific,
+presentation-level evidence, so `worldbuilding_delivery: woven` was
+tagged at confidence 0.6 rather than left null, the one book in this
+batch that cleared the strict evidence bar. Every other book's
+`romance_tone`/`worldbuilding_delivery` was left NULL, same documented
+reasoning as batch 6 -- genre-reputation pattern-matching isn't
+sufficient evidence and this project has been burned by it twice
+before.
+
+**HIGH_RISK_FIELDS**: applied per the skill's list on every book
+(`person`, `pov_count`, `narrator_reliability`, `magic_system_hardness`,
+`overall_pace`, `romance_heat_intensity`, `drive`, `stakes_scope`,
+`narrative_closure`, `humor_level`). Real catches worth flagging:
+*The Raven Tower*'s `narrator_reliability: ambiguous` is a genuine,
+well-evidenced tag (not a default) -- the god-narrator's first/second-
+person split is confirmed to deliberately create "asymmetry that
+invites readers to question what information might be withheld,"
+matching the schema's specific definition of `ambiguous` rather than
+`unreliable`. *The Quantum Thief*'s `person: mixed` (Jean's chapters
+first-person, Mieli/Isidore's third-person) and `narrator_reliability:
+unreliable` (Jean is a professional trickster thief with deliberately
+erased memories) are both real structural facts, not guesses.
+*The Reality Dysfunction* and *The Strain* were both checked against
+the "how many POV characters" trap specifically -- both are genuine
+large ensembles (8+ and several respectively), not the "few" a less
+careful pass might default to for a book that FEELS focused on 2-3
+leads. Where personal knowledge was thinner than usual (3 newer 2025
+titles: *The Raven Scholar*, *The Knight and the Moth*, *The River Has
+Roots*), every HIGH_RISK field plus several adjacent ones was recorded
+in `book_field_confidence` rather than asserted at full confidence --
+this batch has 77 confidence rows total, meaningfully more than batch
+6's, reflecting genuine higher uncertainty on less-familiar/newer
+titles rather than a shortcut around research.
+
+**Author-contamination checks**: *The Rise and Fall of D.O.D.O.*
+(Neal Stephenson, Nicole Galland) and *The Strain* (Guillermo del
+Toro, Chuck Hogan) were pre-confirmed as genuine co-authored novels by
+the session that assembled this batch -- no further Hardcover check
+needed, no single-author book in this batch carried a multi-name
+author field, so no contamination candidates surfaced this round.
+
+**Vocabulary gap tracker**: checked every book against the "Flagged
+single-occurrence vocabulary gaps" tracker's current Open list --
+none of the 20 hit an existing Open gap as a second occurrence, and no
+genuinely new single-book gap was found. One soft observation, not a
+formal flag (confidence too low to add to the tracker): *The Library
+of the Unwritten*'s Claire (Head Librarian of Hell's Unwritten Wing)
+is a plausible partial match for the still-Open `magical_archive_
+guardian` gap (Spellshop, Sorcery of Thorns), but the gap's definition
+specifically requires having fled or been expelled from an official
+institution while still carrying the custodial duty forward, and this
+session doesn't have confident enough knowledge of Claire's exact
+backstory to assert that element -- left as a note for a future
+session with clearer information, not added to the tracker.
+
+**Density self-check**: catalog average queried fresh at 5.36
+tropes/book, 1.71 CWs/book (1079 tagged books, before this batch).
+This batch: 89 tropes/20 books = 4.45/book (~17% below catalog
+average, within the skill's ~20% tolerance -- caught and corrected
+before finishing: an earlier draft was thinner on `The Library of the
+Unwritten`/`The Luminous Dead`/`The Raven Tower`/`The River Has Roots`,
+each brought up with additional real, defensible tropes rather than
+padding), 32 CWs/20 books = 1.60/book (~6% below average, no concern).
+
+Migration `20260920020000_catalog_tagging_batch7_20books.sql` -- every
+INSERT tested in a rolled-back transaction first (confirmed 20/20
+book_dna rows, all 31/33 mandatory non-exception columns filled per
+book -- the 2 exceptions, `romance_tone`/`worldbuilding_delivery`,
+correctly left null except The Quantum Thief's `worldbuilding_delivery`
+-- before committing for real), then applied to hosted via raw
+psycopg2 autocommit per this project's working-from-hosted convention.
+Hosted migration-tracking repaired separately (`supabase migration
+repair --status applied --db-url ... 20260920020000`), verified via
+`supabase migration list --db-url ...` showing both a `local` and
+`remote` entry for the version, no other unpaired-local drift found.
+No duplicate migration timestamps beyond the already-known, already-
+documented `20260911110000` `.sql`/`.tsv` false positive.
