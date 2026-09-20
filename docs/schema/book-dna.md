@@ -1346,6 +1346,16 @@ don't re-derive it from the log):
   Groan* — the Groan family's entire existence is governed by
   Gormenghast's "Book" of ritual, tracked and enforced by the Master of
   Ritual (Sourdust). One occurrence only; watch for a second.
+- **Trope**: a comatose/unconscious protagonist's own spirit or
+  consciousness detaches from and observes/moves through the physical
+  world outside their inert body, weighing whether to live or die --
+  distinct from `ghost_sight` (which covers seeing OTHER dead people, not
+  being an out-of-body spirit oneself) and from `amnesia_driven_narrative`
+  (no memory loss is involved). Found 2026-09-21 (CLDA, catalog tagging
+  batch 9) on Gayle Forman's *If I Stay* -- Mia's spirit walks the
+  hospital observing her own body and the people around her while in a
+  coma after a car accident, deciding whether to stay. One occurrence
+  only; watch for a second.
 
 **Promoted / resolved**:
 - **`caste_or_faction_stratified_society`** — promoted 2026-09-13 (sweep

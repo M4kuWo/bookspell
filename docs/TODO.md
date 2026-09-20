@@ -2073,6 +2073,57 @@ worth deferring to a later session rather than batching in for
   70.6% of average) -- caught before applying, enriched to 87 tropes /
   20 = 4.35/book (80.7% of average) and 28 CWs / 20 = 1.4/book (82.5% of
   average). Untagged count: 218 -> 198.
+
+  **Batch 9 (2026-09-21, CLDA session): 20 more books tagged, LAST CLEAN
+  BATCH of round-4 tagging.** The coordinating CLDA session screened the
+  full remaining 138-book pool and found it's turned a corner: only
+  ~20 titles were genuinely defensible sci-fi/fantasy (this batch --
+  14, A Dirty Job, Anthem, Brave New World / Brave New World Revisited,
+  Ficciones, Galápagos, If I Stay, Lamb, Later, Life After Life, Orlando,
+  Out of the Silent Planet, The Buried Giant, The Dog Stars, The
+  Employees, The Ferryman, The Grace Year, The House of the Spirits, The
+  Phantom Tollbooth, The Yiddish Policemen's Union), the rest is non-SFF
+  leakage (literary fiction, thrillers, nonfiction, classics) needing a
+  repo-owner scope call, not further tagging-time judgment calls. See
+  `docs/project-log.md`'s 2026-09-21 entry for full detail: 5
+  author-field contamination fixes applied inline (14/Jean-Pierre Pugi,
+  Anthem/Leonard Peikoff, Brave New World combined edition/Christopher
+  Hitchens, The Employees/Martin Aitken, The Phantom Tollbooth/Jules
+  Feiffer -- the last one a fresh catch, not pre-flagged); one new
+  vocabulary gap flagged (If I Stay's out-of-body-spirit-during-coma
+  mechanism); density self-check came in meaningfully below the usual
+  ~20% tolerance (3.35 tropes/book, 1.10 CWs/book vs. a fresh 5.29/1.69
+  catalog average) after a genuine second-pass enrichment effort --
+  traced to this batch's own genre mix (10 of 20 books are short/slim
+  literary classics under 350pp) rather than rushing, but flagged
+  explicitly rather than glossed over. Migration
+  `20260921000000_catalog_tagging_batch9_20books.sql`. **118 untagged
+  books remain catalog-wide.**
+
+  **The remaining ~118 books are NOT a normal tagging backlog anymore --
+  they need a repo-owner scope decision before any further tagging
+  session picks them up.** Per the coordinating session's full-pool
+  screen (2026-09-21), the vast majority is non-SFF leakage that
+  Hardcover's genre search pulled in incidentally (literary fiction,
+  thrillers, nonfiction, straight classics with no speculative content)
+  -- continuing to pick individual "defensible" titles out of this pool
+  one batch at a time (as this and prior batches have done) is reaching
+  diminishing returns; a repo-owner pass to bulk-flag/delete the clearly
+  out-of-scope remainder (same treatment as the graphic-novel and
+  unpublished-book precedents elsewhere in this file) would be more
+  efficient than further individual screening.
+
+  **Open data anomaly, needs a repo-owner decision, do NOT unilaterally
+  resolve**: *The Screwtape Letters* (C.S. Lewis) -- documented as
+  deliberately DELETED 2026-09-09 for being out-of-scope theological
+  satire (see CLAUDE.md's catalog-scope section), but a `books` row with
+  that exact title now exists again, `created_at` 2026-09-11 -- looks
+  like the round-4 ingestion (2026-09-12) or an adjacent process
+  re-added it, or a close-in-time coincidence. Re-confirmed still present
+  and still untagged as of this batch (2026-09-21). Needs the repo owner
+  to either re-confirm the deletion (and delete this new row too) or
+  decide it's back in scope for some reason -- not a call for a tagging
+  session to make on its own.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done

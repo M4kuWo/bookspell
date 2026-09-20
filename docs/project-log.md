@@ -19881,3 +19881,156 @@ repair --status applied --db-url ... 20260920040000` (confirmed
 
 No book_dna/tropes/content-warnings changed -- this was purely the
 author-field cleanup batch 8 itself should have included.
+
+## 2026-09-21: Catalog tagging batch 9, 20 books -- last clean batch of round-4 tagging (CLDA)
+
+Tagged the 20-book list the coordinating CLDA session hand-screened from
+the 138-book untagged round-4 pool (see `docs/TODO.md`). Unlike prior
+batches, this one is deliberately genre-blend/borderline-literary: 14
+(Peter Clines), A Dirty Job, Anthem, Brave New World / Brave New World
+Revisited (the combined edition -- a separate, already-tagged plain
+"Brave New World" row also exists in the catalog), Ficciones, Galápagos,
+If I Stay, Lamb: The Gospel According to Biff Christ's Childhood Pal,
+Later, Life After Life, Orlando, Out of the Silent Planet, The Buried
+Giant, The Dog Stars, The Employees, The Ferryman, The Grace Year, The
+House of the Spirits, The Phantom Tollbooth, The Yiddish Policemen's
+Union. Five of these (Orlando, Life After Life, If I Stay, Ficciones,
+The House of the Spirits) were explicitly flagged by the coordinating
+session as genuinely borderline literary/genre-blend calls, each picked
+for a real, specific, checkable speculative mechanism rather than just
+"feels literary and vaguely fantastical." Re-researched all five this
+session (Hardcover descriptions, WebFetch on Wikipedia/Goodreads where
+reachable) and found nothing that undercuts the scope call on four of
+them -- Orlando's literal immortality/sex-change, Life After Life's
+repeated-lives structure (confirmed via Goodreads: "the author never
+explains the mechanism scientifically, leaving it as magical realism"),
+Ficciones' labyrinths/infinite-library/alternate-reality content, and
+The House of the Spirits' clairvoyance/ghosts are all unambiguous. **If I
+Stay is the one worth a second look**: its spec-fic mechanism (Mia's
+spirit observing the physical world from outside her body while
+comatose, deciding to live or die) is real and consistently depicted as
+literally supernatural in the text (she perceives things she couldn't
+access otherwise), not just interior monologue -- but it's the most
+plausibly read as psychological metaphor of the five if someone wanted
+to push back on the scope call. Tagged it as originally planned; flagging
+per the batch instructions rather than unilaterally dropping it.
+
+**Step 1.5**: live `book_dna` columns (42 total) matched the skill's
+mandatory list plus the 5 excluded Tier B columns plus
+`book_id`/`genre`/`created_at`/`updated_at` exactly -- zero drift since
+batch 8.
+
+**Author-field contamination (5 total, all fixed inline in this same
+migration -- learning from batch 8's process gap where the fix was
+deferred and had to be caught/re-applied in a followup)**: verified
+every multi-name `author` field against Hardcover's `cached_contributors`
+GraphQL data before touching anything. *14*'s Jean-Pierre Pugi ->
+`contribution: "Translator"`. *Anthem*'s Leonard Peikoff ->
+`contribution: "Introduction"`. *Brave New World / Brave New World
+Revisited*'s Christopher Hitchens -> `contribution: "Foreword"`,
+`primary: false` (Huxley is `primary: true`, `contribution: "Author"`).
+*The Employees*' Martin Aitken -> not tagged with an explicit role in
+Hardcover's cache (both contributors show `contribution: null`), but
+confirmed via real-world knowledge as the book's actual Danish-to-English
+translator (a well-known literary translator; this is publicly
+documented as a translated work). *The Phantom Tollbooth*'s Jules
+Feiffer -> `contribution: "Illustrator"` (this one wasn't on the
+pre-flagged list -- caught by this session's own routine multi-name
+check, same pattern as batch 8's Titus Groan catch). All 5 stripped down
+to the genuine author(s) only, applied in the same migration as the
+tagging per CLAUDE.md's rule.
+
+**WebSearch budget**: exhausted (200/200) again this session before any
+query could run, same as batch 8 -- confirmed via direct tool response,
+then confirmed WebFetch (a separate mechanism) still worked. Used it to
+pull real plot/structure/narration details from Wikipedia, Goodreads, and
+Hardcover's own `description`/`pages` fields for the less-familiar or
+structurally unusual titles (14, The Buried Giant, The Dog Stars, The
+Employees, The Ferryman, Life After Life, Later, The Yiddish Policemen's
+Union, Galápagos), rather than relying on recalled knowledge alone for
+HIGH_RISK_FIELDS on those. A few WebFetch summaries were less precise
+than direct knowledge on person/POV (e.g. couldn't confirm Galápagos's
+first-person ghost-narrator voice, which I'm confident of from direct
+recall) -- recorded as `book_field_confidence` rows rather than asserted
+at full confidence in those cases. 25 `book_field_confidence` rows
+total this batch, genuinely spread across both directions (not a rubber
+stamp): e.g. `romance_tone` tagged at both `understated` (If I Stay, Life
+After Life, The Buried Giant, all at confidence 0.4-0.5) and
+`melodramatic` (Lamb, confidence 0.4) rather than defaulting to one
+direction.
+
+**HIGH_RISK_FIELDS**: applied per the skill's list on every book, several
+real judgment calls worth recording. *The Buried Giant* and *The House of
+the Spirits* both got `person: mixed` at confidence 0.5 -- Ishiguro's
+novel has first-person Gawain interlude chapters breaking from the
+otherwise third-person narration (recalled directly, not independently
+re-verified this session since WebFetch on Wikipedia couldn't confirm
+either way), and Allende's novel alternates Esteban's first-person
+memoir-style chapters with an omniscient third-person narrator, revealed
+at the end to be Alba compiling the family history from Clara's
+notebooks (both tagged `form: framing_device` accordingly). *Ficciones*
+got `person: mixed` (Borges's stories vary between first-person
+essayistic narrators and third-person tales) and `narrator_reliability:
+ambiguous` at confidence 0.5 each -- genuinely hard to pin down for a
+collection this stylistically varied. *Orlando* got `narrator_reliability:
+unreliable` (confidence 0.5) for its well-documented unreliable
+mock-biographer conceit. *The Ferryman* got `narrator_reliability:
+unreliable` (confidence 0.5) reflecting the "the world is not the world"
+premise -- the entire society's shared reality turns out to be
+engineered/false, which functions as an unreliable-narration device at
+the level of the whole book's presented reality, not just one character's
+voice.
+
+**Vocabulary gap tracker**: checked every open entry against this batch;
+no second occurrence of any existing open gap. **One new single-book gap
+found and added to the tracker's Open list**: *If I Stay*'s core
+mechanism -- a comatose protagonist's spirit/consciousness observes and
+moves through the physical world outside her own unconscious body,
+weighing whether to live or die -- has no existing trope match.
+Distinct from `ghost_sight` (that's about seeing OTHER dead people, not
+being an out-of-body spirit oneself) and from `amnesia_driven_narrative`
+(no memory loss involved). One occurrence only; watch for a second.
+
+**Density self-check**: catalog average queried fresh at 5.29
+tropes/book, 1.69 CWs/book (1119 tagged books, before this batch). This
+batch: 67 tropes/20 books = 3.35/book (~37% below catalog average), 22
+CWs/20 books = 1.10/book (~35% below) -- both meaningfully outside the
+skill's usual ~20% tolerance band, flagged here rather than glossed
+over. Reviewed before accepting rather than assuming it's fine: did a
+genuine second pass specifically hunting for under-counted-but-real
+tropes/CWs across the batch (added `urban_fantasy_setting` to A Dirty
+Job, `forbidden_love` to Anthem, `war_story` to Galápagos/The Buried
+Giant/The House of the Spirits, `twist_ending` to Later,
+`amnesia_driven_narrative` to The Ferryman, `long_journey` to The Phantom
+Tollbooth, `court_intrigue` to The Yiddish Policemen's Union, `bullying`
+to The Grace Year, `genocide` to The Buried Giant -- 8 of the 20 books
+gained at least one real signal in the second pass) before accepting the
+final numbers. The residual shortfall traces to this batch's own genre
+mix, not rushing/fatigue: 10 of the 20 books are short (under 350pp,
+several under 200 -- Anthem 110pp, The Employees 144pp, Ficciones 192pp),
+and literary/classic titles in this catalog have consistently landed
+thin on genre-trope density (batch 8's own precedent: Before the Coffee
+Gets Cold, 2 tropes/0 CWs). Flagging this explicitly for the repo owner
+rather than force-adding tropes that don't genuinely fit the text, per
+this skill's own "don't force-tag" principle -- if this pattern recurs on
+a future literary-leaning batch, it may be worth the repo owner deciding
+whether the ~20% tolerance should flex for this specific genre mix.
+
+Migration `20260921000000_catalog_tagging_batch9_20books.sql` -- every
+statement tested in a rolled-back transaction first (confirmed 20/20
+book_dna rows inserted, both author-fix spot-checks correct) before
+applying for real via autocommit psycopg2 against hosted. Hosted
+migration-tracking repaired separately (`supabase migration repair
+--status applied --db-url ... 20260921000000`), verified via `supabase
+migration list --db-url ...` showing both a `local` and `remote` entry
+for the version, no other unpaired-local drift found beyond the
+already-documented `20260911110000` `.sql`/`.tsv` false positive. 1139
+book_dna rows total catalog-wide after this batch; **118 untagged books
+remain**. Per the coordinating session's own screening, this is the last
+clean batch of round-4 tagging -- the remaining pool is ~non-SFF leakage
+needing a repo-owner scope decision, not a normal tagging backlog
+anymore (see `docs/TODO.md`'s updated "Catalog expansion round 4" entry).
+Also re-confirmed *The Screwtape Letters* anomaly is still unresolved
+(a row with that title exists, created 2026-09-11, despite being
+documented as deliberately deleted 2026-09-09 for being out-of-scope --
+left untouched per instructions, flagged again in TODO.md).
