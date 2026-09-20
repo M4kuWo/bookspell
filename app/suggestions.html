@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookspell — Suggestions</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="stylesheet" href="shared.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .suggestion-row { padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .suggestion-row:last-child { border-bottom: none; }
+  .suggestion-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .suggestion-title { font-weight: 600; }
+  .suggestion-meta { color: var(--ink-soft); font-size: 0.85rem; margin-top: 2px; }
+  .suggestion-note { font-size: 0.9rem; margin-top: 6px; }
+  .suggestion-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .suggestion-actions button { font-size: 0.82rem; padding: 6px 10px; }
+  .status-filter { display: flex; gap: 8px; margin-bottom: 16px; }
+  .status-filter button { flex: 1; background: var(--surface); border: 1px solid var(--line); color: var(--ink); }
+  .status-filter button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top" id="top-nav"></nav>
+  <h1>Suggestions</h1>
+  <p class="sub">Books readers have asked to add. Not linked from the main nav -- this is a repo-owner tool, same spirit as <code>tools/catalog-review</code>; RLS is what actually gates who sees anything here, not this page.</p>
+
+  <div class="status-filter" id="status-filter">
+    <button data-status="open" class="active">Open</button>
+    <button data-status="tagged">Tagged</button>
+    <button data-status="rejected">Rejected</button>
+    <button data-status="">All</button>
+  </div>
+
+  <div id="suggestions-list"><div class="empty-state">Loading…</div></div>
+</div>
+<div id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+let session, currentStatus = 'open';
+
+(async () => {
+  session = await requireAuth();
+  if (!session) return;
+  renderNav('suggestions.html', session);
+  loadSuggestions();
+})();
+
+document.querySelectorAll('#status-filter button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#status-filter button').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentStatus = btn.dataset.status;
+    loadSuggestions();
+  });
+});
+
+async function loadSuggestions() {
+  const container = document.getElementById('suggestions-list');
+  container.innerHTML = '<div class="empty-state">Loading…</div>';
+  let query = sb.from('book_suggestions').select('id, title, author, series_name, note, status, created_at').order('created_at', { ascending: false });
+  if (currentStatus) query = query.eq('status', currentStatus);
+  const { data, error } = await query;
+  if (error) {
+    // The likeliest cause here isn't a bug -- it's this account not
+    // being the one RLS policy scopes admin access to (see
+    // 20260920000000_admin_view_book_suggestions.sql). A non-admin
+    // account querying this table isn't an error at the DB level
+    // (RLS just returns their own 0-1 rows), so a real PostgREST error
+    // here means something else genuinely broke.
+    container.innerHTML = `<div class="empty-state">Couldn't load suggestions: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div class="empty-state">Nothing here.</div>';
+    return;
+  }
+  container.innerHTML = data.map((s) => `
+    <div class="suggestion-row">
+      <div class="suggestion-head">
+        <div class="suggestion-title">${escapeHtml(s.title)}${s.author ? ` <span class="suggestion-meta">by ${escapeHtml(s.author)}</span>` : ''}</div>
+        <span class="pill ${s.status === 'open' ? 'liked' : s.status === 'rejected' ? 'hated' : 'it_was_okay'}">${titleCase(s.status)}</span>
+      </div>
+      <div class="suggestion-meta">${s.series_name ? `${escapeHtml(s.series_name)} · ` : ''}submitted ${escapeHtml(formatRelativeDate(s.created_at.split('T')[0]))}</div>
+      ${s.note ? `<div class="suggestion-note">${escapeHtml(s.note)}</div>` : ''}
+      ${s.status === 'open' ? `
+        <div class="suggestion-actions">
+          <button class="btn-secondary" data-mark="tagged" data-id="${s.id}">Mark tagged</button>
+          <button class="btn-secondary" data-mark="rejected" data-id="${s.id}">Reject</button>
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+  container.querySelectorAll('[data-mark]').forEach((b) => b.addEventListener('click', async () => {
+    const { error: updateError } = await sb.from('book_suggestions').update({ status: b.dataset.mark }).eq('id', b.dataset.id);
+    if (updateError) return showToast(`Couldn't update: ${updateError.message}`);
+    showToast(b.dataset.mark === 'tagged' ? 'Marked tagged.' : 'Rejected.');
+    loadSuggestions();
+  }));
+}
+</script>
+</body>
+</html>

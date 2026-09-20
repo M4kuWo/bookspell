@@ -19385,3 +19385,41 @@ throughout. All matched CODX's report exactly.
 Report/evidence copied to `docs/codx-reviews/`. `docs/codx-tasks/
 current-task.md` reset to a holding-pattern note -- nothing queued for
 CODX right now.
+
+## 2026-09-20 -- `book_suggestions` admin view built
+
+Closed the 2026-09-18 TODO gap: suggestions were a black hole,
+readable only via raw SQL. RLS was the real blocker, not a missing UI
+-- the existing "select/insert own suggestions" policies only ever let
+a submitter see their own row, and there's no role/admin system in
+this project at all. Built the minimum real fix rather than a role
+system nobody else needs yet: two new, additive permissive policies
+scoped directly to the repo owner's real Supabase Auth user id
+(`16977c74-4432-41c4-aa15-494f38e31351`, the same account confirmed
+real via `format_preference` earlier this week) -- "admin select all
+suggestions" and "admin update suggestion status" (plus the missing
+`grant update` the table never had). Ordinary users' own access is
+completely unchanged; these are OR'd in as a second permissive policy
+per action, not a replacement.
+
+New `app/suggestions.html` -- deliberately NOT linked from the main
+nav, same "internal tool, not part of the product" positioning as
+`tools/catalog-review`, since a real per-account admin gate doesn't
+need a nav entry every visitor sees; RLS is what actually gates access
+regardless of who can see a link. Status filter (open/tagged/rejected/
+all, defaulting to open), one-click "Mark tagged"/"Reject" actions.
+
+Migration `20260920000000_admin_view_book_suggestions.sql`, tested in
+a rolled-back transaction, applied to local then hosted, verified
+matching. Verified for real, not just by inspection: found this
+session already had a live authenticated browser session for the real
+account (via the deployed app), confirmed its `session.user.id`
+matched the admin uid directly, then ran the exact SELECT query
+(no `user_id` filter -- proving the ADMIN policy grants it, not just
+the pre-existing per-submitter one) and a real UPDATE round-trip
+(toggled the one real suggestion's status to `open` and back to
+`tagged`, its correct pre-existing state) directly in that tab's
+console against real hosted data. Also rendered the page's actual
+template-literal logic against the real fetched row in the same tab to
+confirm `escapeHtml`/`titleCase`/`formatRelativeDate` all produce
+correct markup, not just that the query succeeds.

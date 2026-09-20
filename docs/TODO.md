@@ -379,18 +379,23 @@ worth deferring to a later session rather than batching in for
   from `open` to `tagged` (an existing, real enum value). Full detail
   in `docs/project-log.md`'s 2026-09-19 entry.
 
-- [ ] **`book_suggestions` has no admin-facing view anywhere -- found
-  2026-09-18 while checking a real test submission.** The table has a
-  real `status` column (`open` by default) but nothing in `app/` or
-  `tools/` ever reads it; the only way to see an incoming suggestion
-  right now is querying the table directly. Not a data-quality problem
-  (RLS/grants weren't checked for this table specifically, note for
-  whoever picks this up), just a real, currently-invisible product gap
-  -- suggestions go into a black hole with no way for the repo owner to
-  browse/triage them short of SQL. Needs a small admin view (could live
-  in `tools/catalog-review` alongside its other repo-owner-facing
-  surfaces, or a new page) listing open suggestions with a way to mark
-  them reviewed/actioned. Not scoped further than that; not started.
+- [x] **`book_suggestions` has no admin-facing view anywhere -- found
+  2026-09-18, DONE 2026-09-20.** The real blocker was RLS, not a
+  missing page -- the existing policies only ever let a submitter see
+  their own row, and this project has no role/admin system at all.
+  Added two new, additive permissive policies scoped directly to the
+  repo owner's real Supabase Auth user id (no role system built for a
+  single real admin -- see the migration's own comment for why) plus
+  the `grant update` the table never had
+  (`20260920000000_admin_view_book_suggestions.sql`). New
+  `app/suggestions.html` -- deliberately not linked from the main nav,
+  same positioning as `tools/catalog-review` -- with a status filter
+  and one-click mark-tagged/reject actions. Verified for real: found a
+  live authenticated browser session for the real account, confirmed
+  its user id matched the admin uid, then ran the actual SELECT (no
+  user_id filter) and a real UPDATE round-trip directly against hosted
+  data in that session. Full detail in `docs/project-log.md`'s
+  matching entry.
 
 ## P1
 
