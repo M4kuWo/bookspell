@@ -132,7 +132,7 @@ async function searchBooks(query) {
   }
   const pattern = ilikeWordPattern(query);
   const [booksRes, seriesRes, universeRes] = await Promise.all([
-    sb.from('books').select('id,title,author,cover_url').or(`title.ilike.${pattern},author.ilike.${pattern}`).order('title').limit(12),
+    sb.from('books').select('id,title,author,cover_url').eq('archived', false).or(`title.ilike.${pattern},author.ilike.${pattern}`).order('title').limit(12),
     sb.from('series').select('id,name').ilike('name', pattern).order('name').limit(5),
     sb.from('universe').select('id,name').ilike('name', pattern).order('name').limit(3),
   ]);
@@ -219,7 +219,7 @@ async function ratingsMapFor(bookIds) {
 async function showSeriesBooks(seriesId, seriesName) {
   const { data: books } = await sb
     .from('books').select('id,title,author,cover_url,position_in_series')
-    .eq('series_id', seriesId).order('position_in_series', { nullsFirst: false });
+    .eq('series_id', seriesId).eq('archived', false).order('position_in_series', { nullsFirst: false });
   const ratedMap = await ratingsMapFor((books || []).map((b) => b.id));
   resultsEl.innerHTML = `
     <div class="result-row" data-back="1" style="cursor:pointer;"><span class="result-title">← Back to search</span></div>

@@ -20034,3 +20034,66 @@ Also re-confirmed *The Screwtape Letters* anomaly is still unresolved
 (a row with that title exists, created 2026-09-11, despite being
 documented as deliberately deleted 2026-09-09 for being out-of-scope --
 left untouched per instructions, flagged again in TODO.md).
+
+## 2026-09-21: built a books.archived mechanism, archived 115 non-SFF/permanent-skip books (CLDA)
+
+Repo owner asked to "put the remaining not relevant books on the side"
+rather than delete them, since the bibliographic data could be useful
+later -- a new mechanism instead of the bulk-delete the round-4 backlog
+entry had been calling for.
+
+**Schema**: `books.archived` (boolean, not null, default false),
+`archived_reason` (text), `archived_at` (timestamptz), migration
+`20260921010000_archive_non_sff_leakage_and_permanent_skips.sql`.
+
+**Archived 115 of the 118 remaining untagged books**: 96
+`non_sff_genre_leakage` (literary fiction/thrillers/nonfiction/classics
+Hardcover's genre search pulled in incidentally -- includes *The
+Screwtape Letters*, re-ingested 2026-09-11 despite being deliberately
+deleted 2026-09-09 for the same reason, now archived instead of
+re-deleted), 11 `graphic_novel` (the already-known round-4 comics:
+Monstress, Paper Girls, Saga x4, The Sandman, The Walking Dead,
+Watchmen, White Sand, Y: The Last Man), 5 `omnibus_duplicate` (Monk and
+Robot, The Farseer Trilogy, The Foundation Trilogy, The Hobbit & The
+Lord of the Rings, Villains Duology), 3 `unpublished` (The Doors of
+Stone, Red God, The Winds of Winter).
+
+**Deliberately left unarchived** (3, real open questions, not mine to
+resolve unilaterally): Holly (SFF-scope question), The Lottery/The Egg
+(likely short-story/book format mismatches -- may warrant deletion
+rather than archival once resolved, a different situation from a book
+that's just out of genre scope).
+
+**Real bug caught during the migration's own rolled-back-transaction
+test, before it ever touched real data**: a first draft scoped every
+UPDATE by title alone. Running it in a test transaction and checking
+row counts (115 expected, 116 actually archived) surfaced a genuine
+duplicate-title collision -- `books` has two different "Quicksilver"
+rows (Callie Hart's already-tagged fantasy romance, Neal Stephenson's
+untagged Baroque Cycle novel). A title-only `WHERE` would have silently
+archived Hart's already-tagged, genuinely-in-scope book too. Rewrote
+every UPDATE to scope by `(title, author)` instead, re-tested (exactly
+115, Hart's Quicksilver confirmed untouched), then applied for real.
+Verified again post-apply: 115 archived by reason, Quicksilver split
+correctly (Hart's `archived=false`, Stephenson's `archived=true`).
+
+**App-side query updates**: `app/rate.html`'s two direct `books` table
+queries (the book-search autocomplete, and `showSeriesBooks`) now
+filter `.eq('archived', false)` so archived books don't surface in the
+reader-facing search/browse UI. `tools/catalog-review` and
+`scoring.catalog.load_catalog()` needed no change -- both already
+inner-join `book_dna`, and an archived book is by definition untagged,
+so they were already invisible there.
+
+**Docs**: CLAUDE.md's "Catalog scope & series hierarchy" section
+updated with the new archive-first convention (archiving is now the
+default over deletion for out-of-scope-but-real books; deletion stays
+reserved for genuinely bad data like duplicate rows or confirmed
+mis-ingests) and the (title, author)-scoping lesson. `docs/TODO.md`'s
+round-4 entry marked resolved.
+
+Migration tested in a rolled-back transaction (twice, including the
+caught bug), applied via autocommit psycopg2, tracking closed via
+`supabase migration repair --status applied --db-url ... 20260921010000`.
+No book_dna/tropes/content-warnings touched -- purely the archive flag
+and the app query filters.

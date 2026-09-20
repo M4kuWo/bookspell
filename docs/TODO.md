@@ -2100,30 +2100,36 @@ worth deferring to a later session rather than batching in for
   `20260921000000_catalog_tagging_batch9_20books.sql`. **118 untagged
   books remain catalog-wide.**
 
-  **The remaining ~118 books are NOT a normal tagging backlog anymore --
-  they need a repo-owner scope decision before any further tagging
-  session picks them up.** Per the coordinating session's full-pool
-  screen (2026-09-21), the vast majority is non-SFF leakage that
-  Hardcover's genre search pulled in incidentally (literary fiction,
-  thrillers, nonfiction, straight classics with no speculative content)
-  -- continuing to pick individual "defensible" titles out of this pool
-  one batch at a time (as this and prior batches have done) is reaching
-  diminishing returns; a repo-owner pass to bulk-flag/delete the clearly
-  out-of-scope remainder (same treatment as the graphic-novel and
-  unpublished-book precedents elsewhere in this file) would be more
-  efficient than further individual screening.
+  **RESOLVED 2026-09-21 -- archived, not deleted.** Per the repo
+  owner's direct instruction, a new `books.archived`/`archived_reason`/
+  `archived_at` mechanism was built instead of the bulk-delete this
+  entry originally called for (see CLAUDE.md's "Catalog scope & series
+  hierarchy" section for the full column/convention writeup). Migration
+  `20260921010000_archive_non_sff_leakage_and_permanent_skips.sql`
+  archived **115 of the 118** remaining untagged books: 96
+  `non_sff_genre_leakage`, 11 `graphic_novel` (the already-known round-4
+  comics), 5 `omnibus_duplicate`, 3 `unpublished`. Every UPDATE scoped
+  by `(title, author)` after a real duplicate-title collision was caught
+  in the migration's own rolled-back-transaction test (two different
+  "Quicksilver" rows -- Callie Hart's already-tagged one and Neal
+  Stephenson's untagged one -- a title-only `WHERE` would have archived
+  the wrong book too). `app/rate.html`'s two direct book-search queries
+  updated to filter `archived = false`; `tools/catalog-review` and
+  `scoring.catalog.load_catalog()` needed no change since both already
+  inner-join `book_dna` and an archived book is by definition untagged.
+  **3 titles deliberately left unarchived, still open questions**:
+  *Holly* (SFF-scope question), *The Lottery*/*The Egg* (likely short-
+  story/book format mismatches, possibly a delete-not-archive case once
+  resolved -- see below). **Untagged-but-not-archived count is now
+  effectively 0** for normal tagging-batch purposes; the round-4 backlog
+  is closed until either these 3 get resolved or new books are ingested
+  (see the 200-book Hardcover pull queued below).
 
-  **Open data anomaly, needs a repo-owner decision, do NOT unilaterally
-  resolve**: *The Screwtape Letters* (C.S. Lewis) -- documented as
-  deliberately DELETED 2026-09-09 for being out-of-scope theological
-  satire (see CLAUDE.md's catalog-scope section), but a `books` row with
-  that exact title now exists again, `created_at` 2026-09-11 -- looks
-  like the round-4 ingestion (2026-09-12) or an adjacent process
-  re-added it, or a close-in-time coincidence. Re-confirmed still present
-  and still untagged as of this batch (2026-09-21). Needs the repo owner
-  to either re-confirm the deletion (and delete this new row too) or
-  decide it's back in scope for some reason -- not a call for a tagging
-  session to make on its own.
+  **The Screwtape Letters resolved as part of the archive batch** --
+  it's one of the 96 `non_sff_genre_leakage` rows (re-ingested
+  2026-09-11 despite being deliberately deleted 2026-09-09 for the same
+  out-of-scope reason; archived this time instead of silently
+  re-deleted, so there's a durable record if it happens again).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done

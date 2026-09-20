@@ -500,9 +500,31 @@ repo) so it's discoverable from either side.
 
 - v1 scope is **sci-fi/fantasy only**. Hardcover's genre search
   sometimes pulls in off-genre books; these get left untagged and
-  flagged, then deleted from `books` entirely once confirmed
-  out-of-scope with the repo owner (don't leave them as permanent
-  dangling untagged rows once that's confirmed).
+  flagged for the repo owner. **As of 2026-09-21, the default
+  resolution is archiving, not deletion**: `books.archived` (boolean,
+  default `false`) plus `archived_reason` (text) and `archived_at`
+  (timestamptz) — set `archived = true` with a real reason
+  (`non_sff_genre_leakage`, `graphic_novel`, `unpublished`,
+  `omnibus_duplicate`, or a new reason string if a genuinely new
+  category comes up) rather than deleting the row outright. The
+  bibliographic data is real and may be useful later (a scope
+  expansion, a different catalog use), so keep it rather than lose it
+  — but make sure it's actually excluded from anything user-facing
+  (see `app/rate.html`'s book-search queries for the pattern: filter
+  `archived = false` on any direct `books` query a reader can trigger).
+  `tools/catalog-review` and the scoring engine's `load_catalog()`
+  don't need a separate filter — both already inner-join `book_dna`,
+  and an archived book is by definition untagged, so it's already
+  invisible there. **Every `UPDATE ... SET archived = true` must be
+  scoped by `(title, author)`, not title alone** — a real duplicate-
+  title collision (two different "Quicksilver" rows, one already
+  tagged) was caught by this exact migration's own rolled-back-
+  transaction test; a title-only `WHERE` would have silently archived
+  an unrelated, already-tagged book too. Outright deletion is still the
+  right call for genuinely bad data (a duplicate row, a confirmed
+  mis-ingest) rather than a real book that's just out of this
+  catalog's current genre scope — don't delete a book that would fit
+  this archive mechanism instead.
 - **Graphic novels/comics are out of v1 scope** (decided 2026-09-04,
   see `20260904090000_remove_out_of_scope_graphic_novels.sql`) — the
   schema has no format/medium field distinguishing a visual comic from
