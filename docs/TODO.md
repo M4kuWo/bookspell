@@ -712,6 +712,22 @@ worth deferring to a later session rather than batching in for
     read by any consumer (`app/`, `api/`, or scoring code) -- the
     column exists and is completely inert. A real, live gap, not
     hypothetical.
+    **UPDATE 2026-09-20: basic version DONE, full `spoiler_horizon`
+    design deliberately not built.** Turned out bigger than the note
+    above: the same "written, never read" problem also applied to
+    `tropes.spoiler` (434 live `book_tropes` rows across 8 spoiler
+    trope ids) and `book_dna`'s own `emotional_resolution`/
+    `ends_on_cliffhanger` fields -- all three were shown plainly in
+    `showBookInfo()`'s always-open grid. Fixed with a collapsed-by-
+    default "⚠ Spoilers" disclosure (same `<details>` pattern already
+    used elsewhere in the same modal), not the schema's own fuller
+    per-series `spoiler_horizon`/reader-progress design (that needs
+    reader-progress tracking this app doesn't collect anywhere --
+    real, separate, bigger feature, left as future work if ever
+    needed). Verified against real hosted data in a real browser
+    (before/after screenshots against 2 real books, one exercising the
+    tropes path, one the content-warnings path). Full detail in
+    `docs/project-log.md`'s matching entry.
   - **Active-learning onboarding** (its 7.2) -- confirmed real: `rate.html`
     has zero guided/suggested-books onboarding today, pure free-text
     search only, despite `recommend.py` already having a

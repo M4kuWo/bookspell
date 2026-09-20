@@ -114,10 +114,24 @@ const DNA_FIELD_ORDER = [
   'timeline', 'form', 'overall_pace', 'pace_shape', 'drive', 'darkness', 'humor_level',
   'emotional_register', 'message_intensity', 'romance_heat_frequency', 'romance_heat_intensity',
   'romance_tone', 'violence_frequency', 'violence_intensity', 'worldbuilding_density',
-  'worldbuilding_delivery', 'narrative_closure', 'emotional_resolution', 'ends_on_cliffhanger',
+  'worldbuilding_delivery', 'narrative_closure',
   'magic_system_hardness', 'scifi_hardness', 'prose_density', 'prose_complexity',
   'intellectual_weight', 'stakes_scope', 'personal_stakes', 'genre_accessibility',
 ];
+// Schema-flagged spoiler: true fields (docs/schema/book-dna.schema.yaml)
+// -- kept OUT of the always-visible grid above and rendered inside the
+// collapsed-by-default "Spoilers" section instead (see showBookInfo()).
+// A real, live gap until 2026-09-20: these were rendered in the same
+// always-open grid as every other field, and book_tropes/
+// book_content_warnings' own per-value/per-instance spoiler flags
+// (tropes.spoiler, book_content_warnings.reveals_spoiler) were written
+// at tagging time but never once read by this app. This doesn't build
+// the full per-series "reveals at installment N" horizon design note
+// in the schema file (that needs reader-progress tracking this app
+// doesn't collect anywhere) -- just stops the current plain leak with
+// a basic click-to-reveal, the same `<details>` pattern already used
+// for Description/Tropes/Content warnings above.
+const DNA_SPOILER_FIELD_ORDER = ['emotional_resolution', 'ends_on_cliffhanger'];
 // Tier B (craft/quality judgment) fields -- audiobook_length is a
 // separate, Tier A field handled on its own below, not mixed into this
 // list, since it's real metadata rather than a subjective listening
@@ -204,8 +218,8 @@ async function showBookInfo(bookId) {
   const [{ data: book }, { data: dna }, { data: tropeRows }, { data: cwRows }, { data: editions }] = await Promise.all([
     sb.from('books').select('title, author, synopsis, page_count, publication_year, cover_url, position_in_series, series(name, status), universe(name)').eq('id', bookId).maybeSingle(),
     sb.from('book_dna').select('*').eq('book_id', bookId).maybeSingle(),
-    sb.from('book_tropes').select('trope_id').eq('book_id', bookId),
-    sb.from('book_content_warnings').select('warning_id, severity').eq('book_id', bookId),
+    sb.from('book_tropes').select('trope_id, tropes(spoiler)').eq('book_id', bookId),
+    sb.from('book_content_warnings').select('warning_id, severity, reveals_spoiler').eq('book_id', bookId),
     sb.from('audiobook_editions').select('edition_type, narrators, production_company, runtime_minutes, release_status, parts_released, parts_total').eq('book_id', bookId).order('edition_type'),
   ]);
 
@@ -218,12 +232,20 @@ async function showBookInfo(bookId) {
   const dnaRows = (dna ? DNA_FIELD_ORDER : [])
     .map((f) => [f, formatDnaValue(dna[f])])
     .filter(([, v]) => v !== null);
+  const spoilerDnaRows = (dna ? DNA_SPOILER_FIELD_ORDER : [])
+    .map((f) => [f, formatDnaValue(dna[f])])
+    .filter(([, v]) => v !== null);
   const audiobookLengthVal = dna ? formatDnaValue(dna.audiobook_length) : null;
   const audioQualityRows = (dna ? DNA_AUDIOBOOK_QUALITY_FIELD_ORDER : [])
     .map((f) => [f, formatDnaValue(dna[f])])
     .filter(([, v]) => v !== null);
-  const tropes = (tropeRows || []).map((t) => titleCase(t.trope_id));
-  const cws = (cwRows || []).map((c) => `${titleCase(c.warning_id)} (${titleCase(c.severity)})`);
+  const allTropes = tropeRows || [];
+  const tropes = allTropes.filter((t) => !t.tropes?.spoiler).map((t) => titleCase(t.trope_id));
+  const spoilerTropes = allTropes.filter((t) => t.tropes?.spoiler).map((t) => titleCase(t.trope_id));
+  const allCws = cwRows || [];
+  const cws = allCws.filter((c) => !c.reveals_spoiler).map((c) => `${titleCase(c.warning_id)} (${titleCase(c.severity)})`);
+  const spoilerCws = allCws.filter((c) => c.reveals_spoiler).map((c) => `${titleCase(c.warning_id)} (${titleCase(c.severity)})`);
+  const hasSpoilers = spoilerDnaRows.length > 0 || spoilerTropes.length > 0 || spoilerCws.length > 0;
   const membership = [
     book.series ? `<span class="membership-badge">📚 ${escapeHtml(book.series.name)}${book.position_in_series ? ` #${book.position_in_series}` : ''} — ${book.series.status === 'completed' ? 'Completed' : 'Ongoing'}</span>` : null,
     book.universe ? `<span class="membership-badge">✦ ${escapeHtml(book.universe.name)} universe</span>` : null,
@@ -286,6 +308,17 @@ async function showBookInfo(bookId) {
         ${cws.length > 0 ? `
           <details open style="margin-top:10px;"><summary style="cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--ink-soft);">Content warnings</summary>
             <div class="dna-chips" style="margin-top:8px;">${cws.map((c) => `<span class="dna-chip">${escapeHtml(c)}</span>`).join('')}</div>
+          </details>
+        ` : ''}
+        ${hasSpoilers ? `
+          <details style="margin-top:10px;"><summary style="cursor:pointer; font-size:0.8rem; font-weight:600; color:var(--disliked);">⚠ Spoilers -- click to reveal</summary>
+            ${spoilerDnaRows.length > 0 ? `
+              <div class="dna-grid" style="margin-top:8px;">
+                ${spoilerDnaRows.map(([k, v]) => `<div class="dna-row"><div class="k">${escapeHtml(titleCase(k))}</div><div class="v">${escapeHtml(v)}</div></div>`).join('')}
+              </div>
+            ` : ''}
+            ${spoilerTropes.length > 0 ? `<div class="dna-chips" style="margin-top:8px;">${spoilerTropes.map((t) => `<span class="dna-chip">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+            ${spoilerCws.length > 0 ? `<div class="dna-chips" style="margin-top:8px;">${spoilerCws.map((c) => `<span class="dna-chip">${escapeHtml(c)}</span>`).join('')}</div>` : ''}
           </details>
         ` : ''}
       </details>

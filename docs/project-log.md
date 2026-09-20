@@ -19423,3 +19423,43 @@ console against real hosted data. Also rendered the page's actual
 template-literal logic against the real fetched row in the same tab to
 confirm `escapeHtml`/`titleCase`/`formatRelativeDate` all produce
 correct markup, not just that the query succeeds.
+
+## 2026-09-20, later -- real spoiler leak in the book-info modal, fixed
+
+Followed up on the 2026-09-14 external-AI-consultation finding (point
+9, "spoiler safety made structural") -- re-verified it independently
+rather than trusting the old TODO note. Confirmed real and bigger than
+the note described: `book_content_warnings.reveals_spoiler` (69 live
+rows) was genuinely unread by `app/`, but the SAME problem also applies
+to `tropes.spoiler` (434 live `book_tropes` rows across 8 spoiler-
+flagged trope ids -- `twist_ending`, `twist_filled`, `redemption_arc`,
+`villain_turns_ally`, `major_character_death`, `mentor_death`,
+`corruption_arc`, `tragic_reversal_of_fortune`) and to `book_dna`'s own
+schema-flagged `spoiler: true` fields (`emotional_resolution`,
+`ends_on_cliffhanger`) -- all three were rendered in the SAME
+always-open grid as every non-spoiler field in `showBookInfo()`
+(`app/shared.js`), for every book, to every reader.
+
+Didn't build the schema's own `spoiler_horizon` design note in full
+(a per-series "reveals at installment N" companion column plus reader-
+progress tracking this app doesn't collect anywhere) -- that's a real,
+separate, bigger feature. Built the minimum that actually stops the
+current leak instead: `DNA_SPOILER_FIELD_ORDER` split out of
+`DNA_FIELD_ORDER`, `book_tropes`/`book_content_warnings` queries
+extended to also select the spoiler flag (`tropes(spoiler)` via the
+existing FK, `reveals_spoiler`), and a collapsed-by-default "⚠
+Spoilers -- click to reveal" `<details>` section holding all three --
+same disclosure pattern already used for Description/Tropes/Content
+warnings elsewhere in the same modal, no new UI concept.
+
+Verified against real hosted data in a real browser, not just read as
+correct: found the live authenticated session again, ran the ACTUAL
+unfixed `showBookInfo()` against The Echo Wife first (screenshotted --
+confirmed `Emotional Resolution`/`Ends On Cliffhanger` and the
+`corruption_arc`/`twist_ending` tropes really were shown plainly),
+then injected the fixed logic and re-ran it against the same book
+(spoilers correctly hidden, correctly revealed on click) and against
+Ender's Game specifically to exercise the content-warnings path
+(`genocide`/`child_death`, both `reveals_spoiler`, correctly hidden
+until revealed alongside its own spoiler trope/DNA fields). No schema
+or migration change -- `app/shared.js` only.
