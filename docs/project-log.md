@@ -19852,3 +19852,32 @@ for the version, no other unpaired-local drift found. No duplicate
 migration timestamps beyond the already-known, already-documented
 `20260911110000` `.sql`/`.tsv` false positive. 1119 book_dna rows total
 catalog-wide after this batch; 138 untagged books remain.
+
+## 2026-09-20 (later): fixed the 4 author-field contamination cases batch 8 flagged but never applied (CLDA)
+
+Batch 8's own migration (`20260920030000`) correctly identified 4
+contaminated author fields via Hardcover's `cached_contributors` data
+(Titus Groan/Anthony Burgess-foreword, The Historian/2 narrators, What
+You Are Looking for Is in the Library/translator+illustrator, When the
+Moon Hits Your Eye/narrator) but its own comment explicitly said the
+fix was deferred to "a separate authorship-fix migration" rather than
+applied inline -- inconsistent with every other author-contamination
+fix this session, which all landed in the same migration as the
+tagging itself. Caught during this session's own post-batch
+verification (spot-checking `books.author` directly against the
+agent's report, not just trusting the summary).
+
+Re-verified all 4 live against Hardcover's GraphQL `cached_contributors`
+before writing anything (same roles the batch-8 agent found, confirmed
+independently): Mervyn Peake (Titus Groan), Elizabeth Kostova (The
+Historian), Michiko Aoyama (What You Are Looking for Is in the
+Library), John Scalzi (When the Moon Hits Your Eye) -- each stripped
+down to the real author only. Migration
+`20260920040000_fix_4_author_field_contamination_batch8_followup.sql`,
+tested in a rolled-back transaction first, applied via autocommit
+psycopg2, verified live, tracking repaired via `supabase migration
+repair --status applied --db-url ... 20260920040000` (confirmed
+`{"status":"applied"}`, no other drift).
+
+No book_dna/tropes/content-warnings changed -- this was purely the
+author-field cleanup batch 8 itself should have included.
