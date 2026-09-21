@@ -2261,6 +2261,39 @@ worth deferring to a later session rather than batching in for
   `docs/project-log.md`'s 2026-09-21 "Round-5 tagging batch 4" entry for
   full detail. **157 untagged, not-archived books remain** (was 175;
   catalog now 1211 tagged / 1483 total).
+  **Batch 5 (round-5-numbering "batch 14") done 2026-09-21 (CLDA, fifth
+  pass into this pool)**: 18 more books tagged. Step 2's query surfaced
+  only 15 partial-series candidates total (4 standing do-not-touch, 11
+  legitimate) -- all 11 taken: The Broken Kingdoms, The Dark Prophecy,
+  The Dream Thieves, The Hammer of Thor, The Secret Commonwealth, The
+  Twelve, The World We Make, and Throne of Jade all reached 2/2 (9
+  series total, counting Great Cities' own duology conclusion); A Dead
+  Djinn in Cairo and Summer Frost advanced their series without
+  completing them (1/2 -> still 1/2 novella-vs-novel counting quirk
+  and 1/3 -> 2/3 respectively); Who Fears Death was tagged but its
+  catalog series row also incorrectly contains the unrelated standalone
+  *Remote Control* -- a data/ingestion mislabeling flagged for CLDO,
+  not corrected here (outside this skill's step-by-step scope). Filled
+  to 18 with 7 well-known standalones/openers (2312, A Princess of Mars,
+  Babel-17, Dogs of War, Empire in Black and Gold, Ella Enchanted, Akata
+  Witch) tagged from existing knowledge since this session's WebSearch
+  budget was already exhausted before this batch started (0 remaining;
+  WebFetch/Wikipedia mostly couldn't answer the specific POV questions
+  asked). 4 author-field contamination cases found and fixed inline (A
+  Dead Djinn in Cairo: Suehyla El-Attar/narrator; The Dark Prophecy:
+  John Rocco/illustrator; The Dream Thieves: Will Patton/narrator; The
+  Secret Commonwealth: Michael Sheen/narrator -- all verified via
+  Hardcover's `cached_contributors`). New vocabulary gap flagged in
+  `docs/schema/book-dna.md`'s tracker: forced female genital
+  cutting/circumcision (Who Fears Death) has no clean `content_warnings`
+  match, `child_abuse` used as an imprecise nearest fit. Density
+  self-check: 4.44 tropes/book (vs. 5.26 catalog avg, ~84.5%), 1.44
+  CWs/book (vs. 1.66 catalog avg, ~86.9%) -- both within tolerance.
+  Migration
+  `20260921090000_catalog_tagging_round5_batch5_18books.sql` -- see
+  `docs/project-log.md`'s 2026-09-21 "Round-5 tagging batch 5" entry for
+  full detail. **139 untagged, not-archived books remain** (was 157;
+  catalog now 1229 tagged / 1483 total).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done

@@ -1404,6 +1404,17 @@ don't re-derive it from the log):
   hospital observing her own body and the people around her while in a
   coma after a car accident, deciding whether to stay. One occurrence
   only; watch for a second.
+- **Content warning**: no `content_warnings` value cleanly covers forced
+  female genital cutting/circumcision specifically -- distinct from
+  `sexual_assault` (a different act) and `child_abuse` (a real but
+  imprecise umbrella that doesn't name the actual practice). Found
+  2026-09-21 (CLDA, round-5 batch 5) tagging Nnedi Okorafor's *Who Fears
+  Death*, where forced circumcision of 11-year-old girls (including the
+  protagonist) is a repeated, central plot element -- tagged `child_abuse`
+  at `central_theme` as the nearest available fit rather than left
+  unflagged, but that's a real gap, not a clean match. One occurrence
+  only; watch for a second (any book depicting FGM/forced circumcision as
+  a real plot element, not just referenced in passing).
 
 **Promoted / resolved**:
 - **`caste_or_faction_stratified_society`** — promoted 2026-09-13 (sweep

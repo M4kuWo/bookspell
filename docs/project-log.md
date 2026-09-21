@@ -20897,3 +20897,116 @@ Catalog-wide: **1211 tagged books** (was 1193), **157 untagged,
 not-archived books remain** in the round-5-plus-earlier-leftover queue
 (was 175). `docs/TODO.md`'s round-5 entry updated with this batch's
 results and the new remaining count.
+
+## 2026-09-21 (later still): Round-5 tagging batch 5 -- 18 books, full Book DNA (CLDA)
+
+Fifth pass into round 5's pool. Persona confirmed via `.claude/PERSONA.local`
+(already set to CLDA on this machine from prior batches). Ran Step 1.5
+fresh: live `book_dna` columns = 42, matches the skill's mandatory list
+exactly (36 skill-listed + 4 excluded Tier B + 2 auto timestamps) -- no
+drift, skill needed no fix. Live vocab confirmed 152 tropes / 38 content
+warnings (both unchanged from batch 4). Catalog-wide pre-batch: 1211
+tagged, 157 untagged-not-archived, avg 5.26 tropes/book, 1.66 CWs/book
+(all fresh-queried, not reused from batch 4's report).
+
+Step 2's partial-series-first query surfaced only 15 partial-series
+candidates total -- the 4 standing do-not-touch titles (The Thorn of
+Emberlain, The Book of the New Sun, 1Q84: Book 1, Holly) plus exactly 11
+legitimate ones, all taken this batch: **A Dead Djinn in Cairo** (Dead
+Djinn Universe, novella #0.1, 1/2), **The Broken Kingdoms** (Inheritance
+Trilogy, 1/2 -> 2/2), **The Dark Prophecy** (Trials of Apollo, 1/2 ->
+2/2), **The Dream Thieves** (Raven Cycle, 1/2 -> 2/2, catalog only holds
+2 of the real 4), **The Hammer of Thor** (Magnus Chase, 1/2 -> 2/2),
+**The Secret Commonwealth** (Book of Dust, 1/2 -> 2/2), **The Twelve**
+(The Passage, 1/2 -> 2/2), **The World We Make** (Great Cities, 1/2 ->
+2/2, concludes the duology), **Throne of Jade** (Temeraire, 1/2 -> 2/2,
+catalog only holds 2 of the real long series), **Who Fears Death**
+(catalog's "Who Fears Death" series row also contains the unrelated
+standalone *Remote Control* -- a data/ingestion mislabeling, not a real
+sequel relationship; left untouched as an improvised fix outside this
+skill's step-by-step scope, flagged here for CLDO rather than corrected
+mid-batch), and **Summer Frost** (Forward Collection, 1/3 -> 2/3, one
+more untagged entry remains in that series). 9 series reached 2/2
+outright, plus the Great Cities duology's own conclusion.
+
+Filled to 18 with 7 well-known standalones/series-openers chosen for
+solid existing literary knowledge, since this session's WebSearch budget
+was already exhausted (0 remaining) by an earlier sibling batch today --
+5 targeted queries at the start of this batch all bounced off the
+exhausted-budget guard before any research began. WebFetch against
+Wikipedia worked but mostly couldn't answer the specific POV-structure
+questions asked (plot-summary-only content): **2312** (Kim Stanley
+Robinson), **A Princess of Mars** (Edgar Rice Burroughs), **Babel-17**
+(Samuel R. Delany), **Dogs of War** and **Empire in Black and Gold**
+(Adrian Tchaikovsky), **Ella Enchanted** (Gail Carson Levine), **Akata
+Witch** (Nnedi Okorafor).
+
+**Author-field contamination caught and fixed inline for 4 books**,
+verified via Hardcover's `cached_contributors` GraphQL API before
+trusting any multi-name `books.author` field: *A Dead Djinn in Cairo*
+("P. Djèlí Clark, Suehyla El-Attar" -- El-Attar is the audiobook
+Narrator), *The Dark Prophecy* ("Rick Riordan, John Rocco" -- Rocco is
+the Illustrator), *The Dream Thieves* ("Maggie Stiefvater, Will Patton"
+-- Patton is the Narrator), *The Secret Commonwealth* ("Philip Pullman,
+Michael Sheen" -- Sheen is the Narrator). All 4 fixed to the single
+genuine author in the same migration, not flagged-and-deferred.
+
+**HIGH_RISK_FIELDS applied per book, not just where something felt
+uncertain.** Given the exhausted search budget, genuine uncertainty on
+several HIGH_RISK_FIELDS values (`person`, `pov_count`, `drive`,
+`narrator_reliability`, `stakes_scope`, `ends_on_cliffhanger`,
+`magic_system_hardness`) was recorded honestly via
+`book_field_confidence` rather than asserted at full confidence --
+0.5/0.6 confidence rows across 15 of the 18 books, 28 rows total (a
+larger-than-usual count, an honest reflection of tagging several
+less-certain titles from existing knowledge under a zero-search-budget
+constraint rather than skipping them). Both directions represented on
+the two hardest fields: `romance_tone` tagged `melodramatic` (A Princess
+of Mars, 0.5 -- classic pulp's heightened declarations-of-love-within-
+days and damsel-rescue beats, a real presentation-level pattern, not
+inferred from genre reputation alone) and `understated` (Ella Enchanted,
+0.6 -- MG-register gentle courtship); `worldbuilding_delivery` tagged
+`woven` x2 (A Dead Djinn in Cairo, Throne of Jade -- both extrapolated
+from same-author/same-universe anchors already carrying the value),
+`exposition_dump` x3 (2312's documentary "Extracts"/"Lists" interludes;
+A Princess of Mars's Burroughs-style explanatory narration; Empire in
+Black and Gold's series-opening kinden-taxonomy setup), and `mixed` x1
+(Akata Witch's genuine split between in-scene discovery and its
+interstitial "Fast Facts for Free Agents" exposition boxes).
+
+**New vocabulary gap flagged and added to book-dna.md's tracker**:
+*Who Fears Death*'s repeated, central forced-female-circumcision element
+has no clean `content_warnings` match -- tagged `child_abuse` at
+`central_theme` as the nearest real fit, but that's an imprecise
+umbrella, not the actual practice. One occurrence only; watching for a
+second per the tracker's standing process.
+
+**Density self-check** (fresh catalog average queried post-batch, not
+reused): catalog avg 5.26 tropes/book / 1.66 CWs/book (1229 tagged).
+This batch: **4.44 tropes/book** (80/18, ~84.5% of catalog avg) and
+**1.44 CWs/book** (26/18, ~86.9% of catalog avg) -- both within the
+~20%-below tolerance, no enrichment pass needed. (Several novellas/short
+standalones in this batch -- A Dead Djinn in Cairo, Summer Frost, A
+Princess of Mars, Babel-17 -- pull the average down some, same pattern
+noted in batch 10's report.)
+
+**Migration**: `20260921090000_catalog_tagging_round5_batch5_18books.sql`
+(4 author-field UPDATEs + 18 `book_dna` inserts + 80 `book_tropes` + 26
+`book_content_warnings` + 28 `book_field_confidence` rows). Tested in a
+rolled-back transaction first, including a genuine idempotency re-run
+(18/80/26 stable both times, no duplication) and a per-row non-null
+column count (35-37 of 42 columns per row). Applied for real via
+autocommit psycopg2 against hosted. Migration tracking closed via `npx
+supabase migration repair --status applied --db-url ... 20260921090000`,
+verified via `npx supabase migration list --db-url ...` (non-`--linked`
+form) showing both `local` and `remote` entries for `20260921090000`.
+Duplicate-timestamp check showed only the known `.tsv`-manifest false
+positive from 2026-09-11, nothing new. Author-field UTF-8 fix (P.
+Djèlí Clark) verified via an exact-string-equality query
+against the live row, not just a terminal-display check (Windows
+console mangles the display but the stored bytes are correct).
+
+Catalog-wide: **1229 tagged books** (was 1211), **139 untagged,
+not-archived books remain** in the round-5-plus-earlier-leftover queue
+(was 157). `docs/TODO.md`'s round-5 entry updated with this batch's
+results and the new remaining count.
