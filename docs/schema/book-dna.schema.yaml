@@ -503,11 +503,23 @@ categories:
         # Tier B -- deferred, see module-level note above.
       narrator_cast:
         type: enum
-        values: [single_narrator, dual_narrator, full_cast]
+        values: [single_narrator, dual_narrator, full_cast, multi_narrator]
         spoiler: false
-        # Tier A -- computable from books.narrators (array length) plus
-        # knowing whether a production is a full-cast dramatization
-        # (relevant to the deferred audiobook_editions/GraphicAudio idea).
+        # Tier A -- computable from audiobook_editions (array length of
+        # narrators on a `standard` row; a `dramatized_full_cast` row is
+        # always full_cast regardless of its own narrator count).
+        # multi_narrator added 2026-09-21 (migration
+        # 20260921070000_add_multi_narrator_value.sql) after the
+        # catalog-wide narrator_cast backfill surfaced 21 real books with
+        # a genuine 3+-narrator `standard` edition (uniform across every
+        # standard edition that book has) -- distinct from full_cast,
+        # which specifically means a dramatized production, not just "3+
+        # people read this book." Does NOT cover a book with multiple
+        # DIFFERENT standard editions carrying different narrator counts
+        # (e.g. a 1-narrator edition and a separate 2-narrator edition of
+        # the same book) -- that's a genuinely different, still-open data
+        # situation (which real narration is "the" narrator_cast?), left
+        # NULL, not multi_narrator (35 such books as of 2026-09-21).
       narration_pace_vs_prose:
         type: enum
         values: [matches, slower, faster]

@@ -20742,3 +20742,40 @@ No book_dna fields other than `narrator_cast` touched. Not currently
 read by `scripts/recommend.py` (confirmed via grep) -- purely a
 data-completeness fix for the still-unbuilt audiobook-native feature,
 not a scoring change.
+
+## 2026-09-21 (later still): added narrator_cast = 'multi_narrator', backfilled 21 of the 56 remaining-NULL books (CLDA)
+
+Repo owner asked directly to add the value and fix catalog-wide. Split
+the 56 books the earlier backfill (`20260921060000`) correctly left
+NULL into their two real, different underlying situations before
+touching anything, rather than sweeping both into the new value:
+
+- **21 books**: a genuine 3+-narrator `standard` edition, uniform
+  across every `standard` edition that book has (e.g. Dune Messiah [4,
+  4], Ender's Game [3, 3], Onyx Storm [4]) -- a real, clean
+  `multi_narrator` case.
+- **35 books**: multiple DIFFERENT `standard` editions with different
+  narrator counts each (e.g. Dune [4, 1], American Gods [1, 4], The
+  Eye of the World [2, 1]) -- genuinely different real narrations of
+  the same book, not one recording with several narrators.
+  `multi_narrator` would misrepresent this ("several narrators on one
+  recording" isn't what's actually true here) -- left NULL, not forced.
+
+Schema: `book_dna_narrator_cast_check` constraint dropped and
+recreated with `multi_narrator` added. Migration
+`20260921070000_add_multi_narrator_value.sql` (constraint change +
+title+author-scoped backfill for the 21), tested in a rolled-back
+transaction with an idempotency re-run (21 both times), applied via
+autocommit psycopg2, verified live (`multi_narrator` count = 21,
+existing single/dual/full_cast counts unchanged), migration-tracking
+repaired via `supabase migration repair --status applied --db-url ...
+20260921070000`.
+
+`docs/schema/book-dna.schema.yaml` and `book-dna.md` both updated in
+this same session with the new value and the real distinction between
+the 21 (fixed) and 35 (a genuinely different, still-open data
+situation -- would need per-edition rather than per-book
+`narrator_cast` to resolve honestly, not attempted here).
+
+`narrator_cast` remains unread by `scripts/recommend.py` -- pure
+data-completeness work, no scoring impact.

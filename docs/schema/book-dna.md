@@ -309,6 +309,23 @@ narrators" on an ordinary reading). If a 4th value is ever worth adding
 here (e.g. `multi_narrator` for a 3+-narrator standard edition), this
 is the real evidence base for it — not designed speculatively.
 
+**`multi_narrator` added 2026-09-21** (migration
+`20260921070000_add_multi_narrator_value.sql`), same day, once the
+evidence above existed. Of the 56 NULL books, only **21 were a genuine
+fit** — a 3+-narrator `standard` edition, uniform across every
+`standard` edition that book has — and those got backfilled to
+`multi_narrator` directly. **The other 35 stayed NULL, deliberately,
+not swept into the new value**: those books have multiple DIFFERENT
+`standard` editions with different narrator counts each (e.g. a real
+1-narrator recording AND a separate real 2-narrator recording of the
+same book) — genuinely different narrations, not one recording with
+several people in it. Forcing `multi_narrator` onto those would assert
+something false about the data. Which narration counts as "the" book's
+`narrator_cast` in that situation is a real open question a single
+per-book column can't answer — the honest fix, if ever worth pursuing,
+is tracking `narrator_cast` per `audiobook_editions` row instead of per
+book; not attempted here.
+
 ### 5. Tropes & craft — SFF extension, v1 only
 | Field | Values |
 |---|---|

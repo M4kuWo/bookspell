@@ -2191,8 +2191,16 @@ worth deferring to a later session rather than batching in for
   dual_narrator), 56 left NULL as a genuine enum gap (3+ narrators on a
   standard edition, or mixed single/dual-narrator editions of the same
   book), remaining 398 have no `audiobook_editions` row yet. Migration
-  `20260921060000_backfill_narrator_cast_catalog_wide.sql`, see
-  `docs/project-log.md`'s 2026-09-21 "(later)" entry and
+  `20260921060000_backfill_narrator_cast_catalog_wide.sql`. **The enum
+  gap partially resolved 2026-09-21 (later still)**: `multi_narrator`
+  added as a real 4th value and backfilled to 21 of those 56 books (a
+  genuine uniform 3+-narrator standard edition). The other 35 stay
+  NULL, deliberately -- those have multiple DIFFERENT standard editions
+  with different narrator counts each (different real narrations, not
+  one recording with several narrators), which `multi_narrator` would
+  misrepresent. Migration `20260921070000_add_multi_narrator_value.sql`.
+  See `docs/project-log.md`'s 2026-09-21 "(later)" and "(later still)"
+  entries and
   `docs/schema/book-dna.md`'s Tier A section for full detail. **193
   untagged, not-archived books remain**
   (was 211; catalog now 1175 tagged / 1483 total). He Who Fights with
