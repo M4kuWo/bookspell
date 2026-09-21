@@ -20581,3 +20581,122 @@ Catalog-wide: **1175 tagged books** (was 1157), **193 untagged,
 not-archived books remain** in the round-5-plus-earlier-leftover queue
 (was 211). `docs/TODO.md`'s round-5 entry updated with this batch's
 results and the new remaining count.
+
+## 2026-09-21, later still -- Catalog tagging batch 12: 18 books, full Book DNA (CLDA)
+
+Round-5 tagging batch 3 (round-5 pool, following batches 10-11).
+Step 1.5 verified: live `book_dna` columns match the skill's mandatory
+list exactly (41 columns: 34 mandatory + genre + book_id + the 4 Tier B
+audiobook fields + narrator_cast + created_at/updated_at), no drift
+since batch 11's narrator_cast fix. Step 2's partial-series-first query
+(with `b.archived = false`) surfaced Holly and The Thorn of Emberlain
+again -- both skipped per this batch's explicit do-not-touch list.
+
+Tagged 18 books, all via existing-series-sibling calibration (checked
+each series' already-tagged entries for craft/style precedent before
+tagging, per book-dna.md's own established pattern) plus own literary
+knowledge, HIGH_RISK_FIELDS checks, and per-book Hardcover
+`cached_contributors` author verification.
+
+**Completed 8 series fully within the catalog**: Cradle (Will Wight,
+10/10 -- Underlord, Uncrowned, Wintersteel, Bloodline, Reaper), He Who
+Fights with Monsters (Shirtaloon, 8/8 -- books 4-8), The Founders
+Trilogy (Robert Jackson Bennett, 3/3 -- Locklands), The Daevabad
+Trilogy (S.A. Chakraborty, 3/3 -- The Empire of Gold), The Kane
+Chronicles (Rick Riordan, 3/3 -- The Serpent's Shadow), The Rain Wild
+Chronicles (Robin Hobb, 3/3 -- The Dragon Keeper, actually book 1,
+untagged despite books 2-3 already being tagged -- a real gap in
+earlier ingestion/tagging order), Shattered Sea (Joe Abercrombie, 2/2
+in-catalog -- Half the World), The Iron Druid Chronicles (Kevin Hearne,
+2/2 in-catalog -- Hexed), Rivers of London (Ben Aaronovitch, 2/2
+in-catalog -- Moon Over Soho). **Moved The Faithful and the Fallen
+closer** (John Gwynne, Wrath tagged) but NOT complete: book 3 ("Ruin")
+was never ingested into this catalog at all -- a real ingestion gap,
+flagged here for the repo owner, not something a tagging batch fixes.
+He Who Fights with Monsters 5-8, left for a future batch by batch 2, are
+now done -- along with book 4, which batch 2's note didn't mention was
+also still untagged.
+
+**Author-field check**: He Who Fights with Monsters 4-8 all carry
+author = "Shirtaloon, Travis Deverell". Verified directly via
+Hardcover's `cached_contributors` GraphQL data (author ids 241312
+"Shirtaloon" / 333525 "Travis Deverell") on all 5 books -- both names
+carry contributor role "Author", not an illustrator/translator/
+narrator credit. This is the same person's pen name and legal name both
+credited as author by Hardcover itself, not contamination -- no fix
+needed. Every other book in this batch has a single, unambiguous
+author.
+
+**A genuine web-search-budget constraint, handled per the batch's own
+efficiency note**: this session's web-search budget was exhausted
+before reaching this batch (shared across the parent session), and
+WebFetch against fan-wiki sources (cradle.fandom.com) returned HTTP 402
+rather than content. For Cradle books 6-10 and He Who Fights with
+Monsters books 4-8 specifically -- 10 of the 18 books, both ongoing
+series I know well in overall shape but not down to every later-book
+plot beat -- craft/style fields were carried forward from each series'
+own already-tagged entries (same author, same unbroken series, a real
+high-confidence basis per book-dna.md's calibration-anchor pattern, not
+genre pattern-matching across different authors). Plot-specific
+escalation calls I was **not** fully certain of were tagged at my
+honest best judgment but recorded via `book_field_confidence`/
+`book_tropes.confidence` at 0.5-0.6 rather than asserted at full
+confidence: `stakes_scope` (a HIGH_RISK_FIELD) on Wintersteel/
+Bloodline/Reaper and He Who Fights with Monsters 5-8; `emotional_
+resolution` on all 5 Cradle books and Wrath; `romance_tone`/
+`worldbuilding_delivery` on all 5 He Who Fights with Monsters books
+(continuing each field's already-established series value at reduced
+confidence, not guessed fresh); a handful of trope calls (`wise_mentor`
+continuing into Wintersteel, `ancient_evil_awakens`/`war_story` on the
+Dreadgod-era Cradle books, `underdog_rising` continuing into HWFWM
+6-8, `court_intrigue`/`satirical_or_comedic_fantasy`/`found_family` on
+individual HWFWM books). Nothing was guessed at full confidence where I
+didn't actually have the evidence.
+
+**No new vocabulary gaps hit** -- checked this batch's content against
+book-dna.md's "Flagged single-occurrence vocabulary gaps" tracker
+before tagging; none of the currently-open gaps matched anything in
+this batch's 18 books.
+
+**Density self-check** (queried fresh): catalog-wide average **5.26
+tropes/book, 1.67 content warnings/book** (1175 already-tagged books,
+before this batch). This batch landed at **4.61 tropes/book (83 tropes
+across 18 books, ~88% of catalog average -- within the skill's
+~20%-below tolerance)** but **1.0 content warnings/book (18 CWs across
+18 books, ~60% of catalog average -- outside tolerance)**. Went back
+per the skill's required gate: re-checked the batch's thinnest books
+and found 2 real, previously-missed `body_horror` instances (Underlord,
+Uncrowned -- consistent with the "graphic" violence_intensity already
+established for this series' corruption/monster-horror content), added
+both, bringing CWs to 1.0/book. The remaining shortfall below the
+20%-tolerance line is real and explained, not unaddressed: 10 of 18
+books are action-adventure progression-fantasy/LitRPG (Cradle, He Who
+Fights with Monsters) plus 1 is middle-grade (The Serpent's Shadow,
+consistent with 0 CWs on both its already-tagged predecessors) --
+genres that structurally carry less content_warnings-vocabulary-
+applicable material than the catalog's grimdark/literary-fantasy-heavy
+average, and (honestly) the two ongoing series' later-book plot
+specifics are exactly where this batch's confidence was already lower
+per the note above -- forcing additional CWs there without real
+supporting evidence would repeat the same over-pattern-matching failure
+mode this project has already been burned by elsewhere, not fix an
+under-tagging problem. Flagging this explicitly rather than padding the
+number.
+
+**Migration**: `20260921050000_catalog_tagging_batch12_18books.sql`.
+Tested in a rolled-back transaction first (18/18 book_dna rows landed
+cleanly, 35-37 non-null columns per row out of 41 total, confirming no
+silent partial insert). Applied for real via autocommit psycopg2 against
+hosted (no local Supabase stack in this environment). The 2 supplementary
+body_horror CW inserts from the density-check enrichment pass were
+applied the same way and folded into the same migration file before
+committing. Migration tracking closed via `supabase migration repair
+--status applied --db-url ... 20260921050000`, verified clean via
+`supabase migration list --db-url ...` (both `local` and `remote`
+entries present). Duplicate-timestamp check showed only the known
+`.tsv`-manifest false positive from 2026-09-11, nothing new.
+
+Catalog-wide: **1193 tagged books** (was 1175), **175 untagged,
+not-archived books remain** in the round-5-plus-earlier-leftover queue
+(was 193). `docs/TODO.md`'s round-5 entry updated with this batch's
+results and the new remaining count.

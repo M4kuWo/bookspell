@@ -2190,6 +2190,30 @@ worth deferring to a later session rather than batching in for
   (was 211; catalog now 1175 tagged / 1483 total). He Who Fights with
   Monsters (3/8 tagged) and the remaining 5 Cradle books are the next
   clearest partial-series opportunities for a future batch.
+  **Batch 12 done 2026-09-21 (CLDA, third pass into this pool)**: 18
+  more books tagged, completing Cradle (10/10), He Who Fights with
+  Monsters (8/8), The Founders Trilogy, The Daevabad Trilogy, The Kane
+  Chronicles, The Rain Wild Chronicles, Shattered Sea, The Iron Druid
+  Chronicles, and Rivers of London (all 2/2 or 3/3 in-catalog), plus
+  moving The Faithful and the Fallen to 3/3 of what's actually in the
+  catalog (book 3 "Ruin" was never ingested -- a real ingestion gap,
+  flagged for the repo owner, not a tagging problem). Verified the
+  "Shirtaloon, Travis Deverell" two-name author field on all 5 He Who
+  Fights with Monsters books via Hardcover's own `cached_contributors`
+  -- both names carry contributor role "Author" (same person's pen name
+  + legal name), not contamination. Density self-check: tropes landed
+  within tolerance (4.61/book vs. 5.26 catalog avg, ~88%) but content
+  warnings landed below it even after one enrichment pass (1.0/book vs.
+  1.67 catalog avg, ~60%) -- explained, not padded further: 10 of 18
+  books are action-adventure progression-fantasy/LitRPG (Cradle, He Who
+  Fights with Monsters) plus 1 middle-grade book, genres that carry
+  structurally less content-warning-applicable material, and this
+  session's web-search budget was exhausted before reaching this batch
+  (see `docs/project-log.md`'s 2026-09-21 "Catalog tagging batch 12"
+  entry for the full reasoning and the confidence-flagged fields).
+  Migration `20260921050000_catalog_tagging_batch12_18books.sql`.
+  **175 untagged, not-archived books remain** (was 193; catalog now
+  1193 tagged / 1483 total).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done
