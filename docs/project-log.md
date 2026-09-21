@@ -20779,3 +20779,121 @@ situation -- would need per-edition rather than per-book
 
 `narrator_cast` remains unread by `scripts/recommend.py` -- pure
 data-completeness work, no scoring impact.
+
+## 2026-09-21 (later still): Round-5 tagging batch 4 -- 18 books, full Book DNA (CLDA)
+
+Fourth pass into round 5's 226-book pool. Ran `tag-catalog-batch`'s
+Step 1.5 fresh (live `book_dna` columns = 42, matches the skill's
+mandatory list exactly: 36 skill-listed + 4 excluded Tier B + 2 auto
+timestamps -- no drift this time, skill needed no fix). Live vocab
+confirmed 152 tropes / 38 content warnings, catalog-wide pre-batch avg
+5.26 tropes/book, 1.67 CWs/book (1193 tagged, 175 untagged-not-archived).
+
+Step 2's query surfaced *The Thorn of Emberlain* and *Holly* at the top
+(both still open/do-not-touch per standing instructions -- skipped) and
+*The Book of the New Sun*/*1Q84: Book 1* next (both genuine
+omnibus/compilation-duplicate situations -- the same underlying work
+already has 2 tagged catalog rows under different edition titles: "The
+Shadow of the Torturer"/"Shadow & Claw" for the former, "1Q84" for the
+latter. This is exactly the future-fields-backlog case
+`docs/schema/book-dna.md` already flags as unresolved -- not something
+to improvise a fix for mid-batch, so both skipped and left for the
+repo owner rather than tagged or merged).
+
+Below those, chose 18 books purely by partial-series-completion value:
+**Codex Alera** (Jim Butcher, *Cursor's Fury*/*Captain's Fury*/
+*Princeps' Fury*/*First Lord's Fury*, 1/5 -> 5/5), **The Belgariad**
+(David Eddings, *Queen of Sorcery*/*Magician's Gambit*/*Castle of
+Wizardry*/*Enchanters' End Game*, 1/5 -> 5/5), **Sookie Stackhouse**
+(Charlaine Harris, *Club Dead*/*Dead to the World*/*Living Dead in
+Dallas*, 1/4 -> 4/4), **The Legend of Drizzt**'s *Sojourn* + *The
+Crystal Shard* (R.A. Salvatore, 1/3 -> 3/3 of what's in-catalog), and 5
+two-book series each brought from 1/2 to 2/2: *A Beautifully Foolish
+Endeavor* (The Carls, Hank Green), *Agency* (Jackpot, William Gibson),
+*Stone of Farewell* (Memory, Sorrow, and Thorn, Tad Williams), *Spell or
+High Water* (Magic 2.0, Scott Meyer), *SpecOps* (Expeditionary Force,
+Craig Alanson). 9 series completed outright in one batch -- all now
+have >= 2 tagged books, real evidence base for Series DNA.
+
+**Author-field contamination caught and fixed inline**: "The Crystal
+Shard" carried `author = 'R. A. Salvatore, Larry Elmore'`. Checked via
+Hardcover's `cached_contributors` GraphQL API before trusting it --
+Larry Elmore comes back with `contribution: "Illustrator"`, not
+`"Author"` (he's the well-known Icewind Dale/Dragonlance cover artist,
+not a co-writer). Fixed to plain `'R. A. Salvatore'` in the same
+migration, not flagged-and-deferred. No other book in this batch had a
+multi-name author field.
+
+**HIGH_RISK_FIELDS applied per book, not just where something felt
+uncertain**: `drive` was explicitly re-checked against plot summary for
+every series rather than defaulted from genre reputation -- Codex Alera
+and Belgariad confirmed `plot_driven` (both are structurally war/quest
+epics, the Tavi/Kitai and Garion/Ce'Nedra romances are real but
+supporting threads, not the engine); Sookie Stackhouse kept
+`character_driven` for consistency with its own already-tagged book 1,
+except *Dead to the World* specifically, where the amnesiac-Eric plot
+is unusually romance-heavy for this series -- genuine judgment call,
+recorded via `book_field_confidence` (0.5) rather than picked silently.
+`narrative_closure`/`ends_on_cliffhanger` for *First Lord's Fury*
+(Codex Alera's finale) verified via direct plot-summary fetch rather
+than assumed from memory: confirmed the Vord Queen is killed, Octavian
+becomes First Lord and marries Kitai -- tagged `self_contained`/
+`happy`/`resolved`, the only book in this batch NOT `requires_series`.
+*Enchanters' End Game* (Belgariad's finale) reasoned the same way from
+known plot (Torak defeated) without a fresh fetch, given very high
+confidence in the source material.
+
+**This session's WebSearch budget was fully exhausted (200/200) before
+this batch started** -- no fresh searches possible; WebFetch worked for
+Wikipedia/Goodreads(one hit) but most fan-wiki targets (Fandom) returned
+HTTP 402. Per the batch instructions' efficiency note, this means:
+`romance_tone` was left NULL throughout this entire batch (18/18) rather
+than pattern-matched from genre/series reputation, even where a
+plausible guess existed (e.g. the Sookie Stackhouse books, where the
+established book-1 tag is `understated` and the narrative voice is
+unchanged -- recorded a same-voice-continuity inference at confidence
+0.5 via `book_field_confidence` instead of asserting it outright).
+`worldbuilding_delivery` was tagged only where there was a real,
+specific basis to extrapolate from an already-tagged, same-author
+anchor book (not fresh research): `woven` at 0.6 for all 4 Codex Alera
+books and *Sojourn* (consistent with Butcher's/Salvatore's established
+in-scene delivery style already confirmed on their respective book-1
+anchors), `exposition_dump` at 0.6 for *Stone of Farewell* (consistent
+with *The Dragonbone Chair*'s own already-tagged value). Left NULL for
+all 4 Belgariad books and both Sookie/Agency/Carls entries where no
+solid basis existed either way. `person` on *A Beautifully Foolish
+Endeavor* (The Carls #2) was flagged at 0.5 given real uncertainty about
+its narrative structure (partial shift away from book 1's pure
+first-person April narration toward an ensemble of other characters'
+POV, some fragments possibly still first-person) -- tagged `mixed`
+rather than asserted as clean `third_limited`.
+
+**Density self-check**: fresh catalog average queried at start of batch
+(5.26 tropes/book, 1.67 CWs/book, 1193 books). This batch: **6.11
+tropes/book** (110 tropes / 18 books, ~116% of catalog avg) and **1.44
+CWs/book** (26 CWs / 18 books, ~87% of catalog avg) -- both within
+tolerance, no enrichment pass needed. Both directions of low-confidence
+tagging are represented in this batch, not just one: 11
+`book_field_confidence`/trope-confidence rows total across 7 distinct
+judgment calls (`worldbuilding_delivery` x6 series-anchors,
+`romance_tone` x3 Sookie books, `drive` x1, `person` x1,
+`major_character_death`/`mentor_death`/`twist_ending` x3 trope-level).
+
+**Migration**: `20260921080000_catalog_tagging_round5_batch4_18books.sql`.
+Tested in a rolled-back transaction first, including a genuine
+idempotency re-run (18/18 book_dna rows both times, no duplication;
+110 tropes/26 CWs stable across the re-run) and a per-row non-null
+column count (35-36 of 42 columns per row, consistent with the
+established silent-partial-insert check). Applied for real via
+autocommit psycopg2 against hosted (no local Supabase stack in this
+environment). Migration tracking closed via `npx supabase migration
+repair --status applied --db-url ... 20260921080000`, verified via
+`npx supabase migration list --db-url ...` (both `local` and `remote`
+entries present, non-`--linked` form per instructions). Duplicate-
+timestamp check showed only the known `.tsv`-manifest false positive
+from 2026-09-11, nothing new.
+
+Catalog-wide: **1211 tagged books** (was 1193), **157 untagged,
+not-archived books remain** in the round-5-plus-earlier-leftover queue
+(was 175). `docs/TODO.md`'s round-5 entry updated with this batch's
+results and the new remaining count.

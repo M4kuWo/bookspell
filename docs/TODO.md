@@ -2230,6 +2230,37 @@ worth deferring to a later session rather than batching in for
   Migration `20260921050000_catalog_tagging_batch12_18books.sql`.
   **175 untagged, not-archived books remain** (was 193; catalog now
   1193 tagged / 1483 total).
+  **Batch 4 (round-5-numbering "batch 13") done 2026-09-21 (CLDA, fourth
+  pass into this pool)**: 18 more books tagged, all via partial-series
+  completion -- Codex Alera (5/5), The Belgariad (5/5), Sookie Stackhouse
+  (4/4), The Legend of Drizzt's *Sojourn* + *The Crystal Shard* (3/3 of
+  what's in-catalog), and 5 two-book series brought to 2/2 each (The
+  Carls, Jackpot, Memory Sorrow and Thorn, Magic 2.0, Expeditionary
+  Force) -- 9 series completed in one batch. Skipped per instructions:
+  *The Thorn of Emberlain* (confirmed unpublished) and *Holly* (round-4
+  open scope question), both still surfacing in the Step 2 query.
+  Also skipped and flagged (not mine to resolve): *The Book of the New
+  Sun* and *1Q84: Book 1* are both the omnibus/compilation-duplicate
+  situation already noted in `docs/schema/book-dna.md`'s Future fields
+  backlog -- the same underlying work already has 2 tagged catalog
+  entries under different edition titles in both cases. One author-field
+  contamination fixed inline ("The Crystal Shard": "R. A. Salvatore,
+  Larry Elmore" -> "R. A. Salvatore" -- Larry Elmore confirmed via
+  Hardcover's `cached_contributors` as `contributor_role_name:
+  "Illustrator"`, not a co-author). This session's WebSearch budget was
+  exhausted before this batch (200/200 used), so `romance_tone` was left
+  null throughout rather than pattern-matched, and several fields
+  (`worldbuilding_delivery` on the Codex Alera/Drizzt/Memory Sorrow and
+  Thorn books, `drive` on *Dead to the World*, `person` on *A
+  Beautifully Foolish Endeavor*) were tagged with real uncertainty
+  recorded via `book_field_confidence` rather than guessed at full
+  confidence. Density self-check: 6.11 tropes/book (vs. 5.26 catalog
+  avg, well above), 1.44 CWs/book (vs. 1.67 catalog avg, ~87%, within
+  tolerance). Migration
+  `20260921080000_catalog_tagging_round5_batch4_18books.sql` -- see
+  `docs/project-log.md`'s 2026-09-21 "Round-5 tagging batch 4" entry for
+  full detail. **157 untagged, not-archived books remain** (was 175;
+  catalog now 1211 tagged / 1483 total).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done
