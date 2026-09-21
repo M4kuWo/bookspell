@@ -20286,3 +20286,136 @@ these 226 books are ready for a future tagging round and that their
 covers need the self-hosting backfill.
 
 Catalog now **1483 books / 570 series** (was 1257/485).
+
+## 2026-09-21, later still -- Catalog tagging batch 10: 18 books, full Book DNA (CLDA, first pass into round-5 pool)
+
+First tagging batch drawn from the round-5 pool (226 new untagged books,
+landed earlier today). Ran the skill's Step 2 partial-series-first query
+with `and b.archived = false`; round 5's 85 new series gave this query
+real work for the first time since round 4's pool was exhausted --
+picked 18 books across 14 different series, all but one of which this
+batch either completed or (Dresden Files) moved materially closer.
+Skipped the 3 still-open round-4 questions (*Holly*, *The Lottery*, *The
+Egg*) and all `archived = true` rows per the task's own instructions --
+neither surfaced in the query anyway.
+
+**Step 1.5 (mandatory schema-drift check) run first**: live
+`information_schema.columns` for `book_dna` matched the skill's Step 3
+mandatory-column list exactly (32 mandatory + `book_id` + `genre` + 5
+Tier B audiobook columns = 39, live table has 41 including
+`created_at`/`updated_at`) -- no drift, skill unchanged.
+
+**Books tagged** (title -- series, position): The Last Continent
+(Discworld #22), The Shepherd's Crown (Discworld #41), Side Jobs:
+Stories from The Dresden Files (Dresden Files #12.5), Dust of Dreams
+(Malazan Book of the Fallen #9), Inversions (The Culture #6), The
+Hydrogen Sonata (The Culture #10), The State of the Art (The Culture
+#4), And Another Thing... (Hitchhiker's Guide #6), The Short Second
+Life of Bree Tanner (Twilight Saga #3.5), Murtagh (Inheritance Cycle),
+The Other Wind (Earthsea Cycle #6), The Eternity Code (Artemis Fowl
+#3), The Heir (The Selection #4), Ashes of Man (Sun Eater collection),
+Disquiet Gods (Sun Eater #5), How the King of Elfhame Learned to Hate
+Stories (The Folk of the Air novella), Rapport: Friendship, Solidarity,
+Communion, Empathy (Murderbot Diaries #2.5), The Sins of Our Fathers
+(The Expanse novella).
+
+**Series completed this batch (13)**: Discworld (41/41), Malazan Book
+of the Fallen (10/10), The Culture (10/10), Hitchhiker's Guide (7/7),
+Twilight Saga (6/6), Sun Eater (6/6), Inheritance Cycle (5/5), Earthsea
+Cycle (5/5), Artemis Fowl [subset tracked in this catalog] (4/4), The
+Selection (4/4), The Folk of the Air (4/4), Murderbot Diaries (11/11),
+The Expanse (17/17). The Dresden Files moved from 17/19 to 18/19
+(*Twelve Months*, book #18, deliberately left untagged -- see below).
+
+**Skipped deliberately**: *Twelve Months* (Jim Butcher, Dresden Files
+#18) -- genuine uncertainty about this specific title's real-world
+publication status/content at this knowledge horizon; rather than
+fabricate tags for a book I couldn't confidently verify, left it
+untagged for a future batch with research budget to spare, per this
+skill's "skip and say so" policy over guessing.
+
+**Author-field contamination found and fixed inline** (per CLAUDE.md,
+not deferred): verified via Hardcover's `cached_contributors` GraphQL
+API before inserting --
+- *Dust of Dreams* author field was `"Steven Erikson, Michael Page"` --
+  Michael Page is the audiobook narrator (`contribution: "Narrator"`),
+  not a co-author. Fixed to `"Steven Erikson"`.
+- *How the King of Elfhame Learned to Hate Stories* author field was
+  `"Holly Black, Rovina Cai"` -- Rovina Cai is the book's illustrator
+  (`contribution: "Illustrator"`), not a co-author. Fixed to
+  `"Holly Black"`.
+
+**HIGH_RISK_FIELDS applied**: `person`/`pov_count` double-checked
+against known narration structure for each book (e.g. Side Jobs' mixed
+first-person narrators -- Harry for most stories, Murphy for
+"Aftermath" -- tagged `person: first`, `pov_count: dual`, not
+`mixed`, since both narrators use the same grammatical person just
+different narrating characters); `magic_system_hardness: hard` on
+*Murtagh* checked against the Inheritance Cycle's well-established
+rule-based energy-exchange magic system rather than defaulted from
+"epic fantasy usually soft"; `drive: worldbuilding_driven` (not
+`plot_driven`/`balanced`) applied to the three Culture novels and
+*Dust of Dreams*/*The Other Wind*, consistent with this schema's own
+worldbuilding_driven precedent (Perdido Street Station) rather than a
+default plot/character split.
+
+**Genuine uncertainty recorded via `book_field_confidence`** (9 rows,
+not `book_tropes.confidence` for these since all are scalar fields):
+`narrator_reliability: ambiguous` on *Inversions* (0.5 -- real
+scholarly ambiguity about how much to trust its framing device);
+`worldbuilding_delivery: mixed` on *The State of the Art* (0.2 -- a
+genuine anthology tie, weak on both sides); `worldbuilding_delivery`
+on *Murtagh* and on *Rapport* (0.5 each -- real but not ironclad
+confidence for less-iconic-on-this-specific-axis books); `pov_count`
+on *Rapport* (0.5 -- genuine uncertainty about this newer 2023+
+collection's exact narrator structure, not full Murderbot-numbered-
+novella certainty); `stakes_scope` on *Ashes of Man*, *Disquiet Gods*,
+and *The Sins of Our Fathers* (0.5 each -- hedged calls on later/newer
+series entries); `drive` on *The Sins of Our Fathers* (0.5). Per the
+skill's strict evidence standard for `romance_tone` specifically, left
+it NULL (not guessed at low confidence) on *The Heir* and *The Short
+Second Life of Bree Tanner* -- I had genre-pattern intuition but no
+real scene-level presentation evidence for either, and the skill is
+explicit that guessing from reputation is exactly the failure mode
+this field's evidence standard exists to prevent.
+
+**No new vocabulary gaps hit** -- checked this batch's content against
+`docs/schema/book-dna.md`'s "Flagged single-occurrence vocabulary gaps"
+tracker before tagging; none of the currently-open gaps (climate-
+disaster CW, natural-evolution first-contact, skinchanging/body-
+possession variants, magical-archive-guardian, etc.) matched anything
+in this batch's 18 books.
+
+**Density self-check** (queried fresh, not reused from a prior
+session): catalog-wide average at the time was **5.27 tropes/book,
+1.68 content warnings/book** (across 1139 already-tagged books, before
+this batch). This batch landed at **4.5 tropes/book (81 tropes across
+18 books, ~85% of catalog average)** and **1.39 content warnings/book
+(25 CWs across 18 books, ~82% of catalog average)** -- both within the
+skill's ~20%-below tolerance, but on the lower side by design: several
+of these are novellas/short-story collections/comedic works (Bree
+Tanner, And Another Thing, The State of the Art, Rapport) genuinely
+carrying less trope/CW-dense content than a full-length epic, not
+under-tagging from rushing. Flagging the numbers honestly rather than
+padding with forced tags, per the skill's own "don't force-tag" policy.
+
+**Migration**: `20260921030000_catalog_tagging_batch10_18books.sql`.
+Tested in a rolled-back transaction first (18/18 book_dna rows, both
+contamination fixes, all tropes/CWs/confidence rows landed cleanly,
+then rolled back). Applied for real via autocommit psycopg2 against
+hosted (this environment has no local Supabase stack, so this is the
+hosted-direct-apply path CLAUDE.md documents). Verified post-apply: all
+18 `book_dna` rows have zero nulls across the 32 mandatory columns (no
+silent partial insert), both author fixes landed, 81 trope rows, 25
+content-warning rows, 9 confidence rows all present. Migration tracking
+closed via `supabase migration repair --status applied --db-url ...
+20260921030000`, verified clean via `supabase migration list
+--db-url ...` (both `local` and `remote` entries present for
+`20260921030000`, no gap). Duplicate-timestamp check
+(`uniq -c -w14`) showed only the known `.tsv`-manifest false positive
+from 2026-09-11, nothing new.
+
+Catalog-wide: **1157 tagged books** (was 1139), **211 untagged,
+not-archived books remain** in the round-5-plus-earlier-leftover queue
+(was 229). `docs/TODO.md`'s round-5 entry updated with this batch's
+results and the new remaining count.

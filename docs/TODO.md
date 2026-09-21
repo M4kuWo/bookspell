@@ -2154,6 +2154,24 @@ worth deferring to a later session rather than batching in for
   signal (thin community tag data) -- if a book turns out to have no
   real SFF content at tagging time, flag it per the usual policy
   rather than assuming the pre-filter already caught everything.
+  **Batch 10 done 2026-09-21 (CLDA, first pass into this pool)**: 18
+  books tagged, prioritized via the skill's partial-series-first query
+  -- completed 13 series outright (Discworld, Malazan Book of the
+  Fallen, The Culture, Hitchhiker's Guide, Twilight Saga, Sun Eater,
+  Inheritance Cycle, Earthsea Cycle, Artemis Fowl subset, The Selection,
+  The Folk of the Air, Murderbot Diaries, The Expanse) and moved The
+  Dresden Files to 18/19 (book #18, *Twelve Months*, deliberately left
+  untagged on genuine uncertainty rather than guessed). 2 author-field
+  contamination cases found and fixed inline (Michael Page/narrator on
+  *Dust of Dreams*, Rovina Cai/illustrator on *How the King of Elfhame
+  Learned to Hate Stories*). Density landed slightly under catalog
+  average (4.5 tropes/book vs. 5.27 catalog avg, 1.39 CWs/book vs. 1.68
+  catalog avg -- both within the ~20% tolerance, expected given several
+  novellas/collections in this batch). Migration
+  `20260921030000_catalog_tagging_batch10_18books.sql` -- see
+  `docs/project-log.md`'s 2026-09-21 "Catalog tagging batch 10" entry
+  for full detail. **211 untagged, not-archived books remain** (was
+  229; catalog now 1157 tagged / 1483 total).
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done
