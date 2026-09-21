@@ -20097,3 +20097,192 @@ caught bug), applied via autocommit psycopg2, tracking closed via
 `supabase migration repair --status applied --db-url ... 20260921010000`.
 No book_dna/tropes/content-warnings touched -- purely the archive flag
 and the app query filters.
+
+## 2026-09-21 — Catalog expansion round 5: 226 new books, 85 new series (CLDA, real quality filter this time)
+
+Repo owner asked for ~200 more good Fantasy/Science Fiction additions,
+explicitly **not** a repeat of round 4's "bump the pull count, insert
+everything new" method -- round 4's 378 new books turned out roughly a
+third non-SFF leakage on the audit that led to today's earlier archive
+batch (115 of 118 leftover untagged books archived, see this file's
+first 2026-09-21 entry above). The ask this time was a real,
+pre-insertion quality filter, not a bigger unconditional pull.
+
+**Method.** Wrote a new script, `scripts/ingest-catalog-round5.js`
+(fresh script per ingestion round, this project's own convention --
+adapted `ingest-seed-catalog.js`'s GraphQL client/pagination/series-
+resolution/`docToBookFields` mechanics rather than reusing the file).
+Investigated Hardcover's GraphQL schema directly (introspection query
+against the `books` type) for a genre-confidence signal beyond the
+loose `genres:=[X]` search filter the prior 4 rounds relied on.
+Found two, neither previously used by any script in this repo:
+
+1. **`book_category_id`** -- Hardcover's own format classification.
+   Queried `book_categories { id name }` directly: 1=Book, 2=Novella,
+   3=Short Story, 4=Graphic Novel, 5=Fan Fiction, 6=Research Paper,
+   7=Poetry, 8=Collection, 9=Web Novel, 10=Light Novel. Confirmed
+   empirically that every one of round 4's manually-flagged-after-the-
+   fact graphic novels (Saga, The Sandman, Monstress, Watchmen) carries
+   category_id 4 -- a clean, mechanical, forward-looking replacement
+   for round 4's after-the-fact manual comic-spotting. Excluded ids
+   4/5/6/7 (Graphic Novel/Fan Fiction/Research Paper/Poetry) as clearly
+   outside v1's prose-SFF-novel scope; Short Story/Collection (3/8)
+   deliberately kept eligible per CLAUDE.md's "short-story collections
+   are in scope" policy.
+2. **`books.cached_tags.Genre`** -- real per-tag community vote counts
+   (`[{tag, count, tagSlug, ...}]`), a genuinely different signal from
+   the search index's own `document.genres` field. First pass used
+   `document.genres`'s list position (it's vote-count-ordered, confirmed
+   by direct comparison against `cached_tags.Genre` -- same order) with
+   a "Fantasy/SciFi in the top 2 positions" rule; this caught the
+   obvious leakage (Atlas Shrugged, White Noise, The Fountainhead, The
+   Girl with the Dragon Tattoo, Fifty Shades of Grey, The Godfather,
+   Shōgun -- top tag Classics/Mystery/Romance/Historical Fiction/Crime
+   in every case even when Fantasy/SciFi appeared further down as
+   noise) but had a real false-positive problem on small samples: Ken
+   Follett's WWI novel **"Fall of Giants"** had "Fantasy" at
+   `genres[1]` on a total sample of just 13 votes (Historical
+   Fiction:4, Fantasy:1, ...) -- position alone can't tell "a real
+   secondary genre" from "one user's mistag that happened to rank
+   second out of three total tags." Switched to the real vote counts:
+   a candidate is kept only if an SFF-pattern tag
+   (`/fantasy|sci-?fi|science[\s-]?fiction|speculative fiction/i`)
+   holds the single **highest raw vote count** among all Genre tags
+   (not just an early position), with a minimum-sample floor of 3
+   votes on the top tag so a 1-vote document can't trivially "win."
+   This caught every reviewed false positive (Fall of Giants, The
+   Pumpkin Spice Café, Sputnik Sweetheart, Heroes: The Greek Myths
+   Reimagined -- which also carries an explicit "non-fiction" tag)
+   while still passing every real SFF book checked (We Are Legion, The
+   Lion the Witch and the Wardrobe, Mistborn; Atlas Shrugged correctly
+   still rejected: top tag Classics:4 vs Science Fiction:2).
+   **Real bug caught during this round's own testing**: the first run
+   of the vote-count version returned "no genre data" for literally
+   every candidate, including manually-verified-rich-tag-data books
+   like We Are Legion (29 total Genre votes) -- traced to `doc.id`
+   coming back as a JSON *string* from the search index while the
+   follow-up `books(where: {id: {_in: ids}})` query returns real
+   integers, so `Map.get(doc.id)` never matched a map keyed by number.
+   Fixed by normalizing every id (`doc.id`, nested `featured_series.
+   series.id`) to `Number(...)` once, right after the search results
+   come back -- documented inline in the script as a warning for future
+   ones (the same class of bug could silently affect `ingest-seed-
+   catalog.js`'s existing `existingHardcoverIds.has(doc.id)` check too,
+   though there it's masked by `on conflict do nothing` being the real
+   safety net regardless).
+
+**Dedup.** Bumped the per-genre pull 850 -> 1050 (same-size step as
+round 4's 620->850). Deduped three ways: (1) `hardcover_id` already in
+`books` (all rows, archived included) -- 1207 of 1508 raw candidates,
+mostly alternate editions of already-catalogued blockbusters (Harry
+Potter, LOTR, Mistborn, A Game of Thrones, etc. -- Hardcover indexes
+each edition separately and sorts by that edition's own `users_count`,
+so pulling deeper into the rank list surfaces more alternate editions
+of books already ingested in rounds 1-4, not just genuinely new
+titles); (2) normalized-title + author-token-overlap against every
+existing `books` row (archived included) *and* against other survivors
+already accepted this same run (two different not-yet-catalogued
+editions of the same book can appear across the separate Fantasy/
+SciFi pulls) -- 0 additional hits this round, everything with a
+matching hardcover_id also matched by title, so the id-based check
+already covered it; (3) category exclusion -- 7 (Scott Pilgrim, 3 more
+Sandman/Saga volumes, White Sand Vol. 2, Attack on Titan Vol. 1).
+
+**Genre-dominance filter.** Of 294 candidates surviving dedup+category:
+118 accepted outright (clear vote-count dominance), 32 rejected as
+genuinely non-dominant -- e.g. "The Reformatory" (top tag Historical
+Fiction:4 vs Fantasy:1), "Fall of Giants" (Historical Fiction:4 vs
+Fantasy:1, the same false-Fantasy-signal book that motivated switching
+off the position-based rule in the first place -- correctly caught
+once real vote counts were used), "The Last Kingdom" (Historical
+Fiction:4 vs Fantasy:1), "Heart-Shaped Box" (Horror:7 vs Fantasy:1),
+"Heroes: The Greek Myths Reimagined" (Mythology:3 vs Fantasy:2, also
+carries an explicit "non-fiction" tag), "The Castle" [Kafka] (Classics:3
+vs Fantasy:1), "The Sun Down Motel" (Thriller:3 vs Fantasy:1) -- and
+144 had too few community genre tags for the vote-count rule to apply
+at all (the vote-count floor is a real tradeoff: it protects against
+small-sample noise but also can't rule on genuinely thin-data books,
+mostly newer/niche titles that haven't accumulated many community tags
+yet).
+
+**Manual literary-knowledge screen (the 144).** Per this round's task
+instructions, this bucket -- genuinely "no structured signal available"
+(too few community genre votes for the floor above to apply at all),
+not "signal says reject" -- got a real per-book screen against title,
+author, and synopsis using actual book knowledge, the same standard
+`tag-catalog-batch` already holds tagging to, rather than either
+blanket-accepting or blanket-discarding it. 108 of 144 kept, 36
+rejected. Worked rejection examples, so the method is auditable and
+not just a number: **Dostoevsky's "Devils"** (classic Russian
+literature, "Fantasy" reads as a pure title-word mistag -- "Devils"
+sounding supernatural); **Murakami's "Sputnik Sweetheart" and "A Wild
+Sheep Chase"** (literary
+fiction with a stray Fantasy tag from a tiny sample -- contrast with
+**"1Q84"**, kept, which has a sustained two-moons alternate-reality
+conceit integral to the plot, not just a mood label); **"The World of
+Ice and Fire"** (an illustrated in-universe history/reference
+companion, not narrative fiction); **Randall Munroe's "What If? 2"**
+and **Clifford Stoll's "The Cuckoo's Egg"** and **Max Tegmark's "Life
+3.0"** and **Carl Sagan's "Pale Blue Dot"** (real nonfiction science
+books); **Michael Crichton's "Airframe"** (grounded aviation thriller,
+zero speculative content despite a stray Science Fiction tag);
+**Thomas More's "Utopia"** (16th-century political philosophy
+treatise, not a genre novel). Kept examples worth naming since they're
+the more interesting calls: **Bernard Cornwell's "The Winter King"**
+(Arthurian historical fantasy, magic genuinely present), **Scott
+Lynch's "The Thorn of Emberlain"** and **Jenn Lyons' "The Ruin of
+Kings"** (core secondary-world epic fantasy, just thin community tags
+for a newer/midlist entry), **Philip Roth's "The Plot Against
+America"** (alternate history -- a real SF subgenre, not a stretch),
+**Rainbow Rowell's "Landline"** (a magic phone that calls the past is
+the book's central, sustained device, not a background detail).
+One entry, **"Savage Awakening 7: A LitRPG Apocalypse Adventure"**
+(author credited as "adastra339"), passed the genre criteria (LitRPG
+apocalypse content) but was rejected anyway on a real-quality-bar
+judgment call -- self-published/uncertain-provenance web-serial entry,
+not the kind of "good addition" the repo owner asked for even though
+it's genuinely genre-matching.
+
+**Final count: 226 accepted** (118 automated + 108 manually rescued)
+out of 1508 raw candidates evaluated -- a real ~85% rejection rate
+against the raw pull (1207 duplicate editions + 7 category + 32
+non-dominant + 36 manual-reject), landing modestly over the ~200
+target because the quality bar was applied honestly rather than
+padded or truncated to hit a round number, per the task's own
+instruction that over/under is fine as long as the bar is real.
+
+**Series**: 85 new series created (hardcover-sourced, deduped by
+Hardcover's own series id, same pattern as every prior round;
+`universe` left unpopulated, still a curated manual concept).
+
+**Cover images -- real, deliberate, documented deviation**: this
+environment has no `supabase link` / Storage access (no service-role
+key, no linked project -- confirmed today), so `scripts/lib/self-host-
+cover.js` cannot run here. `cover_url` for all 226 books is Hardcover's
+own asset URL, stored directly, same as pre-2026-09-18 rounds. **These
+226 covers still need the self-hosting backfill from a machine that
+HAS Supabase Storage access** (CLDO's or the repo owner's own) --
+flagged in the migration file's own header comment too, not just here.
+
+**Migration**: `20260921020000_catalog_expansion_round5_226_books.sql`.
+Tested for idempotency in a rolled-back transaction first (applied
+twice inside one uncommitted transaction: +226 books/+85 series after
+the first pass, +0/+0 after the second, then rolled back -- confirmed
+safe before touching real data, per this project's standing
+rolled-back-transaction-testing convention). Applied for real via
+autocommit psycopg2 (this environment has no local Supabase stack, so
+this is the hosted-direct-apply path CLAUDE.md documents, not
+`supabase db push`): 1257 -> 1483 books, 485 -> 570 series. Tracking
+closed via `supabase migration repair --status applied --db-url ...
+20260921020000`, verified clean via `supabase migration list
+--db-url ...` (both local and remote timestamps present, no gap).
+
+**No Book DNA tagging done** -- bibliographic ingestion only, per the
+task's explicit scope; all 226 are new untagged rows, automatically
+excluded from `recommend.py` scoring via `load_catalog()`'s inner join
+on `book_dna`, same as every prior round. `docs/TODO.md` updated with
+a new entry (not an extension of the now-closed round-4 one) noting
+these 226 books are ready for a future tagging round and that their
+covers need the self-hosting backfill.
+
+Catalog now **1483 books / 570 series** (was 1257/485).

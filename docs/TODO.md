@@ -2130,6 +2130,30 @@ worth deferring to a later session rather than batching in for
   2026-09-11 despite being deliberately deleted 2026-09-09 for the same
   out-of-scope reason; archived this time instead of silently
   re-deleted, so there's a durable record if it happens again).
+- [ ] **Catalog expansion round 5 landed 2026-09-21 -- 226 new untagged
+  books entered the queue, real tagging work again (a new batch, this
+  is NOT an extension of the now-closed round-4 item above -- that one
+  stays resolved).** Catalog now 1483 books / 570 series (was
+  1257/485). Unlike round 4, this batch went through a real
+  pre-insertion quality filter (Hardcover's own `book_category_id`
+  format field plus `cached_tags.Genre` real vote counts, not just the
+  loose `genres:=[X]` search filter) -- see `docs/project-log.md`'s
+  2026-09-21 "Catalog expansion round 5" entry for the full method,
+  so this batch should NOT need the same kind of after-the-fact
+  scope audit round 4 needed. Two things to know before tagging:
+  (a) **covers are NOT self-hosted for these 226** -- `cover_url` still
+  points at Hardcover's own asset URL (the ingesting environment had no
+  Supabase Storage access) -- these need to go through the
+  self-hosting backfill (`scripts/lib/self-host-cover.js`) from a
+  machine that has it (CLDO's or the repo owner's own) before or
+  during tagging, not left pointing at Hardcover's CDN long-term (see
+  CLAUDE.md's 2026-09-18 cover-hotlinking note for why); (b) genre
+  false positives should be rare in this batch but weren't
+  impossible to fully rule out for the 144 of the 226 that got a
+  manual literary-knowledge screen rather than a hard vote-count
+  signal (thin community tag data) -- if a book turns out to have no
+  real SFF content at tagging time, flag it per the usual policy
+  rather than assuming the pre-filter already caught everything.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done
