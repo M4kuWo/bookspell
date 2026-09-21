@@ -2184,9 +2184,17 @@ worth deferring to a later session rather than batching in for
   `docs/project-log.md`'s 2026-09-21 "Catalog tagging batch 11" entry
   for full detail, including two flagged-not-resolved items for the
   repo owner: an unpublished book ("The Thorn of Emberlain") sitting in
-  the untagged queue, and a mechanical `narrator_cast` backfill
-  opportunity for the 1157 already-tagged books with real
-  `audiobook_editions` data. **193 untagged, not-archived books remain**
+  the untagged queue (still open), and a mechanical `narrator_cast`
+  backfill opportunity for the already-tagged books with real
+  `audiobook_editions` data -- **DONE 2026-09-21 (later)**: 739 of 1193
+  then-tagged books backfilled (97 full_cast, 569 single_narrator, 73
+  dual_narrator), 56 left NULL as a genuine enum gap (3+ narrators on a
+  standard edition, or mixed single/dual-narrator editions of the same
+  book), remaining 398 have no `audiobook_editions` row yet. Migration
+  `20260921060000_backfill_narrator_cast_catalog_wide.sql`, see
+  `docs/project-log.md`'s 2026-09-21 "(later)" entry and
+  `docs/schema/book-dna.md`'s Tier A section for full detail. **193
+  untagged, not-archived books remain**
   (was 211; catalog now 1175 tagged / 1483 total). He Who Fights with
   Monsters (3/8 tagged) and the remaining 5 Cradle books are the next
   clearest partial-series opportunities for a future batch.

@@ -294,6 +294,21 @@ documented in `book-dna.schema.yaml`'s comments, not here — caught stale
 2026-09-21 when a tagging batch found `narrator_cast` null on all 1157
 then-tagged books despite being Tier A.
 
+**Catalog-wide backfill run 2026-09-21** (migration
+`20260921060000_backfill_narrator_cast_catalog_wide.sql`, mechanical —
+derived straight from `audiobook_editions`, not per-book judgment):
+739 of the then-1193 tagged books got a real value (97 `full_cast`, 569
+`single_narrator`, 73 `dual_narrator`). **56 books were left NULL as a
+real, open enum gap, not silently dropped**: a `standard`-type
+`audiobook_editions` row with 3+ narrators, or a book carrying BOTH a
+1-narrator and a 2-narrator `standard` edition (genuinely different
+narrations — which one is "the" `narrator_cast`?), has no value that
+fits `single_narrator`/`dual_narrator`/`full_cast` (that last one
+specifically means a dramatized production, not just "more than 2
+narrators" on an ordinary reading). If a 4th value is ever worth adding
+here (e.g. `multi_narrator` for a 3+-narrator standard edition), this
+is the real evidence base for it — not designed speculatively.
+
 ### 5. Tropes & craft — SFF extension, v1 only
 | Field | Values |
 |---|---|

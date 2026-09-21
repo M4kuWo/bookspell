@@ -20700,3 +20700,45 @@ Catalog-wide: **1193 tagged books** (was 1175), **175 untagged,
 not-archived books remain** in the round-5-plus-earlier-leftover queue
 (was 193). `docs/TODO.md`'s round-5 entry updated with this batch's
 results and the new remaining count.
+
+## 2026-09-21 (later): backfilled narrator_cast catalog-wide, 739 of 1193 tagged books (CLDA)
+
+Follow-up to today's earlier finding that a stale skill instruction
+silently excluded `narrator_cast` (a Tier A, mechanically-derivable
+`book_dna` column) from every tagging batch until round-5 batch 2
+caught and fixed it. That fix only applied going forward -- this is the
+one-pass mechanical backfill for the 1193 books tagged before it, per
+the repo owner's direct request to go ahead with it.
+
+**Method, straight from `audiobook_editions` (no per-book judgment
+needed)**: a `dramatized_full_cast` edition -> `full_cast` regardless of
+narrator count; else a `standard` edition with exactly 1 or 2 narrators
+-> `single_narrator`/`dual_narrator` by `array_length`; a `standard`
+edition with 3+ narrators, or a book with both a 1- and a 2-narrator
+`standard` edition (genuinely different narrations), has no clean enum
+value -- left NULL rather than forced, same as the skill's own per-book
+rule.
+
+**Result**: 739 real values set (97 full_cast, 569 single_narrator, 73
+dual_narrator). 56 left NULL as a genuine enum gap (flagged in
+`docs/schema/book-dna.md`'s Tier A section, not silently dropped -- real
+evidence base for a possible future `multi_narrator` value). Remaining
+398 have no `audiobook_editions` row at all yet, correctly still NULL.
+
+**Safety check before writing anything**: verified zero `(title,
+author)` collisions across all 739 candidate rows before generating the
+migration (a batched single query, not 739 round-trips) -- confirmed
+zero duplicate `(title, author)` pairs exist catalog-wide right now, so
+every UPDATE's title+author scoping is guaranteed to hit exactly the
+intended row.
+
+Migration `20260921060000_backfill_narrator_cast_catalog_wide.sql`,
+tested in a rolled-back transaction with a genuine idempotency re-run
+(739 both times), applied via autocommit psycopg2, verified live
+(569/97/73 split matches exactly), migration-tracking repaired via
+`supabase migration repair --status applied --db-url ... 20260921060000`.
+
+No book_dna fields other than `narrator_cast` touched. Not currently
+read by `scripts/recommend.py` (confirmed via grep) -- purely a
+data-completeness fix for the still-unbuilt audiobook-native feature,
+not a scoring change.
