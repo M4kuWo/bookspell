@@ -111,8 +111,12 @@ order by column_name;
 ```
 
 Compare the result against Step 3's mandatory column list below (plus
-`book_id`, `genre`, and the 5 excluded Tier B audiobook columns). If a
-live column isn't on that list, or a listed column no longer exists:
+`book_id`, `genre`, the 4 excluded Tier B audiobook columns
+(`narrator_performance`/`narration_pace_vs_prose`/`accent_authenticity`/
+`production_quality`), and `narrator_cast` -- a Tier A audiobook column,
+NOT part of the Tier B exclusion despite living in the same
+`audiobook_native` module; see Step 3's note on it). If a live column
+isn't on that list, or a listed column no longer exists:
 **stop and fix Step 3's list (and this skill's other affected sections,
 and the example INSERT) before tagging a single book** -- don't tag a
 batch against a list you already know is stale, and don't silently work
@@ -726,7 +730,7 @@ null on purpose.) If a field genuinely doesn't apply to a book (e.g.
 value if the schema defines one for that field -- don't just omit the
 column.
 
-**`romance_tone` and `worldbuilding_delivery` are the two genuine
+**`romance_tone` and `worldbuilding_delivery` are two genuine
 exceptions to "always fill every column"** -- unlike every other field
 above, they have no `none` value on their enum (`understated`/
 `melodramatic`/`mixed` and `woven`/`exposition_dump`/`mixed`
@@ -738,6 +742,31 @@ force a value onto a book where the axis doesn't meaningfully apply. See
 "Tagging romance_tone and worldbuilding_delivery" below for the real
 evidence standard before assigning either one; it's substantially
 stricter than this skill's other fields, for a documented reason.
+
+**`narrator_cast` (added to this list 2026-09-21, was silently being
+skipped -- see the 2026-09-21 project-log entry) is a third genuine
+exception, for a different reason: it's Tier A (`single_narrator`/
+`dual_narrator`/`full_cast`), not a Tier B judgment field, and IS meant
+to be filled whenever the data exists -- but the data is external
+audiobook-edition metadata, not something inferable from reading the
+book, and most books don't have it yet.** Compute it from
+`audiobook_editions` (NOT `books.narrators`, which is populated for
+only 1 book catalog-wide despite the schema.yaml comment suggesting
+otherwise -- `audiobook_editions.narrators` is the real, populated
+source, see `docs/project-log.md`'s 2026-09-11 narrator-backfill
+entries): if the book has an `audiobook_editions` row with
+`edition_type = 'dramatized_full_cast'`, tag `full_cast` (regardless of
+that row's own narrator count). Else, if it has a `standard`-type row,
+tag `single_narrator` (1 narrator) or `dual_narrator` (2 narrators) by
+`array_length(narrators, 1)`. A `standard`-type row with 3+ narrators
+has no clean enum value (real cases exist, ~41 books catalog-wide) --
+don't force it into `full_cast` (that value specifically means a
+dramatized production, not just "more than 2 narrators"); leave it
+NULL and flag it as a vocabulary gap instead. If the book has no
+`audiobook_editions` row at all (the common case -- 796/1483 books
+have one as of 2026-09-21), leave `narrator_cast` NULL -- same
+data-doesn't-exist-yet reasoning as the other two exceptions above, not
+a value to guess at.
 
 **`genre_accessibility` (added 2026-09-03) works differently from every
 other field above -- start from a computed baseline, then adjust, don't
@@ -798,6 +827,7 @@ insert into book_dna (
   violence_frequency, violence_intensity, worldbuilding_density,
   worldbuilding_delivery, narrative_closure,
   emotional_resolution, ends_on_cliffhanger, audiobook_length,
+  narrator_cast,
   magic_system_hardness, scifi_hardness, prose_density, prose_complexity,
   intellectual_weight, stakes_scope, personal_stakes, genre_accessibility
 )
@@ -809,6 +839,7 @@ select
   'occasional', 'graphic', 'moderate',
   null, 'requires_series',
   'bittersweet', 'cliffhanger', 'standard',
+  null,
   'soft', 'na', 'moderate', 'moderate',
   'moderate', 'regional', 'high', 'moderate'
   -- romance_tone/worldbuilding_delivery left null here since this is a
@@ -816,6 +847,10 @@ select
   -- judge -- a real book with either axis present would carry a real
   -- value ('understated'/'melodramatic'/'mixed',
   -- 'woven'/'exposition_dump'/'mixed'), never guessed from genre alone.
+  -- narrator_cast left null here too -- this placeholder has no
+  -- audiobook_editions row to compute it from; see Step 3's note on
+  -- narrator_cast above for the real single_narrator/dual_narrator/
+  -- full_cast computation when a real book does have one.
   -- genre_accessibility: prose_complexity=moderate(0.5), overall_pace=fast
   -- (inverted: 0), worldbuilding_density=moderate(0.5), pov_count=few(0.5),
   -- intellectual_weight=moderate(0.5) -> average 0.4 -> 'moderate' tier.

@@ -2172,6 +2172,24 @@ worth deferring to a later session rather than batching in for
   `docs/project-log.md`'s 2026-09-21 "Catalog tagging batch 10" entry
   for full detail. **211 untagged, not-archived books remain** (was
   229; catalog now 1157 tagged / 1483 total).
+  **Batch 11 done 2026-09-21 (CLDA, second pass into this pool)**: 18
+  more books tagged, completing 15 series outright (The Dresden Files,
+  Children of Time, The Final Architecture, Red Queen, The Riftwar Saga,
+  Sword of Truth, Legend, Caraval, Miss Peregrine's Peculiar Children,
+  Revelation Space, Uglies, Once Upon a Broken Heart, Wayward Children,
+  Ana and Din Mysteries, Legends & Lattes, plus The Captive's War) and
+  moving Cradle from 3/10 to 5/10. Caught and fixed a real skill/schema
+  drift (`narrator_cast`, a Tier A audiobook column, was silently
+  excluded from every prior batch's mandatory-column list) -- see
+  `docs/project-log.md`'s 2026-09-21 "Catalog tagging batch 11" entry
+  for full detail, including two flagged-not-resolved items for the
+  repo owner: an unpublished book ("The Thorn of Emberlain") sitting in
+  the untagged queue, and a mechanical `narrator_cast` backfill
+  opportunity for the 1157 already-tagged books with real
+  `audiobook_editions` data. **193 untagged, not-archived books remain**
+  (was 211; catalog now 1175 tagged / 1483 total). He Who Fights with
+  Monsters (3/8 tagged) and the remaining 5 Cradle books are the next
+  clearest partial-series opportunities for a future batch.
 - [ ] **`series.status`/`book_count` is systemically wrong catalog-wide
   -- root cause found 2026-09-08, batch 1 done 2026-09-11, batches 2-6
   done 2026-09-12, batches 7-8 done 2026-09-13, batches 9-13 done

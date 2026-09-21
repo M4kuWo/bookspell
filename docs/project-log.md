@@ -20419,3 +20419,165 @@ Catalog-wide: **1157 tagged books** (was 1139), **211 untagged,
 not-archived books remain** in the round-5-plus-earlier-leftover queue
 (was 229). `docs/TODO.md`'s round-5 entry updated with this batch's
 results and the new remaining count.
+
+## 2026-09-21, later still -- Catalog tagging batch 11: 18 books, full Book DNA (CLDA)
+
+Second tagging batch drawn from the round-5 pool. Ran the skill's Step 2
+partial-series-first query with `and b.archived = false`; picked 18
+books across 15 series (plus 2 more Cradle entries), completing 15
+series outright and moving Cradle from 3/10 to 5/10.
+
+**Real skill/schema drift caught by Step 1.5 (mandatory, run first)**:
+`narrator_cast` -- a Tier A audiobook column (added in the 2026-08-29
+audiobook_native tier split, explicitly "cheap to source, worth
+completing" per `book-dna.schema.yaml`'s own comment) -- was live in
+`book_dna` but absent from the skill's mandatory-column list. Step
+1.5's own text said "5 excluded Tier B audiobook columns" while Step 3
+only ever named 4 by name (`narrator_performance`/
+`narration_pace_vs_prose`/`accent_authenticity`/`production_quality`)
+-- `narrator_cast` was silently being folded into that exclusion despite
+being Tier A, not Tier B. Confirmed via `information_schema.columns`:
+`narrator_cast` is null on all 1157 previously-tagged books, catalog-wide
+-- every prior batch (including batch 10 this same day, which explicitly
+logged "no drift" against a miscounted "32 mandatory + 5 Tier B = 39"
+check) inherited this gap. Fixed `.claude/skills/tag-catalog-batch/
+SKILL.md` (Step 1.5's column-count text, Step 3's mandatory-column
+exceptions list, the example INSERT) and `docs/schema/book-dna.md`'s
+Audiobook-native section (never updated for the 2026-08-29 tier split --
+still described the whole module as uniformly "skipped for the pilot
+corpus," no Tier A/B distinction at all) in this same session, per
+CLAUDE.md's schema-doc-sync rule. Computed `narrator_cast` from
+`audiobook_editions` (not `books.narrators`, which is populated for only
+1 book catalog-wide despite schema.yaml's comment suggesting otherwise --
+`audiobook_editions.narrators` is the real, populated source) for all 18
+books in this batch: none have an `audiobook_editions` row yet (796/1483
+catalog-wide do), so `narrator_cast` is correctly NULL on every row below,
+not a gap this batch introduced. **Flagging to the repo owner**: the
+1157-book `narrator_cast` backfill for already-tagged books with real
+`audiobook_editions` data is a mechanical, scriptable follow-up (single_
+narrator/dual_narrator from `array_length(narrators,1)` on a `standard`
+edition, `full_cast` from a `dramatized_full_cast` edition, per the
+skill's fixed Step 3 note), not per-book tagging work -- a good candidate
+for a small one-off script rather than folding into future tag-catalog-
+batch runs.
+
+**Books tagged** (title -- series, position): Twelve Months (The Dresden
+Files #18), Children of Strife (Children of Time #4), Lords of Uncreation
+(The Final Architecture #3), War Storm (Red Queen #4), A Darkness at
+Sethanon (The Riftwar Saga #3), Blood of the Fold (Sword of Truth #3),
+Champion (Legend #3), Finale (Caraval #3), Library of Souls (Miss
+Peregrine's Peculiar Children #3), Redemption Ark (Revelation Space #2),
+Specials (Uglies #3), A Curse for True Love (Once Upon a Broken Heart
+#3), Beneath the Sugar Sky (Wayward Children #3), A Trade of Blood (Ana
+and Din Mysteries #3), Livesuit (The Captive's War #1.5), Brigands &
+Breadknives (Legends & Lattes #3), Skysworn (Cradle #4), Ghostwater
+(Cradle #5).
+
+**Series completed this batch (15)**: The Dresden Files (19/19),
+Children of Time (4/4), The Final Architecture (3/3), Red Queen (4/4),
+The Riftwar Saga (3/3 tracked), Sword of Truth (3/3 tracked), Legend
+(3/3), Caraval (3/3), Miss Peregrine's Peculiar Children (3/3),
+Revelation Space (3/3 tracked), Uglies (3/3), Once Upon a Broken Heart
+(3/3), Wayward Children (3/3 tracked), Ana and Din Mysteries (3/3
+tracked), Legends & Lattes (3/3 tracked), and The Captive's War (3/3
+tracked, via the `Livesuit` novella). Cradle moved from 3/10 to 5/10
+(Skysworn, Ghostwater) -- 5 books remain for a future batch.
+
+**Deliberately skipped, not guessed**: "The Thorn of Emberlain" (Scott
+Lynch, Gentleman Bastard #4) surfaced in the Step 2 query but is
+UNPUBLISHED -- confirmed via Wikipedia ("planned fourth of seven books
+in the series," no release date, listed under "Planned works"). Has no
+real text to tag; flagging to the repo owner as a data-quality question
+(why an unpublished/no-release-date book is sitting in the untagged
+`books` catalog at all -- possibly a speculative Hardcover listing that
+shouldn't have been ingested, or should be archived until it actually
+releases) rather than resolving it myself. He Who Fights with Monsters
+5-8 (3/8 tagged, real partial-series opportunity) was also left for a
+future batch -- this session's budget went to the safer completions
+above rather than a 5-book LitRPG stretch that deserves its own careful
+person/POV verification pass given this project's Dungeon Crawler Carl
+precedent (LitRPG "usually" reads a certain way and sometimes doesn't).
+
+**Author-field contamination found and fixed inline** (verified via
+Hardcover's `cached_contributors` GraphQL API before inserting, per
+CLAUDE.md, not deferred):
+- *War Storm* (Victoria Aveyard) author field was "Victoria Aveyard,
+  Vikas Adam, Amanda Dolan, Charlie Thurston, Erin Spencer, Saskia
+  Maarleveld" -- the latter 5 are all audiobook Narrators, not
+  co-authors. Fixed to "Victoria Aveyard".
+- *He Who Fights with Monsters 4* author field included "Heath Miller"
+  (Narrator) alongside two genuine "Author"-role credits ("Shirtaloon"
+  is Travis Deverell's pen name; both legitimately author, not
+  contamination between them). Fixed to "Shirtaloon, Travis Deverell" --
+  found while checking HWFWM siblings for consistency before deciding
+  not to tag that series this round; fixed inline as a single verified,
+  scoped UPDATE even though this book isn't part of this batch's tagging.
+
+**HIGH_RISK_FIELDS applied**: person/pov_count checked against each
+series' own established pattern via sibling `book_dna` rows queried
+before tagging (not defaulted from genre reputation) for every book --
+e.g. *Beneath the Sugar Sky*'s multi-character quest structure checked
+against Wayward Children's own precedent rather than assumed single-POV
+like most of the series; `pace_shape: slow_burn_to_fast_finish` applied
+to the six trilogy-finale books (*Lords of Uncreation*, *Champion*,
+*Finale*, *Library of Souls*, *Specials*, *A Curse for True Love*) as a
+deliberate deviation from their own series' usual "consistent" tag.
+
+**Children of Strife** (Adrian Tchaikovsky, published 2026-03-13) is
+AFTER this session's January 2026 knowledge cutoff -- tagged from its
+real Hardcover-sourced synopsis plus very strong 3-book series-pattern
+calibration (person/drive/scifi_hardness/worldbuilding_density/romance
+fields/stakes_scope were UNANIMOUS across all 3 predecessors, a strong
+prior). Fields with genuinely weaker basis (`pov_count`, `timeline`,
+`violence_frequency`/`violence_intensity`, `personal_stakes`,
+`emotional_resolution`) are recorded at real, honest low confidence
+(0.4-0.5) via `book_field_confidence` rather than guessed at full
+confidence.
+
+**Genuine uncertainty recorded via `book_field_confidence`** (22 rows)
+**plus one `book_tropes.confidence` row** (`slow_burn_romance` on
+*Brigands & Breadknives*, 0.5 -- a real but not fully scene-verified
+call): concentrated on `romance_tone` (6 books: *War Storm*, *Blood of
+the Fold*, *Champion*, *Finale*, *Library of Souls*, *A Curse for True
+Love* -- each matched to real, evidence-backed series-sibling precedent
+per the skill's strict evidence standard, none guessed from reputation
+alone) plus the *Children of Strife* cluster above and a handful of
+individual judgment calls (`ends_on_cliffhanger` on *Twelve Months*/
+*Blood of the Fold*, `pov_count`/`narrative_closure` on *A Trade of
+Blood*, `pov_count`/`worldbuilding_density` on *Livesuit*, `person` on
+*Brigands & Breadknives*, `scifi_hardness` on *Lords of Uncreation*,
+`personal_stakes` on *Beneath the Sugar Sky*, `message_intensity`/
+`romance_heat_frequency` on *Blood of the Fold*). Left `romance_tone`
+NULL (not guessed) on 9 of the 18 books where I had no real
+presentation-specific evidence, consistent with the field's strict
+evidence standard.
+
+**No new vocabulary gaps hit** -- checked this batch's content against
+`docs/schema/book-dna.md`'s "Flagged single-occurrence vocabulary gaps"
+tracker before tagging; none of the currently-open gaps matched anything
+in this batch's 18 books.
+
+**Density self-check** (queried fresh): catalog-wide average **5.27
+tropes/book, 1.68 content warnings/book** (1157 already-tagged books,
+before this batch -- unchanged from batch 10's same-day number, as
+expected with no tagging in between). This batch landed at **4.72
+tropes/book (85 tropes across 18 books, ~90% of catalog average)** and
+**1.39 content warnings/book (25 CWs across 18 books, ~83% of catalog
+average)** -- both within the skill's ~20%-below tolerance.
+
+**Migration**: `20260921040000_catalog_tagging_batch11_18books.sql`.
+Tested in a rolled-back transaction first (18/18 book_dna rows landed
+cleanly, zero nulls across all mandatory columns including the newly-
+required `narrator_cast` check, both author-contamination fixes, 85
+trope rows, 25 CW rows, 23 confidence rows, then rolled back). Applied
+for real via autocommit psycopg2 against hosted (this environment has no
+local Supabase stack). Migration tracking closed via `supabase migration
+repair --status applied --db-url ... 20260921040000`, verified clean via
+`supabase migration list --db-url ...` (both `local` and `remote`
+entries present, no gap). Duplicate-timestamp check showed only the
+known `.tsv`-manifest false positive from 2026-09-11, nothing new.
+
+Catalog-wide: **1175 tagged books** (was 1157), **193 untagged,
+not-archived books remain** in the round-5-plus-earlier-leftover queue
+(was 211). `docs/TODO.md`'s round-5 entry updated with this batch's
+results and the new remaining count.

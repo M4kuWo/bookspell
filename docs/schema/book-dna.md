@@ -275,8 +275,24 @@ holds as the wedge even if the genre scope expands later.
 from `book_length` — narration pace means the two can diverge, and for an
 audiobook-first product, hours-to-listen is the more relevant
 approachability signal than page count for a large share of users.
-Skipped for the pilot corpus along with every other `audiobook_native`
-field.
+
+**Split 2026-08-29 into two tiers** after realizing this whole module was
+100% untagged across the catalog. **Tier A** — `narrator_cast` and
+`audiobook_length` — is ordinary publisher/retailer metadata, cheap to
+source from `audiobook_editions` (see that table's `edition_type`/
+`narrators` columns), and is filled in as part of normal `book_dna`
+tagging going forward (mandatory-when-computable, per
+`.claude/skills/tag-catalog-batch/SKILL.md`'s Step 3 — null only when no
+`audiobook_editions` row exists yet for that book, or when a `standard`
+edition has 3+ narrators with no clean enum value). **Tier B** —
+`narrator_performance`, `narration_pace_vs_prose`, `accent_authenticity`,
+`production_quality` — is subjective listening judgment with no ordinary
+metadata source (professional audio reviews / Audible sentiment mining
+only, both with real coverage gaps); deliberately still deferred, see
+project-log.md's 2026-08-29 entry. This distinction was previously only
+documented in `book-dna.schema.yaml`'s comments, not here — caught stale
+2026-09-21 when a tagging batch found `narrator_cast` null on all 1157
+then-tagged books despite being Tier A.
 
 ### 5. Tropes & craft — SFF extension, v1 only
 | Field | Values |
