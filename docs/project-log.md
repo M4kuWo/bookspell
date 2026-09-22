@@ -21088,3 +21088,21 @@ Final state, verified both sides: `check_db_sync.py` clean across all 6
 tables (books 1484/1484, book_dna 1229/1229, book_tropes 6460/6460,
 matching hosted); 0 books left pointing at Hardcover's own CDN for
 `cover_url`; The Faithful and the Fallen 4/4 in catalog.
+
+## 2026-09-22, later -- CODX Task 15 landed: minimal CI workflow
+
+Reviewed CODX's proposal (`.github/workflows/ci.yml` +
+`.github/scripts/check-inline-js.cjs`, full detail and evidence in
+CODX's own `docs/codx-reports/2026-09-22-ci-workflow.md`, uncommitted in
+its clone per its review-only scope) and independently re-ran all three
+checks against this repo directly (not just trusting its evidence) --
+Python syntax, inline-JS syntax, duplicate-SQL-migration-timestamps --
+all passed clean, matching CODX's own results. Landed as-is, no changes
+needed. Real judgment calls CODX made, both reasonable: filtering the
+duplicate-timestamp check to `*.sql` only (correctly leaves the known
+harmless `20260911110000` SQL/TSV pair green without special-casing it,
+while still catching a genuine future SQL-vs-SQL collision), and
+`compileall` over `py_compile` for clearer multi-file output. `contents:
+read` only, no secrets, no DB access, no branch-protection changes --
+exactly the budget-scoped slice it was asked for. Closes the "zero CI"
+gap the 2026-09-14 external-AI-consultation review flagged.

@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  syntax-and-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Check Python syntax
+        run: python3 -m compileall -q -f scripts api
+      - name: Check inline JavaScript syntax
+        run: node .github/scripts/check-inline-js.cjs
+      - name: Check duplicate migration timestamps
+        shell: bash
+        run: |
+          # Supabase tracks SQL files, not accompanying TSV manifests.
+          # cut + uniq is the portable equivalent of GNU uniq -w14.
+          duplicates=$(ls supabase/migrations/*.sql | sed 's|.*/||' | cut -c1-14 | sort | uniq -c | awk '$1>1')
+          if [[ -n "$duplicates" ]]; then
+            echo "Duplicate SQL migration timestamps:"
+            echo "$duplicates"
+            exit 1
+          fi
+          echo "No duplicate SQL migration timestamps."
