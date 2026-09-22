@@ -2140,15 +2140,11 @@ worth deferring to a later session rather than batching in for
   loose `genres:=[X]` search filter) -- see `docs/project-log.md`'s
   2026-09-21 "Catalog expansion round 5" entry for the full method,
   so this batch should NOT need the same kind of after-the-fact
-  scope audit round 4 needed. Two things to know before tagging:
-  (a) **covers are NOT self-hosted for these 226** -- `cover_url` still
-  points at Hardcover's own asset URL (the ingesting environment had no
-  Supabase Storage access) -- these need to go through the
-  self-hosting backfill (`scripts/lib/self-host-cover.js`) from a
-  machine that has it (CLDO's or the repo owner's own) before or
-  during tagging, not left pointing at Hardcover's CDN long-term (see
-  CLAUDE.md's 2026-09-18 cover-hotlinking note for why); (b) genre
-  false positives should be rare in this batch but weren't
+  scope audit round 4 needed. **(a) covers RESOLVED 2026-09-22 (CLDO)**
+  -- all 226 self-hosted (were pointing at Hardcover's own CDN, the
+  ingesting environment had no Storage access), see project-log.md's
+  matching entry. (b) genre false positives should be rare in this
+  batch but weren't
   impossible to fully rule out for the 144 of the 226 that got a
   manual literary-knowledge screen rather than a hard vote-count
   signal (thin community tag data) -- if a book turns out to have no
@@ -2213,7 +2209,14 @@ worth deferring to a later session rather than batching in for
   Chronicles, and Rivers of London (all 2/2 or 3/3 in-catalog), plus
   moving The Faithful and the Fallen to 3/3 of what's actually in the
   catalog (book 3 "Ruin" was never ingested -- a real ingestion gap,
-  flagged for the repo owner, not a tagging problem). Verified the
+  flagged for the repo owner, not a tagging problem).
+  **RESOLVED 2026-09-22 (CLDO), along with 4 other items flagged across
+  these batches: Remote Control's wrong series_id, Thorn of Emberlain
+  (archived, unpublished), and the Holly/Lottery/Egg scope calls (Holly
+  + Lottery archived as non_sff_genre_leakage per the repo owner's
+  direct call; Egg's standalone row replaced with the real "The Egg and
+  Other Stories" collection, which IS in-scope) -- see project-log.md's
+  2026-09-22 entry for the full detail on all 5.** Verified the
   "Shirtaloon, Travis Deverell" two-name author field on all 5 He Who
   Fights with Monsters books via Hardcover's own `cached_contributors`
   -- both names carry contributor role "Author" (same person's pen name

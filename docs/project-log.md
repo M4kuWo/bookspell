@@ -21010,3 +21010,81 @@ Catalog-wide: **1229 tagged books** (was 1211), **139 untagged,
 not-archived books remain** in the round-5-plus-earlier-leftover queue
 (was 157). `docs/TODO.md`'s round-5 entry updated with this batch's
 results and the new remaining count.
+
+## 2026-09-22 -- CLDO sync + all 5 items CLDA flagged during round-5 tagging resolved
+
+Session start: pulled 14 commits CLDA had pushed straight to `origin/main`
+since her last logged status (2026-09-20, ~25% budget) -- 9 more tagging
+batches (round-4 close-out batches 6-9, round-5 batches 10-14), the
+`books.archived` mechanism (115 books archived), catalog expansion
+round 5 (226 new books, catalog to 1483), and a catalog-wide
+`narrator_cast` backfill + new `multi_narrator` enum value. All clean:
+`supabase migration list --linked` showed every local version already
+matched on remote (no tracking-table repair needed), nothing in
+`docs/PENDING_APPROVALS.md`. Local Postgres had drifted behind hosted as
+a result (`check_db_sync.py`: books 1257 vs 1483, book_dna 1059 vs 1229,
+book_tropes 5689 vs 6460) -- applied all 14 pulled migrations locally via
+the documented raw-psycopg2 method; local matched hosted after.
+
+Then resolved the 5 real findings CLDA had flagged along the way as not
+hers to fix (explicit repo-owner request):
+
+1. **"Remote Control" (Nnedi Okorafor) had "Who Fears Death"'s series_id**
+   -- a standalone novella incorrectly sharing a series with an unrelated
+   book. Decoupled (`series_id = null`), scoped by (title, author).
+2. **"The Thorn of Emberlain" (Scott Lynch)** -- confirmed unpublished
+   across two separate CLDA tagging passes, still sitting untagged.
+   Archived (`archived_reason = 'unpublished'`), same treatment as the
+   round-4 archive batch.
+3. **"Ruin" (John Gwynne, The Faithful and the Fallen #3)** -- a real
+   ingestion gap; the series was 3/4 in catalog. Ingested via a new
+   `scripts/ingest-ruin.js` (hardcover_id 1235599, series hardcover_id
+   2438 already in catalog), cover self-hosted. Series now 4/4. Not yet
+   tagged -- left for the next tag-catalog-batch pass (a natural
+   partial-series-completion pick).
+4. **3 open scope calls from the round-4 archive batch, resolved by the
+   repo owner directly**:
+   - *Holly* (Stephen King) -- mostly straight crime/thriller, thin
+     supernatural thread. Repo owner: out of scope. Archived
+     (`non_sff_genre_leakage`).
+   - *The Egg* (Andy Weir) -- was ingested as a standalone ~1,000-word
+     flash-fiction piece, not a real book. Repo owner's framing: a short
+     story is in scope via a real compilation, not by itself. Checked
+     Hardcover: a real audio-exclusive collection exists, "The Egg and
+     Other Stories" (hardcover_id 839124), tagged Science Fiction/Fantasy
+     by Hardcover itself. Deleted the standalone row (a mis-ingest, not
+     an out-of-scope book -- zero dependent rows, confirmed first) and
+     ingested the real collection via a new
+     `scripts/ingest-egg-and-other-stories.js` (author field "Andy Weir"
+     only, excluding the 3 audiobook narrators Hardcover's own
+     `author_names` lumps in -- confirmed via `contribution_types`).
+   - *The Lottery* (Shirley Jackson) -- same short-story situation, but
+     checked first and the real collection ("The Lottery and Other
+     Stories") is itself tagged "Gothic" by Hardcover, not Science
+     Fiction/Fantasy, with a straight-horror description and no
+     speculative elements. Repo owner: archive, same as Holly
+     (`non_sff_genre_leakage`) -- not a format problem this time, a
+     genuine scope miss even at the full-collection level.
+5. **226 round-5 books still pointed at Hardcover's own CDN for
+   `cover_url`** (CLDA's ingesting environment had no Supabase Storage
+   access). Backfilled via a new `scripts/backfill-round5-covers.js`,
+   run against local first: all 226 succeeded (0 failures), migration
+   generated with hardcover_id-scoped UPDATEs (never a raw local uuid,
+   since local/hosted ids differ for the same book).
+
+**One real migration-timestamp collision hit and fixed along the way**:
+`backfill-round5-covers.js` wrote its own migration at a hardcoded
+`20260922020000`, but by the time it finished (it ran in the background
+while other fixes above were being pushed) hosted's last-applied
+migration had moved past that timestamp -- `supabase db push` correctly
+refused to insert it "before" an already-applied migration. Confirmed via
+`migration list --linked` that the file had never actually been applied
+to hosted (safe to rename), renamed to a free trailing timestamp
+(`20260922060000`), pushed clean. Same class of issue CLAUDE.md already
+documents, this time from a script's own hardcoded timestamp rather than
+two sessions colliding on the same day.
+
+Final state, verified both sides: `check_db_sync.py` clean across all 6
+tables (books 1484/1484, book_dna 1229/1229, book_tropes 6460/6460,
+matching hosted); 0 books left pointing at Hardcover's own CDN for
+`cover_url`; The Faithful and the Fallen 4/4 in catalog.
