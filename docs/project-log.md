@@ -21156,3 +21156,29 @@ random sample of the 226 repointed covers actually resolving) and a
 bounded ~15-book spot-check sample across CLDA's round-5 tagging batches
 6-14, same HIGH_RISK_FIELDS/author-contamination methodology as its
 prior confidence-QA passes.
+
+## 2026-09-22, later still -- NDCG@5/10/20 and top-K rejection-rate metrics landed, surfaced a real ranking finding
+
+CLDO's own next task per the earlier P1 discussion. Full detail and
+reasoning in `docs/scoring-test-protocol.md`'s matching 2026-09-22
+entry -- short version here: added `ranking_metrics()` to
+`scripts/scoring_tests.py`, measuring where a held-out book actually
+lands in a REAL `api.recommend()` top-K ranking (not just whether its
+isolated match label was right, which is all `recall_and_rejection()`
+could see). Not a scoring-algorithm change -- pure test-harness
+addition, verified by running the full suite to completion (exit 0, no
+regressions in any of the other 13 scenarios).
+
+Real finding, verified by hand (not a bug in the new code): Mathias's
+NDCG@5/10/20 is 0.000 -- none of his 5 held-out loved/liked books crack
+the real top-20 of the ~1483-book catalog, despite scoring 0.46-0.77 in
+isolation. The real top-20 for his profile scores 0.79-0.88; there's
+simply enough other competitive material that a "Good match" book isn't
+competitive for a spot a user would actually see. `top_k_rejection_rate`
+is a clean 100% for him (every dealbreaker correctly excluded).  Osnat:
+same NDCG=0 pattern, rejection_rate 50% (1 of 2 negative held-out titles
+leaks into her top-20). Not chased further this session -- flagged as a
+real open question (data-volume artifact of a still-small catalog/rater
+pool, or a genuine ranking gap) for a future pass once more raters
+exist, per the reader-count-bottleneck framework already tracked in
+`docs/TODO.md`.

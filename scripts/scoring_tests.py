@@ -14,6 +14,7 @@ that shape, not fabricated ratings.
 import sys
 import os
 import json
+import math
 import random
 import statistics
 import ast
@@ -403,6 +404,104 @@ def recall_and_rejection(rows):
         "loved_recall": (sum(1 for r in good if r[4] == "OK"), len(good)),
         "hated_rejection": (sum(1 for r in poor if r[4] == "OK"), len(poor)),
     }
+
+
+def ranking_metrics(catalog, all_ratings, held_out, label, ks=(5, 10, 20),
+                     train_ratings=None, format_preference=None, quiet=False, summary=True):
+    """What recall_and_rejection() can't measure: not just whether a
+    held-out book's OWN predicted label was right, but whether it
+    actually lands in the top-K a real user would see. Trains the same
+    way run_held_out_test() does, then calls the REAL api.recommend()
+    (same eligibility/exclusion logic production uses -- every OTHER
+    trained-on book is excluded as "already_rated", held-out books
+    aren't, since they're absent from the training profile) and looks
+    at where the held-out titles actually land in that ranking.
+
+    Two metrics per k, deliberately kept separate rather than blended
+    into one number -- same reasoning as recall_and_rejection()'s own
+    loved_recall/hated_rejection split (a system can be lopsided on one
+    while looking fine on the other):
+
+    - ndcg: standard graded-relevance NDCG@k (loved=2, liked=1, anything
+      else -- including a disliked/hated held-out title, or any of the
+      huge unrated remainder -- contributes 0 relevance). Rewards
+      surfacing genuinely loved books EARLY in a real top-k, not just
+      correctly labeling them somewhere in a fixed test set.
+    - top_k_rejection_rate: of the held-out hated/disliked titles (real
+      dealbreakers), what fraction are correctly kept OUT of the top-k?
+      1.0 = perfect (every one excluded from what's actually shown).
+      This is hated_rejection's own question, just asked against real
+      rank position in a real recommend() call instead of a fixed-
+      bucket match-label verdict.
+
+    Both are None (not 0.0) when the held-out set has no titles of the
+    relevant kind (no loved/liked for ndcg, no hated/disliked for
+    top_k_rejection_rate) -- "nothing to measure" isn't the same claim
+    as "the system found none of it". Returns {k: {"ndcg", "top_k_rejection_rate",
+    "n_relevant_held_out", "n_negative_held_out"}} for each k in ks."""
+    train = train_ratings if train_ratings is not None else {
+        t: r for t, r in all_ratings.items() if t not in held_out
+    }
+    max_k = max(ks)
+    ranked = api.recommend(catalog, train, top_n=max_k, genre=None,
+                            format_preference=format_preference)
+    ranked_titles = [row[1] for row in ranked]
+
+    RELEVANCE = {"loved": 2, "liked": 1}
+    held_out_labels = {t: all_ratings[t] for t in held_out if t in all_ratings}
+    n_relevant = sum(1 for lbl in held_out_labels.values() if lbl in RELEVANCE)
+    n_negative = sum(1 for lbl in held_out_labels.values() if lbl in EXPECT_POOR)
+    ideal_rels_full = sorted((RELEVANCE[lbl] for lbl in held_out_labels.values() if lbl in RELEVANCE), reverse=True)
+
+    results = {}
+    for k in sorted(ks):
+        window = ranked_titles[:k]
+
+        dcg = 0.0
+        for i, title in enumerate(window, start=1):
+            rel = RELEVANCE.get(held_out_labels.get(title), 0)
+            if rel:
+                dcg += (2 ** rel - 1) / math.log2(i + 1)
+        idcg = sum((2 ** rel - 1) / math.log2(i + 1)
+                   for i, rel in enumerate(ideal_rels_full[:k], start=1))
+        ndcg = (dcg / idcg) if idcg > 0 else None
+
+        window_set = set(window)
+        rejected = sum(1 for t, lbl in held_out_labels.items()
+                       if lbl in EXPECT_POOR and t not in window_set)
+        rejection_rate = (rejected / n_negative) if n_negative > 0 else None
+
+        results[k] = {
+            "ndcg": ndcg, "top_k_rejection_rate": rejection_rate,
+            "n_relevant_held_out": n_relevant, "n_negative_held_out": n_negative,
+        }
+        if not quiet:
+            ndcg_str = f"{ndcg:.3f}" if ndcg is not None else "n/a"
+            rej_str = f"{rejection_rate:.0%}" if rejection_rate is not None else "n/a"
+            print(f"    top-{k:<3} NDCG={ndcg_str:<6} rejection-rate={rej_str}")
+    if summary:
+        print(f"  {label}: ranking metrics over top-{max_k} of a real recommend() call "
+              f"(n_relevant_held_out={n_relevant}, n_negative_held_out={n_negative})")
+    return results
+
+
+def print_ranking_metrics_table(rows):
+    """rows: list of (label, {k: {...}}) pairs, e.g. from calling
+    ranking_metrics() a few times and collecting (label, result). Prints
+    one line per (label, k) combination in a fixed-width table, same
+    style as print_scorecard()."""
+    headers = ["Test", "k", "NDCG@k", "Rejection rate@k", "n_rel", "n_neg"]
+    widths = [32, 4, 10, 18, 6, 6]
+    print("  " + "  ".join(h.ljust(w) for h, w in zip(headers, widths)))
+    print("  " + "-" * (sum(widths) + 2 * (len(widths) - 1)))
+    for label, per_k in rows:
+        for k in sorted(per_k):
+            m = per_k[k]
+            ndcg_str = f"{m['ndcg']:.3f}" if m["ndcg"] is not None else "n/a"
+            rej_str = f"{m['top_k_rejection_rate']:.0%}" if m["top_k_rejection_rate"] is not None else "n/a"
+            cells = [label, str(k), ndcg_str, rej_str, str(m["n_relevant_held_out"]), str(m["n_negative_held_out"])]
+            print("  " + "  ".join(c.ljust(w) for c, w in zip(cells, widths)))
+            label = ""  # only print the test name once per group of k rows
 
 
 def _isolated_training_set(catalog, all_ratings, held_out, isolate_by):
@@ -1189,6 +1288,15 @@ def run_all():
     mathias_format_preference = load_rater_format_preference("mathias")
     run_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, f"held-out, format_preference={mathias_format_preference}",
                        format_preference=mathias_format_preference)
+
+    print("\n=== Scenario 1c: ranking-position metrics (NDCG@5/10/20, top-K rejection rate) ===")
+    print("  Mathias, print-profile baseline (matches Scenario 1's held-out training):")
+    ranking_metrics(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, full")
+    print("  Mathias, real format_preference (matches Scenario 1b):")
+    ranking_metrics(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, real format_preference",
+                     format_preference=mathias_format_preference)
+    print(f"  Osnat ({len(OSNAT_USABLE)} usable ratings):")
+    ranking_metrics(catalog, OSNAT_USABLE, OSNAT_HELD_OUT, "Osnat, full")
 
     print("\n=== Scenario 2: WEIGHT_CAP domination check ===")
     run_weight_cap_check(catalog, "current formula")

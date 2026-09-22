@@ -3428,3 +3428,94 @@ genre requests per "Get recommendations" click, each paying whatever
 `recommend()`'s own cost is independently) remains open, per the
 original TODO entry -- a separate, smaller, frontend-only piece, not
 attempted in this session.
+
+## 2026-09-22 -- NDCG@5/10/20 and top-K rejection-rate metrics added to scripts/scoring_tests.py
+
+From the 2026-09-14 external AI (ChatGPT "Astra") review's confirmed-real,
+not-yet-built list (see `docs/TODO.md`'s P1 entry): a real, genuine gap
+independently re-verified before starting -- `recall_and_rejection()`
+(landed earlier) measures whether a held-out book's own predicted MATCH
+LABEL was right, in isolation, but says nothing about where that book
+actually lands in a real `recommend()` call's top-K, which is the only
+thing a real user ever sees. Not a scoring-algorithm change -- no
+`score_book()`/`build_profile()`/`score_candidate()` edits, purely a new
+read-only measurement in the test harness, so the "two failure
+scenarios before landing" rule for scoring CHANGES doesn't strictly
+apply, but it was run against 2 real raters anyway (see below) as
+routine due diligence.
+
+**What was built**: `ranking_metrics()` in `scripts/scoring_tests.py`,
+trains a profile the same way `run_held_out_test()` does, then calls
+the REAL `api.recommend()` (same eligibility logic production uses --
+every trained-on book excluded as `already_rated`, held-out books
+included since they're absent from the training profile) and measures,
+per k in (5, 10, 20):
+- `ndcg`: standard graded-relevance NDCG@k (loved=2, liked=1, everything
+  else -- including a disliked/hated held-out title -- contributes 0).
+  Kept to non-negative standard relevance deliberately, rather than a
+  signed variant using `RATING_LABELS`' -1..1 scale -- see below.
+- `top_k_rejection_rate`: of the held-out hated/disliked titles, what
+  fraction are correctly kept OUT of the top-k. 1.0 = perfect.
+
+Kept deliberately SEPARATE (not blended into one number), same
+reasoning as `recall_and_rejection()`'s own `loved_recall`/
+`hated_rejection` split, which this directly extends to real rank
+position: a system can be lopsided on one while looking fine on the
+other. Considered a single signed-relevance NDCG (using
+`constants.RATING_LABELS`' -1.0..1.0 scale directly, letting a
+high-ranked hated book contribute negative DCG) but rejected it --
+non-standard (classic NDCG assumes non-negative grades), and the
+existing recall/rejection split already proves this project's own
+convention is to keep those two questions legible separately rather
+than collapse them.
+
+Both metrics report `None` (not `0.0`) when the held-out set has
+nothing of the relevant kind to measure (no loved/liked for `ndcg`, no
+hated/disliked for `top_k_rejection_rate`) -- "nothing to measure" isn't
+the same claim as "the system found none of it," same distinction
+`_pct()` already makes elsewhere in this file.
+
+Wired into `run_all()` as a new Scenario 1c, run against Mathias (both
+the print-profile baseline matching Scenario 1, and his real
+`format_preference` matching Scenario 1b) and Osnat.
+
+**A real, substantive finding, not a bug** (verified by hand before
+trusting it -- see below): Mathias's NDCG@5/10/20 is **0.000** across
+the board. None of his 5 held-out loved/liked titles (Warbreaker, A
+Clash of Kings, Rhythm of War, The Last Wish, Old Man's War) crack the
+real top-20 of a full ~1483-book `recommend()` ranking, despite scoring
+0.46-0.77 individually in the isolated `run_held_out_test()` check
+(several landing "Good"/"Strong match"). The real top-20 for his
+profile scores 0.79-0.88 -- there are simply enough other candidate
+books scoring that high that none of the held-out set is competitive
+for a spot a user would actually see. This is exactly the gap the
+external review's NDCG proposal was meant to expose and
+`recall_and_rejection()` structurally cannot: a book can be correctly
+LABELED a good match while still never actually surfacing. Verified not
+a title-matching/slicing bug in the new code by manually printing
+`api.recommend()`'s real top-20 titles/scores and confirming by eye that
+none of the 5 held-out titles appear anywhere in it (see the
+conversation this landed in for the exact printout). `top_k_rejection_rate`
+is a clean 100% for Mathias at every k (all 5 held-out hated/disliked
+titles correctly absent from the top-20) -- consistent with Scenario
+1's own bucket verdicts, where every one of them already scored "Poor
+match, OK". Osnat: `ndcg` also 0.000 (0 of 3 relevant held-out titles in
+her top-20), `top_k_rejection_rate` 50% (1 of her 2 negative held-out
+titles DOES leak into her top-20) -- a real, smaller-magnitude version
+of the same finding.
+
+**Not investigated further this session** -- landing the metric itself,
+not chasing the finding it surfaced. Worth a dedicated follow-up: is
+"loved/liked held-out books don't crack a full-catalog top-20" a
+structural property of a still-small catalog/rating-count regime (not
+enough signal yet to separate a genuinely great match from a merely
+good one at the very top), or a real ranking-quality gap independent of
+data volume? The reader-count-bottleneck framework this project already
+tracks (`docs/TODO.md`'s P1 external-review entry) is the natural lens
+to revisit this through once more real raters exist.
+
+**Verification**: full `scripts/scoring_tests.py` suite run to
+completion, exit code 0, no regressions in any of the other 13
+scenarios (scorecard/ablation/threshold/dealbreaker/user-rules/
+confidence-floor checks all still pass exactly as before -- this
+change adds a new scenario, touches nothing existing).
