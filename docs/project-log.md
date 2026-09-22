@@ -21106,3 +21106,36 @@ while still catching a genuine future SQL-vs-SQL collision), and
 read` only, no secrets, no DB access, no branch-protection changes --
 exactly the budget-scoped slice it was asked for. Closes the "zero CI"
 gap the 2026-09-14 external-AI-consultation review flagged.
+
+## 2026-09-22, later still -- docs/TODO.md rewritten into short-backlog format; the rule that should have prevented the drift now stated explicitly
+
+Repo owner asked a genuinely good question: was CLDA "going around" a
+stated convention by pasting full narrative into TODO.md items instead
+of pointing at project-log.md, or was the rule never actually stated?
+Answer: the split was described (TODO.md forward-looking/mutable vs.
+project-log.md append-only history) but the anti-duplication rule was
+only ever modeled once, for schema ideas specifically -- never stated as
+a general policy. And it wasn't just CLDA: this session's own earlier
+P0 entries (the v1 web app item, ~370 lines of inline "UPDATE" paragraphs
+across many CLDO sessions) did the same thing.
+
+Fixed both the immediate problem and the gap that caused it:
+- Added an explicit rule to CLAUDE.md's "Logging" section: a TODO.md
+  item is a short pointer, never a second copy of the narrative --
+  log the real story in project-log.md as normal, then come back and
+  collapse the TODO.md item to 1-3 lines plus a pointer.
+- Reinforced the same rule directly in TODO.md's own header, since
+  that's what actually gets read first.
+- Rewrote the whole file: 4,408 lines -> 103 lines (~98% reduction).
+  Done via 3 parallel non-forked background agents (one per P1/P2/P3,
+  per CLAUDE.md's own large-batch-work convention), each given the
+  compressed P0 section as a style example and explicit instructions
+  not to invent/drop real information -- flag anything genuinely unsure
+  about instead. One real flag came back: the shared-universe-linking
+  audit's "confirmed NOT connected, don't re-research" roster (51
+  author-pairings across 9 batches) was a genuine reference list, not
+  narrative, with no other home -- pulled out to its own new file,
+  `docs/universe-linking-negatives.md`, rather than either losing it or
+  leaving it bloating TODO.md. Every other closed item collapsed to a
+  short summary + a project-log.md pointer; every open item kept its
+  real actionable substance (current state, next step, real blockers).

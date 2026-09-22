@@ -748,3 +748,21 @@ successor if superseded) for the original build plan.
   `docs/schema/book-dna.md`'s "Future fields backlog" instead.
 - Migration file comments should explain **why**, not just restate what
   the SQL does.
+- **A `docs/TODO.md` item is a short pointer, never a second copy of the
+  narrative.** When work on an item finishes (or a session makes real
+  progress on it), write the real story — what happened, why, what was
+  verified — as a dated `docs/project-log.md` entry as normal, then go
+  back to the TODO.md item and update it to a line or two: current
+  status, and `see docs/project-log.md's <date> "<title>" entry for
+  detail`. Don't leave the full account sitting in TODO.md too. This
+  was already the stated design (TODO.md is meant to be forward-looking
+  and scannable, project-log.md is the append-only history) but wasn't
+  spelled out as a rule, and it drifted badly as a result — real,
+  already-happened example (2026-09-22): a single P0 item (the v1 web
+  app) had accumulated 370 lines of inline "UPDATE" narrative across
+  many sessions, duplicating what was already fully recorded in
+  project-log.md, making the file too long to skim for its actual
+  purpose (deciding what to work on next). Not just a CLDA habit — CLDO
+  sessions did this too. Fixed with a full TODO.md rewrite the same
+  day; keep it from recurring by applying this rule every time you
+  touch an item, not just during the next cleanup pass.
