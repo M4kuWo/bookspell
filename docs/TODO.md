@@ -44,6 +44,8 @@ worth deferring to a later session rather than batching in for
 
 ## P1
 
+- [ ] **A book Osnat hated ranks #4 of 695 in her real recommendations -- flagged 2026-09-22, not investigated.** Found via `rank_percentile_report()` (see `docs/scoring-test-protocol.md`'s 2026-09-22 "ranking_metrics() demoted" entry): *Magic Burns* is a `hated` rating for her, yet lands near the literal top of a real `api.recommend()` call. Worth a real dig -- is this a specific field/trope mismatch, a dealbreaker that isn't validating, something structural about her profile -- not just re-running the check again.
+
 - [x] **Fix `/recommendations` slowness.** Raised 2026-09-18; real cause found (`explain_match()` redundantly re-resolving the whole profile on every call, plus the dashboard firing 3 parallel requests). Backend fix (`resolve_explain_profile()`/`explain_match_with_profile()`, resolved once per request) and dashboard fix (`GET /recommendations/all`, one shared request instead of 3) both landed 2026-09-20. CODX's follow-up review (Tasks 13-14) caught and fixed a title-validation-ordering regression and a partial-failure resilience gap the same week. See `docs/project-log.md`'s 2026-09-18/19/20 entries and `docs/scoring-test-protocol.md`.
 
 - [x] **Audiobook edition data gaps: missing `runtime_minutes` (27% of rows), no `release_date` field.** Raised and schema-fixed 2026-09-18 -- added `release_date_start`/`release_date_end` (a range, for multi-part editions) via migration `20260918231000`; `docs/schema/book-dna.md` and the tagging skill updated same session. Data backfill (306 rows missing runtime, all release-date values) is queued to `tag-audiobook-editions`'s research backlog, not yet done.
