@@ -3519,3 +3519,90 @@ completion, exit code 0, no regressions in any of the other 13
 scenarios (scorecard/ablation/threshold/dealbreaker/user-rules/
 confidence-floor checks all still pass exactly as before -- this
 change adds a new scenario, touches nothing existing).
+
+## 2026-09-22, later still -- ranking_metrics() demoted from "accuracy metric" to "product-surface metric"; rank_percentile_report() added
+
+Same day the metric above landed. The repo owner pushed back on the
+"NDCG=0.000" finding with a genuinely good methodological question,
+worth recording in full since the original framing was wrong and a
+future session might otherwise re-derive the same mistake. Logged per
+his explicit request ("log the reasoning behind it for posterity, we
+might change our mind in the future") -- this is a correction entry,
+not a rewrite; the original 2026-09-22 entry above stays as-is.
+
+**The question, paraphrased**: imagine a friend reads 20 self-chosen
+books and loves 6 of them. What are the odds those 6 land in the top
+percentiles of the catalog, and what would that actually tell us?
+
+**The math**: under a genuinely random ranking, 6 independent titles
+all landing above, say, the 90th percentile would be astronomically
+unlikely (0.1^6, about one in a million) -- so a high percentile alone
+does look like strong evidence of SOMETHING real. That part of the
+original framing wasn't wrong.
+
+**What was wrong**: held-out titles aren't a random sample of the
+catalog. A rater chose to read them, which means they already passed
+that PERSON'S OWN "this looks appealing" filter before the scoring
+system ever touched them. A system that can't discriminate taste at
+all -- one that only detects "books shaped like what this person tends
+to pick up" (genre, tropes, surface pattern-matching) -- would ALSO
+rank a rater's own held-out books above the catalog median, for the
+same reason: they were self-selected to be appealing-looking in the
+first place. Both a rater's loved AND their disliked held-out titles
+cleared that same self-selection filter. So a high percentile on
+EITHER one doesn't distinguish "this system understands MY taste" from
+"this system detects the genre/shape I already read" -- the only thing
+that isolates real taste-discrimination is the GAP between where loved
+titles rank and where disliked titles rank, not either one's absolute
+position.
+
+**The real consequence**: this project already has a metric that
+measures exactly that gap, more directly and with more statistical
+power -- `pairwise_accuracy()` (every loved/disliked PAIR compared
+head-to-head, not each title's own isolated rank). `ranking_metrics()`
+does not out-perform it as an accuracy signal and was wrong to be
+implicitly framed that way (both in its own docstring and in how the
+2026-09-22 landing entry above reported the Mathias/Osnat findings as
+if they were primarily about ranking quality).
+
+**What `ranking_metrics()`/`rank_percentile_report()` ARE still
+genuinely good for, and why they're kept rather than reverted**: real
+PRODUCT-surface visibility -- does a specific held-out title literally
+appear in the top-K a user would see on screen, using the actual
+`api.recommend()` call. That's a narrower, different, still-legitimate
+question ("what does this person actually see") from "does the system
+generalize" ("is the ranking logic sound") -- worth tracking on its
+own, just not as evidence of accuracy. `ranking_metrics()`'s docstring
+now states this distinction explicitly rather than implying otherwise.
+
+**Also added this session**: `rank_percentile_report()` -- the
+`ranking_metrics()` top-K binary check (in the top-K or not) turned out
+to be nearly uninformative on its own, for a related, simpler reason: a
+specific title's chance of landing in a K-wide window purely by chance
+is K/pool_size, and with a 661-698-book pool and K=20, that's about 3%
+-- so a handful of held-out titles missing a top-20 cutoff barely moves
+the needle either way. The actual rank/percentile (computed once, by
+hand, in the conversation this landed in, now a real reusable function)
+told a far richer story: 3 of Mathias's 5 held-out loved/liked titles
+landed in the top 5-19% of the scored pool (Warbreaker #29/661 = top
+4.4%; The Last Wish #62/661 = top 9.4%; Rhythm of War #123/661 = top
+18.6%), which is real, meaningful separation even though none reached
+the literal top-20. It also surfaced a genuinely concrete, actionable
+finding the binary check couldn't: Osnat's `top_k_rejection_rate` at
+k=20 read as a middling "50%", but the actual rank shows why that
+number understates the problem -- *Magic Burns*, a book she HATED, is
+ranked **#4 of 695**, nearly the single top recommendation the system
+would show her. That's a much sharper, more useful signal than "50%
+rejection" conveyed on its own.
+
+**Not chased further this session**: WHY Magic Burns ranks so high
+despite being hated, or whether the Mathias loved-books percentiles (top
+5-19%, real but shy of top-20) reflect a still-small catalog/rating-count
+regime or something scoring-side. Both are real follow-up candidates,
+not attempted here -- this session's scope was fixing the metric's
+framing and tooling, not chasing findings it surfaces.
+
+**Verification**: full suite re-run after both the docstring rewrite
+and the new function, exit code 0, all 14 scenarios still pass exactly
+as before (this only added a new function and reworded documentation --
+no existing function's behavior changed).

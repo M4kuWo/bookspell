@@ -21182,3 +21182,28 @@ real open question (data-volume artifact of a still-small catalog/rater
 pool, or a genuine ranking gap) for a future pass once more raters
 exist, per the reader-count-bottleneck framework already tracked in
 `docs/TODO.md`.
+
+## 2026-09-22, later still -- corrected framing on the NDCG/rejection-rate metric, added rank_percentile_report()
+
+Same-day follow-up. The repo owner asked a sharp methodological
+question about the earlier "NDCG=0.000" finding: held-out books are
+self-selected by the rater (they chose to read them), so even a system
+that can't tell taste apart at all would still rank them above the
+catalog median -- a high (or low) percentile alone doesn't prove
+taste-discrimination, only the GAP between loved and disliked held-out
+titles' ranks does, and `pairwise_accuracy()` already measures that gap
+directly. Full reasoning logged in `docs/scoring-test-protocol.md`'s
+matching entry, per his explicit request to preserve it for posterity
+rather than silently rewrite. `ranking_metrics()`'s docstring rewritten
+to state this plainly: a product-surface metric ("does this literally
+show up on screen"), not an accuracy metric.
+
+Also added `rank_percentile_report()` -- the top-K binary check turned
+out to be low-power on its own (a K/pool_size chance of a hit by pure
+luck), and the real rank/percentile view (worked out by hand in the
+conversation, now a permanent function) told a much richer story: 3 of
+Mathias's 5 held-out loved titles land in the top 5-19% of the scored
+pool, and Osnat's own data surfaced a genuinely sharp, concrete finding
+the binary check couldn't -- a book she HATED (*Magic Burns*) ranks #4
+of 695, nearly her literal #1 recommendation. Wired into Scenario 1c.
+Full suite re-run, exit 0, no regressions.

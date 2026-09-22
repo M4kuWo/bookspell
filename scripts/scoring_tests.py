@@ -408,14 +408,42 @@ def recall_and_rejection(rows):
 
 def ranking_metrics(catalog, all_ratings, held_out, label, ks=(5, 10, 20),
                      train_ratings=None, format_preference=None, quiet=False, summary=True):
-    """What recall_and_rejection() can't measure: not just whether a
-    held-out book's OWN predicted label was right, but whether it
-    actually lands in the top-K a real user would see. Trains the same
-    way run_held_out_test() does, then calls the REAL api.recommend()
-    (same eligibility/exclusion logic production uses -- every OTHER
-    trained-on book is excluded as "already_rated", held-out books
-    aren't, since they're absent from the training profile) and looks
-    at where the held-out titles actually land in that ranking.
+    """A PRODUCT-SURFACE metric, not an accuracy metric -- read this
+    before trusting a headline number from it. Demoted from "the better
+    NDCG replacement for recall_and_rejection()" to this narrower framing
+    2026-09-22, same day it landed, after the repo owner pushed back on
+    what a raw percentile/top-K number actually proves. Full reasoning
+    in docs/scoring-test-protocol.md's matching 2026-09-22 entry -- short
+    version:
+
+    held_out titles are NOT a random sample of the catalog. They're
+    titles the rater chose to read, which means they already cleared
+    that person's own "looks appealing" filter before this system ever
+    scored them. So even a system that can't discriminate taste at all
+    -- one that just detects "books shaped like what this person tends
+    to pick up" -- would rank a rater's own held-out books well above
+    the catalog median. A high percentile alone doesn't distinguish
+    "this system understands MY taste" from "this system detects the
+    genre/shape I already read," because both loved AND disliked
+    held-out titles passed the same self-selection filter.
+
+    The signal that actually isolates taste-discrimination is the GAP
+    between loved and disliked held-out titles' rank -- not either
+    one's absolute position. pairwise_accuracy() already measures
+    exactly that gap, more directly and with more statistical power
+    (every loved/disliked PAIR, not just each title's own rank) --
+    this function doesn't out-perform it as an accuracy signal, and
+    was wrong to be framed that way.
+
+    What this function IS genuinely useful for, and why it's kept:
+    real PRODUCT visibility -- does a held-out book literally appear in
+    the top-K a user would see on screen, using the REAL api.recommend()
+    call (same eligibility/exclusion logic production uses -- every
+    OTHER trained-on book excluded as "already_rated", a held-out book
+    isn't, since it's absent from the training profile). That's a
+    different, narrower question than "does the system generalize,"
+    and worth tracking in its own right, just not as evidence of
+    ranking quality on its own.
 
     Two metrics per k, deliberately kept separate rather than blended
     into one number -- same reasoning as recall_and_rejection()'s own
@@ -438,7 +466,16 @@ def ranking_metrics(catalog, all_ratings, held_out, label, ks=(5, 10, 20),
     relevant kind (no loved/liked for ndcg, no hated/disliked for
     top_k_rejection_rate) -- "nothing to measure" isn't the same claim
     as "the system found none of it". Returns {k: {"ndcg", "top_k_rejection_rate",
-    "n_relevant_held_out", "n_negative_held_out"}} for each k in ks."""
+    "n_relevant_held_out", "n_negative_held_out"}} for each k in ks.
+
+    See also rank_percentile_report() below -- a lower-level companion
+    that reports each held-out title's actual rank/percentile in the
+    full scored pool (not just a top-K in/out cutoff), added the same
+    session for the same reason: a binary top-K hit is nearly
+    uninformative when the pool is much larger than K (a specific
+    title's chance of landing in a K-wide window by pure chance is
+    K/pool_size, so a handful of titles missing a narrow top-K proves
+    very little on its own)."""
     train = train_ratings if train_ratings is not None else {
         t: r for t, r in all_ratings.items() if t not in held_out
     }
@@ -483,6 +520,69 @@ def ranking_metrics(catalog, all_ratings, held_out, label, ks=(5, 10, 20),
         print(f"  {label}: ranking metrics over top-{max_k} of a real recommend() call "
               f"(n_relevant_held_out={n_relevant}, n_negative_held_out={n_negative})")
     return results
+
+
+def rank_percentile_report(catalog, all_ratings, held_out, label,
+                            train_ratings=None, format_preference=None, quiet=False):
+    """The actually-informative companion to ranking_metrics()'s top-K
+    hit/miss check -- added 2026-09-22 after a top-K-only check on
+    Mathias's own held-out set read as "0.000, nothing surfaced" when
+    the real story (visible only by looking at rank, not a binary
+    cutoff) was 3 of 5 loved titles landing in the top 5-19% of the
+    scored pool. A pool much larger than K makes "did it crack the
+    top-K" a very low-power question on its own -- a specific title's
+    chance of landing in a K-wide window by pure chance is K/pool_size,
+    so a handful of misses proves little by itself. See
+    ranking_metrics()'s docstring for the full self-selection caveat,
+    which applies here too: a held-out title's percentile ALONE still
+    can't prove taste-discrimination, only the loved-vs-disliked GAP
+    can -- this function reports both sides specifically so that gap is
+    visible at a glance.
+
+    Trains the same way ranking_metrics() does, ranks the FULL eligible
+    pool (not just a top-K prefix), and reports each held-out title's
+    exact rank and percentile within it. Returns a list of dicts sorted
+    by rank (best first): {"title", "label", "rank", "pool_size",
+    "percentile"} for held-out titles that made it into the scored pool,
+    plus a separate list of titles excluded from the pool entirely
+    (already-rated overlap, a series-position gate, etc. -- see
+    score_candidate()'s policy="ranking" exclusions) since "excluded"
+    and "ranked last" are different, real distinctions this shouldn't
+    blur together."""
+    train = train_ratings if train_ratings is not None else {
+        t: r for t, r in all_ratings.items() if t not in held_out
+    }
+    pool_size_hint = len(catalog) - len(train)
+    ranked = api.recommend(catalog, train, top_n=pool_size_hint, genre=None,
+                            format_preference=format_preference)
+    ranked_titles = [row[1] for row in ranked]
+    pool_size = len(ranked_titles)
+    rank_by_title = {t: i + 1 for i, t in enumerate(ranked_titles)}
+
+    ranked_rows, excluded = [], []
+    for title in held_out:
+        if title not in all_ratings:
+            continue
+        lbl = all_ratings[title]
+        if title in rank_by_title:
+            rank = rank_by_title[title]
+            ranked_rows.append({
+                "title": title, "label": lbl, "rank": rank, "pool_size": pool_size,
+                "percentile": rank / pool_size,
+            })
+        else:
+            excluded.append({"title": title, "label": lbl})
+    ranked_rows.sort(key=lambda r: r["rank"])
+
+    if not quiet:
+        print(f"  {label}: rank within a {pool_size}-book scored pool")
+        for r in ranked_rows:
+            print(f"    {r['title']:<28} {r['label']:<12} rank {r['rank']:>5} of {pool_size}  "
+                  f"(top {r['percentile']:.1%})")
+        for r in excluded:
+            print(f"    {r['title']:<28} {r['label']:<12} excluded from scored pool "
+                  f"(already-rated overlap, series-position gate, etc.)")
+    return ranked_rows, excluded
 
 
 def print_ranking_metrics_table(rows):
@@ -1289,14 +1389,18 @@ def run_all():
     run_held_out_test(catalog, REAL_RATINGS, REAL_HELD_OUT, f"held-out, format_preference={mathias_format_preference}",
                        format_preference=mathias_format_preference)
 
-    print("\n=== Scenario 1c: ranking-position metrics (NDCG@5/10/20, top-K rejection rate) ===")
+    print("\n=== Scenario 1c: ranking-position metrics -- a PRODUCT-SURFACE check, ===")
+    print("=== not an accuracy metric; see ranking_metrics()'s docstring before ===")
+    print("=== reading a headline number here as evidence of ranking quality.   ===")
     print("  Mathias, print-profile baseline (matches Scenario 1's held-out training):")
     ranking_metrics(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, full")
+    rank_percentile_report(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, full")
     print("  Mathias, real format_preference (matches Scenario 1b):")
     ranking_metrics(catalog, REAL_RATINGS, REAL_HELD_OUT, "Mathias, real format_preference",
                      format_preference=mathias_format_preference)
     print(f"  Osnat ({len(OSNAT_USABLE)} usable ratings):")
     ranking_metrics(catalog, OSNAT_USABLE, OSNAT_HELD_OUT, "Osnat, full")
+    rank_percentile_report(catalog, OSNAT_USABLE, OSNAT_HELD_OUT, "Osnat, full")
 
     print("\n=== Scenario 2: WEIGHT_CAP domination check ===")
     run_weight_cap_check(catalog, "current formula")
