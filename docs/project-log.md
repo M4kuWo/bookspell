@@ -21139,3 +21139,20 @@ Fixed both the immediate problem and the gap that caused it:
   leaving it bloating TODO.md. Every other closed item collapsed to a
   short summary + a project-log.md pointer; every open item kept its
   real actionable substance (current state, next step, real blockers).
+
+## 2026-09-22, later still -- CODX Task 16 queued: cleanup + a QA pass on recent unreviewed work
+
+Task 15 landed clean (see the matching entry above). Two things queued
+next in `docs/codx-tasks/current-task.md`: (A) a real housekeeping item
+-- an untracked file sitting forgotten in CODX's own clone since
+2026-09-14 (`docs/codx-recommend-review-2026-09-14.md`), never landed or
+cleaned up; asked CODX to figure out what it is and either land, delete,
+or clearly flag it rather than let it keep rotting. (B) an independent
+QA pass on everything that's landed without a second set of eyes since
+Task 15: the 6 migrations CLDO wrote solo today (the 5 CLDA-flagged
+fixes plus the round-5 cover backfill -- re-verify against Hardcover
+directly, don't just trust the migration files' own claims, plus a real
+random sample of the 226 repointed covers actually resolving) and a
+bounded ~15-book spot-check sample across CLDA's round-5 tagging batches
+6-14, same HIGH_RISK_FIELDS/author-contamination methodology as its
+prior confidence-QA passes.
