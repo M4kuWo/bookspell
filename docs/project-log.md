@@ -21207,3 +21207,64 @@ pool, and Osnat's own data surfaced a genuinely sharp, concrete finding
 the binary check couldn't -- a book she HATED (*Magic Burns*) ranks #4
 of 695, nearly her literal #1 recommendation. Wired into Scenario 1c.
 Full suite re-run, exit 0, no regressions.
+
+## 2026-09-23 -- CODX Task 16 landed: post-round-5 QA, 4 real findings, 3 fixed
+
+Full report copied to `docs/codx-reviews/2026-09-22-post-round5-qa.md`
+(was uncommitted in CODX's clone, per the normal handoff). Genuinely
+rigorous work: random-seeded sampling (`random.Random(20260922)`, 15 of
+170 tagged titles + 18 of 226 recomputed covers), every claim sourced,
+explicit PASS/FAIL/INCONCLUSIVE distinctions, nothing overclaimed
+(Babel-17's pov_count stayed "inconclusive" rather than forced to a
+verdict). Part A: the stale 2026-09-14 file turned out to be a
+byte-identical leftover copy of an already-landed, already-tracked
+report (verified via `cmp`/SHA-256) -- deleted, not an abandoned task.
+Part B1 (CLDO's own 6 migrations from 2026-09-22): every check passed,
+including independent re-verification against Hardcover's live API
+(Ruin's identity/series position, the 3 narrator names on "The Egg and
+Other Stories"). Part B2 (15-book spot-check across round-5 tagging):
+13 clean, 1 confirmed error, 1 likely-wrong-but-unverified, 1 genuinely
+inconclusive; zero new author-contamination found.
+
+CLDO independently re-verified before applying anything, per the
+standing rule -- not just trusted the report:
+
+1. **2 real cover-image defects, both fixed** (migration
+   `20260923000000`) -- confirmed by actually viewing the images, not
+   just trusting the report. "Just One Damned Thing After Another"
+   (hardcover_id 428569) was showing a genuine 10-book Chronicles of St
+   Mary's BOX SET cover -- turned out to be Hardcover's own primary
+   listing image for that book id, not a prior session's selection
+   error. Replaced with a correct 326x500 individual-book cover from a
+   different edition on the same Hardcover id. "War Storm" (429081) had
+   the right cover at only 98x150px; replaced with a 500x500 edition
+   image. Neither defect could have been caught by a URL-health check --
+   both resolved fine, the content itself was wrong/low-quality.
+2. **1 confirmed tagging error, fixed** (migration `20260923010000`) --
+   "Enchanters' End Game" (David Eddings)'s `pov_count = single` is
+   wrong, independently re-confirmed via a fresh web search (this is
+   the one Belgariad volume that splits from Garion-only narration
+   into Garion/Belgarath/Silk vs. Ce'Nedra and multiple named Alorn
+   queens defending the west). Corrected to `few` -- the defensible
+   floor, not the possibly-higher `several` bucket, since whether each
+   named queen counts as its own recurring viewpoint or reads as one
+   collective council thread isn't settled without a full read.
+   Recorded that real remaining uncertainty via `book_field_confidence`
+   (0.6, `manual_review`) rather than picking a bucket with unwarranted
+   confidence.
+3. **1 "likely wrong" flag, checked and NOT changed** (migration
+   `20260923020000`) -- CODX proposed "The Fold"'s `narrative_closure`
+   should be `self_contained` based on one review, explicitly caveated
+   that it hadn't inspected the actual ending. Independent check found
+   a second source describing real "more to come" sequel setup and at
+   least one reader explicitly frustrated by a semi-cliffhanger --
+   genuinely mixed evidence, not a clear error. Left the tag as-is,
+   recorded the real ambiguity via `book_field_confidence` (0.5,
+   `manual_review`) instead of guessing either direction. A real
+   example of independent re-verification catching a proposed fix that
+   shouldn't land as proposed, not just rubber-stamping a report that
+   looked thorough.
+4. **Babel-17's pov_count inconclusive finding** -- no action; already
+   has a 0.5 confidence row from original tagging, working as intended.
+
+Verified both sides after: `check_db_sync.py` clean across all 6 tables.
