@@ -21,6 +21,12 @@
   .my-rating-author { color: var(--ink-soft); font-size: 0.85rem; }
   .my-rating-actions { display: flex; gap: 8px; align-items: center; flex: 0 0 auto; }
   .icon-btn { background: none; border: none; color: var(--ink-soft); font-size: 1rem; padding: 4px 6px; cursor: pointer; }
+  .starter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; margin-top: 14px; }
+  .starter-card { background: none; border: none; padding: 0; cursor: pointer; text-align: left; font-family: inherit; color: inherit; }
+  .starter-card .thumb { width: 100%; height: auto; aspect-ratio: 2/3; object-fit: cover; border-radius: 6px; display: block; }
+  .starter-card .starter-title { font-size: 0.8rem; font-weight: 600; margin-top: 6px; line-height: 1.25; }
+  .starter-card .starter-author { font-size: 0.75rem; color: var(--ink-soft); }
+  .starter-skip { display: block; margin-top: 14px; font-size: 0.85rem; color: var(--ink-soft); cursor: pointer; background: none; border: none; padding: 0; text-decoration: underline; font-family: inherit; }
 </style>
 </head>
 <body>
@@ -34,6 +40,13 @@
     <input type="text" id="book-search" placeholder="Title or author…" autocomplete="off">
   </div>
   <div id="results" class="results-box" style="display:none;"></div>
+
+  <div id="onboarding" class="card" style="display:none; margin-bottom: 20px;">
+    <div><strong>New here? Rate a few of these to get started</strong></div>
+    <p class="sub" style="margin: 4px 0 0;">A deliberately varied set — fast-paced or slow, grim or gentle, hard magic systems or none at all. You don't need to recognize all of them; a handful of real answers is enough to get going. Rating one opens the same panel as a search result would.</p>
+    <div id="starter-grid" class="starter-grid"></div>
+    <button type="button" class="starter-skip" id="skip-onboarding-btn">Skip, I'll search myself →</button>
+  </div>
 
   <details style="margin: -8px 0 20px;">
     <summary style="cursor:pointer; font-size:0.85rem; color:var(--ink-soft);">Can't find a book or series? Suggest it →</summary>
@@ -102,6 +115,81 @@
 <script>
 let session, selectedBook = null, searchDebounce = null;
 const RATING_LABELS = { loved: 'Loved', liked: 'Liked', it_was_okay: 'It was okay', disliked: 'Disliked', hated: 'Hated' };
+
+// Active-learning onboarding (simple/curated version -- see docs/TODO.md's
+// P1 entry and docs/project-log.md's 2026-09-23 entry for the full
+// reasoning). Deliberately picked to SPAN the DNA space rather than just
+// be popular -- hard vs. soft magic, hard vs. soft sci-fi, single vs.
+// ensemble POV, light vs. grimdark tone, character/plot/romance/
+// worldbuilding-driven, slow vs. fast pace -- so a handful of real
+// answers gives cold_start_weight()/build_profile() something to work
+// with fast, instead of a new user staring at a blank search box with
+// nothing rated. (title, author) pairs, not title alone -- this project
+// has hit real duplicate-title collisions before (see CLAUDE.md).
+const STARTER_TITLES = [
+  { title: 'The Way of Kings', author: 'Brandon Sanderson' },
+  { title: 'Mistborn: The Final Empire', author: 'Brandon Sanderson' },
+  { title: 'A Game of Thrones', author: 'George R.R. Martin' },
+  { title: 'The Blade Itself', author: 'Joe Abercrombie' },
+  { title: 'Circe', author: 'Madeline Miller' },
+  { title: 'Uprooted', author: 'Naomi Novik' },
+  { title: 'A Court of Thorns and Roses', author: 'Sarah J. Maas' },
+  { title: 'Six of Crows', author: 'Leigh Bardugo' },
+  { title: 'The Poppy War', author: 'R.F. Kuang' },
+  { title: 'The Goblin Emperor', author: 'Katherine Addison' },
+  { title: 'Gideon the Ninth', author: 'Tamsyn Muir' },
+  { title: 'Dune', author: 'Frank Herbert' },
+  { title: 'Project Hail Mary', author: 'Andy Weir' },
+  { title: 'The Martian', author: 'Andy Weir' },
+  { title: 'Leviathan Wakes', author: 'James S.A. Corey' },
+  { title: 'The Long Way to a Small, Angry Planet', author: 'Becky Chambers' },
+];
+const ONBOARDING_DISMISS_KEY = 'bookspell-onboarding-dismissed';
+// Shown only below this many ratings -- fades out the same way
+// cold_start_weight() itself fades, not a one-time thing that vanishes
+// after a single rating.
+const ONBOARDING_RATING_THRESHOLD = 5;
+
+async function maybeShowOnboarding(currentRatingCount) {
+  const onboardingEl = document.getElementById('onboarding');
+  let dismissed = false;
+  try { dismissed = localStorage.getItem(ONBOARDING_DISMISS_KEY) === '1'; } catch (e) { /* ignore */ }
+  if (dismissed || currentRatingCount >= ONBOARDING_RATING_THRESHOLD) {
+    onboardingEl.style.display = 'none';
+    return;
+  }
+  const { data, error } = await sb.from('books').select('id,title,author,cover_url')
+    .in('title', STARTER_TITLES.map((s) => s.title)).eq('archived', false);
+  if (error || !data) return;
+  // Match on (title, author) exactly, in STARTER_TITLES' own curated
+  // order -- an .in() on title alone could pull in an unrelated book
+  // sharing a title with something else in the catalog.
+  const byKey = new Map(data.map((b) => [`${b.title}::${b.author}`, b]));
+  const books = STARTER_TITLES
+    .map((s) => byKey.get(`${s.title}::${s.author}`))
+    .filter(Boolean);
+  if (books.length === 0) {
+    onboardingEl.style.display = 'none';
+    return;
+  }
+  document.getElementById('starter-grid').innerHTML = books.map((b) => `
+    <button type="button" class="starter-card" data-id="${b.id}" data-title="${escapeAttr(b.title)}" data-author="${escapeAttr(b.author || '')}">
+      ${b.cover_url ? `<img class="thumb" src="${escapeAttr(b.cover_url)}" alt="" loading="lazy">` : ''}
+      <div class="starter-title">${escapeHtml(b.title)}</div>
+      <div class="starter-author">${escapeHtml(b.author || '')}</div>
+    </button>
+  `).join('');
+  document.querySelectorAll('#starter-grid [data-id]').forEach((card) => {
+    card.addEventListener('click', () => {
+      pickBook({ id: card.dataset.id, title: card.dataset.title, author: card.dataset.author });
+    });
+  });
+  onboardingEl.style.display = 'block';
+}
+document.getElementById('skip-onboarding-btn').addEventListener('click', () => {
+  try { localStorage.setItem(ONBOARDING_DISMISS_KEY, '1'); } catch (e) { /* ignore */ }
+  document.getElementById('onboarding').style.display = 'none';
+});
 
 (async () => {
   session = await requireAuth();
@@ -403,8 +491,9 @@ async function loadMyRatings() {
     container.innerHTML = `<div class="empty-state">Couldn't load your ratings: ${escapeHtml(error.message)}</div>`;
     return;
   }
+  maybeShowOnboarding((data || []).length);
   if (!data || data.length === 0) {
-    container.innerHTML = '<div class="empty-state">Nothing rated yet — search above to start.</div>';
+    container.innerHTML = '<div class="empty-state">Nothing rated yet — search above to start, or pick something from the list above.</div>';
     return;
   }
   container.innerHTML = data.map((r) => `
