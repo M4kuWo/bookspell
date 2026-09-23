@@ -21268,3 +21268,16 @@ standing rule -- not just trusted the report:
    has a 0.5 confidence row from original tagging, working as intended.
 
 Verified both sides after: `check_db_sync.py` clean across all 6 tables.
+
+## 2026-09-23, later -- CODX Task 17 queued: diagnose the Magic Burns ranking anomaly
+
+Investigation-only task in `docs/codx-tasks/current-task.md`: root-cause
+why a book Osnat rated `hated` (*Magic Burns*) ranks #4 of 695 in a real
+`recommend()` call (found via `rank_percentile_report()`, flagged in
+`docs/TODO.md`'s P1 the same day it surfaced). Explicitly scoped as
+diagnosis and evidence only -- no scoring-code changes, no proposed fix,
+no retagging; asked it to use `explain_match()`/`audit_book_score()` for
+a real per-field score decomposition, check whether Osnat's other
+held-out negatives show the same pattern (isolated outlier vs.
+systematic), and state a falsification condition for whatever root
+cause it lands on -- same evidentiary bar as its Task 16 report.
