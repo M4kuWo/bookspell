@@ -21325,3 +21325,44 @@ oversight). Applied to local then hosted, `check_db_sync.py` clean
 after (book_dna 1229 -> 1230). The Faithful and the Fallen is now 4/4
 in the catalog AND 4/4 tagged -- fully usable by the scoring engine's
 Series DNA aggregation, not just bibliographically complete.
+
+## 2026-09-23, later still -- active-learning onboarding (simple version) built for rate.html
+
+Closes the other still-open item from the 2026-09-14 external AI
+review's P1 entry. `cold_start_weight()` has always assumed early
+ratings exist and fades its accessibility-leaning behavior in as they
+accumulate, but `rate.html` gave a brand-new user nothing but a blank
+search box and "Nothing rated yet" -- confirmed by reading the file
+directly before touching anything, not assumed from the TODO item's
+own description.
+
+Built the simple/curated version discussed with the repo owner (not
+the fully adaptive per-answer version -- that's a real, larger follow-up,
+not attempted here): a 16-book starter list shown below 5 ratings,
+deliberately chosen to SPAN the DNA space rather than just be popular
+-- hard vs. soft magic, hard vs. soft sci-fi, single through ensemble
+POV, light through grimdark tone, every `drive` value including
+romance_driven, slow through fast pace. Reuses the existing
+`pickBook()`/rating-panel flow entirely, no new rating UI. Dismissible
+via a "Skip" link, remembered in `localStorage`.
+
+Verified before shipping, not assumed: all 16 (title, author) pairs
+independently confirmed against the live catalog to have real
+self-hosted cover images and not be archived. Full auth (real
+signup/magic-link) can't be driven headlessly in this environment (a
+known, already-documented limitation from earlier sessions) -- tested
+instead via a throwaway local harness (real markup, real CSS, the real
+onboarding JS copied verbatim, Supabase/`pickBook` mocked), same
+precedent this project used for the 2026-09-18 modal-scroll fix. Caught
+and fixed 2 real bugs in the harness's OWN mock along the way (a query
+builder that didn't chain `.in().eq()` the way real supabase-js does; a
+missing `return` in a test helper) -- both confirmed to be mock-only
+bugs, not issues in `app/rate.html` itself, before moving on. Confirmed
+working: all 16 real cards render, clicking one calls `pickBook()`
+with the right book, the 5-rating threshold hides/shows correctly, skip
+persists across the equivalent of a reload, and a starter title that
+fails to match the catalog degrades gracefully (fewer cards) instead of
+crashing.
+
+Inline-JS syntax check (`.github/scripts/check-inline-js.cjs`, the same
+one CI runs) passes clean on all 5 app pages.
