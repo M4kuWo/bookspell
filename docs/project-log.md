@@ -21281,3 +21281,47 @@ a real per-field score decomposition, check whether Osnat's other
 held-out negatives show the same pattern (isolated outlier vs.
 systematic), and state a falsification condition for whatever root
 cause it lands on -- same evidentiary bar as its Task 16 report.
+
+## 2026-09-23, later still -- tagged "Ruin", The Faithful and the Fallen now 4/4 in catalog AND fully tagged
+
+CLDO, following `.claude/skills/tag-catalog-batch/SKILL.md` for a
+single, already-identified book (ingested 2026-09-22). Step 1.5's
+mandatory schema-sync check ran clean -- the skill's 36-field mandatory
+list matches the live `book_dna` schema exactly, no drift, no skill
+update needed.
+
+Grounded HIGH_RISK_FIELDS in real research rather than the series'
+own established pattern, per the standing "confidently wrong on a
+checkable detail" warning -- 4 reviews (Grimdark Magazine, Winter Is
+Coming, Novel Notions, FanFiAddict) independently confirmed: a real
+12-character ensemble POV (not inferred from Valor/Wrath both being
+`ensemble`), a genuine cliffhanger ending, and -- the one place series
+inheritance would have been wrong -- `emotional_resolution: tragic`,
+NOT `bittersweet` like Valor and Wrath, since reviews specifically
+describe this book's ending as loss and reversal ("whatever little
+progress was made, ended up being undone or worse") rather than a mixed
+happy/sad balance.
+
+`romance_tone`/`worldbuilding_delivery` left null (no real
+presentation-specific evidence found, matching Valor/Wrath's own
+precedent of leaving these null too); `narrator_cast`/`audiobook_length`
+left null (confirmed no `audiobook_editions` row exists yet for this
+book). `genre_accessibility` computed to "demanding" by the standard
+formula but adjusted down to "moderate" -- kept consistent with the
+SAME adjustment already present on both Valor and Wrath (both also
+compute to "demanding" by the formula), reasoned as: this book's real
+readership has already read 2 prior entries, so raw craft-field demand
+doesn't translate to the same first-read accessibility barrier.
+
+9 tropes (chosen_one, war_story, prophecy,
+mythological_pantheon_as_characters, child_soldiers_in_warfare,
+major_character_death, found_family, underdog_rising, court_intrigue --
+above the fresh catalog average of 5.26/book), 1 content warning
+(war_trauma:central_theme, matching Valor/Wrath's own single-CW
+pattern for this series exactly). Verified no silent partial insert in
+a rolled-back transaction first (31 of 36 mandatory columns non-null;
+the other 5 null columns are the legitimate cases above, not an
+oversight). Applied to local then hosted, `check_db_sync.py` clean
+after (book_dna 1229 -> 1230). The Faithful and the Fallen is now 4/4
+in the catalog AND 4/4 tagged -- fully usable by the scoring engine's
+Series DNA aggregation, not just bibliographically complete.
