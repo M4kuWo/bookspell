@@ -21366,3 +21366,55 @@ crashing.
 
 Inline-JS syntax check (`.github/scripts/check-inline-js.cjs`, the same
 one CI runs) passes clean on all 5 app pages.
+
+## 2026-09-23, later still -- CODX Task 17 landed: Magic Burns is a real, well-diagnosed data-sparsity failure, not a scoring bug
+
+Full report + evidence copied to `docs/codx-reviews/2026-09-23-magic-
+burns-ranking.md` and its `-evidence/` dir (a full point-in-time
+catalog/ratings snapshot plus the exact scripts, for reproducibility --
+`catalog.json` 2.4MB, `results.json` 976KB, committed as-is, matching
+this project's existing evidence-retention convention). Independently
+re-verified the headline number before trusting it: my own fresh
+`api.recommend()` run reproduces CODX's score almost exactly (0.88537
+vs. CODX's 0.88536 -- the tiny difference is the same float-ordering
+noise CODX's own report predicted). The exact rank shifted from #3 to
+#4 because a new top-2 contender ("A Wizard's Guide to Defensive
+Baking") entered the live catalog after CODX's synced snapshot -- CODX
+flagged this exact kind of discrepancy transparently in its own report
+rather than hiding it. The core finding is unaffected by that shift.
+
+**Root cause, high confidence, NOT a scoring bug**: Osnat has only 2
+negative ratings total in her usable set (The Midnight Library, When
+the Moon Hatched), and neither shares any trope with Magic Burns. Magic
+Burns (a later Kate Daniels book) shares several POSITIVE-weighted
+tropes directly traceable to Magic Bites (book 1 of the same series,
+which she LIKED) -- found_family, war_story, multiple_fantasy_species,
+urban_fantasy_setting, noir_detective_structure, morally_grey_protagonist.
+With no learned negative signal touching any of those, and no single
+scalar field mismatch exceeding 0.07 (well under the 0.15+ threshold a
+dealbreaker would need), there's nothing in the current DNA-tag
+representation that distinguishes "book 1 she loved" from "a later book
+in the same series she hated" -- a within-series quality-drift signal
+current tags don't capture at all, not a bibliographic or tagging
+error. `validated_dealbreaker_fields()` is empty for her (needs >=3
+negatives per field, she has 2 total) -- the same already-tracked P3
+"graduated dealbreaker veto" gap, now with a concrete real-world
+example of its cost, not just a theoretical blocker.
+
+**Real comparison, not guessed**: Mathias's own held-out negatives
+separate far better (15/16 eligible pairs correct, 93.75%, vs. Osnat's
+2/4, 50%) -- he has 132 resolved ratings and 19 negatives to her 23 and
+2. A leave-one-out sensitivity check (holding out each of her 4 usable
+negatives one at a time) confirmed Magic Burns stays a severe outlier
+(rank #2/692) even with more negative examples available in training,
+not just an artifact of her having so few negatives overall.
+
+Explicitly NOT claimed, correctly: not a tagging error (no evidence
+found either way -- no text reason exists for why she hated it), not a
+scoring-arithmetic bug (the formula reproduces exactly), not proof the
+problem is systematic (4 negatives is too few to estimate a real
+failure rate). No fix proposed, per the task's own scope -- diagnosis
+only.
+
+CODX's task file reset to "nothing queued" pending the next real
+assignment.

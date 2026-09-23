@@ -1,0 +1,57 @@
+Catalog books: 1230
+
+RATER Osnat
+    top-5   NDCG=0.000  rejection-rate=50%
+    top-10  NDCG=0.000  rejection-rate=50%
+    top-20  NDCG=0.000  rejection-rate=50%
+  Osnat: ranking metrics over top-20 of a real recommend() call (n_relevant_held_out=3, n_negative_held_out=2)
+  Osnat: rank within a 695-book scored pool
+    Magic Burns                  hated        rank     3 of 695  (top 0.4%)
+    A Court of Wings and Ruin    loved        rank    30 of 695  (top 4.3%)
+    Harry Potter and the Goblet of Fire it_was_okay  rank   192 of 695  (top 27.6%)
+    Iron Flame                   it_was_okay  rank   223 of 695  (top 32.1%)
+    Divergent                    liked        rank   231 of 695  (top 33.2%)
+    Daughter of No Worlds        hated        rank   450 of 695  (top 64.7%)
+    Harry Potter and the Half-Blood Prince loved        excluded from scored pool (already-rated overlap, series-position gate, etc.)
+Training labels: {'liked': 10, 'loved': 6, 'it_was_okay': 5, 'hated': 2} clusters: 15 validated: [] cold_start: 0.0
+A Court of Wings and Ruin score 0.8389 flags []
+Harry Potter and the Half-Blood Prince score 0.8582 flags []
+Harry Potter and the Goblet of Fire score 0.7479 flags [('trope:dragons', 0.3073170731707317)]
+Divergent score 0.7222 flags [('trope:slow_burn_romance', 0.30757575757575756)]
+Iron Flame score 0.7269 flags [('trope:dragons', 0.3073170731707317)]
+Daughter of No Worlds score 0.6015 flags []
+Magic Burns score 0.8854 flags []
+Magic Bites score 0.8623 flags []
+A Questionable Client score 0.8405 flags []
+When the Moon Hatched score 0.0648 flags []
+The Midnight Library score 0.0175 flags []
+
+RATER Mathias
+    top-5   NDCG=0.000  rejection-rate=100%
+    top-10  NDCG=0.000  rejection-rate=100%
+    top-20  NDCG=0.000  rejection-rate=100%
+  Mathias: ranking metrics over top-20 of a real recommend() call (n_relevant_held_out=5, n_negative_held_out=5)
+  Mathias: rank within a 661-book scored pool
+    Warbreaker                   loved        rank    28 of 661  (top 4.2%)
+    The Last Wish                liked        rank    61 of 661  (top 9.2%)
+    Rhythm of War                loved        rank   122 of 661  (top 18.5%)
+    Interview with the Vampire   disliked     rank   282 of 661  (top 42.7%)
+    Eragon                       it_was_okay  rank   305 of 661  (top 46.1%)
+    Old Man's War                liked        rank   463 of 661  (top 70.0%)
+    Skyward                      disliked     rank   473 of 661  (top 71.6%)
+    The Wise Man's Fear          hated        rank   511 of 661  (top 77.3%)
+    Royal Assassin               disliked     rank   531 of 661  (top 80.3%)
+    A Clash of Kings             loved        excluded from scored pool (already-rated overlap, series-position gate, etc.)
+    Assassin's Quest             disliked     excluded from scored pool (already-rated overlap, series-position gate, etc.)
+Training labels: {'loved': 67, 'hated': 8, 'liked': 37, 'disliked': 11, 'it_was_okay': 9} clusters: 65 validated: [] cold_start: 0.0
+Warbreaker score 0.7728 flags []
+A Clash of Kings score 0.6089 flags []
+Rhythm of War score 0.6633 flags []
+The Wise Man's Fear score 0.432 flags []
+Royal Assassin score 0.4206 flags []
+Skyward score 0.4555 flags []
+Eragon score 0.5397 flags []
+Interview with the Vampire score 0.5508 flags []
+The Last Wish score 0.7179 flags []
+Old Man's War score 0.4582 flags []
+Assassin's Quest score 0.5298 flags []
