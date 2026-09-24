@@ -36,3 +36,5 @@ jobs:
             exit 1
           fi
           echo "No duplicate SQL migration timestamps."
+      - name: Check scoring mechanics fixtures
+        run: python3 -S scripts/scoring/tests/test_fixtures.py

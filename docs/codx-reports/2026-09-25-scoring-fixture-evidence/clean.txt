@@ -1,0 +1,11 @@
+test_nominal_exact_partial_and_mismatch (__main__.ScoringFixtures.test_nominal_exact_partial_and_mismatch) ... ok
+test_only_ranking_short_circuits_series_ineligibility (__main__.ScoringFixtures.test_only_ranking_short_circuits_series_ineligibility) ... ok
+test_ordinal_similarity_uses_normalized_distance (__main__.ScoringFixtures.test_ordinal_similarity_uses_normalized_distance) ... ok
+test_policies_agree_on_scores_with_optional_adjustments_inactive (__main__.ScoringFixtures.test_policies_agree_on_scores_with_optional_adjustments_inactive) ... ok
+test_profile_learns_separating_field_in_both_directions (__main__.ScoringFixtures.test_profile_learns_separating_field_in_both_directions) ... ok
+test_series_position_requires_every_earlier_installment (__main__.ScoringFixtures.test_series_position_requires_every_earlier_installment) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.001s
+
+OK

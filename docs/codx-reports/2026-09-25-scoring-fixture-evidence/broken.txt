@@ -1,0 +1,90 @@
+test_nominal_exact_partial_and_mismatch (__main__.ScoringFixtures.test_nominal_exact_partial_and_mismatch) ... ok
+test_only_ranking_short_circuits_series_ineligibility (__main__.ScoringFixtures.test_only_ranking_short_circuits_series_ineligibility) ... FAIL
+test_ordinal_similarity_uses_normalized_distance (__main__.ScoringFixtures.test_ordinal_similarity_uses_normalized_distance) ... ok
+test_policies_agree_on_scores_with_optional_adjustments_inactive (__main__.ScoringFixtures.test_policies_agree_on_scores_with_optional_adjustments_inactive) ... ok
+test_profile_learns_separating_field_in_both_directions (__main__.ScoringFixtures.test_profile_learns_separating_field_in_both_directions) ... ok
+test_series_position_requires_every_earlier_installment (__main__.ScoringFixtures.test_series_position_requires_every_earlier_installment) ... 
+  test_series_position_requires_every_earlier_installment (__main__.ScoringFixtures.test_series_position_requires_every_earlier_installment) (book_id='series-2', ratings={}) ... FAIL
+  test_series_position_requires_every_earlier_installment (__main__.ScoringFixtures.test_series_position_requires_every_earlier_installment) (book_id='series-2', ratings={'pace-slow': 1.0}) ... FAIL
+  test_series_position_requires_every_earlier_installment (__main__.ScoringFixtures.test_series_position_requires_every_earlier_installment) (book_id='series-3', ratings={'series-1': 1.0}) ... FAIL
+  test_series_position_requires_every_earlier_installment (__main__.ScoringFixtures.test_series_position_requires_every_earlier_installment) (book_id='series-3', ratings={'series-2': 1.0}) ... FAIL
+
+======================================================================
+FAIL: test_only_ranking_short_circuits_series_ineligibility (__main__.ScoringFixtures.test_only_ranking_short_circuits_series_ineligibility)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/2v/bh1zl26s4sbgznrl92t3gc8c0000gn/T/codx-task18-sc5kb4qs/scripts/scoring/tests/test_fixtures.py", line 160, in test_only_ranking_short_circuits_series_ineligibility
+    self.assertEqual(ranking['exclusions'], ['series_position'])
+AssertionError: Lists differ: [] != ['series_position']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'series_position'
+
+- []
++ ['series_position']
+
+======================================================================
+FAIL: test_series_position_requires_every_earlier_installment (__main__.ScoringFixtures.test_series_position_requires_every_earlier_installment) (book_id='series-2', ratings={})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/2v/bh1zl26s4sbgznrl92t3gc8c0000gn/T/codx-task18-sc5kb4qs/scripts/scoring/tests/test_fixtures.py", line 185, in test_series_position_requires_every_earlier_installment
+    self.assertEqual(result['exclusions'], [] if eligible else ['series_position'])
+AssertionError: Lists differ: [] != ['series_position']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'series_position'
+
+- []
++ ['series_position']
+
+======================================================================
+FAIL: test_series_position_requires_every_earlier_installment (__main__.ScoringFixtures.test_series_position_requires_every_earlier_installment) (book_id='series-2', ratings={'pace-slow': 1.0})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/2v/bh1zl26s4sbgznrl92t3gc8c0000gn/T/codx-task18-sc5kb4qs/scripts/scoring/tests/test_fixtures.py", line 185, in test_series_position_requires_every_earlier_installment
+    self.assertEqual(result['exclusions'], [] if eligible else ['series_position'])
+AssertionError: Lists differ: [] != ['series_position']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'series_position'
+
+- []
++ ['series_position']
+
+======================================================================
+FAIL: test_series_position_requires_every_earlier_installment (__main__.ScoringFixtures.test_series_position_requires_every_earlier_installment) (book_id='series-3', ratings={'series-1': 1.0})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/2v/bh1zl26s4sbgznrl92t3gc8c0000gn/T/codx-task18-sc5kb4qs/scripts/scoring/tests/test_fixtures.py", line 185, in test_series_position_requires_every_earlier_installment
+    self.assertEqual(result['exclusions'], [] if eligible else ['series_position'])
+AssertionError: Lists differ: [] != ['series_position']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'series_position'
+
+- []
++ ['series_position']
+
+======================================================================
+FAIL: test_series_position_requires_every_earlier_installment (__main__.ScoringFixtures.test_series_position_requires_every_earlier_installment) (book_id='series-3', ratings={'series-2': 1.0})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/2v/bh1zl26s4sbgznrl92t3gc8c0000gn/T/codx-task18-sc5kb4qs/scripts/scoring/tests/test_fixtures.py", line 185, in test_series_position_requires_every_earlier_installment
+    self.assertEqual(result['exclusions'], [] if eligible else ['series_position'])
+AssertionError: Lists differ: [] != ['series_position']
+
+Second list contains 1 additional elements.
+First extra element 0:
+'series_position'
+
+- []
++ ['series_position']
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.002s
+
+FAILED (failures=5)

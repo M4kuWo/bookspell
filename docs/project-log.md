@@ -21767,3 +21767,41 @@ value (the user is mid-visual-overhaul on `app/` themselves) and any
 measurement of whether it actually predicts real recommendation
 failures (needs the outcome-tracking table, itself still pending a
 privacy design pass).
+
+## 2026-09-25, later -- CODX Task 18 landed: first slice of CI-integrated scoring fixture tests
+
+CODX's report: `docs/codx-reports/2026-09-25-scoring-fixture-tests.md`
+(evidence: `docs/codx-reports/2026-09-25-scoring-fixture-evidence/`).
+New file `scripts/scoring/tests/test_fixtures.py` -- 15 hand-built
+synthetic books, 6 `unittest` methods covering ordinal/nominal
+similarity, `build_profile()` learning the right sign on clean
+synthetic evidence, all 4 `score_candidate()` policies agreeing where
+their stage sequences overlap, and series-position gating (including
+that only `policy="ranking"` short-circuits eligibility). Zero DB
+access, zero external dependencies, stdlib-only -- exactly Task 18's
+scope, nothing from the deliberately-deferred list (redundancy/
+prevalence, trajectory, cold start, user rules, explanation text,
+dealbreaker firing).
+
+Independently re-verified before trusting it, not taken on CODX's word
+alone: copied the test file into this repo's own `scripts/scoring/
+tests/` and ran it directly against current `main` (`b065a5a` at sync
+time, now past this session's confidence-instrumentation commit too,
+which touches unrelated files) -- all 6 pass clean, 0.001s. Separately
+reproduced the negative control myself (not just re-read CODX's own
+run): copied `scripts/` to a scratch dir, applied the exact same
+one-line mutation (`elif not series_position_ready(...)` ->
+`elif False:`), reran -- 5 of 6 tests fail with the exact assertion
+CODX's report describes (`series_position` exclusion missing). Confirms
+the test actually catches a real regression, not just passing by
+construction.
+
+Wired the proposed 4th CI check into `.github/workflows/ci.yml`
+(`python3 -S scripts/scoring/tests/test_fixtures.py`, appended after
+the existing 3 checks) -- CODX's own scope boundary (no `.github/`
+edits, no commits) respected; this wiring is CLDO's own action, not
+CODX's.
+
+Task 19 (the deferred mechanics: redundancy/prevalence, trajectory,
+cold start, user rules, explanation generation, dealbreaker firing) is
+the natural next CODX task once this lands.

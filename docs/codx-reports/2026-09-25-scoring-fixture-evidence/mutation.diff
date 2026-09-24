@@ -1,0 +1,2 @@
+- elif not series_position_ready(catalog, id_to_magnitude, book):
++ elif False:  # deliberate Task 18 mutation: bypass series-position gate
