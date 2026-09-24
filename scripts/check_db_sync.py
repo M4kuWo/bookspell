@@ -49,6 +49,8 @@ TABLES = [
     "tropes",
     "content_warning_types",
     "audiobook_editions",
+    "series",
+    "universe",
 ]
 
 

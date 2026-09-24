@@ -21542,3 +21542,50 @@ design pass before any build starts, not just "add a table" (R6);
 recommendation-confidence instrumentation, diagnostic/UI-only, no
 ranking changes (R7); a keep-warm ping for the Render cold-start
 problem, scoped as genuinely simple given today's real measurement.
+
+## 2026-09-24, later -- naming calls confirmed, and a real undetected local/hosted drift found and fixed while checking them
+
+Asked the repo owner to sanity-check 2 universe names from the
+2026-09-13 shared-universe audit ("Lyra's World", "The Legend
+Universe"). His framing: if either is an actual fandom/author term,
+that's confirmation enough on its own; if not, apply his own read for
+Lyra's World (still sounds right) and defer to CLDO for Legend
+Universe (he hasn't read the series). Re-confirmed neither is an
+established fan/publisher term (matches the original audit's own
+finding) -- both stay as their original fallback names, no rename.
+
+**While confirming this, found a real gap**: "The Legend Universe" did
+not exist in LOCAL Postgres at all, nor did "Daevabad" or "Meridian
+Empire" -- all 3 from the 2026-09-13 batch 8/9 audit migrations.
+Confirmed via `supabase db query --linked` that all 3 exist correctly
+on hosted (21 universe rows there, only 18 locally) -- a real,
+previously undetected local/hosted drift, invisible until now because
+`check_db_sync.py` only ever monitored 6 tables
+(books/book_dna/book_tropes/tropes/content_warning_types/
+audiobook_editions) and never included `universe` or `series`. Root
+cause in the original migrations themselves: neither
+`20260913140000_shared_universe_audit_batch8.sql` nor
+`20260913260000_shared_universe_audit_batch9.sql` guarded its `insert
+into universe` with `on conflict` -- turns out `universe.name` has no
+unique constraint at all (confirmed directly, only a PK on `id`), so
+that guard wouldn't even have worked as written.
+
+Fixed with a new migration (`20260924000000_fix_local_universe_drift.sql`),
+guarded with `where not exists`/`universe_id is null` instead (portable
+without needing a schema change): inserts the 3 missing universe rows
+and re-links the 6 series that should point at them (The Daevabad
+Trilogy, Amina al-Sirafi -> Daevabad; Caraval, Once Upon a Broken Heart
+-> Meridian Empire; Legend, Warcross -> The Legend Universe) -- each
+mapping verified against hosted's real data before writing, not
+assumed from the original audit text. Tested in a rolled-back
+transaction first, applied to local then hosted (a safe no-op on the
+hosted side, which already had the data).
+
+**Closed the actual gap, not just this one instance of it**: added
+`series` and `universe` to `check_db_sync.py`'s monitored `TABLES` list
+-- both are realistically exposed to the exact same "insert landed on
+hosted, local apply step skipped" drift class as the 6 tables already
+watched, and neither happened to be caught by three days of repeated
+drift incidents in September only because nobody had hit this specific
+gap yet. Reran the script after the fix: clean across all 8 tables now
+(series 570/570, universe 21/21).
