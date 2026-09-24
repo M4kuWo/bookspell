@@ -1,0 +1,44 @@
+name: Keep API warm
+
+# Render's free tier spins the API down after 15 minutes idle -- the
+# first request after that is a real, measured 25-60s cold start (see
+# docs/TODO.md's "Render cold-start mitigation" item and
+# docs/project-log.md's 2026-09-24 entry for the live measurement:
+# 25.65s cold, 0.55s warm). A beta visitor's first cold hit lands right
+# after onboarding -- the least forgiving moment for a 25+ second
+# stall. This workflow pings a real, no-auth, DB-touching endpoint
+# every 10 minutes (comfortably inside the 15-minute window) so a real
+# user essentially never hits a cold instance during active hours.
+#
+# GET /rule-targets was picked deliberately, not an arbitrary/health
+# endpoint: it's the same lightweight no-auth endpoint this project has
+# used for live API testing before (see api/main.py's own docstring on
+# it) -- it actually loads the catalog from Postgres, so a "warm" ping
+# keeps the DB connection path warm too, not just the process alive.
+#
+# This does NOT eliminate cold starts entirely -- GitHub Actions'
+# schedule can be delayed under platform load, and there's still a
+# real gap during genuinely idle hours (e.g. overnight) where a ping
+# might land more than 15 minutes apart. It substantially reduces how
+# often a real visitor hits one, for zero new infrastructure. If cold
+# starts still turn out to matter for a real public launch, the other
+# real option is Render's paid tier (a cost decision, not an
+# engineering one -- see the TODO item).
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}  # manual trigger, useful for testing this workflow itself
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the API to keep it warm
+        shell: bash
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 60 https://bookspell-api.onrender.com/rule-targets)
+          echo "Response: HTTP $status"
+          if [ "$status" != "200" ]; then
+            echo "::warning::Keep-warm ping got HTTP $status instead of 200 -- API may be down, not just cold."
+          fi

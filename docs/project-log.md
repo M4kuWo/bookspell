@@ -21589,3 +21589,32 @@ watched, and neither happened to be caught by three days of repeated
 drift incidents in September only because nobody had hit this specific
 gap yet. Reran the script after the fix: clean across all 8 tables now
 (series 570/570, universe 21/21).
+
+## 2026-09-24, later still -- Render keep-warm ping built
+
+The simplest item from today's task list. New
+`.github/workflows/keep-warm.yml`: a scheduled GitHub Actions job
+pinging `GET /rule-targets` (the same real, no-auth, DB-touching
+endpoint this project already uses for live API testing) every 10
+minutes -- comfortably inside Render's 15-minute spin-down window, so
+a real visitor should essentially never hit a genuinely cold instance
+during active hours. Doesn't eliminate cold starts entirely (GitHub's
+own schedule can slip under load, and a long idle stretch like
+overnight can still open a gap) -- reduces how often they're hit, for
+zero new infrastructure.
+
+Verified before trusting it, same discipline as CODX's own CI work:
+validated the YAML structure directly (`ruby -ryaml -rjson`, same
+method CODX used for `ci.yml`), then actually ran the exact script
+logic locally under `bash` (not just eyeballed) against both a real
+200 response and a real non-200 response, confirming the warning
+annotation only fires on the failure path. Caught one real thing along
+the way, worth noting for future workflow scripts: testing the exact
+same script under this session's own shell (zsh) failed with `status:
+read-only variable` -- `$status` is a reserved special variable in
+zsh, not in bash. GitHub Actions runs bash by default, and this
+particular script now declares `shell: bash` explicitly anyway (a
+style match with `ci.yml`'s own steps, not a required fix) -- a real,
+useful reminder that local shell testing needs to match the actual
+execution shell, not just "a shell," when using loosely-conventional
+variable names.
