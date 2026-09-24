@@ -21618,3 +21618,21 @@ style match with `ci.yml`'s own steps, not a required fix) -- a real,
 useful reminder that local shell testing needs to match the actual
 execution shell, not just "a shell," when using loosely-conventional
 variable names.
+
+## 2026-09-24, later still -- CODX Task 18 queued: first slice of CI-integrated scoring fixture tests
+
+Next item off the simplest-first list from the 2026-09-23 review. A
+new, separate synthetic-fixture test file -- NOT a change to
+`scripts/recommend.py`/`scripts/scoring_tests.py`, both stay
+CLDO-exclusive as always. Scoped deliberately small, same discipline
+as every prior CODX task: ordinal/nominal similarity, basic
+`build_profile()` weight-direction sanity, `score_candidate()`'s 4
+policies staying internally consistent, and series-position gating --
+5 mechanics, all cheap to construct with a hand-built ~12-15-book
+synthetic catalog, zero DB access needed. Explicitly deferred to a
+follow-up task: redundancy/prevalence discounts, trajectory, cold
+start, user rules, explanation generation, dealbreaker firing --
+listed as real and valuable, just not this pass, to keep the batch
+size sane. CODX proposes the file + the CI wiring; doesn't touch
+`.github/workflows/ci.yml` or commit anything itself, same handoff as
+every prior task.
