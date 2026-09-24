@@ -302,6 +302,26 @@ async def import_goodreads(file: UploadFile, authorization: str = Header(default
                 """,
                 (user_id, book_id, label, rated_dates.get(title), reviews.get(title)),
             )
+
+        # Import-coverage tracking (2026-09-24, see
+        # docs/TODO.md's import-coverage item) -- persists what the
+        # response below already returns to the caller, so coverage %
+        # and cross-user repeated-unmatched-title aggregation are
+        # possible later without needing to re-import anything. Same
+        # transaction as the ratings upserts above, so a failure here
+        # rolls back everything together rather than leaving ratings
+        # committed with no matching coverage record.
+        cur.execute(
+            "insert into import_events (user_id, matched_count, unmatched_count) values (%s, %s, %s) returning id",
+            (user_id, len(ratings), len(unmatched_rows)),
+        )
+        import_event_id = cur.fetchone()[0]
+        for orig_title, author, _avg_rating in unmatched_rows:
+            cur.execute(
+                "insert into import_unmatched_titles (import_event_id, user_id, title, author) values (%s, %s, %s, %s)",
+                (import_event_id, user_id, orig_title, author),
+            )
+
         conn.commit()
     finally:
         conn.close()

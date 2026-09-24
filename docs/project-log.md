@@ -21636,3 +21636,47 @@ listed as real and valuable, just not this pass, to keep the batch
 size sane. CODX proposes the file + the CI wiring; doesn't touch
 `.github/workflows/ci.yml` or commit anything itself, same handoff as
 every prior task.
+
+## 2026-09-24, later still -- import-coverage tracking built, while CODX worked Task 18 in parallel
+
+Second item off the simplest-first list, worked by CLDO directly while
+CODX ran Task 18 independently. New tables `import_events` and
+`import_unmatched_titles` (migration `20260924010000`), persisting what
+`app/import.html`/`api/main.py` already computed per-import but never
+saved -- a running coverage percentage, and which titles get repeatedly
+unmatched ACROSS different users' imports (a real catalog-priority
+signal stronger than any one person's own unmatched list).
+
+Treated as private, user-scoped data (a proxy for someone's reading
+history), not a public-catalog-style table -- RLS pattern copied
+directly from `book_suggestions`' own precedent
+(`20260913080000`/`20260920000000`): a user sees their own rows, the
+repo owner's real Auth user id sees all of them, no separate role
+system. No INSERT grant to `authenticated`/`anon` on either table --
+`api/main.py` already writes via its own privileged direct Postgres
+connection (`_db()`), the same way it writes `ratings`, so only reads
+needed gating.
+
+`total_rows` deliberately NOT stored as its own column -- it's exactly
+`matched_count + unmatched_count`, and storing it separately would let
+it drift from its own components for no benefit. Confirmed the right
+denominator for "coverage" is rows actually ELIGIBLE for matching
+(on the 'read' shelf with a real star rating), not raw CSV row count
+-- checked `import_goodreads_csv()`'s own code directly rather than
+assume: a to-read or explicitly-unrated row is correctly skipped
+entirely, in neither bucket, and shouldn't be punished as if it were a
+real unmatched miss.
+
+Verified properly before trusting it, not just syntax-checked: tested
+the migration in a rolled-back transaction (RLS/grants confirmed via
+`pg_policies`/`information_schema.role_table_grants`, not assumed from
+reading the SQL), then a REAL end-to-end request through the actual
+FastAPI app via `TestClient` (same pattern this project has used
+before -- a throwaway local `auth.users` row, `require_user_id`
+monkeypatched) against the synthetic fixture CSV already embedded in
+`scripts/import_goodreads.py`'s own self-check. Confirmed: HTTP 200,
+response body byte-identical in shape to before this change (matched:
+2, unmatched: 1 title), AND the new tables now hold exactly that same
+data. Manually verified the coverage query too: 2/3 = 0.667, correctly
+excluding the 4th fixture row (currently-reading, unrated) from the
+denominator. Test user and its cascaded rows cleaned up after.
