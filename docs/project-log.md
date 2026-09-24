@@ -21805,3 +21805,83 @@ CODX's.
 Task 19 (the deferred mechanics: redundancy/prevalence, trajectory,
 cold start, user rules, explanation generation, dealbreaker firing) is
 the natural next CODX task once this lands.
+
+## 2026-09-25, later still -- prospective recommendation-outcome tracking: design pass + landed
+
+Built `docs/TODO.md`'s outcome-tracking item, which had been explicitly
+flagged (2026-09-24) as needing a real design pass, not "just add a
+table." Did that pass with the repo owner before writing any schema:
+
+**What it is**: `recommendation_impressions` records what
+`/recommendations`/`/recommendations/all` actually SHOW a user --
+book, rank, score, genre pool, and this candidate's
+`evidence_confidence` (landed earlier the same day) at the time. This
+is the concrete mechanism for finally checking, with real ongoing
+usage instead of only the ~4-person manual rater benchmark, whether a
+highly-scored/high-confidence recommendation actually gets rated well
+later. Deliberately NOT a second logged-event table for "opened
+detail"/"viewed explanation" clicks -- that would need new frontend
+instrumentation (the repo owner is mid-visual-overhaul on `app/`
+himself, out of scope here). "Outcome" is computed by joining this
+table against the EXISTING `ratings` table on (user_id, book_id),
+comparing timestamps -- zero new frontend code needed for a real,
+useful first version.
+
+**Two real decisions made explicitly, not defaulted into**:
+- **Retention**: indefinite, matching every other user-data table in
+  this project (none has a purge policy either) -- the repo owner's
+  own call, reasoned as: the app has essentially one real user right
+  now, so building purge machinery ahead of any real need is waste.
+  Paired with a genuine early-warning mechanism instead of a hard
+  limit: a new `impression_count_monitor` Postgres role (mirrors
+  `codx_readonly`'s own pattern -- role SHELL in a migration, password
+  set separately via a direct `supabase db query --linked` call never
+  saved to a committed file) granted ONLY `select (id)` on this one
+  table -- verified directly before trusting it: reading any other
+  column, any other table, or any write all fail with "permission
+  denied" using this exact role. A new daily GitHub Actions workflow
+  (`.github/workflows/impression-count-check.yml`, same shape as
+  `keep-warm.yml`) fires a `::warning::` at 100,000 rows -- picked from
+  real math (Supabase free tier: 500MB total DB storage; ~300
+  bytes/row including index overhead puts the real ceiling around
+  1.6M rows; 100,000 is ~16x below that, clearly a "real traction"
+  signal rather than a beta-testing false alarm). The monitor role's
+  connection string was handed to the repo owner directly (a local
+  scratchpad file, never printed to chat or committed) for him to add
+  as the `IMPRESSION_COUNT_DATABASE_URL` repo secret himself, since
+  `gh` isn't authenticated in this environment.
+- **Privacy notice**: explicitly discussed and deliberately deferred,
+  not skipped. This is the first PASSIVE data collection this project
+  has -- not something a user typed in, but a record of what was shown
+  to them. Real discussion with the repo owner: this kind of
+  impression/interaction logging is close to universal in any
+  recommendation-driven product (Netflix, Spotify, MTG Arena, etc.),
+  and the actual harm isn't in the tracking mechanism, it's in not
+  disclosing it to someone with no other way to know. Today's real
+  users (the repo owner + a handful of raters who know him personally)
+  have no meaningful transparency gap; a real privacy notice becomes a
+  genuine pre-launch requirement the moment a stranger with no such
+  context could sign up, not before. Filed as a real, not-yet-built
+  beta-readiness item rather than resolved either way.
+
+**Schema**: `supabase/migrations/20260925000000_recommendation_impressions.sql`
+(table + RLS, own-row + admin-uid pattern matching `ratings`/
+`import_events`) and `20260925010000_create_impression_count_monitor_role.sql`
+(the monitoring role). Both tested in a rolled-back local transaction
+first (valid inserts, all 3 check-constraint violations -- bad rank,
+bad genre, out-of-range confidence -- correctly rejected, grants/RLS
+policies confirmed via `information_schema`/`pg_policies`) before
+applying for real to local, then hosted via `supabase db push`
+(`supabase migration list --linked` confirmed both versions tracked
+correctly on both sides, no drift).
+
+**Write path**: `api/main.py`'s `_score_genre()` gained an optional
+`user_id` parameter; when given, a new `_log_recommendation_impressions()`
+helper does one batched INSERT per genre response. Deliberately never
+raises -- a real recommendation response existing matters strictly
+more than this diagnostic log succeeding, so a write failure is
+printed (visible in Render's logs) and swallowed, never surfaced as a
+500 to the user. Verified end-to-end against local Postgres via
+`api/.venv`: a real `_score_genre()` call for a real rater
+(Mathias) correctly logged 3 rows with the right rank/genre/score/
+evidence_confidence, cleaned up after.

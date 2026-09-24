@@ -1,0 +1,44 @@
+name: Impression count check
+
+# Alerts well before recommendation_impressions (see docs/TODO.md's
+# "Prospective recommendation-outcome tracking" item and
+# supabase/migrations/20260925000000_recommendation_impressions.sql)
+# becomes a real storage concern -- NOT a hard limit, an early warning.
+# Supabase's free tier caps total DB storage at 500MB; back-of-envelope
+# math (~300 bytes/row including index overhead) puts the real ceiling
+# around 1.6M rows of this shape. 100,000 is ~16x below that, chosen so
+# this fires from genuine multi-user traction long before actual
+# capacity is at risk, not right as beta testing ramps up.
+#
+# Uses IMPRESSION_COUNT_DATABASE_URL, a repo secret holding the
+# connection string for `impression_count_monitor`
+# (20260925010000_create_impression_count_monitor_role.sql) -- a
+# Postgres role granted ONLY `select (id)` on this one table, nothing
+# else. Real technical enforcement (verified directly before this
+# workflow was written: a read of any other column, any other table,
+# and any write all fail with "permission denied" using this exact
+# role), same principle as codx_readonly's own scoping.
+
+on:
+  schedule:
+    - cron: '17 6 * * *'  # once daily, off-the-hour to avoid GitHub's own peak-minute scheduling delays
+  workflow_dispatch: {}  # manual trigger, useful for testing this workflow itself
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check recommendation_impressions row count
+        shell: bash
+        env:
+          DATABASE_URL: ${{ secrets.IMPRESSION_COUNT_DATABASE_URL }}
+        run: |
+          if [[ -z "$DATABASE_URL" ]]; then
+            echo "::warning::IMPRESSION_COUNT_DATABASE_URL secret is not set -- skipping check."
+            exit 0
+          fi
+          count=$(psql "$DATABASE_URL" -tAc "select count(*) from recommendation_impressions;")
+          echo "recommendation_impressions row count: $count"
+          if (( count > 100000 )); then
+            echo "::warning::recommendation_impressions has $count rows, over the 100,000 early-warning threshold -- see docs/TODO.md's outcome-tracking item for the retention decision this was meant to flag, not a hard failure."
+          fi

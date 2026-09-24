@@ -146,7 +146,42 @@ def rule_targets():
     return scoring_rules.list_user_rule_targets(catalog)
 
 
-def _score_genre(catalog, ratings, user_rules, format_preference, genre, top_n):
+def _log_recommendation_impressions(user_id, genre, out, title_to_id):
+    """Records what was actually shown (docs/TODO.md's "Prospective
+    recommendation-outcome tracking" item, design pass + schema landed
+    2026-09-25 -- see supabase/migrations/20260925000000_recommendation_impressions.sql
+    and docs/project-log.md's 2026-09-25 entry for the full reasoning).
+    One row per book in `out`, in one batched INSERT. Never raises --
+    a real user-facing recommendation response existing is strictly
+    more important than this diagnostic log succeeding; a failure here
+    is printed (visible in Render's logs) and otherwise swallowed."""
+    if not out:
+        return
+    conn = _db()
+    try:
+        cur = conn.cursor()
+        cur.executemany(
+            """
+            insert into recommendation_impressions
+              (user_id, book_id, genre, rank, score, evidence_confidence)
+            values (%s, %s, %s, %s, %s, %s)
+            """,
+            [
+                (
+                    user_id, title_to_id[row["title"]], genre, rank,
+                    row["score"], row["evidence_confidence"]["overall"],
+                )
+                for rank, row in enumerate(out, start=1)
+            ],
+        )
+        conn.commit()
+    except Exception as e:
+        print(f"WARNING: failed to log recommendation impressions: {e}")
+    finally:
+        conn.close()
+
+
+def _score_genre(catalog, ratings, user_rules, format_preference, genre, top_n, user_id=None):
     """Shared by /recommendations and /recommendations/all -- one
     genre's full ranked+explained result list. Pulled out unchanged from
     /recommendations' own body (2026-09-20) so /recommendations/all can
@@ -154,7 +189,12 @@ def _score_genre(catalog, ratings, user_rules, format_preference, genre, top_n):
     scored pool, not just a client-side filter of one shared pool, since
     recommend()/explain_match_with_profile() take genre into their own
     prevalence/threshold calculations) against catalog/ratings/rules/
-    format_preference loaded ONCE, instead of duplicating this logic."""
+    format_preference loaded ONCE, instead of duplicating this logic.
+
+    user_id: optional (2026-09-25) -- when given, logs an impression row
+    per returned book via _log_recommendation_impressions() above. Kept
+    optional (not threaded through as required) so any other caller of
+    this helper doesn't need to supply a real user just to get scores."""
     results = api.recommend(
         catalog, ratings, top_n=top_n, genre=genre,
         user_rules=user_rules, format_preference=format_preference,
@@ -193,6 +233,8 @@ def _score_genre(catalog, ratings, user_rules, format_preference, genre, top_n):
             "mismatches": detail["mismatches"],
             "dealbreaker_flags": detail["dealbreaker_flags"],
         })
+    if user_id is not None:
+        _log_recommendation_impressions(user_id, genre, out, explain_bundle["title_to_id"])
     return out
 
 
@@ -214,7 +256,7 @@ def recommendations(genre: str = None, top_n: int = 10, authorization: str = Hea
     # the endpoint returning the entire catalog.
     top_n = max(1, min(top_n, 100))
 
-    out = _score_genre(catalog, ratings, user_rules, format_preference, genre, top_n)
+    out = _score_genre(catalog, ratings, user_rules, format_preference, genre, top_n, user_id=user_id)
     return {"results": out}
 
 
@@ -247,7 +289,7 @@ def recommendations_all(top_n: int = 10, authorization: str = Header(default=Non
     for key, genre in (("", None), ("fantasy", "fantasy"), ("sci_fi", "sci_fi")):
         try:
             results_by_genre[key] = _score_genre(
-                catalog, ratings, user_rules, format_preference, genre, top_n
+                catalog, ratings, user_rules, format_preference, genre, top_n, user_id=user_id
             )
         except Exception:
             logging.getLogger(__name__).exception("Recommendation scoring failed for genre %r", key)
