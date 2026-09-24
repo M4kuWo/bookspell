@@ -1166,6 +1166,45 @@ belong in frozen per-book tag data at all.
 
 ## Future fields backlog
 
+### The bar for a new scalar `book_dna` field (not a trope/content-warning)
+
+Added 2026-09-24, from an external AI review's D4 (`docs/external-reviews/
+2026-09-23-gpt-review.md`) — a real, previously-unwritten gap: tropes and
+content warnings already have a working bar and a formal promotion rule
+(see the tracker right below this section), but a whole new SCALAR
+field — a bigger, rarer decision, closer in weight to `romance_tone`/
+`worldbuilding_delivery` landing as real columns than to one more trope
+— had no equivalent written gate. This is that gate, deliberately mirroring
+the trope tracker's own discipline rather than inventing a separate one:
+
+1. **A repeated failure class, not one book.** The same standard as a
+   trope's second-occurrence rule, applied here too — a single
+   recommendation failure that a new field would explain is a real
+   finding (log it, e.g. via a CODX-style diagnosis like
+   `docs/codx-reviews/2026-09-23-magic-burns-ranking.md`), but isn't by
+   itself grounds to propose a new field. Wait for — or actively check
+   for — a second, independent case the SAME missing dimension would
+   explain before treating it as a field proposal rather than an
+   isolated data point.
+2. **Confirm no existing field or trope combination already covers it.**
+   Check both the scalar fields above and the trope vocabulary — a
+   missing CONCEPT and a missing VOCABULARY ENTRY for an already-modeled
+   concept are different problems with different fixes.
+3. **State what an ablation-style check would need to show, before
+   building it.** `run_ablation_study()`/`ABLATION_GROUPS` in
+   `scripts/scoring_tests.py` already exist for exactly this (currently
+   used to catch regressions in existing fields) — reuse it, don't build
+   a parallel mechanism. Write down, in advance, what post-launch
+   result would justify the field's added complexity (which metric,
+   how much movement) and what result would mean it didn't earn its
+   keep.
+4. **This is scoring-adjacent, not just a data-tagging decision** — a
+   new field changes what `build_profile()`/`score_book()` learn from,
+   so it also has to clear `docs/scoring-test-protocol.md`'s 10-question
+   gate, not just this one. The two aren't redundant: this section is
+   about whether the CONCEPT is real and repeated; that gate is about
+   whether adding it is the right ENGINEERING response.
+
 ### Flagged single-occurrence vocabulary gaps (pending a second occurrence)
 
 **A running tracker, not a one-off list — update it every time `tag-catalog-batch`

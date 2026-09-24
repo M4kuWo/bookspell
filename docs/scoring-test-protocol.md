@@ -31,6 +31,49 @@ Rerun this whenever:
 - Enough time/data has passed that a deferred idea (see table below) is
   worth reconsidering.
 
+## Before proposing any scoring change: the 10-question gate
+
+Adopted 2026-09-24 from an external AI (GPT/"Astra") review's section 7
+(`docs/external-reviews/2026-09-23-gpt-review.md`) -- a genuinely good,
+reusable checklist that matches this project's existing discipline
+closely enough to make it a real, binding gate rather than filing it
+away as "a good idea from a review." Answer all ten before writing a
+line of scoring code, the same way the two-scenario requirement below
+is already mandatory, not optional:
+
+1. **What observed failure class is this intended to solve?**
+2. **Is this failure present across multiple books/readers, or only
+   one example?** (a single example is a CODX-style diagnosis task, not
+   yet a scoring-change proposal)
+3. **Could the problem instead be incorrect metadata?** (check the
+   book's actual tags before touching the formula)
+4. **Could it be caused by insufficient reader history?** (see the
+   Magic Burns case, `docs/codx-reviews/2026-09-23-magic-burns-ranking.md`
+   -- a real example where the honest answer was yes, and the correct
+   response was "wait for more data," not "add a heuristic")
+5. **Can the problem already be represented by existing Book DNA?**
+6. **Which metric should improve if the change works?** (pairwise
+   accuracy, NDCG, rank percentile, top-K rejection rate, or a real
+   prospective outcome -- name it before starting, not after)
+7. **What metric/regression would cause us to reject the change?**
+8. **Can this be implemented without creating another parallel scoring
+   path?** (see `score_candidate()`'s canonical-pipeline design --
+   every consumer calls it, nothing reconstructs scoring semantics
+   independently)
+9. **Can the change be ablated independently?** (`run_ablation_study()`/
+   `ABLATION_GROUPS` in `scripts/scoring_tests.py` already exist for
+   exactly this)
+10. **Does the added complexity earn its maintenance cost?**
+
+If these ten can't be answered, the change isn't ready to implement --
+log it as a deferred idea in the table below instead, same as this
+file already does for every other idea that didn't clear its bar.
+
+See also `docs/schema/book-dna.md`'s Future fields backlog for the
+equivalent, more specific gate for proposing a brand-new scalar
+`book_dna` field (question 2 and 9 above, made concrete for that
+particular kind of change).
+
 ## The two scenarios, and why both are required
 
 **Scenario 1 (dilution)**: a real signal (e.g. "this reader dislikes

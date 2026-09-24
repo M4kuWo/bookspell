@@ -572,7 +572,9 @@ repo) so it's discoverable from either side.
   so far — landed, rejected, and deferred — and why. Several ideas that
   looked like clear wins under an incomplete test turned out not to be;
   don't re-litigate a rejected idea, or claim a win, without checking
-  that table first.
+  that table first. **Answer its "Before proposing any scoring change:
+  the 10-question gate" section before writing any code** — a real,
+  binding pre-check (adopted 2026-09-24), not optional framing.
 - **Every scoring change must be checked against at least two failure
   scenarios before landing**, not just the one that motivated it: a
   fix that helps a real signal from getting diluted by many unrelated

@@ -21418,3 +21418,127 @@ only.
 
 CODX's task file reset to "nothing queued" pending the next real
 assignment.
+
+## 2026-09-23/24 -- second external AI review (GPT/"Astra"): verified, one real self-correction, real cold-start measurement, 2 new standing process rules adopted
+
+Full text committed in full this time (the repo owner's explicit request,
+unlike the 2026-09-14 review which stayed external) at
+`docs/external-reviews/2026-09-23-gpt-review.md`. Same discipline as
+that first review: every checkable claim independently re-verified
+against the actual repo before trusting or acting on it, not taken at
+face value just because it read as well-informed.
+
+**Held up on direct verification**: `scripts/recommend.py` is 105 lines
+(review said ~95 -- close); exactly 4 independent real readers (Dandan,
+Gabriel, Mathias, Osnat -- `mathias_goodreads.json` is the same person
+as `mathias.json`, not a 5th, confirmed by listing `data/ratings/`);
+catalog is 1,484 books / 1,230 tagged ("well over 1,200" holds); CI is
+genuinely just the 3 syntax/migration checks CODX built (2026-09-22),
+nothing scoring-related, matching the review's "CI is lighter than the
+engine's sophistication" critique exactly.
+
+**I5/R1 (Magic Burns) was already fully investigated** -- CODX's Task
+17 (landed 2026-09-23, `docs/codx-reviews/2026-09-23-magic-burns-ranking.md`)
+independently converged on essentially the review's own suggested
+Codex prompt before the review ever arrived. Real, reassuring
+validation that this project's own process is asking the right
+questions on its own, not a gap the review found first.
+
+**Where the review overstated or needed a caveat**:
+- O4's "dramatically increasing catalog size did not significantly
+  change recommendation scores" rests on a narrower real result than
+  stated -- checked `scoring-test-protocol.md` (~line 160): a fixed
+  held-out accuracy test came back bit-identical after a 307->523 book
+  catalog grew, but only because those specific scenarios never touch
+  catalog-wide statistics at all. Not the general "catalog size doesn't
+  matter for quality" finding the review implies.
+- R4 (import coverage) is already partially built and the review
+  seemed not to know it -- `app/import.html` already shows matched
+  count and a full unmatched-title list per import, `api/main.py`
+  already returns that breakdown. What's genuinely missing is the
+  AGGREGATE piece: a persistent coverage percentage and cross-user
+  tracking of repeatedly-unmatched titles as a catalog-prioritization
+  signal (R5's actual novel piece).
+- The 1-10 scorecard in section 1 has no rubric behind it -- flagged as
+  not meaningfully checkable, treat as narrative framing, not a metric.
+
+**Render cold-start claim (O5, "30-60 seconds") -- investigated
+properly at the repo owner's explicit request, since a first pass had
+wrongly called it "plausible but unverified."** That first pass only
+grepped `docs/`, missing that the number already lives in the codebase
+itself (`app/shared.js`, dated 2026-09-12, the literal basis for
+`dashboard.html`'s "can take up to a minute" copy) -- a real gap in
+that verification pass, corrected once found. Then actually measured
+it live against the real deployed API (`GET /rule-targets`, no auth,
+same endpoint this project has used for testing before): **cold 25.65s,
+warm 0.56s and 0.55s on two immediate follow-ups** -- confirms the
+existing "up to a minute" UI copy is honest and not underselling the
+wait, landing on the faster end of it. Real, not exaggerated -- and a
+first-time beta visitor's first cold hit will almost always land right
+after finishing the onboarding starter list, exactly the moment least
+forgiving of a 25+ second stall. Worth real mitigation (a keep-warm
+ping, or pricing Render's paid tier) before a public beta specifically,
+separate from internal use where it's already fine.
+
+**D5 (adaptive active learning) -- design sketched, not built, so the
+deferral is a real decision rather than just "later."** If/when
+justified: after each rating, score the REMAINING unrated starter
+candidates against the partial profile `build_profile()` already
+computes, and surface next whichever sits closest to the Poor/Good
+decision boundary rather than whichever has the most extreme predicted
+score -- standard uncertainty sampling, reusing existing scoring
+infrastructure, no new mechanism needed. Not built now because there's
+no usage data yet on whether the simple 2026-09-23 starter list is
+even the real bottleneck (do people rate past 2-3 starters, does
+quality visibly improve by rating 5) -- that evidence has to exist
+before this is worth building, not "eventually" with no trigger
+condition.
+
+**D4 (DNA-field-addition methodology) -- a real gap found, now closed.**
+Checked what actually exists: tropes/content-warnings already have a
+real, working bar (`docs/schema/book-dna.md`'s "does this change what
+gets recommended" + a formal second-occurrence-promotes-it rule), but
+no equivalent written gate exists for a whole new SCALAR field -- a
+bigger, rarer decision than a trope. The tooling to close this gap
+already exists and wasn't being used for this purpose:
+`run_ablation_study()`/`ABLATION_GROUPS` in `scripts/scoring_tests.py`
+already measure what removing a field group does, currently only used
+to catch regressions in EXISTING fields. Added a written rule to
+`docs/schema/book-dna.md`'s Future fields backlog: a new scalar field
+needs (a) a REPEATED failure class (not one book) that no existing
+field/trope combination explains, same second-occurrence discipline
+tropes already have, and (b) a stated ablation-style check for what
+would need to be true post-launch to prove the field earned its
+complexity.
+
+**Section 7's Q1-Q10 decision checklist -- adopted as a real, binding
+gate, not filed away as "a good idea from a review."** Added verbatim
+to `docs/scoring-test-protocol.md` as a standing pre-check, referenced
+from CLAUDE.md's own scoring-change rules alongside the existing
+`scripts/scoring_tests.py` scorecard requirement.
+
+Everything else in the review (D1-D3, D6-D7, sections 8-9's CLDO/CODX
+role framing) either matches this project's already-existing practice
+closely enough to need no change, or is already covered by an existing
+TODO.md item -- not separately re-logged here.
+
+## 2026-09-24 -- TODO.md updated with the review's genuinely new, real items
+
+Per the repo owner's request to add everything agreed on to the
+backlog. Also clarified a real, worth-fixing confusion: the repo owner
+asked "where does our roadmap reside" -- there's never been a file
+literally named that; `docs/TODO.md` has always been serving that role
+by design (its own header already says so), added a one-line note at
+the top of it making that explicit so this doesn't come up again for a
+future session either.
+
+New items added (see `docs/TODO.md` for the actual entries, kept
+short per its own convention -- not duplicated here): CI fixture-based
+deterministic scoring/API tests (R3); import-coverage aggregation +
+cross-user unmatched-title tracking as a catalog-prioritization signal
+(R4/R5's real novel piece); prospective recommendation-outcome
+tracking, explicitly flagged as needing a real privacy/minimization
+design pass before any build starts, not just "add a table" (R6);
+recommendation-confidence instrumentation, diagnostic/UI-only, no
+ranking changes (R7); a keep-warm ping for the Render cold-start
+problem, scoped as genuinely simple given today's real measurement.
