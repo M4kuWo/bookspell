@@ -1,6 +1,6 @@
 # CODX current task
 
-**Assigned**: 2026-09-24, by CLDO.
+**Assigned**: 2026-09-25, by CLDO.
 **Status**: ready to start.
 
 See `docs/persona-workflow.md` if you haven't read it yet. Report to
@@ -8,120 +8,104 @@ See `docs/persona-workflow.md` if you haven't read it yet. Report to
 
 ---
 
-## Task 18 — a real CI-integrated scoring-mechanics fixture test (first slice)
+## Task 19 — fixture-testing the mechanics Task 18 deliberately deferred
 
-`main` is at commit `1c92666`. From the 2026-09-23 external AI review
-(`docs/external-reviews/2026-09-23-gpt-review.md`, its R3) and confirmed
-as a real gap 2026-09-24: current CI (`.github/workflows/ci.yml`, your
-own Task 15) only checks syntax and migration timestamps -- nothing
-exercises `scripts/scoring/` at all. This task builds the first real
-slice of that.
+Task 18 (`scripts/scoring/tests/test_fixtures.py`, landed by CLDO
+2026-09-25 after independent re-verification -- see
+`docs/project-log.md`'s 2026-09-25 "CODX Task 18 landed" entry and
+`docs/codx-reports/2026-09-25-scoring-fixture-tests.md`) covered
+ordinal/nominal similarity, `build_profile()`'s learned-sign
+correctness, the 4 `score_candidate()` policies' stage-sequence
+agreement, and series-position gating. It explicitly deferred six
+other real mechanics to this task. Same file, same conventions --
+extend `scripts/scoring/tests/test_fixtures.py` (add new test methods
+and new fixture books as needed) rather than starting a second file;
+this is one coherent fixture-test suite, not two.
 
-**This is a NEW, separate file — do not modify `scripts/recommend.py`
-or `scripts/scoring_tests.py`.** Both stay CLDO-exclusive territory per
-this project's persona rules, same as always; a new, independent
-fixture-test file doesn't touch either.
+**Same ground rules as Task 18**: this is a NEW/extended test file only
+-- do not modify `scripts/recommend.py` or `scripts/scoring_tests.py`
+(CLDO-exclusive, per this project's persona rules). No DB access, no
+network, stdlib `unittest` only, synthetic fixture data only. Read
+`scripts/scoring/pipeline.py`'s real implementation for each mechanic
+before writing an assertion -- assert against what the code actually
+does, not a guess about what it "should" do (Task 18's own discipline).
 
-### Why fixtures, not the live database
+### What to test in this slice
 
-`scripts/scoring_tests.py`'s own benchmark (real raters, real catalog)
-answers "do these rules produce GOOD recommendations" — genuinely can't
-run in CI (needs a live Postgres + real tagged data). This task answers
-a different, narrower question: "does the engine obey its OWN rules,"
-which a small hand-built synthetic catalog can test deterministically,
-fast, with zero external dependencies. Keep both purposes distinct —
-don't try to make this new file a smaller version of the real benchmark.
+1. **Redundancy/prevalence discounts** -- `_redundancy_adjusted_weight()`
+   and the `field_prevalence`/`trope_prevalence` discount in
+   `_iter_book_factors()` (`w_eff *= max(PREVALENCE_DISCOUNT_FLOOR, 1 -
+   prevalence)`). Build a fixture pair: two otherwise-identical
+   candidates where one shares a value with a catalog-wide-common
+   field (high prevalence) and one with a rare one (low prevalence) --
+   confirm the common one's effective weight is discounted relative to
+   the rare one's, given equal raw weight. Separately, confirm the
+   redundancy discount actually reduces a correlated field's effective
+   weight per `REDUNDANCY_DISCOUNTS` (`scripts/scoring/constants.py`)
+   for a candidate where it applies, and does NOT discount an unrelated
+   candidate lacking that correlation (this project's own real
+   regression, documented in CLAUDE.md's recommendation-engine section:
+   "a discount must be conditional on the specific book being scored,
+   never a blanket adjustment").
+2. **Series-repeat blending** -- `_apply_series_repeat()` /
+   `series_repeat_worst_similarity()`. A synthetic series where the
+   rater already liked/disliked an earlier installment: confirm the
+   blended score moves the right direction and stays a no-op for a
+   standalone with no series-mates in `id_to_magnitude`.
+3. **Series-trajectory penalty** -- `_apply_series_trajectory_penalty()`
+   / `_series_trajectory_penalty_factor()` / `compute_series_dna()`. A
+   synthetic 2+ book series whose DNA shifts across installments in a
+   way the rater's profile disfavors: confirm the penalty factor is
+   `< 1.0` and moves score down; confirm a series with no meaningful
+   shift is a no-op (factor `== 1.0`).
+4. **Cold-start blending** -- `cold_start_weight()` (already partly
+   exercised indirectly by `scripts/scoring/confidence.py`, landed by
+   CLDO the same day -- read its docstring for the two components:
+   count-based fade and `reader_experience_fraction()`) and its actual
+   application inside `score_candidate()`'s `policy="ranking"`/`"audit"`
+   branch (blends toward `1.0 - genre_accessibility_demand`). Confirm a
+   fully-cold profile (`cold_start=1.0`) blends the score toward the
+   accessibility-implied value regardless of the base score, and
+   `cold_start=0.0` is a byte-identical no-op.
+5. **User-rules filtering** -- `apply_user_rules()`/
+   `normalize_user_rules()` (`scripts/scoring/rules.py`). A synthetic
+   "none of X" rule that matches vs. doesn't match a candidate: confirm
+   exclusion + the `user_rule` exclusion label fires correctly, and a
+   "less of X" rule applies its multiplicative discount without fully
+   excluding. Task 18's own Scenario 13 in `scripts/scoring_tests.py`
+   is the real-data analog to read for the expected shape -- don't
+   copy it, this is a from-scratch synthetic-fixture version.
+6. **Explanation-text generation** -- `explain_book()`/`describe()`/
+   `natural_sentence()`/`dealbreaker_sentence()`
+   (`scripts/scoring/explanations.py`). Confirm a known match/mismatch
+   pair produces a real, non-empty, correctly-signed phrase (matches
+   read as positive, mismatches as negative) -- not exact string
+   matching against English wording (too brittle), but structural
+   assertions (which list a given label lands in, correct sign/
+   direction).
+7. **Dealbreaker/veto firing** -- `_apply_dealbreaker_veto()` and
+   `dealbreaker_flags()`. A synthetic dealbreaker-magnitude mismatch:
+   confirm the veto actually suppresses the score when triggered, and
+   confirm the two documented modes (validated_fields non-empty vs.
+   empty -- see `dealbreaker_flags()`'s own docstring for the fixed-
+   threshold fallback vs. validated-set-only behavior) each produce the
+   behavior their own docstrings describe.
 
-### The fixture catalog shape
+### Validation bar (same as Task 18)
 
-`scripts/scoring/catalog.py`'s `load_catalog()` returns
-`{book_id: {...}}` where each book dict has: `id`, `title`, `author`,
-`series_id`, `series_name`, `position_in_series`, every `book_dna`
-column (read `docs/schema/book-dna.schema.yaml` for the full field
-list and controlled vocabularies), plus `tropes` (a list of trope id
-strings), `_trope_confidence` (dict, trope_id -> float, only for tropes
-with a recorded confidence), `_field_confidence` (dict, field_name ->
-float, only for fields with a recorded confidence). Build a small,
-fully synthetic version of this shape by hand — 12-15 fake books is
-enough, with `series_id`/`position_in_series` set on at least 2-3 of
-them (forming 1-2 fake short series) since several of the mechanics
-below specifically need series structure to test. Real UUIDs aren't
-required — any unique string id is fine for a fixture that never
-touches a real database.
-
-Design the fixture books DELIBERATELY, not randomly — each one should
-exist to isolate a specific mechanic being tested (e.g. two books
-identical except for one ordinal field's value, at a known distance
-apart, so the expected similarity score is computable by hand and
-assertable exactly).
-
-### What to test in this first slice (scope it to exactly this — a
-### second task will cover the rest, see "What NOT to do")
-
-1. **Ordinal field similarity** — a field like `overall_pace`
-   (slow/medium/fast) or `darkness`: confirm similarity at distance 0
-   (identical), 1 (adjacent), and max distance (opposite ends) match
-   the formula's actual documented behavior, not an assumption about
-   it — read `scripts/scoring/pipeline.py`'s own similarity functions
-   first, assert against what they actually compute, not against your
-   prior expectation of what they "should" compute.
-2. **Nominal field similarity** — same idea for a nominal field (e.g.
-   `person`, `magic_system_hardness`): match vs. mismatch, confirm the
-   actual similarity values used.
-3. **Basic field weighting via `build_profile()`** — a tiny synthetic
-   rating set (a few loved, a few hated books differing cleanly on one
-   field) produces a learned weight on that field with the correct
-   SIGN and a non-trivial magnitude. Not testing exact weight values
-   (too sensitive to the real formula's tuning) — testing that the
-   mechanism directs weight the right way given clean synthetic
-   evidence.
-4. **`score_candidate()`'s 4 policies are internally consistent** —
-   ranking/explanation/evaluation/audit agree on base score where
-   their stage sequences overlap, and differ only in the documented
-   ways (see `score_candidate()`'s own docstring in `pipeline.py` for
-   the exact stage sequence per policy — assert against that, not
-   against a guess).
-5. **Series-position gating** — a synthetic 3-book fake series: confirm
-   book 2 is ineligible (`policy="ranking"`) when book 1 isn't in the
-   training ratings, and eligible once it is. Cheap to construct, real
-   mechanic, currently completely untested anywhere in CI.
-
-### What NOT to do in this task (real, deliberately deferred to a
-### follow-up — do not try to cover these now)
-
-Redundancy/prevalence discounts, trajectory adjustment, cold-start
-blending, user-rules filtering, explanation-text generation, and
-dealbreaker/veto firing are all real, valuable things to fixture-test
-eventually, but adding all of them in one pass risks exactly what this
-project's own "deliberately small batches" convention exists to avoid.
-Leave them for Task 19 once this slice lands and is reviewed.
-
-No changes to `.github/workflows/ci.yml` itself, no commits, no
-pushes, no DB access needed at all for this task (it's 100% synthetic
-data) — propose the new file's path and the exact CI step that would
-run it (a fourth check alongside the existing three) in your report;
-CLDO wires it in after independent review, same as every other CODX
-proposal.
-
-### Validation bar
-
-- Actually run the fixture test file locally and confirm every
-  assertion passes against the current, real `scripts/scoring/` code
-  — don't write assertions you haven't verified pass.
-- Deliberately break one thing (e.g. temporarily comment out the
-  series-position gate in a throwaway copy of `pipeline.py`, never the
-  real file) and confirm your test actually catches it — same
-  "prove the check can fail" discipline your Task 15/16 work already
-  used.
-- Confirm the whole file runs in well under a second (it's tiny
-  synthetic data, no DB) — if it's slow, something's wrong with the
-  fixture design, not expected behavior.
+- Actually run every new assertion locally against current
+  `scripts/scoring/` and confirm it passes before reporting.
+- Deliberately break at least 2 of the 7 mechanics above (a throwaway
+  copy, never the real file) and confirm the corresponding new test(s)
+  actually fail -- prove each check can fail, not just that it can pass.
+- Confirm the whole extended file still runs in well under a second.
 
 ### Deliverable
 
-The new test file itself (e.g. `scripts/scoring/tests/test_fixtures.py`
-or a path of your own choosing — say what you picked and why), plus a
-report at `docs/codx-reports/<date>-scoring-fixture-tests.md` with:
-what each test actually asserts and why, the pass/fail evidence from
-both the clean run and the deliberately-broken run, and your proposed
-CI step (the exact command CI would run).
+The extended `scripts/scoring/tests/test_fixtures.py`, plus a report at
+`docs/codx-reports/<date>-scoring-fixture-tests-2.md` with what each
+new test asserts and why, and the pass/fail evidence for both the clean
+run and at least 2 deliberately-broken runs. No `.github/workflows/
+ci.yml` edit needed -- the existing 4th CI check
+(`python3 -S scripts/scoring/tests/test_fixtures.py`) already runs the
+whole file, extended or not.
