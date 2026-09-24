@@ -21680,3 +21680,90 @@ response body byte-identical in shape to before this change (matched:
 data. Manually verified the coverage query too: 2/3 = 0.667, correctly
 excluding the 4th fixture row (currently-reading, unrated) from the
 denominator. Test user and its cascaded rows cleaned up after.
+
+## 2026-09-25 -- recommendation-confidence instrumentation landed (diagnostic-only)
+
+Built the `docs/TODO.md` item from the 2026-09-23 GPT review's R7
+(`docs/external-reviews/2026-09-23-gpt-review.md`): a per-recommendation
+confidence signal shown alongside the match score, motivated concretely
+by the Magic Burns/Osnat case CODX investigated (Task 17) -- a
+recommendation can currently look exactly as certain whether it rests
+on a well-evidenced profile or a near-empty one.
+
+New module `scripts/scoring/confidence.py`, wired into
+`explain_match_with_profile()` (`scripts/scoring/api.py`) as a new
+`evidence_confidence` key, and from there into `/recommendations`'
+response (`api/main.py`'s `_score_genre()`). Deliberately NOT touching
+`score_candidate()`/`build_profile()`/ranking at all -- purely additive,
+computed as a post-processing step over `score_candidate()`'s
+already-returned `factors`, per the review's own explicit caution
+("do NOT immediately multiply confidence into the recommendation score
+... first measure whether low-confidence recommendations actually fail
+more often" -- no real-outcome data exists yet to make that call; see
+the still-pending prospective-outcome-tracking TODO item).
+
+Two separately-reported components, not collapsed into one opaque
+number:
+- `rater_evidence`: how much real evidence backs THIS READER'S profile,
+  independent of any specific candidate. Average of (a) `1 -
+  cold_start_weight()` (reuses recommend()'s own existing independent-
+  cluster-count + demonstrated-genre-readiness blend) and (b)
+  independent NEGATIVE rating clusters faded to 1.0 at
+  `MIN_DEALBREAKER_SAMPLE` (3, an existing constant, not a new one).
+- `candidate_metadata`: weighted average of `get_confidence()` over the
+  specific fields/tropes that actually appeared in this candidate's
+  score factors (not every field the book has a value for), weighted
+  by each factor's RAW weight, not its confidence-discounted effective
+  weight -- weighting by the discounted weight would double-count
+  confidence and bias the result toward looking artificially certain.
+
+**A real design correction made before landing, not after**: the first
+draft's `rater_evidence` component used
+`validated_dealbreaker_fields()`'s own validated-fields fraction as its
+negative-evidence proxy (reusing the fields already validated for real
+dealbreaker firing seemed like the obvious no-new-logic choice).
+Checked against real rater data before trusting it (per this project's
+own "verify before trusting" discipline) and found it was dead weight:
+even Mathias's real 143-rating, 21-negative-cluster profile validates
+ZERO fields at `STAT_SEPARATION_THRESHOLD` (0.65) -- that threshold is
+deliberately conservative for actual per-book veto-firing, not usable
+as a continuous confidence signal, so this component would have been
+uniformly 0.0 for every real rater tested and contributed no
+discriminating signal at all. Replaced with the negative-cluster-vs-
+`MIN_DEALBREAKER_SAMPLE` floor above, which does discriminate (verified
+against Mathias/Osnat/Gabriel/Dandan's real profiles: `rater_evidence`
+came out 1.0 / 1.0 / 0.583 / 0.833 respectively, and 0.0 for a synthetic
+single-rating profile) -- a much weaker, more honest claim ("enough
+negative evidence exists to mean something," not "a specific field has
+been statistically validated"), which is the only claim this component
+is actually entitled to make.
+
+Deliberately deferred, not attempted: **learned-weight stability**
+(the GPT review's own suggested third input). No cheap proxy was found
+that wouldn't require a real bootstrap/resampling estimate -- adding
+one now, before any real-outcome data exists to justify the added
+complexity, would be exactly the kind of premature investment this
+project's own Q10 gate (`docs/scoring-test-protocol.md`) exists to
+catch. Left as a candidate refinement once outcome data exists.
+
+Verification: full `scripts/scoring_tests.py` benchmark run clean
+(zero regressions) both before and after a small, behavior-preserving
+extraction attempt in `scripts/scoring/pipeline.py`'s
+`validated_dealbreaker_fields()` that was ultimately reverted once the
+above correction made it unnecessary (the extracted helper had no
+other caller once `rater_evidence_confidence()` stopped depending on
+it -- reverted rather than left in as unused/premature abstraction).
+Confirmed real, meaningfully-varying `evidence_confidence` output
+against all 4 real raters' actual profiles and a synthetic near-zero-
+evidence one, via direct calls into `scripts/scoring/api.py` (not a
+full HTTP round-trip -- `api/main.py`'s own one-line addition reads an
+unconditionally-present key from `explain_match_with_profile()`'s
+return dict, and setting up its auth-gated `TestClient` harness for
+that alone wasn't warranted; a full end-to-end check is still worth
+doing whenever this area is touched again for another reason).
+
+Not built this session, on purpose: any frontend/UI display of this
+value (the user is mid-visual-overhaul on `app/` themselves) and any
+measurement of whether it actually predicts real recommendation
+failures (needs the outcome-tracking table, itself still pending a
+privacy design pass).

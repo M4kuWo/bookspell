@@ -179,6 +179,12 @@ def _score_genre(catalog, ratings, user_rules, format_preference, genre, top_n):
             "mismatch_summary": detail["mismatch_summary"],
             "dealbreaker_summary": detail["dealbreaker_summary"],
             "series_note": detail["series_note"],
+            # Diagnostic-only (2026-09-25, see scripts/scoring/
+            # confidence.py's module docstring) -- how much real
+            # evidence backs this specific match, NOT part of `score`
+            # and never fed back into it. Frontend display of this is
+            # a separate, later step -- not built here.
+            "evidence_confidence": detail["evidence_confidence"],
             # Itemized detail behind the one-line summaries above -- the
             # app's "why this recommendation" expansion renders these
             # directly rather than re-deriving them, since explain_match()

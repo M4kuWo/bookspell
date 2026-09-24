@@ -4,6 +4,9 @@
 from .cold_start import (
     cold_start_weight,
 )
+from .confidence import (
+    evidence_confidence,
+)
 from .constants import (
     MAX_DIVERSITY,
 )
@@ -256,6 +259,12 @@ def explain_match_with_profile(catalog, title, centroid, weights, id_to_magnitud
         "dealbreaker_flags": [p for _, p in flags_labeled],
         "dealbreaker_summary": dealbreaker_sentence(flags_labeled),
         "series_note": series_note,
+        # Diagnostic only -- see scoring/confidence.py's module docstring.
+        # NOT part of `score`/`match_label` above, never fed back into
+        # either.
+        "evidence_confidence": evidence_confidence(
+            catalog, id_to_magnitude, book, result["factors"]
+        ),
     }
 
 
@@ -270,7 +279,10 @@ def explain_match(catalog, ratings, title, genre=None, fatigue_overrides=None, t
 
     Returns {"title", "score", "match_label", "matches", "mismatches",
     "summary", "mismatch_summary", "dealbreaker_flags",
-    "dealbreaker_summary", "series_note"} -- matches/mismatches are
+    "dealbreaker_summary", "series_note", "evidence_confidence"} --
+    evidence_confidence is diagnostic-only (see scoring/confidence.py's
+    module docstring) -- never multiplied into score/match_label.
+    matches/mismatches are
     ordered lists of human-readable phrases (see describe());
     summary/mismatch_summary are the same data assembled into one
     readable sentence each (see natural_sentence()) instead of a flat
