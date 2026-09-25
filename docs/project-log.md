@@ -22130,3 +22130,12 @@ finding from earlier today's backup, per the repo owner's explicit
 direction -- acceptable for now (private repo, only a couple of real/
 test accounts), revisit once multiple real users are stored, not
 before.
+
+## 2026-09-25, later still -- CODX Task 20 reassigned (deferral resolved)
+
+Task 21 (context-load review) landed and its follow-up process
+safeguards are in place, so Task 20 (HIGH_RISK_FIELDS confidence QA,
+round 3 -- the 22-pair/20-book batch assigned earlier today) is back
+in `docs/codx-tasks/current-task.md`, restored byte-identical from its
+original assignment (commit `1448192`, diffed to confirm zero drift)
+now that the deferral noted at the time has resolved.
