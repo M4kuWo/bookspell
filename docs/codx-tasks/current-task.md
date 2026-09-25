@@ -8,83 +8,121 @@ See `docs/persona-workflow.md` if you haven't read it yet. Report to
 
 ---
 
-## Task 20 — HIGH_RISK_FIELDS confidence QA, round 3
+## Task 22 — review a concrete `book-dna.md` split proposal (per the new structural-change review gate)
 
-Resumes `docs/TODO.md`'s P3 "Recurring HIGH_RISK_FIELDS confidence QA
-pass" item -- paused 2026-09-17 for budget pacing after rounds 1-2
-(Tasks 9-10, `docs/codx-reviews/codx-highrisk-confidence-qa-pass-
-2026-09-17.md` and `...-round2-2026-09-17.md`), not because it stopped
-being worth doing. **Read both of those reports first** -- same
-methodology, same evidence standard, same output format. Their
-`HIGH_RISK_FIELDS` definitions/POV-count thresholds/etc. are unchanged;
-don't re-derive them.
+This task exists because of CLAUDE.md's new "Structural/methodology-change
+review gate" section (added 2026-09-25, right after your own Task 21
+review). That gate requires an independent review before implementing a
+"big" structural change — and specifically calls out this exact
+situation as its worked example: Task 21 blessed the GENERAL direction
+of splitting `book-dna.md`, but flagged that a mechanical single-heading
+cut would break real things. This task is CLDO's attempt at a CONCRETE
+split plan that accounts for what Task 21 found. **Review this plan
+critically before it's implemented — this is a genuine ask, not a
+formality. Find flaws, boundary cases that are mis-assigned, or propose
+a different structure entirely if you think this one is wrong.**
 
-**Same scope/gate as before**: this is a proposal-only review, same as
-every CODX task. No catalog, confidence, scoring, or migration changes
--- findings go in your report for CLDO to independently review and
-apply (rounds 1-2's proposals both landed this way, via
-`20260917020000_task9_highrisk_confidence_qa_corrections.sql` and
-`20260917030000_task10_highrisk_confidence_qa_round2_corrections.sql`
--- confirm that pattern if useful context, don't just assume).
+Same posture as Task 21: review/ideation only, no file changes, no
+implementation, no commits.
 
-### Why this needs a fresh assignment, not "just query for more"
+### What CLDO found digging into the actual content (beyond Task 21's own findings)
 
-The catalog grew significantly since rounds 1-2 (round-5 ingestion +
-ordinary batch tagging), so the low-confidence pool is no longer the
-same 125 rows the TODO item's stale count describes -- it's 240 rows
-as of 2026-09-25 (queried fresh, confidence < 0.6, `HIGH_RISK_FIELDS`
-columns only, excluding archived books). The 22 pairs below were
-selected from that live query, explicitly excluding every pair rounds
-1-2 already reviewed (whether corrected or left "genuinely
-inconclusive"/"schema-format-mismatch" -- re-reviewing those would
-just reach the same conclusion), and capped at 2 fields per book so
-this batch spans 20 different books rather than clustering on a few.
+Task 21 established that "Future fields backlog" contains real
+operational material (the vocabulary-gap tracker `tag-catalog-batch`
+requires, and `audiobook_editions`' rationale for an already-shipped
+table) mixed with genuinely speculative content. Digging further to
+build this concrete plan surfaced two more entanglements:
 
-### Assigned pairs (22, current value / confidence shown for reference -- verify against hosted yourself, don't trust this table blindly)
+1. **The `audiobook_editions` backlog entry literally contains the line
+   "UPDATE (2026-09-05): table BUILT"** (book-dna.md:1563) while the
+   whole entry still lives under "Future fields backlog" — an even more
+   direct confirmation than Task 21's already found: this isn't
+   ambiguous filing, it's a stale header on live content.
+2. **"Vocabulary growth process" (book-dna.md:526-940, 3,425 words) has
+   the exact same shape as the backlog problem**: it opens with a real,
+   current, always-needed rule (~270 words — "does this predict a
+   different recommendation, not just 'is it a real term'"), then the
+   remaining ~3,150 words are a chronological history of 7 past
+   "growth rounds," dated and closed. Same mixed-content pattern Task 21
+   found in the backlog, just under a different heading CLDO hadn't
+   checked yet when writing Task 21's assignment.
 
-| Book | Author | Field | Current value | Confidence |
-|---|---|---|---|---|
-| Exile | R. A. Salvatore | magic_system_hardness | hard | 0.4 |
-| Gone | Michael Grant | stakes_scope | regional | 0.4 |
-| Gone | Michael Grant | magic_system_hardness | na | 0.4 |
-| How to Become the Dark Lord and Die Trying | Django Wexler | stakes_scope | regional | 0.4 |
-| How to Become the Dark Lord and Die Trying | Django Wexler | magic_system_hardness | hard | 0.4 |
-| Provenance | Ann Leckie | person | first | 0.4 |
-| The Bone Ships | RJ Barker | magic_system_hardness | soft | 0.4 |
-| The Eye of the Bedlam Bride | Matt Dinniman | pov_count | dual | 0.4 |
-| The Historian | Elizabeth Kostova | magic_system_hardness | soft | 0.4 |
-| The Knight and the Moth | Rachel Gillig | narrator_reliability | ambiguous | 0.4 |
-| The Knight and the Moth | Rachel Gillig | romance_heat_intensity | low | 0.4 |
-| The Prison Healer | Lynette Noni | magic_system_hardness | soft | 0.4 |
-| The Queen of the Tearling | Erika Johansen | romance_heat_intensity | low | 0.4 |
-| The Raven Scholar | Antonia Hodgson | romance_heat_intensity | low | 0.4 |
-| The Raven Scholar | Antonia Hodgson | magic_system_hardness | soft | 0.4 |
-| The Redemption of Time | Baoshu, Ken Liu | stakes_scope | cosmic | 0.4 |
-| The Rise and Fall of D.O.D.O. | Neal Stephenson, Nicole Galland | stakes_scope | regional | 0.4 |
-| The Rise and Fall of D.O.D.O. | Neal Stephenson, Nicole Galland | narrative_closure | requires_series | 0.4 |
-| The River Has Roots | Amal El-Mohtar | person | third_limited | 0.4 |
-| The River Has Roots | Amal El-Mohtar | romance_heat_intensity | closed_door | 0.4 |
-| The Salvation | Justin Lockey | humor_level | light | 0.4 |
-| The Tommyknockers | Stephen King | romance_heat_intensity | low | 0.4 |
+### Proposed file structure (4 files, from 1)
 
-### Validation bar (same as rounds 1-2)
+| File | Contents | Read when |
+|---|---|---|
+| `book-dna.md` (core, ~5,600 words / ~7,300 tokens — down from 19,578/25,451, a ~71% cut) | `Scope`, `Categories` (the actual field/trope vocabulary+definitions), `Known limitations`, `Spoiler gating`, `Series & universe` note, and ONLY the opening rule of `Vocabulary growth process` (trimmed to the ~270-word current standard, not the 7 growth-round history) | Every session, unconditionally (per CLAUDE.md's existing instruction) |
+| `book-dna-vocabulary-gaps.md` (operational tracker, ~2,241 words) | The full "Flagged single-occurrence vocabulary gaps" section (book-dna.md:1208-1457) verbatim, Open + Promoted/resolved both — it's explicitly already "a running tracker, not a one-off list," not history | Before `tag-catalog-batch`/gap-sweep work (already the case today, just relocated) |
+| `book-dna-tables.md` (discoverable current-table contracts) | The `audiobook_editions` entry (book-dna.md:1544 onward) EXTRACTED from the backlog and rewritten as current documentation (not "a deferred idea that got built" — just what the table is and why), since it describes a real, live, 1000+-row table | Whenever touching `audiobook_editions` or building UI against it — linked prominently from `book-dna.md`'s core AND from `.claude/skills/tag-audiobook-editions/SKILL.md` |
+| `book-dna-history.md` (rationale/history) | `Resolved during review`, `Vocabulary growth process`'s 7-round chronology, the remaining genuinely-deferred "Future fields backlog" entries (everything except the vocab-gap tracker and the audiobook_editions entry, both moved above), `Open for review`, `Next step`, and — open question, see below — possibly "The bar for a new scalar field" gate | When proposing a new field, revisiting a past decision, or a current rule explicitly points here |
 
-- Identity-check each book against hosted (title/author/Hardcover
-  ID/ISBN/year) before researching it -- round 1's Shroud
-  disambiguation is the template for why this matters.
-- Real, findable evidence (reviews, excerpts, synopses) per pair, not
-  genre pattern-matching -- this is exactly the failure mode
-  `HIGH_RISK_FIELDS` exists to catch (see CLAUDE.md's "Data quality /
-  tagging" section on this).
-- Same output categories as before: confirmed-correct (propose a
-  confidence increase), likely-wrong (propose a new value +
-  confidence), genuinely-inconclusive (unchanged), schema/format
-  mismatch if one turns up (unchanged, flagged).
+**Open question CLDO is genuinely unsure about, wants your read on**:
+"The bar for a new scalar `book_dna` field" (book-dna.md:1169-1206, 344
+words, currently the first thing under "Future fields backlog") is a
+CURRENT, standing rule — anyone ever proposing a new field must clear
+it, not just people looking at old history. Does it belong in the core
+file (short enough to justify always-reading it) or in
+`book-dna-history.md` with a one-line pointer left in core (matching
+the pattern for everything else in that file)? CLDO leans toward the
+pointer-in-core approach (most sessions never propose a new field, so
+paying 344 words every session for a rule almost nobody needs that
+session is the same mistake as reading the whole vocab-gap tracker
+every time), but this is exactly the kind of boundary call Task 21
+warned CLDO's own judgment can miss.
+
+### Every file that references `book-dna.md`'s current structure — must be updated together, not just `CLAUDE.md`
+
+Confirmed via direct grep before writing this (exact lines, so you
+don't need to re-derive them, only re-verify if useful):
+
+- `CLAUDE.md`: "always read `docs/schema/book-dna.md`" instruction
+  needs to point at the new core file instead.
+- `AGENTS.md:14`: same instruction, forwarded from CLAUDE.md's wording.
+- `.claude/skills/tag-catalog-batch/SKILL.md:69`: explicitly requires
+  the vocabulary-gap tracker "before tagging" — needs to point at
+  `book-dna-vocabulary-gaps.md` once it exists.
+- `.claude/skills/catalog-trope-gap-sweep/SKILL.md`: lines 13, 33, 49,
+  62, 179, 185, 199 all reference book-dna.md's structure, including
+  line 33's explicit "`docs/schema/book-dna.md` in full (not just the
+  backlog section" — this line's whole PREMISE (that there's a
+  meaningful "backlog section" distinct from the rest) needs rewriting
+  once the split exists, not just a path swap.
+- `.claude/skills/convert-romance-worldbuilding-fields/SKILL.md`: lines
+  14, 70.
+- `.claude/skills/tag-audiobook-editions/SKILL.md:73`: currently says
+  "book-dna.md's audiobook_editions backlog entry" — needs to become a
+  pointer to `book-dna-tables.md` instead, and the word "backlog" needs
+  to go since that table isn't backlog anymore under this plan.
+
+### What to actually do
+
+1. **Critique the file structure and the specific content-mapping
+   above.** Is 4 files the right number (too many, too few)? Is
+   anything mis-assigned? Does the `book-dna-tables.md` idea make sense
+   as a NEW file, or should `audiobook_editions`' contract live
+   somewhere that already exists / makes more sense?
+2. **Answer the open question** about where "The bar for a new scalar
+   field" belongs, with your reasoning.
+3. **Check CLDO's cross-file reference list for completeness** — did a
+   search of your own (across CLAUDE.md, AGENTS.md, `.claude/skills/`,
+   and anywhere else book-dna.md might be referenced, e.g.
+   `docs/scoring-test-protocol.md` or other docs) turn up anything
+   CLDO's grep missed?
+4. **Flag anything else Task 21's own "additional ideas" section
+   implied but this plan doesn't yet address** — e.g. "route by task
+   class" was Task 21's own idea and isn't reflected in this plan at
+   all yet; say whether it should be folded into this pass or stay a
+   separate, later piece of work.
+5. Don't restructure any files. This is a plan review, not
+   implementation — even if you're confident the plan is right, no file
+   changes, no commits.
 
 ### Deliverable
 
-A report at `docs/codx-reports/<date>-highrisk-confidence-qa-round3.md`,
-same shape as rounds 1-2's (identity table, recommendations-at-a-glance
-table, individual findings with sources). No commits, pushes, or
-hosted writes -- proposal only, for CLDO to review and land as a
-migration the same way rounds 1-2 landed.
+A report at `docs/codx-reports/<date>-book-dna-split-review.md`: your
+verdict on the proposed structure (keep as-is / modify / reject and
+propose an alternative), your answer to the open question, confirmation
+or correction of the cross-file reference list, and anything from
+point 4 above worth flagging. CLDO implements after reading this,
+independently re-verifying it the same way every other CODX output gets
+verified before being trusted.

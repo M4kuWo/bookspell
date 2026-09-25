@@ -22200,3 +22200,34 @@ Same conditional-UPDATE idempotency pattern as rounds 1-2.
 240 rows remained below 0.6 catalog-wide before this round (query
 fresh before assigning a round 4 -- the catalog keeps growing faster
 than these QA passes can keep up, expected and fine).
+
+## 2026-09-25, later still -- CODX Task 22 queued: review a concrete book-dna.md split proposal
+
+First real use of the new structural-change review gate for its
+actual worked example. Drafted a concrete 4-file split plan (core /
+`book-dna-vocabulary-gaps.md` / `book-dna-tables.md` /
+`book-dna-history.md`) before sending it for review, not just the
+general direction Task 21 already blessed. Digging into the actual
+content to build this plan surfaced 2 more entanglements beyond what
+Task 21 found: the `audiobook_editions` backlog entry literally
+contains the line "UPDATE (2026-09-05): table BUILT" while still
+living under "Future fields backlog" (book-dna.md:1563); and
+"Vocabulary growth process" (3,425 words) has the same mixed-content
+shape as the backlog problem -- a ~270-word current rule followed by
+~3,150 words of closed historical "growth round" chronology.
+
+Proposed core file: ~5,600 words (~7,300 tokens), down from the
+current 19,578/25,451 -- a ~71% cut to the always-read tax, with 100%
+of content preserved across the other 3 files. Flagged one genuine
+open question for CODX rather than deciding it unilaterally: whether
+"The bar for a new scalar field" (a current, standing rule, not pure
+history) belongs in the core file or the history file with a pointer.
+
+Cross-file reference audit included directly in the task (exact
+lines from a real grep, not left for CODX to re-derive): CLAUDE.md,
+AGENTS.md, and 3 skill files (`tag-catalog-batch`, `catalog-trope-gap-
+sweep` -- whose own text explicitly says "in full, not just the
+backlog section," a premise the split invalidates -- and
+`tag-audiobook-editions`). Also asked CODX to weigh in on whether
+Task 21's own "route by task class" idea should fold into this pass
+or stay separate.
