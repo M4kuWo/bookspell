@@ -21936,3 +21936,19 @@ landed. Fixed: marked done, summarized the actual finding (not a
 scoring bug -- sparse negative evidence, same root blocker as the
 already-tracked P3 graduated-dealbreaker-veto item, not a new separate
 problem), linked to the full report.
+
+## 2026-09-25, later still -- CODX Task 20 queued: HIGH_RISK_FIELDS confidence QA, round 3
+
+Resumed the P3 recurring QA pass at the repo owner's request. Queried
+local Postgres (verified in sync with hosted first) for current
+`HIGH_RISK_FIELDS`-column `book_field_confidence` rows below 0.6:
+**240 rows**, up from the stale 125 the TODO item cited (catalog growth
+since 2026-09-17, not a regression). Built a fresh 22-pair/20-book
+batch, explicitly excluding all 21 pairs rounds 1-2 (Tasks 9-10)
+already reviewed -- including the ones left "genuinely inconclusive"
+or "schema/format mismatch" and therefore still sitting at their
+original low confidence, which a naive fresh query would have
+re-surfaced and wasted CODX's effort re-reviewing. Capped at 2 fields
+per book so the batch spans 20 distinct books rather than clustering.
+Assigned as Task 20 in `docs/codx-tasks/current-task.md`, same
+methodology/evidence-standard/output-format as rounds 1-2.
