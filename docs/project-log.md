@@ -22440,3 +22440,40 @@ This closes out the `docs/TODO.md` "Fresh-session context-load
 reduction" item's two concrete steps (bounded project-log read window;
 book-dna.md split). "Route by task class" (Task 21's own idea, possibly
 a bigger win than the split alone) remains a real, unscoped follow-up.
+
+## 2026-09-26 -- new standing rule: multi-phase task closure discipline
+
+Repo owner flagged a real, recurring pattern: when a multi-phase effort
+finishes with one piece deliberately or accidentally left undone, the
+parent item gets marked closed and the leftover piece drifts into
+looking like a fresh, unrelated backlog idea later, instead of being
+explicitly flagged as "we still have X left" at the moment of closing.
+Concrete instance confirmed by checking the actual record before
+agreeing (not just taking the premise at face value): CODX's Task 21
+review proposed 3 things together (bounded read window, book-dna.md
+split, "route by task class"); the first 2 landed and `docs/TODO.md`
+was marked `[x]` "both steps done," with the 3rd noted only inside the
+log entry as "a real, unscoped follow-up" -- then presented the next
+session as one candidate task among unrelated options when asked
+"what's next," with no flag that it was actually unfinished work from
+the effort just closed.
+
+Added CLAUDE.md's new "Multi-phase task closure" section: before
+treating a multi-phase effort as closed, or moving to something else
+while a piece is still open, say so explicitly and ask whether to
+finish it first -- shelving a piece is still fine, but has to be a
+real, stated decision (budget, a genuine blocker, an explicit
+deprioritization), not something that happens by omission. Also fixed
+the actual instance this was caught on: `docs/TODO.md`'s context-load
+item un-marked from `[x]` back to `[ ]`, accurately describing 2 of 3
+recommendations done and the 3rd now being picked up.
+
+Did not send this specific CLAUDE.md addition through a CODX review
+under the new structural-change gate -- judged it as clearly-scoped,
+low-risk textual guidance directly specified by the repo owner (not a
+technical design with hidden cross-file complexity, unlike the
+book-dna.md split), matching the gate's own stated exception for
+well-defined, bounded work. Noted this judgment call to the repo owner
+rather than deciding it silently.
+
+Next: actually scoping and building "route by task class."

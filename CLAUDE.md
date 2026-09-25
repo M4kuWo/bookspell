@@ -844,6 +844,31 @@ successor if superseded) for the original build plan.
   content-warning ID that doesn't exist, and a NOT NULL column that
   would have failed every insert).
 
+## Multi-phase task closure
+
+Don't let one piece of a multi-phase effort quietly drop while the rest
+gets marked done. Real, already-happened example (2026-09-25/26): CODX's
+Task 21 review proposed three things together (a bounded project-log
+read window, the `book-dna.md` split, and "route by task class"). The
+first two were implemented and `docs/TODO.md`'s item was marked `[x]`
+"both steps done," with the third noted only as "a real, unscoped
+follow-up" inside the log entry. When the repo owner asked "what's
+next" the following session, it got presented as one candidate task
+among several unrelated options — not as "we still have a piece of the
+thing we just closed left to do." The repo owner caught this and asked
+for it not to recur.
+
+**The fix**: before treating a multi-phase effort as closed, or before
+moving on to something else while one is still genuinely open, say so
+explicitly — something like "we still have X left from this effort,
+are you sure you want to move on before finishing it?" — rather than
+silently deferring it and letting it drift into looking like a fresh,
+unrelated idea later. This doesn't mean a piece can never be shelved —
+a real reason (token/time budget, a genuine external blocker, an
+explicit call from the repo owner to deprioritize) is legitimate — but
+that has to be a stated, explicit decision made in the moment, not
+something that just happens by omission and gets rediscovered later.
+
 ## Agent/token efficiency
 
 - For large batch work (tagging many books, checking a trope across the
