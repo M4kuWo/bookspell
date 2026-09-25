@@ -21987,3 +21987,82 @@ context-window/retrieval-pattern perspective). Task 20 (HIGH_RISK_FIELDS
 QA round 3) is deferred one slot, not cancelled -- its full assignment
 is preserved in commit `1448192` and will be reassigned once Task 21
 lands.
+
+## 2026-09-25, later still -- CODX Task 21 landed: context-load review, verdict "keep the objective, modify all three proposals"
+
+CODX's report: `docs/codx-reports/2026-09-25-context-load-review.md`.
+Independently re-verified every quantitative claim before trusting any
+of it -- all matched exactly, to the word: `book-dna.md`'s "Future
+fields backlog" section is 9,880 of the file's 19,578 words; removing
+it leaves 9,698; `project-log.md` has exactly 358 H2 headings totaling
+5,213 words, zero duplicates.
+
+The most important finding: **my own proposed schema split (core vs.
+backlog, split at one heading) was genuinely flawed, not just
+suboptimal.** Verified myself: `.claude/skills/tag-catalog-batch/
+SKILL.md` mandatorily requires reading the "Flagged single-occurrence
+vocabulary gaps" tracker before tagging -- which lives INSIDE "Future
+fields backlog" (confirmed at book-dna.md:1208, backlog section spans
+1167-2290). Separately, `audiobook_editions`' real design rationale --
+for an already-built, 1000+-row, shipped table -- also sits inside
+that same "Future fields backlog" section (book-dna.md:1544), which
+CLAUDE.md itself already documents as the exact kind of discoverability
+gap that caused a real incident once (the book-info-modal/
+audiobook_editions story). A naive "read only when proposing a new
+field" cut would have broken tag-catalog-batch's own mandatory step
+and recreated that same incident. Also verified: AGENTS.md,
+catalog-trope-gap-sweep/SKILL.md (which explicitly says "in full, not
+just the backlog section"), convert-romance-worldbuilding-fields/
+SKILL.md, and tag-audiobook-editions/SKILL.md all cross-reference
+book-dna.md's structure -- confirming CODX's point that updating
+CLAUDE.md alone would be insufficient; any real split needs a
+coordinated reference audit across all of these.
+
+**Revised understanding of the 3 proposals, per CODX's review:**
+1. Schema split -- real and valuable, but must be organized by CONTENT
+   TYPE (current contract / active operational tracker / historical
+   rationale), not a mechanical single-heading cut, and must ship
+   together with updating every cross-referencing file above, with a
+   verified link audit -- not a quick CLAUDE.md-only pointer change.
+2. Project-log index -- rejected as originally framed (an always-read
+   index just relocates the same unbounded-growth problem one level
+   down: the 358-heading index alone is already ~6,800 tokens and will
+   keep growing). Replaced with on-demand `rg` search as the default
+   (zero new files, zero maintenance), with a generated (not
+   hand-maintained) index file only as a later addition if search
+   itself becomes the bottleneck.
+3. Search-over-linear-reads -- kept, but turned into a concrete 5-step
+   retrieval procedure (read core rules -> identify touched
+   systems/routing -> search identifiers+synonyms, read full sections
+   on a hit -> search for later reversals/supersession -> don't treat
+   truncated output as complete). Critically: permission/safety/
+   destructive-action rules must NEVER be pushed behind optional
+   search, only ever in the always-loaded core.
+
+**New idea, not something I'd proposed**: "route by task class" -- a
+small map directing different task types to different reading subsets
+(a CI-fixture task never needs the schema at all; tagging needs the
+full vocabulary + active gap tracker; scoring needs the protocol doc).
+CODX assesses this as likely bigger savings than the schema split
+alone, since most tasks currently pay the full schema-read tax for no
+reason.
+
+**Prioritized next step CODX recommends, and I agree is the right
+first move**: replace the vague "read the tail" project-log
+instruction with a concrete bounded rule (proposed: the 3 most recent
+complete entries, capped at 1,500 words total, with explicit
+disclosure if an entry gets cut off) -- genuinely valuable on its own,
+zero restructuring risk, doesn't require touching book-dna.md or any
+skill file, directly fixes the single most ambiguous part of the
+current instructions. The schema split is real but larger, riskier,
+cross-file work to do carefully in a follow-up pass.
+
+Explicitly NOT recommended by CODX, matching my own instinct: external
+RAG/vector infrastructure (unjustified complexity for a handful of
+Markdown files), retroactively converting old log entries into
+ADR-style pages (real clerical cost, little startup-time benefit), or
+monthly log sharding (doesn't solve retrieval alone, risks breaking
+existing links).
+
+Task 20 (HIGH_RISK_FIELDS QA round 3) remains queued to reassign next,
+per the deferral noted when Task 21 was queued.
