@@ -1,0 +1,7 @@
+PASS: 22 unique assigned pairs; 16 distinct unarchived books.
+PASS: all hosted values/confidences match assignment; all sources ai_inferred.
+PASS: 3 value corrections, 5 confidence-only increases, 14 unchanged inconclusive pairs.
+PASS: every inconclusive value and confidence preserved exactly.
+PASS: 22 sequential finding headings and all local evidence links exist.
+PASS: git diff --exit-code HEAD -- returned 0 (no tracked-file changes).
+No scoring tests, hosted writes, commits or pushes performed.

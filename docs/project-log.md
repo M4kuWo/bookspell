@@ -22168,3 +22168,35 @@ riskier, cross-file work, deliberately sequenced after this smaller,
 self-contained first step. Per the new structural-change review gate,
 a concrete split proposal should go to CODX for review before it's
 implemented, not just the general direction CODX already blessed.
+
+## 2026-09-25, later still -- CODX Task 20 landed: HIGH_RISK_FIELDS confidence QA, round 3
+
+CODX's report: `docs/codx-reports/2026-09-25-highrisk-confidence-qa-round3.md`.
+22 pairs across 16 distinct books (CODX correctly caught that my own
+task assignment had miscounted this as 20 books -- verified myself:
+16 is right). 3 value corrections, 5 confidence-only increases, 14
+genuinely inconclusive and left unchanged.
+
+Independently re-verified before landing: all 22 current values/
+confidences (0.4 across the board) confirmed against local Postgres --
+22/22 matched exactly (first comparison attempt had a false-positive
+"mismatch" from a Python Decimal-vs-float comparison bug in my OWN
+verification script, not a real data issue -- caught and fixed before
+trusting the result). Spot-checked the 2 highest-impact "likely wrong"
+person/narration-mode corrections by fetching the cited sources
+directly, not just trusting CODX's summary: Provenance's cited VICE
+excerpt is genuinely third-person ("Ingray knew that if she
+reached..."), confirming `first` was wrong; The River Has Roots'
+cited Reactor review explicitly calls the narration omniscient ("as
+if you're there watching the sisters like an omniscient god"),
+confirming `third_limited` -> `third_omniscient`.
+
+Landed via `supabase/migrations/20260925020000_task20_highrisk_
+confidence_qa_round3_corrections.sql` -- tested in a rolled-back
+transaction first (all 8 updates verified landing exactly as
+intended), applied to local then hosted (`supabase db push`, clean).
+Same conditional-UPDATE idempotency pattern as rounds 1-2.
+
+240 rows remained below 0.6 catalog-wide before this round (query
+fresh before assigning a round 4 -- the catalog keeps growing faster
+than these QA passes can keep up, expected and fine).
