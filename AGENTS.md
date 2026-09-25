@@ -13,8 +13,12 @@ over time) and to say what's specific to your role.
 Also read, same as `CLAUDE.md` tells every session to: `docs/project-log.md`
 per its own bounded-read rule (the 3 most recent complete entries,
 capped at 1,500 words — search for anything older/specific instead of
-reading further back), `docs/schema/book-dna.md` (the schema),
-`docs/TODO.md` (the broader cross-cutting backlog, for context/rationale
+reading further back), `docs/schema/book-dna.md` (the core schema
+reference — as of 2026-09-25 split into 4 files; this one stays
+always-read, its companions `book-dna-vocabulary-gaps.md`/
+`book-dna-tables.md`/`book-dna-decisions.md` only when the task needs
+them, see its own "Schema map" section), `docs/TODO.md` (the broader
+cross-cutting backlog, for context/rationale
 — your own specific next assignment is a separate file, see "Getting
 your next task" below), and check `.claude/skills/` for anything
 relevant to a table/feature you're about to touch.

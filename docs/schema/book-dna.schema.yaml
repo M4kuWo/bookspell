@@ -1,6 +1,7 @@
 # Book DNA schema — machine-readable draft
 #
-# Status: DRAFT, v0.1 — pending review (see book-dna.md, "Open for review")
+# Status: DRAFT, v0.1 — pending review (see book-dna-decisions.md, "Open for review" --
+# moved there from book-dna.md during the 2026-09-25 core/companion-file schema split)
 # This is the source of truth to generate, later:
 #   - Postgres columns for `book_dna` (step 02 of the roadmap)
 #   - the JSON schema handed to the LLM tagging pipeline (step 04)

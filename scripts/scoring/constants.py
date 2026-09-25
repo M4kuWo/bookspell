@@ -180,7 +180,8 @@ TROPE_SHRINKAGE_K = 5
 # history. Keeping diversity's contribution below MAX_DIVERSITY means
 # the relevance term never gets crowded out entirely, so a book that
 # doesn't match the user's taste at all stays capped low regardless of
-# how novel it is -- see book-dna.md's 2026-08-29 refinement note.
+# how novel it is -- see book-dna-decisions.md's 2026-08-29 refinement
+# note (moved out of book-dna.md during the 2026-09-25 schema split).
 MAX_DIVERSITY = 0.5
 
 # --- Cold-start fallback (2026-09-03) -------------------------------------

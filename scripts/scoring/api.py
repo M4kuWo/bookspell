@@ -104,7 +104,8 @@ def recommend(catalog, ratings, top_n=10, genre=None,
     recent_history: list of titles the user was recently recommended/has
     recently read, most-relevant for the `diversity` param below. Purely
     caller-supplied for now (no real per-user history table exists yet
-    -- see book-dna.md's 2026-08-29 diversity/fatigue design note).
+    -- see book-dna-decisions.md's 2026-08-29 diversity/fatigue design
+    note, moved out of book-dna.md during the 2026-09-25 schema split).
 
     diversity: 0.0 (default, today's pure-relevance behavior) up to
     MAX_DIVERSITY. Blends relevance (profile match) against novelty

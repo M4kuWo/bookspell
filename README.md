@@ -318,8 +318,12 @@ docs/
                                  CLDO has independently verified and applied
   PENDING_APPROVALS.md          cross-session destructive-action approval gate
   schema/
-    book-dna.md                 human-readable schema spec + roadmap backlog
-    book-dna.schema.yaml        machine-readable schema
+    book-dna.md                 core schema reference, always read in full
+    book-dna-vocabulary-gaps.md active tracker (read before tagging/gap sweeps)
+    book-dna-tables.md          current contracts for tables that grew out of
+                                 this schema (audiobook_editions, work_type, etc.)
+    book-dna-decisions.md       deferred proposals + rejected decisions + history
+    book-dna.schema.yaml        machine-readable schema (exact, exhaustive vocabulary)
   pilot/, catalog-audit/,       earlier-phase tagging-quality process
   remaining-catalog-tagging/,   records, superseded by the skills in
   step04-test-batch/            .claude/skills/ but kept for history

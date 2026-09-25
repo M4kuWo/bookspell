@@ -70,9 +70,11 @@ against.
 ## Sub-task A: dramatized full-cast editions on EXISTING catalog books
 
 Populates `audiobook_editions` (one-to-many on `book_id`; see
-`docs/schema/book-dna.md`'s "audiobook_editions" backlog entry for the
-full design rationale, and `tools/catalog-review/index.html` for where
-this surfaces). Two known producers as of 2026-09-07 -- both do genuine
+`docs/schema/book-dna-tables.md`'s current contract for this table --
+moved out of `book-dna.md`'s old "Future fields backlog" during the
+2026-09-25 schema split, since this table is real and shipped, not a
+deferred idea -- and `tools/catalog-review/index.html` for where this
+surfaces). Two known producers as of 2026-09-07 -- both do genuine
 full-cast dramatizations of existing SFF novels, not just standard
 narration:
 

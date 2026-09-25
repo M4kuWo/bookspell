@@ -10,9 +10,10 @@ description: A deliberate, catalog-wide sweep for missing trope/content-warning 
 Ordinary tagging (`tag-catalog-batch`) already flags a real vocabulary
 gap when one comes up -- but only reactively, one book at a time, and
 (until 2026-09-13) with nowhere central to track a flagged gap across
-batches. `docs/schema/book-dna.md`'s new "Flagged single-occurrence
-vocabulary gaps" tracker (top of its "Future fields backlog" section)
-fixes the tracking half of that. This skill is the other half: a
+batches. `docs/schema/book-dna-vocabulary-gaps.md`'s tracker (its own
+file as of 2026-09-25; previously a subsection of book-dna.md's
+"Future fields backlog") fixes the tracking half of that. This skill
+is the other half: a
 deliberate, proactive pass looking for gaps that per-book tagging is
 structurally unlikely to surface on its own, because they only become
 visible when you look at many books at once (a recurring pattern with
@@ -30,13 +31,18 @@ real reason to expect this pass finds more, not less, this time.
 
 Read, in order: `CLAUDE.md` (all of it -- especially "Data quality /
 tagging"'s vocabulary rules and the closed-vocabulary bar), then
-`docs/schema/book-dna.md` in full (not just the backlog section --
-you need to know the ENTIRE existing trope/content-warning vocabulary
-cold before you can tell a real gap from something already covered) and
-`docs/schema/book-dna.schema.yaml` (the exact machine-readable list --
-cross-check against this, not memory, before proposing anything as
-"missing"). Then read the tail of `docs/project-log.md` for whatever's
-landed since this file was written, and `docs/TODO.md` for current
+`docs/schema/book-dna.md` (the core reference) and
+`docs/schema/book-dna.schema.yaml` in full (the exact machine-readable
+list -- **this is the authoritative, exhaustive vocabulary as of the
+2026-09-25 schema split; book-dna.md's own field tables are a
+readable distinctions reference, not guaranteed complete** -- cross-
+check against the YAML, not memory or book-dna.md's prose, before
+proposing anything as "missing") and `docs/schema/book-dna-decisions.md`
+(prior rejected/deferred candidates -- check here too before proposing
+something that's already been considered once). Then read
+`docs/project-log.md` per CLAUDE.md's own bounded-read rule (3 most
+recent entries, capped at 1,500 words) for whatever's landed since this
+file was written, and `docs/TODO.md` for current
 priorities (this sweep should be logged there as a P1 item -- check
 whether it's still queued or already claimed by another session before
 starting).
@@ -46,7 +52,7 @@ decision in this project**: "does this change what gets recommended,"
 not "is this a real term." A trope that's accurate but doesn't
 discriminate between books a reader would and wouldn't want isn't
 worth adding, no matter how many books you find it on. See
-`docs/schema/book-dna.md`'s existing deferred-tropes entries
+`docs/schema/book-dna-decisions.md`'s existing deferred-tropes entries
 (`touch_her_and_die`, etc.) for what "real but too narrow" looks like.
 
 **Every proposed addition needs real per-book verification against
@@ -57,12 +63,18 @@ and any trope asserting a specific plot beat -- it applies with equal
 force here, arguably more, since a whole new vocabulary term riding on
 a mis-read plot point is a much bigger mistake than one mistagged book.
 
-## Step 1: check the two already-flagged, already-partially-scoped gaps first
+## Step 1: check every already-flagged, already-partially-scoped gap first
 
-`docs/schema/book-dna.md`'s tracker currently has two "Open" entries,
-each already naming a specific real second-occurrence candidate to
-check -- this is the cheapest, highest-confidence part of this whole
-sweep, do it before the broader search below:
+**Read `docs/schema/book-dna-vocabulary-gaps.md`'s current "Open" list
+directly -- don't trust a hardcoded count or candidate list here (this
+section used to hardcode "two Open entries," which went stale as the
+tracker grew; treat that as a documented lesson, not a number to
+restore).** For each Open entry, the tracker itself already names any
+known specific second-occurrence candidates worth checking directly --
+this is the cheapest, highest-confidence part of this whole sweep, do
+it before the broader search below. Two of the original entries, kept
+here only as a worked example of the pattern (verify their CURRENT
+status in the tracker -- don't assume this snapshot is still accurate):
 
 1. **Climate/natural-disaster mass-casualty content warning** (no
    existing `content_warning_types` value cleanly covers it, distinct
@@ -70,15 +82,19 @@ sweep, do it before the broader search below:
    Look for other climate-disaster-driven SFF already in the catalog
    (query `book_content_warnings`/`book_tropes` for anything
    thematically close, or just recall/search for genre-adjacent titles
-   -- cli-fi, ecological-collapse SF) as a second occurrence.
+   -- cli-fi, ecological-collapse SF) as a second occurrence. **Note
+   (2026-09-25): the tracker currently shows a real, unresolved status
+   contradiction for this exact gap -- appears as both Open and
+   Promoted/resolved. Resolve that ambiguity by checking the live
+   `content_warning_types`/`book_content_warnings` data directly before
+   treating this as either status.**
 2. **First-contact-with-a-non-human-non-alien-intelligence-via-natural-
    evolution trope** (distinct from `first_contact` and `uplift`).
-   First seen on *The Mountain in the Sea*. The tracker names two
-   specific candidates worth checking directly: *Alien Clay* (Adrian
-   Tchaikovsky) and *Blindsight* (Peter Watts) -- check whether either
-   is even in the catalog yet (`select id, title from books where title
-   ilike '%alien clay%' or title ilike '%blindsight%'`), and if so
-   whether it's already tagged and whether it genuinely hits this same
+   First seen on *The Mountain in the Sea*. The tracker names specific
+   candidates worth checking directly (as of last update: *Alien Clay*,
+   Adrian Tchaikovsky, already tagged and confirmed excluded; check the
+   tracker for the current state) -- check whether a real second
+   occurrence exists yet, and if so whether it genuinely hits this same
    gap (not just "also sci-fi with aliens" -- re-read the actual
    mechanism before deciding it's the same pattern).
 
@@ -182,8 +198,11 @@ tagging" sections) -- nothing special here, but all of it applies:
   this reason (a real, already-happened miss cost a full day last time
   it was skipped). A new trope/content-warning is a smaller change than
   a new column, but the same discipline applies: add it to the
-  schema.yaml vocabulary list and to book-dna.md's trope/CW
-  documentation before calling the migration done.
+  schema.yaml vocabulary list before calling the migration done --
+  `book-dna.md`'s core file no longer maintains a separate group-by-
+  group trope/CW listing of its own (see its "A note on this file vs.
+  the YAML" section), so schema.yaml is the only vocabulary list that
+  actually needs updating here.
 - If you're CLDA: this counts as "already spelled out step-by-step in
   the skill you're following" for the destructive-action gate's
   purposes (the inserts themselves aren't destructive at all) -- no
@@ -196,7 +215,7 @@ tagging" sections) -- nothing special here, but all of it applies:
 
 ## Step 5: update the tracker and report
 
-- Move anything resolved this sweep from `docs/schema/book-dna.md`'s
+- Move anything resolved this sweep from `docs/schema/book-dna-vocabulary-gaps.md`'s
   tracker's "Open" list to "Promoted / resolved," noting what it became
   and which migration landed it.
 - Add anything genuinely new you found but didn't act on (a real

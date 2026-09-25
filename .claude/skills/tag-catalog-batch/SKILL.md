@@ -66,10 +66,11 @@ machine-readable field list and controlled vocabularies) before tagging
 anything. Every field is a closed, controlled vocabulary -- never invent
 a value not listed there.
 
-**Also read `docs/schema/book-dna.md`'s "Flagged single-occurrence
-vocabulary gaps" tracker (top of the "Future fields backlog" section)
-before tagging, and treat it as a real, active checklist, not
-background reading** -- added 2026-09-13 specifically because gaps were
+**Also read `docs/schema/book-dna-vocabulary-gaps.md`'s tracker
+(as of 2026-09-25, its own file -- previously a subsection of
+book-dna.md's "Future fields backlog") before tagging, and treat it as
+a real, active checklist, not background reading** -- added 2026-09-13
+specifically because gaps were
 being flagged in `docs/project-log.md` batch reports but nothing
 tracked them centrally, so a SECOND book hitting the same gap in a
 later batch had no way to be recognized as one (nobody was going to

@@ -69,9 +69,11 @@ If these ten can't be answered, the change isn't ready to implement --
 log it as a deferred idea in the table below instead, same as this
 file already does for every other idea that didn't clear its bar.
 
-See also `docs/schema/book-dna.md`'s Future fields backlog for the
-equivalent, more specific gate for proposing a brand-new scalar
-`book_dna` field (question 2 and 9 above, made concrete for that
+See also `docs/schema/book-dna.md`'s "The bar for a new scalar
+`book_dna` field" section (still in the core file, not moved out,
+after the 2026-09-25 schema split -- see that file's own reasoning on
+why) for the equivalent, more specific gate for proposing a brand-new
+scalar `book_dna` field (question 2 and 9 above, made concrete for that
 particular kind of change).
 
 ## The two scenarios, and why both are required

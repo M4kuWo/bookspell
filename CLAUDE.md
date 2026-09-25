@@ -5,11 +5,13 @@ this project has been worked on from multiple machines and Claude
 accounts, and a few real mistakes have already happened from one session
 not knowing what another had already established. This file is the fix.
 
-Also read `docs/schema/book-dna.md` (the schema, including its "Future
-fields backlog" of deferred ideas) and `docs/TODO.md` (the prioritized,
-cross-cutting task backlog — mutable, not append-only) before making
-non-trivial changes — don't re-litigate decisions already made there,
-and check `docs/TODO.md` before picking your own next task.
+Also read `docs/schema/book-dna.md` (the core schema reference — as of
+2026-09-25 split from one file into four; this one stays always-read,
+its three companions are read only when the task needs them, see its
+own "Schema map" section for which) and `docs/TODO.md` (the
+prioritized, cross-cutting task backlog — mutable, not append-only)
+before making non-trivial changes — don't re-litigate decisions already
+made there, and check `docs/TODO.md` before picking your own next task.
 
 For `docs/project-log.md` (the running, append-only history — tens of
 thousands of lines and growing): **read the 3 most recent complete
@@ -41,8 +43,8 @@ built to show audiobook data, but `audiobook_editions` (a real,
 1000+-row table with narrators/cast/production data) was never checked
 for — it exists specifically because `.claude/skills/
 tag-audiobook-editions/SKILL.md` had been populating it in a separate
-effort, and that skill file (plus the design-rationale entry it points
-to in `docs/schema/book-dna.md`) would have surfaced this immediately.
+effort, and that skill file (plus the current contract it points to in
+`docs/schema/book-dna-tables.md`) would have surfaced this immediately.
 A table existing with no docs/schema/ entry of its own and no mention
 in CLAUDE.md is not evidence it's unused — check the skills directory,
 not just the two doc files above, before assuming a feature starts from
@@ -249,7 +251,13 @@ file's "new public-catalog-style table" rule under "Database &
 migrations" below). CLDO's own review before sending to CODX had not
 caught this. See `docs/project-log.md`'s 2026-09-25 "CODX Task 21
 landed" entry for the full story, including everything CODX
-independently verified before it was trusted.
+independently verified before it was trusted. (This example is itself
+historical — the split it describes was subsequently implemented as a
+4-file structure, `book-dna.md` + `book-dna-vocabulary-gaps.md` +
+`book-dna-tables.md` + `book-dna-decisions.md`, per a follow-up review
+in `docs/codx-reports/2026-09-25-book-dna-split-review.md`; this
+paragraph is left describing the incident as it happened, not rewritten
+to match the final layout.)
 
 **What counts as "big" for this gate** — a judgment call, not an
 exhaustive list, but concrete anchors:
@@ -466,10 +474,16 @@ fires, but don't let it fire and then ignore it.
 ## Data quality / tagging
 
 - **A `book_dna` schema change (new/removed/changed column) is not done
-  until `docs/schema/book-dna.schema.yaml`, `docs/schema/book-dna.md`,
-  AND `.claude/skills/tag-catalog-batch/SKILL.md` (its mandatory-column
-  list, example INSERT, and any field-specific tagging guidance) are all
-  updated in the same session as the migration** — not left for someone
+  until `docs/schema/book-dna.schema.yaml`, the relevant `docs/schema/
+  book-dna*.md` file(s) (as of 2026-09-25, a 4-file split — `book-dna.md`
+  for a core-vocabulary change, `book-dna-vocabulary-gaps.md` for a
+  tracker promotion/status change, `book-dna-tables.md` for a related
+  table's contract, `book-dna-decisions.md` for a new deferred proposal
+  or rejection — update whichever one(s) actually own the thing that
+  changed, not all four reflexively), AND `.claude/skills/tag-catalog-batch/
+  SKILL.md` (its mandatory-column list, example INSERT, and any
+  field-specific tagging guidance) are all updated in the same session
+  as the migration** — not left for someone
   else to notice later. Real, already-happened example (2026-09-12):
   `romance_tone`/`worldbuilding_delivery` landed as real columns
   2026-09-11, but the schema docs were never touched (schema.yaml had no
@@ -561,7 +575,7 @@ fires, but don't let it fire and then ignore it.
   the first working replacement URL rather than the highest-resolution
   one). One image per book for now — multiple cover-art variants (e.g.
   US vs UK editions) are a deliberately-deferred future idea, see
-  `docs/schema/book-dna.md`'s Future fields backlog. The 3 existing
+  `docs/schema/book-dna-decisions.md`'s deferred proposals. The 3 existing
   `scripts/ingest-*.js` files were deliberately NOT updated to call
   this helper — they're one-off scripts from already-completed
   ingestion rounds and won't run again as-is (this project's own
@@ -654,9 +668,11 @@ fires, but don't let it fire and then ignore it.
   catalog row (Stormlight Archive #2.5) and is also one of the stories
   collected in *Arcanum Unbounded*, a separate catalog row. Keep both;
   this is a different situation from the omnibus/compilation-duplicate
-  case (`docs/schema/book-dna.md`'s "omnibus/compilation editions"
-  future-fields entry — one edition of the same book represented
-  twice), not the same problem wearing a different face.
+  case (`docs/schema/book-dna-tables.md`'s current operational rule
+  for this — skip tagging a duplicate compilation; the deferred
+  `edition_kind` data-model proposal is in `book-dna-decisions.md` —
+  one edition of the same book represented twice), not the same
+  problem wearing a different face.
 
 ## Recommendation engine (`scripts/recommend.py`)
 
@@ -791,9 +807,10 @@ successor if superseded) for the original build plan.
 - **`audiobook_editions`** (real per-edition narrator/cast/production
   data, distinct from `book_dna`'s own Tier B "listening quality"
   fields, which remain genuinely untagged catalog-wide) is populated by
-  `.claude/skills/tag-audiobook-editions/SKILL.md`, with its full design
-  rationale in `docs/schema/book-dna.md`'s "Future fields backlog"
-  entry — read both before touching this table. `edition_type` values
+  `.claude/skills/tag-audiobook-editions/SKILL.md`, with its current
+  contract in `docs/schema/book-dna-tables.md` (full original design
+  rationale preserved in `book-dna-decisions.md`) — read both before
+  touching this table. `edition_type` values
   (verified directly against the live CHECK constraint, 2026-09-25 —
   `audio_original` is NOT one of them, a stale claim this same bullet
   used to make; that's a real value on the separate `books.work_type`
@@ -845,7 +862,11 @@ successor if superseded) for the original build plan.
 - Every real change (schema, data, engine logic, a design decision) gets
   a dated entry in `docs/project-log.md` — append-only, never rewritten
   after the fact. Deferred ideas and schema-specific backlog items go in
-  `docs/schema/book-dna.md`'s "Future fields backlog" instead.
+  `docs/schema/book-dna-decisions.md`'s "Deferred / open proposals"
+  section instead — **not** `book-dna.md` itself, which is the always-
+  read core file (as of 2026-09-25's split) and must stay small; a new
+  deferred idea logged there instead of in the decisions file recreates
+  the exact bloat problem the split was meant to fix.
 - Migration file comments should explain **why**, not just restate what
   the SQL does.
 - **A `docs/TODO.md` item is a short pointer, never a second copy of the
