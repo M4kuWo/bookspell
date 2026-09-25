@@ -631,6 +631,246 @@ re-derive a finding already recorded here without checking first.
   as a genre. Two different, previously uncaptured approachability axes;
   see `book-dna.md`'s Scope and "Series & universe" sections.
 
+### Full original write-ups for now-built tables/mechanisms
+
+`book-dna-tables.md` promises each of the 5 items below has its "full
+original rationale... preserved verbatim" here. That preservation step
+was incomplete after the 2026-09-25 split's implementation stalled
+partway through -- caught by the split's own after-the-fact acceptance
+testing (a fresh agent's investigation flagged the confidence-layer
+entry specifically as missing; checking the other 4 confirmed the same
+gap). Restored verbatim from the pre-split commit (`git show
+pre-book-dna-split:docs/schema/book-dna.md`) the same day, not
+rewritten -- these are exactly what the original file said, including
+any staleness already noted inline at the time.
+
+- **A real `audiobook_editions` table (one-to-many), not the current
+  single-audiobook-per-book assumption.** Surfaced 2026-08-29 alongside
+  the author/narrator field-contamination bug (`books.author` had
+  narrator names mixed in — e.g. Words of Radiance read "Brandon
+  Sanderson, Michael Kramer, Kate Reading"; fixed with a minimal
+  `narrators text[]` column for that one case). The bigger, deferred
+  idea: many books have more than one audiobook edition worth
+  distinguishing — different narrators/casts, and notably **GraphicAudio
+  full-cast dramatized productions**, which exist for a meaningful slice
+  of this catalog's SFF titles and are a distinct listening experience
+  from a standard single/dual-narrator audiobook. A real fix needs a
+  `book_id, edition_type (standard/graphicaudio/etc.), narrator(s),
+  runtime_minutes, production_company` table, not another single-value
+  column — and real per-book sourcing work (Hardcover's API likely
+  doesn't carry GraphicAudio editions at all; would need separate
+  research). Deliberately not built in the same pass as the field-value
+  audit below — it's a real schema addition plus a new data-sourcing
+  effort, not a quick fix, and deserves its own scoped pass.
+
+  **UPDATE (2026-09-05): table BUILT** (`audiobook_editions`,
+  `20260905260000_audiobook_editions_table.sql`) — `book_id,
+  edition_type (standard/dramatized_full_cast/abridged/other),
+  narrators, production_company, runtime_minutes`, plus a real,
+  repo-owner-flagged addition the original idea missed: dramatized
+  full-cast productions (GraphicAudio in particular, but the same
+  applies to other dramatized adaptations) release EPISODICALLY over
+  months, not all at once — confirmed directly, Wind and Truth's
+  GraphicAudio adaptation released across 5 parts between roughly late
+  2025 and March 2026. A lookup done mid-release would correctly find
+  "yes, a GraphicAudio exists" while badly misrepresenting reality (only
+  some parts out, no way to say how much of the story is actually
+  available to listen to). Added `release_status`
+  (fully_released/in_progress/announced), `parts_released`/
+  `parts_total`, and `last_verified_date` — the same "refreshed from
+  metadata sources periodically, never set once at tagging time" pattern
+  this project already uses for `series.status`/`book_count`, now backed
+  by an actual column instead of just a documented expectation, so a
+  future tagging session can tell whether a row needs re-checking rather
+  than trusting a stale status indefinitely. Seeded with one real,
+  directly-verified row (Wind and Truth) as a working example — full
+  catalog backfill is separate, future work, not attempted in this pass.
+  Populating this at real scale is still blocked on the same
+  data-sourcing problem as before (Hardcover's API likely doesn't carry
+  GraphicAudio editions; needs per-book research).
+
+  **UPDATE (2026-09-07): real-scale population handed off** as
+  `.claude/skills/tag-audiobook-editions/SKILL.md` -- covers GraphicAudio
+  AND BBC Audio/Radio drama (a second confirmed real producer, not just
+  GraphicAudio) for existing catalog books, plus Audible Originals
+  (audio-only, no print counterpart -- see `books.work_type`'s new
+  `'audio_original'` value, migration `20260907140000_work_type_audio_
+  original.sql`) as brand-new catalog entries.
+
+  **UPDATE (2026-09-09): real progress, 94 rows populated** across
+  GraphicAudio and BBC Audio (see project-log.md's many 2026-09-08/09
+  "audiobook-editions skill" entries for the full batch-by-batch
+  history) -- `narrators` stores a flat array of names only, no
+  character-role mapping. Repo owner raised a real future idea: a
+  movie-credits-style "who plays whom" cast list, prompted by
+  GraphicAudio's own site not publishing this (their product pages
+  list a cast but not which actor voices which character). Genuinely
+  future work, explicitly placed further back in the roadmap than the
+  current per-book/per-producer sourcing effort -- would need either a
+  richer `narrators` shape (array of `{name, character}` objects
+  instead of plain strings) or a new join table, plus a real data
+  source for the character-level mapping (GraphicAudio doesn't publish
+  it, so this would need liner notes, credits read directly from the
+  audio, or another source entirely). Not scoped further than that;
+  revisit once the current sourcing effort is further along.
+
+  **UPDATE (2026-09-18): added `release_date_start`/`release_date_end`**
+  (migration `20260918231000_audiobook_editions_release_date_range.sql`),
+  prompted by a repo-owner report that a `release_date` field was
+  missing entirely. Deliberately a RANGE, not a single date -- a
+  single-release edition gets both columns set to the same date, but a
+  multi-part dramatized release (GraphicAudio's Wind and Truth again
+  being the concrete example, 5 parts over ~4 months) genuinely has a
+  different start and end, and `release_date_end` should stay null
+  until `release_status = 'fully_released'` rather than guess an end
+  date for a release still in progress. Schema only -- every existing
+  row has both columns null; populating them (along with the separately
+  tracked 306-row `runtime_minutes` gap, see `docs/TODO.md`) is real
+  per-row research queued to `.claude/skills/tag-audiobook-editions/
+  SKILL.md`, not attempted in this pass.
+
+- **`work_type` (novella/novel) on `books` — built 2026-08-29.** User's
+  idea, prompted by decimal `position_in_series` values (e.g. 2.5) not
+  clearly signaling "this is a short-form entry" to a newcomer, plus
+  audiobook-credit economics (a novella may not be "worth" a full Audible
+  credit). No `novelette` value — this catalog is published SFF books,
+  not magazine-length short fiction, so that category doesn't
+  realistically occur as its own entry here. Deliberately NOT computed
+  from `page_count` — checked the actual catalog data first and
+  page_count turned out to be an unreliable discriminator (Tor.com's
+  novella imprint uses a large trim/font, so *Edgedancer* at 272pp reads
+  longer on the page than full novels like *Fahrenheit 451* at 227pp or
+  *Piranesi* at 245pp; conversely *The Time Machine* at 144pp is a full
+  novel, shorter than every Murderbot novella). Set manually instead,
+  from real-world publishing classification: the four Murderbot Diaries
+  novellas (*All Systems Red*, *Artificial Condition*, *Rogue Protocol*,
+  *Exit Strategy* — *Network Effect* is the first full-length Murderbot
+  novel), *Edgedancer*, and *This Is How You Lose the Time War* (won the
+  2020 Hugo Award for Best Novella).
+- **`crucial_to_arc` (or similar) flag on interstitial series entries**
+
+- **Series DNA — built 2026-08-30.** External suggestion, judged the
+  strongest idea in the batch. A series can change dramatically across
+  its own run (Harry Potter: light tone/mild violence in book 1 to dark
+  tone/graphic violence by book 7) — recommending or scoring against
+  only the first entry's Book DNA can misrepresent the whole commitment.
+  Confirmed the key insight: NOT a fresh tagging pass — computed as an
+  aggregation over `book_dna` rows already tagged per book, grouped by
+  `series_id` (`compute_series_dna()` in `recommend.py`) and ordered by
+  `position_in_series`.
+
+  Scope question resolved: does a shared universe (the Cosmere) or a
+  parent series spanning tonally different eras (Mistborn, spanning the
+  original trilogy and the later Wax & Wayne books) merit its own DNA?
+  No to both, and the existing series hierarchy already settles this for
+  free — `books.series_id` always points at a LEAF series (confirmed:
+  Mistborn's books link to "Mistborn Era One"/"Era Two", never to the
+  parent "Mistborn" row, which has zero books linked directly), so
+  grouping by `series_id` naturally computes trajectories only at the
+  level a reader actually commits to reading in order. No special-casing
+  needed. Verified across all 18 multi-book series currently in the
+  catalog: every trajectory read as genuine and well-known (Harry
+  Potter's darkening, Percy Jackson's stakes narrowing in book 2, LOTR's
+  POV structure opening up once the Fellowship splits, Murderbot's
+  stakes widening from novella to novel scope).
+
+  Two more pieces built alongside the core aggregation, both from user
+  feedback: (1) `series_dnf_outlook()` — per-user (unlike the objective
+  trajectory above): compares how well the CURRENT book in a series
+  scores against a specific user's profile vs. the NEXT one, to answer
+  "will this series get better for me if I keep going" instead of
+  silence when a reader is on the fence about DNFing; (2) `explain_match()`
+  now includes a `series_note` field — when a book's explanation is
+  shown, it's paired with an objective caveat about how the series shifts
+  over its run (e.g. "Across the series, it shifts from several POV
+  characters to a large ensemble cast..."), reusing the same
+  `describe_series_trajectory()`/`phrase_field()` machinery already built
+  for the explanation layer.
+
+- **Confidence + source layer on field/trope values — built 2026-08-30.**
+  External suggestion, e.g. "slow pace" tagged with a 0.8 confidence
+  level, plus which source produced it. `book_tropes` gained
+  `confidence`/`source` columns directly; scalar `book_dna`/`books`
+  fields use a new side table, `book_field_confidence` (book_id,
+  field_name, confidence, source), since a per-field companion column on
+  the wide `book_dna` row would mean ~29 extra columns. Source values:
+  `ai_inferred` (the vast majority — an LLM judgment call), `verified_external`
+  (a real citable authority, e.g. `work_type`'s Hugo Award backing),
+  `manual_review` (a deliberate editorial correction, not a fresh batch
+  guess), `community_tagged`/`community_confirmed` (future, not populated
+  yet — see the community-validation idea below).
+
+  Deliberately did NOT retroactively fabricate confidence numbers across
+  the whole catalog — most existing tags predate this system, and a
+  precise-looking number invented after the fact would be worse than no
+  number. Absence of a row means "unassessed," scored as full confidence
+  (1.0) by default, not penalized. Backfilled only real, traceable cases:
+  6 `work_type` novellas (`verified_external`, Hugo Award-backed), 7
+  `pov_count` values corrected during manual review (`manual_review`,
+  0.85), and 14 `pov_count` values this session's own batch agents
+  explicitly flagged as borderline/uncertain in their own reports
+  (`ai_inferred`, 0.4-0.65 depending on how uncertain). A systematic
+  confidence audit across the rest of the catalog (all other fields,
+  all other tropes) is separate, much larger future work — not
+  attempted here, logged as its own open item.
+
+  Wired into `recommend.py` scoring: `score_book()`/`explain_book()` now
+  discount a field/trope's effective weight by `get_confidence(book,
+  field)` before it contributes, for that specific book only — an
+  uncertain tag gets less voting power in the weighted average rather
+  than being trusted at face value. Both the contribution (numerator)
+  and total_weight (denominator) are discounted equally, so this is a
+  "counts for less" effect, not a bias toward match or mismatch. Verified
+  on The Bands of Mourning (pov_count confidence 0.6, in a profile where
+  pov_count carries weight 0.5): score shifts modestly (0.4423 vs. 0.4433
+  simulated full-trust) — small but real, and the right order of
+  magnitude given one moderately-uncertain field is only one of ~20
+  contributing signals for that book.
+
+  Two originally-proposed uses NOT built yet: using low confidence as a
+  triage signal to prioritize re-research, and raising confidence via
+  future community-tag correlation (both still logged, need the data --
+  more confidence-scored books, and community tagging respectively --
+  to be worth building on top of).
+
+- **Post-read/DNF "why didn't it work" dropdown — built 2026-08-30.**
+  External suggestion, distinguished from what this doc already rejected
+  elsewhere (asking users to explain field-by-field on every single
+  rating, which defeats the point of structured Book DNA inference).
+  Design choice: rather than inventing a separate fixed reason taxonomy
+  ("too slow," "too much romance," ...), reuse the book's OWN
+  already-tagged tropes/fields (via the explanation layer's `describe()`)
+  as a dynamic checklist — "here's what we tagged this book with, tell
+  us which of these worked against you" — plus a small fixed set of
+  `NEUTRAL_FEEDBACK_REASONS` (wasn't the mood, didn't click with
+  characters, lost interest, life got in the way) that are explicitly
+  NOT about the book's content and produce no calibration signal.
+
+  Real design catch made during implementation, worth recording: only
+  TROPE selections translate into a `fatigue_overrides` entry.
+  Field-level selections (e.g. "overall_pace" was the problem)
+  deliberately do NOT, because `fatigue_overrides` flips a field's
+  weight relative to the user's own CENTROID ("avoid being similar to
+  your average"), which is a different statement from "avoid this
+  specific book's slow-pace value" — if the disliked book's pace was
+  already far from the user's centroid, force-applying the existing
+  mechanism would perversely reward OTHER far-from-centroid books
+  instead of steering away from slow pacing specifically. The correct
+  existing mechanism for field-level dislikes is just rating the book
+  itself hated/disliked (already built, see the rating-magnitude
+  scoring system entry) — `build_profile()` already learns whether pace
+  is a real discriminator once it recurs across several disliked books,
+  which is the right way to learn a pattern, not a single-book override.
+  Field-level selections are still captured by `book_feedback_options()`
+  for triage/logging value, just not wired into calibration yet.
+
+  Verified end-to-end: selecting `court_intrigue` as a dislike reason on
+  *A Clash of Kings* correctly demoted court-intrigue-heavy books
+  (A Clash of Kings, A Storm of Swords, Malice) and promoted others
+  (The Gunslinger, The Two Towers, Eragon) in a real `recommend()` call,
+  while a simultaneously-selected neutral reason ("wasn't my mood")
+  correctly produced no calibration change on its own.
+
 ### Vocabulary growth process — dated growth rounds
 
 The opening standing rule for this process ("does this predict a
