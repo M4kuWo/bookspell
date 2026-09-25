@@ -22231,3 +22231,77 @@ backlog section," a premise the split invalidates -- and
 `tag-audiobook-editions`). Also asked CODX to weigh in on whether
 Task 21's own "route by task class" idea should fold into this pass
 or stay separate.
+
+## 2026-09-25, later still -- CODX Task 22 landed: "modify before implementation" -- the gate caught real errors in CLDO's own plan
+
+CODX's report: `docs/codx-reports/2026-09-25-book-dna-split-review.md`.
+This is the new structural-change review gate's first real use, and it
+worked exactly as intended -- CLDO's concrete split plan had genuine
+errors, not just room for polish.
+
+Independently re-verified before trusting any of it (5 separate
+substantive claims spot-checked, all confirmed accurate):
+- **The proposed vocabulary-gap tracker range (1208-1457) was
+  wrong** -- verified directly: it cuts off the entire "Promoted /
+  resolved" list (starts at 1458) and a real operational "Process note
+  for whoever runs tag-catalog-batch next" (line 1522). Correct range
+  is 1208-1530.
+- **`work_type` enum drift confirmed real**: book-dna.md's text still
+  says "novella/novel" (two values) but a real migration,
+  `20260907140000_work_type_audio_original.sql`, added a third
+  (`audio_original`) -- the old text can't become the "current
+  contract" unchanged, exactly as flagged.
+- **`cosmic_horror` confirmed absent** from the pre-growth-chronology
+  Categories/Scope text (0 matches before line 526) despite being a
+  real, current trope (3 matches in `book-dna.schema.yaml`) --
+  confirms the broader claim that "Categories" isn't actually a
+  complete current vocabulary reference on its own, YAML is.
+- **Two missed cross-references confirmed real**: `docs/scoring-
+  test-protocol.md` explicitly points into book-dna.md's "Future
+  fields backlog" for the scalar-field gate; `book-dna.schema.yaml`'s
+  own header comment points at book-dna.md's "Open for review"
+  section, which moves under any split.
+
+**Bigger findings beyond identity/value verification**:
+- At least 4 MORE built-but-mis-filed sections beyond `audiobook_editions`
+  (which Task 21 already caught): the omnibus-proposal entry has a live
+  operational rule mixed into a deferred proposal; `work_type` (built,
+  enum since grew); Series DNA (built aggregation); the confidence/
+  source layer (`book_field_confidence`, built, used daily by
+  tagging/QA); post-read/DNF feedback (built behavior). Task 21's own
+  "Built confidence/source, Series DNA, and other mechanisms" line had
+  already hinted at this but CLDO's concrete plan only actually fixed
+  the one audiobook_editions case.
+- A real, PRE-EXISTING internal inconsistency surfaced as a side
+  effect (not something the split causes): the natural-disaster
+  content-warning tracker entry contradicts itself across 3 different
+  places in the current text (Open / promoted / Open again).
+  Deliberately NOT resolved by this review -- flagged for a real,
+  separate fix, per the review's own explicit discipline ("do not
+  quietly resolve genuinely uncertain gaps").
+- Cross-file reference audit grew from CLDO's 4 files to a real list
+  spanning CLAUDE.md itself (6 more locations beyond the one CLDO
+  checked), `docs/scoring-test-protocol.md`, `book-dna.schema.yaml`,
+  `docs/TODO.md` (7 locations), `README.md`, and 2 scoring-engine
+  source files' docstrings/comments.
+- Answered CLDO's open question (where the scalar-field gate belongs)
+  with real reasoning, contra CLDO's own lean: KEEP IT IN CORE --
+  applies "before proposing a field, including when an ordinary
+  tagging task discovers a possible new dimension," so routing it out
+  of core risks missing it exactly when it matters.
+- Renamed the 4th file from `book-dna-history.md` to
+  `book-dna-decisions.md`, with a clearer internal split (deferred/
+  open proposals vs. rejected/superseded decisions vs. dated
+  implementation history).
+- Provided a real pre-implementation acceptance checklist: a full
+  old-line-to-new-destination manifest covering all 2,306 original
+  lines, a repeat cross-file audit, verification of current enums
+  against YAML/migrations, and 5 fresh-context retrieval walkthroughs
+  (ordinary tagging, a gap promotion, an audiobook modal task, a
+  scalar-field proposal, a confidence QA task) before landing.
+
+Net effect: the actual restructuring is a meaningfully bigger, more
+careful task than either Task 21's high-level review or CLDO's own
+first concrete plan anticipated. Implementation deliberately NOT
+started this session -- reporting back to the repo owner on scope
+before committing to it.
