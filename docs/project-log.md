@@ -22066,3 +22066,24 @@ existing links).
 
 Task 20 (HIGH_RISK_FIELDS QA round 3) remains queued to reassign next,
 per the deferral noted when Task 21 was queued.
+
+## 2026-09-25, later still -- fresh database backup taken before the context-load restructuring work
+
+Last snapshot was 2026-09-16 (9 days stale, and a lot landed since:
+catalog round-5 tagging batches, 2 confidence-QA rounds, the universe-
+naming/drift fix, `import_events`/`import_unmatched_titles`,
+`recommendation_impressions`). Took a fresh one per the established
+process in `../bookspell-backups`' own README, before starting the
+documentation-restructuring work discussed for Task 21's findings --
+not because that work touches the database at all (it doesn't), but as
+ordinary good practice given how much had accumulated since the last
+one. `supabase db dump --linked` (schema) and `--linked --data-only`
+(data), both scanned for secrets before committing per the backups
+repo's own stated policy -- found real bcrypt password hashes in
+`auth.users` (expected, not a new issue: the 2026-09-11/09-16 backups
+already contain the same kind of data as an inherent part of a full
+Supabase Auth data dump) and confirmed `bookspell-backups` is a
+PRIVATE repo before pushing. Committed as `b3cb7b2`. Catalog-side row
+counts at snapshot time (verified matching hosted via
+`check_db_sync.py` immediately before): 1484 books, 1230 tagged,
+6469 tropes, 570 series, 21 universes.
