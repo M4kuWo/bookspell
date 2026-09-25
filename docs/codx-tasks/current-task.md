@@ -6,85 +6,117 @@
 See `docs/persona-workflow.md` if you haven't read it yet. Report to
 `docs/codx-reports/<date>-<slug>.md` in your own clone as always.
 
+**Note**: this REPLACES the previously-queued Task 20 (HIGH_RISK_FIELDS
+confidence QA, round 3) at the repo owner's explicit request -- Task 20
+is not cancelled, just deferred one slot. It'll be reassigned once this
+one lands. If you already started Task 20 before pulling this file,
+stop and finish this one first; Task 20's assignment is still intact
+in git history (commit `1448192`) and will come back unchanged.
+
 ---
 
-## Task 20 — HIGH_RISK_FIELDS confidence QA, round 3
+## Task 21 — review + ideate: fresh-session context/documentation load is growing unbounded
 
-Resumes `docs/TODO.md`'s P3 "Recurring HIGH_RISK_FIELDS confidence QA
-pass" item -- paused 2026-09-17 for budget pacing after rounds 1-2
-(Tasks 9-10, `docs/codx-reviews/codx-highrisk-confidence-qa-pass-
-2026-09-17.md` and `...-round2-2026-09-17.md`), not because it stopped
-being worth doing. **Read both of those reports first** -- same
-methodology, same evidence standard, same output format. Their
-`HIGH_RISK_FIELDS` definitions/POV-count thresholds/etc. are unchanged;
-don't re-derive them.
+This is a review-and-brainstorm task, not a code/data task. Deliverable
+is a written report with your assessment and proposals -- no file
+changes, no migrations, no commits, same proposal-only posture as
+every other task, just applied to documentation/process instead of
+code or catalog data.
 
-**Same scope/gate as before**: this is a proposal-only review, same as
-every CODX task. No catalog, confidence, scoring, or migration changes
--- findings go in your report for CLDO to independently review and
-apply (rounds 1-2's proposals both landed this way, via
-`20260917020000_task9_highrisk_confidence_qa_corrections.sql` and
-`20260917030000_task10_highrisk_confidence_qa_round2_corrections.sql`
--- confirm that pattern if useful context, don't just assume).
+### The problem, with real numbers (measured 2026-09-25)
 
-### Why this needs a fresh assignment, not "just query for more"
+Every fresh Claude Code session in this repo (CLDO or CLDA) is
+instructed by `CLAUDE.md` to read several files before doing anything
+else. Measured sizes of what that actually costs, in round numbers
+(~1.3 tokens/word as a rough proxy):
 
-The catalog grew significantly since rounds 1-2 (round-5 ingestion +
-ordinary batch tagging), so the low-confidence pool is no longer the
-same 125 rows the TODO item's stale count describes -- it's 240 rows
-as of 2026-09-25 (queried fresh, confidence < 0.6, `HIGH_RISK_FIELDS`
-columns only, excluding archived books). The 22 pairs below were
-selected from that live query, explicitly excluding every pair rounds
-1-2 already reviewed (whether corrected or left "genuinely
-inconclusive"/"schema-format-mismatch" -- re-reviewing those would
-just reach the same conclusion), and capped at 2 fields per book so
-this batch spans 20 different books rather than clustering on a few.
+| File | Size | How CLAUDE.md says to read it |
+|---|---|---|
+| `CLAUDE.md` itself | ~6,900 words (~9k tokens) | Always, in full, automatically (it's the system prompt) |
+| `docs/TODO.md` | ~4,400 words (~5.7k tokens) | Always, in full |
+| `docs/schema/book-dna.md` | **~19,600 words (~25k tokens)** | Always, in full |
+| `docs/project-log.md` | ~185,000 words total, ~22,000 lines | "The tail" -- CLAUDE.md's actual phrase, no defined bound |
+| `docs/scoring-test-protocol.md` | ~30,800 words (~40k tokens) | Conditional -- only "before changing any scoring logic," correctly scoped already, not part of the fixed tax |
 
-### Assigned pairs (22, current value / confidence shown for reference -- verify against hosted yourself, don't trust this table blindly)
+So the **mandatory fixed tax before any real work starts** is
+conservatively 40k+ tokens (CLAUDE.md + TODO.md + book-dna.md, plus
+whatever "the tail" of project-log.md ends up meaning that session --
+which is itself the biggest source of variance, since nothing defines
+how far back "the tail" goes). `book-dna.md` alone is larger than
+CLAUDE.md. This has already happened once before, concretely:
+`docs/TODO.md` itself ballooned to 4,408 lines of inline narrative
+before a full rewrite brought it down to its current ~123 lines (see
+`docs/project-log.md`'s 2026-09-22 TODO.md-rewrite entry, and
+CLAUDE.md's own "Logging" section, which now has an explicit rule
+against this recurring) -- the same failure mode is now visibly
+recurring in `book-dna.md` and, more diffusely, in `project-log.md`'s
+unbounded growth.
 
-| Book | Author | Field | Current value | Confidence |
-|---|---|---|---|---|
-| Exile | R. A. Salvatore | magic_system_hardness | hard | 0.4 |
-| Gone | Michael Grant | stakes_scope | regional | 0.4 |
-| Gone | Michael Grant | magic_system_hardness | na | 0.4 |
-| How to Become the Dark Lord and Die Trying | Django Wexler | stakes_scope | regional | 0.4 |
-| How to Become the Dark Lord and Die Trying | Django Wexler | magic_system_hardness | hard | 0.4 |
-| Provenance | Ann Leckie | person | first | 0.4 |
-| The Bone Ships | RJ Barker | magic_system_hardness | soft | 0.4 |
-| The Eye of the Bedlam Bride | Matt Dinniman | pov_count | dual | 0.4 |
-| The Historian | Elizabeth Kostova | magic_system_hardness | soft | 0.4 |
-| The Knight and the Moth | Rachel Gillig | narrator_reliability | ambiguous | 0.4 |
-| The Knight and the Moth | Rachel Gillig | romance_heat_intensity | low | 0.4 |
-| The Prison Healer | Lynette Noni | magic_system_hardness | soft | 0.4 |
-| The Queen of the Tearling | Erika Johansen | romance_heat_intensity | low | 0.4 |
-| The Raven Scholar | Antonia Hodgson | romance_heat_intensity | low | 0.4 |
-| The Raven Scholar | Antonia Hodgson | magic_system_hardness | soft | 0.4 |
-| The Redemption of Time | Baoshu, Ken Liu | stakes_scope | cosmic | 0.4 |
-| The Rise and Fall of D.O.D.O. | Neal Stephenson, Nicole Galland | stakes_scope | regional | 0.4 |
-| The Rise and Fall of D.O.D.O. | Neal Stephenson, Nicole Galland | narrative_closure | requires_series | 0.4 |
-| The River Has Roots | Amal El-Mohtar | person | third_limited | 0.4 |
-| The River Has Roots | Amal El-Mohtar | romance_heat_intensity | closed_door | 0.4 |
-| The Salvation | Justin Lockey | humor_level | light | 0.4 |
-| The Tommyknockers | Stephen King | romance_heat_intensity | low | 0.4 |
+**Explicitly not on the table**: logging less, or losing any existing
+detail. The repo owner was clear he wants this project's thorough
+documentation habit to continue -- the problem is *retrieval/loading
+efficiency* for a fresh session, not documentation discipline itself.
 
-### Validation bar (same as rounds 1-2)
+### CLDO's own proposal so far (not yet implemented -- review this critically, don't just rubber-stamp it)
 
-- Identity-check each book against hosted (title/author/Hardcover
-  ID/ISBN/year) before researching it -- round 1's Shroud
-  disambiguation is the template for why this matters.
-- Real, findable evidence (reviews, excerpts, synopses) per pair, not
-  genre pattern-matching -- this is exactly the failure mode
-  `HIGH_RISK_FIELDS` exists to catch (see CLAUDE.md's "Data quality /
-  tagging" section on this).
-- Same output categories as before: confirmed-correct (propose a
-  confidence increase), likely-wrong (propose a new value +
-  confidence), genuinely-inconclusive (unchanged), schema/format
-  mismatch if one turns up (unchanged, flagged).
+1. **Split `docs/schema/book-dna.md` into a core file (field/trope
+   vocabulary + definitions -- what every tagging/scoring session
+   actually needs) and a separate backlog/rationale file (the "Future
+   fields backlog" section and narrative design-rationale entries --
+   needed only when someone's actually proposing a new field).**
+   Update CLAUDE.md's "always read" instruction to point at the
+   smaller core file only. Same fix pattern TODO.md already got, same
+   reasoning, zero content lost -- pure reorganization.
+2. **Give `project-log.md` a compact chronological index** -- one line
+   per dated entry (date + title/one-line hook), not the full entries.
+   A fresh session skims the index (probably a few hundred lines, not
+   22,000) to find what's relevant, then jumps or greps to the actual
+   dated entry instead of reading an undefined "tail" or scanning
+   linearly. Open question even within this proposal: does the index
+   live at the top of the same file, or as its own separate file
+   (`docs/project-log-index.md`)? Either has tradeoffs (single-file
+   keeps it in one place but makes the file itself even bigger to open;
+   separate file needs its own maintenance discipline to stay in sync).
+3. **Formalize "grep/search over full linear reads" as an explicit
+   CLAUDE.md convention** for anything beyond the mandatory core files
+   -- already informal practice, but not written down anywhere,
+   meaning CLDA/you don't necessarily know to do it the same way.
+
+### What to actually do
+
+1. **Critically review proposals 1-3 above.** Where are they weak,
+   incomplete, or likely to cause a NEW problem (e.g., does splitting
+   book-dna.md risk someone editing the core file without realizing a
+   related rationale entry now lives elsewhere and needs updating too;
+   does a project-log index risk drifting out of sync with the real
+   log the way TODO.md itself drifted before)? Say plainly if you think
+   any of the three isn't worth doing.
+2. **Independently brainstorm your own ideas**, not just react to
+   CLDO's. You're a different model/tool with a different context
+   window and different retrieval behavior (you already read hosted
+   data over HTTP rather than a live DB connection for most of your
+   work, and your own task handoff is itself file-based/asynchronous --
+   you may have a genuinely different perspective on what "efficient
+   for a fresh session to load" actually means in practice). Feel free
+   to research how other real, long-running documentation-heavy
+   projects or tools handle this class of problem (changelogs,
+   architecture decision records, RAG-style indexing, etc.) if useful,
+   but ground any borrowed idea in THIS repo's real constraints: multi-
+   persona (CLDO/CLDA/you, each a genuinely different tool/session with
+   no live channel between them), append-only history requirement
+   (nothing gets deleted or rewritten after the fact), and the file-
+   based git-committed nature of all of this (no external database or
+   service to index into, unless you're proposing one and can justify
+   the added complexity).
+3. **If you think a concrete first step is obviously worth taking
+   regardless of the rest, say so and why** -- but this task is
+   deliberately review/ideation only, not implementation. Don't restructure
+   any files yourself.
 
 ### Deliverable
 
-A report at `docs/codx-reports/<date>-highrisk-confidence-qa-round3.md`,
-same shape as rounds 1-2's (identity table, recommendations-at-a-glance
-table, individual findings with sources). No commits, pushes, or
-hosted writes -- proposal only, for CLDO to review and land as a
-migration the same way rounds 1-2 landed.
+A report at `docs/codx-reports/<date>-context-load-review.md`: your
+assessment of proposals 1-3 (keep/modify/drop each, with reasoning),
+your own additional or alternative ideas, and a recommended prioritized
+next step or two. CLDO will read this, decide what to actually
+implement, and this becomes a real project-log entry either way.

@@ -21952,3 +21952,38 @@ re-surfaced and wasted CODX's effort re-reviewing. Capped at 2 fields
 per book so the batch spans 20 distinct books rather than clustering.
 Assigned as Task 20 in `docs/codx-tasks/current-task.md`, same
 methodology/evidence-standard/output-format as rounds 1-2.
+
+## 2026-09-25, later still -- CODX Task 21 queued: fresh-session context-load review (Task 20 deferred one slot)
+
+Repo owner flagged a real concern: this project's own thorough-
+documentation habit means a fresh CLDO/CLDA session now pays a large,
+partly-unbounded fixed reading tax before any real work starts, and
+this will only get worse as project-log.md keeps growing and
+book-dna.md keeps accumulating backlog/rationale content alongside its
+core schema. Measured it concretely rather than estimating: CLAUDE.md
+(~9k tokens) + TODO.md (~5.7k tokens) + book-dna.md (~25k tokens, ALL
+read unconditionally every session per CLAUDE.md's own instructions)
+plus an undefined "tail" of project-log.md (185k words/~22k lines
+total, no bound on how far back "tail" means) -- 40k+ tokens minimum
+before any task-specific work begins. `book-dna.md` alone is larger
+than CLAUDE.md itself. This is the same failure mode TODO.md already
+had and was fixed for (4,408 -> ~123 lines, 2026-09-22), now visibly
+recurring elsewhere.
+
+Proposed (not yet implemented, deliberately not decided unilaterally):
+(1) split book-dna.md into a core vocabulary/definitions file (always
+read) + a backlog/rationale file (read only when proposing a new
+field, mirroring scoring-test-protocol.md's already-correct
+conditional scoping); (2) a compact chronological index for
+project-log.md (date + one-line hook per entry) so a fresh session can
+skim and jump instead of reading an undefined "tail"; (3) formalize
+"grep over full linear reads" as an explicit CLAUDE.md convention so
+CLDA/CODX know to do it too, not just CLDO's own informal habit.
+
+Repo owner asked for a second opinion before implementing anything --
+queued as CODX Task 21 (review CLDO's 3 proposals critically, and
+independently brainstorm its own ideas, informed by its own different
+context-window/retrieval-pattern perspective). Task 20 (HIGH_RISK_FIELDS
+QA round 3) is deferred one slot, not cancelled -- its full assignment
+is preserved in commit `1448192` and will be reassigned once Task 21
+lands.
