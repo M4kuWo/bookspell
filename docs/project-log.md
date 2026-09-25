@@ -22139,3 +22139,32 @@ round 3 -- the 22-pair/20-book batch assigned earlier today) is back
 in `docs/codx-tasks/current-task.md`, restored byte-identical from its
 original assignment (commit `1448192`, diffed to confirm zero drift)
 now that the deferral noted at the time has resolved.
+
+## 2026-09-25, later still -- documentation-restructuring step 1: bounded project-log read window
+
+First concrete step from CODX's Task 21 review, implemented as
+directed (this specific change was already reviewed as part of Task
+21 -- it's CODX's own proposed idea, not a fresh unreviewed change, so
+it didn't need a second review round under the new structural-change
+gate). Replaced CLAUDE.md's undefined "read the tail of project-log.md"
+with a concrete rule: read the 3 most recent complete dated entries,
+capped at 1,500 words total; if a complete entry would exceed the
+remaining budget, stop there and read its heading only rather than
+partially reading it, and say so. Anything older/specific should be
+found via targeted search (grep/rg), not a longer linear read.
+Explicitly labeled a starting budget, not a measured optimum. Updated
+AGENTS.md's matching pointer to stop referencing "the tail" (a phrase
+that no longer appears in CLAUDE.md) and point at the same rule
+instead. Sanity-checked against the real current log before shipping:
+the 3 most recent entries combined are 600 words, comfortably under
+the cap -- confirms the rule is workable for typical entries with real
+headroom for an occasional larger one.
+
+Remaining restructuring work (not done in this pass, per CODX's
+own prioritization): the `book-dna.md` core/backlog/operational-tracker
+split, organized by content type with a coordinated reference audit
+across AGENTS.md and the 3+ cross-referencing skill files -- larger,
+riskier, cross-file work, deliberately sequenced after this smaller,
+self-contained first step. Per the new structural-change review gate,
+a concrete split proposal should go to CODX for review before it's
+implemented, not just the general direction CODX already blessed.

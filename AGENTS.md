@@ -10,12 +10,14 @@ same way it tells every Claude Code session to. This file exists only to
 avoid duplicating that content here (which would just drift out of sync
 over time) and to say what's specific to your role.
 
-Also read, same as `CLAUDE.md` tells every session to: the tail of
-`docs/project-log.md` (running history), `docs/schema/book-dna.md` (the
-schema), `docs/TODO.md` (the broader cross-cutting backlog, for
-context/rationale — your own specific next assignment is a separate
-file, see "Getting your next task" below), and check `.claude/skills/`
-for anything relevant to a table/feature you're about to touch.
+Also read, same as `CLAUDE.md` tells every session to: `docs/project-log.md`
+per its own bounded-read rule (the 3 most recent complete entries,
+capped at 1,500 words — search for anything older/specific instead of
+reading further back), `docs/schema/book-dna.md` (the schema),
+`docs/TODO.md` (the broader cross-cutting backlog, for context/rationale
+— your own specific next assignment is a separate file, see "Getting
+your next task" below), and check `.claude/skills/` for anything
+relevant to a table/feature you're about to touch.
 
 ## Your starting scope — review/propose only, not a permanent limit
 

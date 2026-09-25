@@ -5,12 +5,34 @@ this project has been worked on from multiple machines and Claude
 accounts, and a few real mistakes have already happened from one session
 not knowing what another had already established. This file is the fix.
 
-Also read the tail of `docs/project-log.md` (the running history),
-`docs/schema/book-dna.md` (the schema, including its "Future fields
-backlog" of deferred ideas), and `docs/TODO.md` (the prioritized,
+Also read `docs/schema/book-dna.md` (the schema, including its "Future
+fields backlog" of deferred ideas) and `docs/TODO.md` (the prioritized,
 cross-cutting task backlog — mutable, not append-only) before making
 non-trivial changes — don't re-litigate decisions already made there,
 and check `docs/TODO.md` before picking your own next task.
+
+For `docs/project-log.md` (the running, append-only history — tens of
+thousands of lines and growing): **read the 3 most recent complete
+entries** (each running from one dated `## ` heading to the next),
+**capped at 1,500 words total.** If reading a complete entry would push
+past that cap, stop there — read that entry's heading only, and say so,
+rather than reading it partially (a half-read entry is worse than not
+reading it at all, since a caveat or reversal near the end can change
+what the first half implied). This gives orientation on what just
+happened, not proof that all relevant history was reviewed. For
+anything specific — a past decision, a rejected idea, an incident tied
+to a file you're about to touch — search for it directly (`grep`/`rg`
+for the term, a book title, a table/function name) rather than reading
+further back linearly; a targeted search finds the exact entry, a
+longer linear read just spends more tokens without more certainty of
+finding it. (Adopted 2026-09-25, replacing a "read the tail" instruction
+with no defined bound, which made the actual amount read vary
+arbitrarily session to session — see `docs/project-log.md`'s 2026-09-25
+"CODX Task 21 landed" entry and
+`docs/codx-reports/2026-09-25-context-load-review.md` for the full
+reasoning. The exact 3-entry/1,500-word figures are a starting budget
+CODX proposed, not a measured optimum — revisit if it turns out too
+tight or too loose in practice.)
 
 **Also check `.claude/skills/` for anything relevant to a table/feature
 you're about to build on, before you build on it.** Real,
