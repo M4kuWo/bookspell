@@ -22305,3 +22305,53 @@ careful task than either Task 21's high-level review or CLDO's own
 first concrete plan anticipated. Implementation deliberately NOT
 started this session -- reporting back to the repo owner on scope
 before committing to it.
+
+## 2026-09-25, later still -- book-dna.md split: "before" baseline measured (6 fresh-agent scenarios)
+
+Ran all 6 scenarios from `docs/book-dna-split-acceptance-tests.md` as
+genuinely fresh (non-fork) agents against the CURRENT, unsplit
+`book-dna.md`, before implementing anything -- the real baseline to
+compare "after" against.
+
+**Result: 28/28 checklist items passed across all 6 scenarios.**
+Nothing is currently undiscoverable -- a sufficiently thorough agent
+CAN find everything it needs today. The real problem this whole effort
+targets is confirmed to be READING VOLUME, not missing information:
+scenario 1 (ordinary tagging batch prep) alone used 138,710 subagent
+tokens and read roughly 60% of book-dna.md (~11,700 of 19,578 words)
+plus the full 7,945-word tagging skill, just to answer one realistic
+task's worth of questions.
+
+**Real bonus finding**: the baseline agents independently surfaced
+several genuine, pre-existing inaccuracies in the CURRENT docs, unrelated
+to the split itself:
+- Two agents (scenarios 1 and 5) independently caught that CLAUDE.md's
+  pointer to `HIGH_RISK_FIELDS` "in `scripts/recommend.py`" is stale --
+  the real list has lived in `scripts/scoring/constants.py` since the
+  Phase B refactor (2026-09-17).
+- Scenario 3's agent caught that CLAUDE.md's "v1 web app" section lists
+  `audio_original` as a real `audiobook_editions.edition_type` value --
+  it is NOT in the table's live CHECK constraint (confirmed: only
+  `standard`/`dramatized_full_cast`/`abridged`/`other`). CLAUDE.md is
+  conflating this with `books.work_type`'s own, separate, real
+  `audio_original` value (a different column on a different table).
+  Every real Audible-Originals ingestion actually used
+  `edition_type = 'dramatized_full_cast'`.
+- Scenario 3's agent also caught that CLAUDE.md's GraphicAudio-
+  mislabeling caveat is now overstated -- `docs/TODO.md`'s own more
+  current entry says a 2026-09-18 sweep found zero confirmed mislabeled
+  rows catalog-wide, but CLAUDE.md still reads as if this is a live,
+  ongoing concern.
+
+These 2 CLAUDE.md factual bugs are being fixed as a small separate
+follow-up (not part of the book-dna.md split itself, since they're
+CLAUDE.md content errors, not book-dna.md structure).
+
+Per-scenario checklist results: all 6 scenarios 5/5 (or 3/3 for
+scenario 6, which had 3 checklist items) -- full detail available by
+re-reading the 6 agent transcripts if ever needed; not reproduced here
+in full to keep this entry a reasonable size. The book-dna.md
+restructuring implementation itself was started the same session (a
+forked agent, given the corrected plan from Task 22's review) --
+"after" results with the same 6 scenarios follow once that lands and
+is verified.
