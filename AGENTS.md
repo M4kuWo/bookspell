@@ -294,6 +294,15 @@ bias toward this codebase's own history:**
 - An independent QA pass on CLDA's own large migrations — a genuine
   third opinion, not redundant with CLDO's own verification of the same
   work.
+- **Reviewing a "big" structural/methodology change before it's
+  implemented** — CLAUDE.md's own "Structural/methodology-change review
+  gate" section, added 2026-09-25 after your Task 21 review caught a
+  real, otherwise-unnoticed flaw in a proposed `book-dna.md` split
+  (would have broken a mandatory tagging-skill check and a shipped
+  table's discoverability). When CLDO sends you one of these: actually
+  critique it (find flaws, propose alternatives) rather than confirming
+  it looks fine — that task's whole point is catching what a single
+  session's own review missed.
 
 **Mechanical/scriptable work:**
 - The still-open local-bootstrap gap (seed data can't currently rebuild

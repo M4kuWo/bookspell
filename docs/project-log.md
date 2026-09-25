@@ -22087,3 +22087,46 @@ PRIVATE repo before pushing. Committed as `b3cb7b2`. Catalog-side row
 counts at snapshot time (verified matching hosted via
 `check_db_sync.py` immediately before): 1484 books, 1230 tagged,
 6469 tropes, 570 series, 21 universes.
+
+## 2026-09-25, later still -- two process safeguards added: a structural-change review gate, and an automated backup-staleness reminder
+
+Repo owner asked for both after this session's earlier events: (1)
+CLDO's own book-dna.md split proposal turned out to be genuinely
+flawed and was only caught because it happened to be sent to CODX for
+review first (Task 21); (2) the last database backup had gone 9 days
+stale with nothing forcing anyone to notice.
+
+**1. New CLAUDE.md section, "Structural/methodology-change review
+gate"**: before implementing a "big" structural change (an edit to
+CLAUDE.md itself, restructuring a document other files depend on, a
+new cross-session convention, or anything explicitly flagged as risky
+or foundational), get an independent CODX review BEFORE implementing,
+not after. Explicitly scoped to NOT duplicate the existing
+scoring-change Q1-Q10 gate or the destructive-DB-action gate, which
+already cover their own domains. Grounded in the real book-dna.md
+incident as its worked example. Added a matching pointer in AGENTS.md
+so CODX recognizes this as a defined, recurring function, not a one-off
+task.
+
+**2. New `.github/workflows/backup-reminder.yml`**, daily, warns
+(`::warning::`, non-blocking) if EITHER: more than 14 days have passed
+since the last logged snapshot, or more than 15 distinct migration-day
+timestamps have landed since then -- either signal alone fires it.
+Deliberately reads this repo's OWN `docs/project-log.md` rather than
+querying `../bookspell-backups` directly (a separate private repo --
+cross-repo access would need a new credential for a low-value read).
+Requires every real backup-snapshot log entry's heading to contain the
+literal phrase "database backup" (case-insensitive) -- checked first
+that all 3 real snapshot entries logged so far already satisfy this
+naturally; documented as an explicit requirement going forward in both
+CLAUDE.md and `../bookspell-backups`' own README so it doesn't silently
+drift. Verified the date-diff and migration-count logic against the
+real 2026-09-16 -> 2026-09-25 gap (9 days, 9-10 migration-days,
+correctly stays quiet -- both thresholds are comfortably above
+ordinary cadence) before trusting it.
+
+**Also**: added a real TODO.md P3 item for the bcrypt-password-hash
+finding from earlier today's backup, per the repo owner's explicit
+direction -- acceptable for now (private repo, only a couple of real/
+test accounts), revisit once multiple real users are stored, not
+before.

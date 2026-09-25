@@ -200,6 +200,67 @@ the cross-session case where CLDA's environment may have a thinner
 safety net than usual (e.g. a sandbox with no working local Supabase
 stack to dry-run against, discovered 2026-09-09).
 
+## Structural/methodology-change review gate
+
+Before implementing a "big" change — structural rather than routine,
+and specifically one whose risk is hard to fully self-verify because it
+depends on cross-file effects or blind spots in the proposing session's
+own reasoning — get an independent review from CODX (or another
+impartial reviewer) BEFORE implementing, not as an afterthought once
+something's already landed.
+
+**Real, already-happened example (2026-09-25)**: CLDO proposed splitting
+`docs/schema/book-dna.md` into a "core" (always-read) file and a
+"backlog" (read-only-when-relevant) file, to address a real, measured
+fresh-session context-load problem (CLAUDE.md + `docs/TODO.md` +
+`book-dna.md`, all read in full every session, totaled 40k+ tokens
+before any task-specific work began). The proposal was sent to CODX for
+review BEFORE being implemented. CODX's review found the split was
+genuinely broken, not just suboptimal: `.claude/skills/
+tag-catalog-batch/SKILL.md`'s mandatory pre-tagging check, and the
+already-shipped `audiobook_editions` table's real design rationale,
+both live inside the exact section ("Future fields backlog") the
+proposal would have demoted to "read only when relevant" — which would
+have broken a mandatory tagging step and recreated a discoverability
+incident this project already has a documented postmortem for (see this
+file's "new public-catalog-style table" rule under "Database &
+migrations" below). CLDO's own review before sending to CODX had not
+caught this. See `docs/project-log.md`'s 2026-09-25 "CODX Task 21
+landed" entry for the full story, including everything CODX
+independently verified before it was trusted.
+
+**What counts as "big" for this gate** — a judgment call, not an
+exhaustive list, but concrete anchors:
+- Any change to CLAUDE.md itself.
+- Restructuring, splitting, or moving a document that other files
+  (skills, AGENTS.md, other docs) reference or depend on.
+- A new or changed convention/process every session/persona is expected
+  to follow (e.g. how `project-log.md` is read, how tasks are handed
+  off).
+- Anything the person requesting it explicitly flags as risky or
+  foundational.
+
+**What does NOT need this gate** — this project already has its own
+domain-specific review requirements; don't duplicate or weaken them by
+routing everything through this new one instead. Scoring-engine changes
+go through `docs/scoring-test-protocol.md`'s Q1-Q10 gate and the
+two-failure-scenario check. Destructive DB actions go through the
+Cross-session destructive-action gate above. Ordinary code/data/schema
+work with a well-defined, bounded scope doesn't need a separate review
+pass just because it's real work — see "Agent/token efficiency"
+below's "for a small, well-defined fix, just do it directly," which
+still applies.
+
+The review itself should be a genuine ask, not a formality: describe
+the actual problem with real data/evidence (not just the proposed
+solution), state the proposal plainly, and explicitly invite the
+reviewer to find flaws or propose their own alternative — not "does
+this look okay," which invites a rubber stamp. Whoever receives the
+review back must independently re-verify its concrete claims before
+trusting them (same standing discipline as reviewing any other CODX
+output — see the Persona system section above), not just accept "no
+issues found" or apply proposed corrections blindly.
+
 ## Database & migrations
 
 - **Every schema or data change is a versioned file in
@@ -370,7 +431,15 @@ change in this project.
 No fixed cadence yet — take a new snapshot whenever a meaningful
 amount of new data has landed or before anything genuinely risky, and
 note it in this repo's `docs/project-log.md` (not just in the backups
-repo) so it's discoverable from either side.
+repo) so it's discoverable from either side. **The log entry's dated H2
+heading must contain the literal phrase "database backup"
+(case-insensitive)** — `.github/workflows/backup-reminder.yml` (added
+2026-09-25, after a real 9-day-stale snapshot went unnoticed with no
+forcing function) greps for exactly that phrase daily and warns if a
+snapshot is overdue by either signal: more than 14 days since the last
+one, or more than 15 distinct migration-day timestamps have landed
+since. It's a reminder, not enforcement — nothing blocks work if it
+fires, but don't let it fire and then ignore it.
 
 ## Data quality / tagging
 

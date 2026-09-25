@@ -1,0 +1,59 @@
+name: Backup reminder
+
+# Reminder, not enforcement -- warns when a real database backup
+# (../bookspell-backups) is overdue, per two independent signals (either
+# one alone fires it):
+#   - time: more than 14 days since the last logged snapshot. Real
+#     snapshots have landed every 5-11 days so far when the process was
+#     actually followed; 14 gives real headroom before flagging.
+#   - volume: more than 15 distinct migration-day timestamps have
+#     landed since the last snapshot, regardless of elapsed time. A real
+#     9-day gap (2026-09-16 -> 2026-09-25) produced 10 -- 15 is
+#     comfortably above ordinary cadence, catching a genuinely large
+#     unbacked-up batch even if it happens quickly.
+#
+# Built 2026-09-25 after the repo owner noticed the prior snapshot was
+# 9 days stale with no forcing function -- see docs/project-log.md's
+# 2026-09-25 "database backup taken" entry. Deliberately doesn't try to
+# read ../bookspell-backups directly (a separate, private repo -- would
+# need a new cross-repo credential for a low-value read). Instead reads
+# the LAST logged "database backup" entry in this repo's own
+# docs/project-log.md, per the convention (see ../bookspell-backups'
+# README and CLAUDE.md's "Database backups" section): every project-log
+# entry that records taking a real snapshot must contain the literal
+# phrase "database backup" (case-insensitive) in its dated H2 heading --
+# already true of all 3 real snapshot entries logged so far, checked
+# directly before relying on it here.
+
+on:
+  schedule:
+    - cron: '43 7 * * *'  # once daily, off-the-hour
+  workflow_dispatch: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check backup staleness
+        shell: bash
+        run: |
+          last_line=$(grep -nEi '^## [0-9]{4}-[0-9]{2}-[0-9]{2}.*database backup' docs/project-log.md | tail -1 || true)
+          if [[ -z "$last_line" ]]; then
+            echo "::warning::No 'database backup' entry found in docs/project-log.md -- either none has ever been logged, or the heading convention broke. See ../bookspell-backups' README."
+            exit 0
+          fi
+          last_date=$(echo "$last_line" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1)
+          echo "Last logged database backup: $last_date"
+
+          today=$(date -u +%Y-%m-%d)
+          days_since=$(( ( $(date -u -d "$today" +%s) - $(date -u -d "$last_date" +%s) ) / 86400 ))
+          echo "Days since: $days_since"
+
+          last_date_compact=${last_date//-/}
+          new_migrations=$(ls supabase/migrations/*.sql 2>/dev/null | sed 's|.*/||' | cut -c1-8 | sort -u | awk -v d="$last_date_compact" '$1 > d' | wc -l | tr -d ' ')
+          echo "Distinct migration-day timestamps since: $new_migrations"
+
+          if (( days_since > 14 )) || (( new_migrations > 15 )); then
+            echo "::warning::Database backup is overdue -- last logged snapshot was $last_date ($days_since days ago, $new_migrations new migration-day(s) since). Take a fresh one per ../bookspell-backups' README, then log it in docs/project-log.md with 'database backup' in the heading so this check picks it up."
+          fi
