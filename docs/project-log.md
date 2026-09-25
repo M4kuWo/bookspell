@@ -22477,3 +22477,26 @@ well-defined, bounded work. Noted this judgment call to the repo owner
 rather than deciding it silently.
 
 Next: actually scoping and building "route by task class."
+
+## 2026-09-26, later -- CODX Task 23 queued: review "route by task class" (the deferred piece from Task 21)
+
+Picking up the piece flagged in the previous entry as caught-but-not-
+finished. Measured the real opportunity before drafting the task, not
+just asserting CODX's original idea was right: CLAUDE.md is 914 lines,
+of which ~530 (Database & migrations through v1 web app, ~58%) are
+genuinely task-specific rather than universal -- a pure CI-
+infrastructure task or a frontend-only tweak currently pays the cost of
+reading tagging-evidence standards and catalog-scope policy that have
+nothing to do with the actual work.
+
+Presented CODX with 2 explicit tiers rather than picking one
+unilaterally: Tier 1 (a purely additive routing table -- nothing
+removed or gated, just an explicit map so a narrowly-scoped task can
+move faster) as the proposed default; Tier 2 (an actual CLAUDE.md split
+mirroring book-dna.md's) explicitly NOT proposed as default, flagged as
+likely MORE cross-file risk than the schema split given CLAUDE.md's
+centrality (referenced by AGENTS.md, persona-workflow.md, and every
+skill/session's operating assumptions). Both of CODX's own hard rules
+from the schema-split review carried forward explicitly: never move
+the two safety gates or credentials section out of the always-read
+core, regardless of which tier gets built.

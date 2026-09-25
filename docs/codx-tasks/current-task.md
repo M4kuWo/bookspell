@@ -1,6 +1,6 @@
 # CODX current task
 
-**Assigned**: 2026-09-25, by CLDO.
+**Assigned**: 2026-09-26, by CLDO.
 **Status**: ready to start.
 
 See `docs/persona-workflow.md` if you haven't read it yet. Report to
@@ -8,121 +8,117 @@ See `docs/persona-workflow.md` if you haven't read it yet. Report to
 
 ---
 
-## Task 22 — review a concrete `book-dna.md` split proposal (per the new structural-change review gate)
+## Task 23 — review a concrete "route by task class" proposal (per the structural-change review gate)
 
-This task exists because of CLAUDE.md's new "Structural/methodology-change
-review gate" section (added 2026-09-25, right after your own Task 21
-review). That gate requires an independent review before implementing a
-"big" structural change — and specifically calls out this exact
-situation as its worked example: Task 21 blessed the GENERAL direction
-of splitting `book-dna.md`, but flagged that a mechanical single-heading
-cut would break real things. This task is CLDO's attempt at a CONCRETE
-split plan that accounts for what Task 21 found. **Review this plan
-critically before it's implemented — this is a genuine ask, not a
-formality. Find flaws, boundary cases that are mis-assigned, or propose
-a different structure entirely if you think this one is wrong.**
+This is your own idea, from Task 21's report ("Additional ideas grounded
+in this repo" section): "Route by task class. A tiny map can direct
+scoring work to its protocol and engine contracts, tagging to full
+vocabulary/evidence guidance and the active gap tracker, audiobook/UI
+work to edition contracts and relevant skills, and infrastructure-only
+work to infrastructure rules... This gives larger savings than
+permanently requiring a somewhat shorter schema for every task." Your
+Task 22 review of the `book-dna.md` split also explicitly said this
+needs its own separate, deliberate review, not to be folded into that
+split: "Defer the larger change to global reading obligations by task
+class... Measure it and review it explicitly; don't smuggle it into a
+relocation." This task is that separate review.
 
-Same posture as Task 21: review/ideation only, no file changes, no
-implementation, no commits.
+**Real context you should know**: after the `book-dna.md` split landed
+(and was measured — 26/26 acceptance-test checklist items, zero
+regressions), CLDO closed out `docs/TODO.md`'s tracking item and
+described "route by task class" as an unscoped follow-up, without
+flagging at the time that it was a genuinely unfinished piece of the
+same effort. The repo owner caught this the next session and asked for
+a standing rule against it — see CLAUDE.md's new "Multi-phase task
+closure" section (2026-09-26) for the full incident. This task is that
+follow-up now actually being picked up, not dropped.
 
-### What CLDO found digging into the actual content (beyond Task 21's own findings)
+Same posture as Tasks 21/22: review/ideation only for the tiered
+question below, but see "What to actually do" -- some review-only,
+some genuine can-implement-if-you're-confident territory, spelled out.
 
-Task 21 established that "Future fields backlog" contains real
-operational material (the vocabulary-gap tracker `tag-catalog-batch`
-requires, and `audiobook_editions`' rationale for an already-shipped
-table) mixed with genuinely speculative content. Digging further to
-build this concrete plan surfaced two more entanglements:
+### The real, measured opportunity (verified 2026-09-26)
 
-1. **The `audiobook_editions` backlog entry literally contains the line
-   "UPDATE (2026-09-05): table BUILT"** (book-dna.md:1563) while the
-   whole entry still lives under "Future fields backlog" — an even more
-   direct confirmation than Task 21's already found: this isn't
-   ambiguous filing, it's a stale header on live content.
-2. **"Vocabulary growth process" (book-dna.md:526-940, 3,425 words) has
-   the exact same shape as the backlog problem**: it opens with a real,
-   current, always-needed rule (~270 words — "does this predict a
-   different recommendation, not just 'is it a real term'"), then the
-   remaining ~3,150 words are a chronological history of 7 past
-   "growth rounds," dated and closed. Same mixed-content pattern Task 21
-   found in the backlog, just under a different heading CLDO hadn't
-   checked yet when writing Task 21's assignment.
+`CLAUDE.md` is 914 lines. Its sections split into two real categories:
 
-### Proposed file structure (4 files, from 1)
+**Universal (every session needs these regardless of task)**: `Persona
+system`, `Cross-session destructive-action gate`, `Structural/
+methodology-change review gate`, `Safety / credentials`, `Multi-phase
+task closure`, `Agent/token efficiency`, `Logging`.
 
-| File | Contents | Read when |
-|---|---|---|
-| `book-dna.md` (core, ~5,600 words / ~7,300 tokens — down from 19,578/25,451, a ~71% cut) | `Scope`, `Categories` (the actual field/trope vocabulary+definitions), `Known limitations`, `Spoiler gating`, `Series & universe` note, and ONLY the opening rule of `Vocabulary growth process` (trimmed to the ~270-word current standard, not the 7 growth-round history) | Every session, unconditionally (per CLAUDE.md's existing instruction) |
-| `book-dna-vocabulary-gaps.md` (operational tracker, ~2,241 words) | The full "Flagged single-occurrence vocabulary gaps" section (book-dna.md:1208-1457) verbatim, Open + Promoted/resolved both — it's explicitly already "a running tracker, not a one-off list," not history | Before `tag-catalog-batch`/gap-sweep work (already the case today, just relocated) |
-| `book-dna-tables.md` (discoverable current-table contracts) | The `audiobook_editions` entry (book-dna.md:1544 onward) EXTRACTED from the backlog and rewritten as current documentation (not "a deferred idea that got built" — just what the table is and why), since it describes a real, live, 1000+-row table | Whenever touching `audiobook_editions` or building UI against it — linked prominently from `book-dna.md`'s core AND from `.claude/skills/tag-audiobook-editions/SKILL.md` |
-| `book-dna-history.md` (rationale/history) | `Resolved during review`, `Vocabulary growth process`'s 7-round chronology, the remaining genuinely-deferred "Future fields backlog" entries (everything except the vocab-gap tracker and the audiobook_editions entry, both moved above), `Open for review`, `Next step`, and — open question, see below — possibly "The bar for a new scalar field" gate | When proposing a new field, revisiting a past decision, or a current rule explicitly points here |
+**Task-specific (~530 of 914 lines, ~58%) — genuinely irrelevant to
+many real task types**: `Database & migrations` (294-444), `Database
+backups` (445-473), `Data quality / tagging` (474-606), `Catalog scope
+& series hierarchy` (607-676), `Recommendation engine` (677-755), `v1
+web app` (756-826). A pure CI-infrastructure task (like your own Tasks
+18-19) or a frontend-only CSS tweak currently pays the full cost of
+reading migration rules, tagging evidence standards, and catalog-scope
+policy that have nothing to do with the actual work.
 
-**Open question CLDO is genuinely unsure about, wants your read on**:
-"The bar for a new scalar `book_dna` field" (book-dna.md:1169-1206, 344
-words, currently the first thing under "Future fields backlog") is a
-CURRENT, standing rule — anyone ever proposing a new field must clear
-it, not just people looking at old history. Does it belong in the core
-file (short enough to justify always-reading it) or in
-`book-dna-history.md` with a one-line pointer left in core (matching
-the pattern for everything else in that file)? CLDO leans toward the
-pointer-in-core approach (most sessions never propose a new field, so
-paying 344 words every session for a rule almost nobody needs that
-session is the same mistake as reading the whole vocab-gap tracker
-every time), but this is exactly the kind of boundary call Task 21
-warned CLDO's own judgment can miss.
+### Two tiers, deliberately not decided yet -- this is the actual review question
 
-### Every file that references `book-dna.md`'s current structure — must be updated together, not just `CLAUDE.md`
+**Tier 1 (proposed default, lower risk): a purely additive routing
+table.** Add a new short section near the top of `CLAUDE.md` (right
+after the existing always-read instructions) that's just a map: task
+class -> which of CLAUDE.md's OWN sections are relevant, plus which
+external files (skills, schema companions, `scoring-test-protocol.md`)
+round it out. Nothing gets removed, hidden, or gated behind search --
+every section stays exactly where it is, always fully readable by
+anyone who wants to be thorough. This only adds a fast, explicit
+shortcut for a session with a narrowly-scoped task; it doesn't change
+what a maximally-careful session would already do. Candidate task
+classes (not final, critique these too): tagging a batch / vocabulary
+gap sweep / proposing a new scalar field / scoring-engine change /
+audiobook-table or UI work / infrastructure-only (CI, workflows,
+deploy) / migration-and-DB work.
 
-Confirmed via direct grep before writing this (exact lines, so you
-don't need to re-derive them, only re-verify if useful):
-
-- `CLAUDE.md`: "always read `docs/schema/book-dna.md`" instruction
-  needs to point at the new core file instead.
-- `AGENTS.md:14`: same instruction, forwarded from CLAUDE.md's wording.
-- `.claude/skills/tag-catalog-batch/SKILL.md:69`: explicitly requires
-  the vocabulary-gap tracker "before tagging" — needs to point at
-  `book-dna-vocabulary-gaps.md` once it exists.
-- `.claude/skills/catalog-trope-gap-sweep/SKILL.md`: lines 13, 33, 49,
-  62, 179, 185, 199 all reference book-dna.md's structure, including
-  line 33's explicit "`docs/schema/book-dna.md` in full (not just the
-  backlog section" — this line's whole PREMISE (that there's a
-  meaningful "backlog section" distinct from the rest) needs rewriting
-  once the split exists, not just a path swap.
-- `.claude/skills/convert-romance-worldbuilding-fields/SKILL.md`: lines
-  14, 70.
-- `.claude/skills/tag-audiobook-editions/SKILL.md:73`: currently says
-  "book-dna.md's audiobook_editions backlog entry" — needs to become a
-  pointer to `book-dna-tables.md` instead, and the word "backlog" needs
-  to go since that table isn't backlog anymore under this plan.
+**Tier 2 (bigger, NOT proposed as this session's default): actually
+split CLAUDE.md** the way `book-dna.md` was split -- move the
+task-specific sections into companion files, leave only a slim routing
+core as the mandatory always-read. Real, structurally-similar risk to
+the book-dna.md split (CLAUDE.md is referenced by `AGENTS.md`,
+`docs/persona-workflow.md`, and implicitly by every skill file and every
+session's own operating assumptions) -- likely MORE cross-file risk
+given CLAUDE.md's centrality, not less. Per your own Task 22 finding
+("never move permission boundaries, credentials restrictions,
+destructive-action gates... behind optional search"), the two safety
+gates and the credentials section can NEVER move out of the always-read
+core regardless of which tier gets built.
 
 ### What to actually do
 
-1. **Critique the file structure and the specific content-mapping
-   above.** Is 4 files the right number (too many, too few)? Is
-   anything mis-assigned? Does the `book-dna-tables.md` idea make sense
-   as a NEW file, or should `audiobook_editions`' contract live
-   somewhere that already exists / makes more sense?
-2. **Answer the open question** about where "The bar for a new scalar
-   field" belongs, with your reasoning.
-3. **Check CLDO's cross-file reference list for completeness** — did a
-   search of your own (across CLAUDE.md, AGENTS.md, `.claude/skills/`,
-   and anywhere else book-dna.md might be referenced, e.g.
-   `docs/scoring-test-protocol.md` or other docs) turn up anything
-   CLDO's grep missed?
-4. **Flag anything else Task 21's own "additional ideas" section
-   implied but this plan doesn't yet address** — e.g. "route by task
-   class" was Task 21's own idea and isn't reflected in this plan at
-   all yet; say whether it should be folded into this pass or stay a
-   separate, later piece of work.
-5. Don't restructure any files. This is a plan review, not
-   implementation — even if you're confident the plan is right, no file
-   changes, no commits.
+1. **Critique the task-specific/universal classification above.** Is
+   anything mis-classified? (E.g., is `Database backups` really
+   task-specific, or universal enough — "before anything genuinely
+   risky" — that it should stay in core regardless?)
+2. **If Tier 1 looks right, design it concretely**: propose the actual
+   routing table's rows/columns, and where exactly it should live
+   (CLAUDE.md itself vs. a separate small file, given the same
+   "shrink routing before shrinking evidence" principle from Task 21).
+   You may write this table yourself as a proposal (a diff, not applied)
+   in your report -- this is squarely "implementing a proposed design
+   and validating it in your own sandbox," which your existing scope
+   already covers, not a bypass of "review only."
+3. **Answer directly: is Tier 2 worth doing at all, and if so, when
+   relative to Tier 1?** Your own words already leaned toward "measure
+   Tier 1 first" -- confirm or revise that view now that you can see the
+   real section sizes.
+4. **Say whether `AGENTS.md`/`docs/persona-workflow.md` need equivalent
+   treatment** -- they have their own "read CLAUDE.md in full" pointers;
+   would a task-class map in CLAUDE.md automatically help you (CODX) and
+   CLDA too, or does each persona's own entry file need its own routing
+   note?
+5. Don't implement Tier 2 or touch any file's actual content beyond a
+   proposed diff in your report for Tier 1, if you get that far.
 
 ### Deliverable
 
-A report at `docs/codx-reports/<date>-book-dna-split-review.md`: your
-verdict on the proposed structure (keep as-is / modify / reject and
-propose an alternative), your answer to the open question, confirmation
-or correction of the cross-file reference list, and anything from
-point 4 above worth flagging. CLDO implements after reading this,
-independently re-verifying it the same way every other CODX output gets
-verified before being trusted.
+A report at `docs/codx-reports/<date>-task-class-routing-review.md`:
+your verdict on the classification, a concrete Tier 1 proposal (or a
+reasoned alternative if you think this framing is wrong), your Tier 2
+recommendation, and the AGENTS.md/persona-workflow.md question answered.
+CLDO implements after reading this, independently re-verifying it the
+same way every other CODX output gets verified before being trusted --
+and will explicitly ask before moving on to anything else if a genuine
+piece of this is still unfinished when this task's own conversation
+turn ends, per the new "Multi-phase task closure" rule.
