@@ -517,8 +517,11 @@ fires, but don't let it fire and then ignore it.
   confirmed track record of this failure — `person`, `pov_count`,
   `narrator_reliability`, `magic_system_hardness`, `overall_pace`,
   `romance_heat_intensity`, `drive`, `stakes_scope`, `narrative_closure`,
-  `humor_level` (see `HIGH_RISK_FIELDS` in `scripts/recommend.py`, and
-  this list is expected to keep growing) — deserve a quick check
+  `humor_level` (see `HIGH_RISK_FIELDS` in `scripts/scoring/constants.py`
+  — moved there in the Phase B `scripts/scoring/` submodule split,
+  2026-09-17; `scripts/recommend.py` is now just a 105-line CLI demo
+  and no longer defines it — and this list is expected to keep growing)
+  — deserve a quick check
   (re-reading a synopsis, a web search) even when you feel sure,** and
   any trope asserting a specific plot beat happened (not just a general
   theme/setting) warrants the same treatment. This is a standing policy,
@@ -790,15 +793,19 @@ successor if superseded) for the original build plan.
   fields, which remain genuinely untagged catalog-wide) is populated by
   `.claude/skills/tag-audiobook-editions/SKILL.md`, with its full design
   rationale in `docs/schema/book-dna.md`'s "Future fields backlog"
-  entry — read both before touching this table. `edition_type` values:
-  `standard`, `dramatized_full_cast`, `abridged`, `audio_original`,
-  `other`. `narrators` is a flat name array (no character-role
-  mapping — a known, documented future gap, not a bug). A known,
-  flagged-not-fixed data-quality issue: some GraphicAudio full-cast
-  productions are mislabeled `edition_type = 'standard'` in the current
-  data (see `docs/TODO.md`) — don't treat `edition_type` as fully
-  reliable without cross-checking narrator count/production company
-  for genuinely ambiguous-looking rows.
+  entry — read both before touching this table. `edition_type` values
+  (verified directly against the live CHECK constraint, 2026-09-25 —
+  `audio_original` is NOT one of them, a stale claim this same bullet
+  used to make; that's a real value on the separate `books.work_type`
+  column, not this table's `edition_type`): `standard`,
+  `dramatized_full_cast`, `abridged`, `other`. `narrators` is a flat
+  name array (no character-role mapping — a known, documented future
+  gap, not a bug). A 2026-09-18 sweep found zero confirmed rows
+  mislabeled `edition_type = 'standard'` catalog-wide (see
+  `docs/TODO.md`) — a one-time clean result, not a standing guarantee,
+  so still worth a light cross-check of narrator count/production
+  company on genuinely ambiguous-looking rows, especially after any
+  future GraphicAudio/BBC tagging batch.
 
 ## Safety / credentials
 

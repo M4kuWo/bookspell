@@ -22355,3 +22355,20 @@ restructuring implementation itself was started the same session (a
 forked agent, given the corrected plan from Task 22's review) --
 "after" results with the same 6 scenarios follow once that lands and
 is verified.
+
+## 2026-09-25, later still -- fixed 2 real CLAUDE.md bugs the baseline agents found
+
+Small, independent fixes, unrelated to the book-dna.md restructuring
+itself (CLAUDE.md content errors, not book-dna.md structure):
+1. `HIGH_RISK_FIELDS`'s pointer said "in `scripts/recommend.py`" --
+   stale since the Phase B split (2026-09-17); fixed to point at
+   `scripts/scoring/constants.py`, the real current location.
+2. The `audiobook_editions.edition_type` value list incorrectly
+   included `audio_original` -- verified directly against the live
+   CHECK constraint (only `standard`/`dramatized_full_cast`/
+   `abridged`/`other`, 4 values); `audio_original` is a real value on
+   the separate `books.work_type` column, conflated here. Also
+   softened the GraphicAudio-mislabeling caveat, which had drifted out
+   of sync with `docs/TODO.md`'s own more current entry (a 2026-09-18
+   sweep found zero confirmed mislabeled rows -- a clean one-time
+   result, not the live ongoing concern CLAUDE.md still described).
