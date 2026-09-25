@@ -22372,3 +22372,71 @@ itself (CLAUDE.md content errors, not book-dna.md structure):
    of sync with `docs/TODO.md`'s own more current entry (a 2026-09-18
    sweep found zero confirmed mislabeled rows -- a clean one-time
    result, not the live ongoing concern CLAUDE.md still described).
+
+## 2026-09-25, later still -- book-dna.md split: "after" results, real content-loss bug caught and fixed, restructuring complete
+
+Ran all 6 `docs/book-dna-split-acceptance-tests.md` scenarios again,
+fresh agents, against the NEW 4-file structure, same checklists as the
+baseline. (Minor correction to the baseline entry's own count: it said
+28/28 checklist items; the actual total across all 6 scenarios'
+checklists is 26, not 28 -- an arithmetic slip in that entry, not a
+result change.)
+
+**Result: 26/26 checklist items passed, zero regressions.** Everything
+findable before is still findable. Real, measured reading-volume
+improvement in every scenario that involved a narrowly-scoped task:
+scenario 4 (new scalar field proposal) dropped from needing ~2,500+
+words of reading (baseline) to ~1,150 (after) -- the agent explicitly
+noted it "did not need to open book-dna-decisions.md, book-dna-tables.md,
+schema.yaml, or TODO.md in full" since the scalar-field gate stayed
+self-contained in core exactly as designed. Scenario 3 (audiobook UI)
+dropped ~24%, scenario 1 (ordinary tagging batch, the most demanding
+scenario) dropped ~20% even though it still legitimately needs to read
+a lot (schema.yaml, the full tagging skill, the vocabulary-gap tracker).
+
+**The acceptance-test methodology caught a real bug, exactly as it was
+built to.** Scenario 5's fresh agent, investigating the confidence/
+source layer, noticed `book-dna-tables.md` promised "full original
+rationale... preserved verbatim in `book-dna-decisions.md`" but
+couldn't find that content when it checked. Verified directly: true --
+the split's implementation (a forked agent that stalled partway
+through, per this session's earlier "Agent stalled: no progress for
+600s" event) had written the forward-pointing promise in
+`book-dna-tables.md` for all 6 built items but only actually completed
+the verbatim-preservation step for 1 of them (the omnibus operational
+rule). The other 5 (`audiobook_editions`, `work_type`, Series DNA, the
+confidence/source layer, post-read/DNF feedback) were missing their
+promised original rationale entirely -- a real, silent content-loss bug
+that a smaller/shallower test wouldn't have caught, since the CURRENT-
+CONTRACT summaries in `book-dna-tables.md` were themselves complete and
+correct; only the "historical rationale" half of the promise was broken.
+
+Fixed same-day: restored all 5 missing entries verbatim from the
+`pre-book-dna-split` git tag (not rewritten -- confirmed via `git show
+pre-book-dna-split:docs/schema/book-dna.md`), inserted as a new
+"Full original write-ups for now-built tables/mechanisms" subsection in
+`book-dna-decisions.md`. Verified all 6 promises now resolve (grepped
+for a unique marker phrase from each: "Bands of Mourning," "GraphicAudio,"
+"Hugo Award," "shared-universe," "collaborative filtering," "edition_kind"
+-- all present). Total word count across the 4 files is now 21,125
+(up from the original single file's 19,578) -- an increase, not a
+concern, since the current-contract summaries in `book-dna-tables.md`
+are genuinely new, useful content alongside the fully-preserved
+original entries, not duplication of identical text.
+
+**Final state**: `docs/schema/book-dna.md` (core, 5,376 words, ~72%
+smaller than the original 19,578-word single file, always read) +
+`book-dna-vocabulary-gaps.md` (3,001 words, active tracker) +
+`book-dna-tables.md` (1,732 words, current contracts) +
+`book-dna-decisions.md` (11,016 words, full history/rationale, only
+read when relevant). Committed across 3 commits (`5f1f7cc` the main
+split, `643bf34` two pre-existing CLAUDE.md bugs the baseline testing
+found, `4a5ba2d` this content-loss fix) -- not yet pushed, held back
+until this final verification passed. Safety net (`pre-book-dna-split`
+git tag, already pushed) never needed for an actual revert -- the bug
+was caught and fixed forward instead, which was the better outcome.
+
+This closes out the `docs/TODO.md` "Fresh-session context-load
+reduction" item's two concrete steps (bounded project-log read window;
+book-dna.md split). "Route by task class" (Task 21's own idea, possibly
+a bigger win than the split alone) remains a real, unscoped follow-up.

@@ -1,5 +1,13 @@
 # Book DNA split — acceptance test methodology
 
+**Verdict: shipped 2026-09-25.** 26/26 checklist items passed both
+before and after, zero regressions, real reading-volume drops (12-54%
+depending on scenario) -- and the methodology caught a real content-loss
+bug before it shipped silently. Full results in `docs/project-log.md`'s
+2026-09-25 "after results" entry. This file remains the fixed
+methodology (unchanged since it was written), kept for anyone re-running
+these scenarios after a future schema-doc change.
+
 Written 2026-09-25, before implementing the `book-dna.md` restructuring
 (`docs/codx-reports/2026-09-25-book-dna-split-review.md`, CODX's Task
 22 review), per the repo owner's explicit requirement: a way to
