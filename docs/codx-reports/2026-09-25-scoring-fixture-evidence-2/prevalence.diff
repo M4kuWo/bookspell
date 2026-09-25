@@ -1,0 +1,2 @@
+- w_eff *= max(PREVALENCE_DISCOUNT_FLOOR, 1 - prevalence)
++ w_eff *= 1.0  # deliberate mutation: no prevalence discount

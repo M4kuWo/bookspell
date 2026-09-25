@@ -21885,3 +21885,41 @@ printed (visible in Render's logs) and swallowed, never surfaced as a
 `api/.venv`: a real `_score_genre()` call for a real rater
 (Mathias) correctly logged 3 rows with the right rank/genre/score/
 evidence_confidence, cleaned up after.
+
+## 2026-09-25, later still -- CODX Task 19 landed: deferred scoring mechanics fixture tests
+
+CODX's report: `docs/codx-reports/2026-09-25-scoring-fixture-tests-2.md`
+(evidence: `docs/codx-reports/2026-09-25-scoring-fixture-evidence-2/`).
+Extended `scripts/scoring/tests/test_fixtures.py` from 6 to 15 methods,
+covering the 7 mechanics Task 18 deliberately deferred: prevalence
+discounts, the redundancy discount's candidate-conditionality, series-
+repeat blending (disliked-only, not liked), series-trajectory penalty,
+both cold-start components (count + experience) and its ranking/audit-
+only application, user-rules exclude/reduce, explanation-text
+match/mismatch direction, and both dealbreaker-veto modes (fixed
+threshold vs. validated-set). Real, already-caught-and-fixed example in
+CODX's own process, not just claimed after the fact: the first direct
+run of the series-repeat test failed because `book_similarity()` scores
+two EMPTY trope sets at 0 similarity (Jaccard), not 1 -- an engine
+behavior the fixture's initial "identical books" assumption didn't
+account for. Fixed by giving both fixture records a shared nonempty
+trope set (the intended identical-component case), not by changing the
+engine.
+
+Independently re-verified before trusting it, same discipline as Task
+18: copied the extended file into this repo's own `scripts/scoring/
+tests/`, ran it directly against current `main` -- all 15 pass, 0.003s.
+Separately reproduced one of CODX's two negative controls myself (not
+just re-read the report): copied `scripts/` to a scratch dir, applied
+the exact cold-start mutation (`if policy in ("ranking", "audit") and
+cold_start > 0:` -> `if False:`), reran -- 4 tests failed with the
+expected assertion (`0.75` not returned for a fully-cold ranking/audit
+score), confirming the check actually catches a real regression.
+
+No CI change needed -- the existing 4th step (`python3 -S scripts/
+scoring/tests/test_fixtures.py`) already runs the whole file, extended
+or not.
+
+This closes out both fixture-testing tasks from the 2026-09-23 GPT
+review's R3. Next CODX task not yet decided -- candidates from
+`docs/TODO.md` to pick from at the next sync.

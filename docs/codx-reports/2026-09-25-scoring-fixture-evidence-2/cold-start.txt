@@ -1,0 +1,56 @@
+test_cold_start_applies_only_to_ranking_and_audit (__main__.ScoringFixtures.test_cold_start_applies_only_to_ranking_and_audit) ... 
+  test_cold_start_applies_only_to_ranking_and_audit (__main__.ScoringFixtures.test_cold_start_applies_only_to_ranking_and_audit) (policy='ranking', book='pace-slow') ... FAIL
+  test_cold_start_applies_only_to_ranking_and_audit (__main__.ScoringFixtures.test_cold_start_applies_only_to_ranking_and_audit) (policy='ranking', book='pace-fast') ... FAIL
+  test_cold_start_applies_only_to_ranking_and_audit (__main__.ScoringFixtures.test_cold_start_applies_only_to_ranking_and_audit) (policy='audit', book='pace-slow') ... FAIL
+  test_cold_start_applies_only_to_ranking_and_audit (__main__.ScoringFixtures.test_cold_start_applies_only_to_ranking_and_audit) (policy='audit', book='pace-fast') ... FAIL
+test_cold_start_count_and_experience_components (__main__.ScoringFixtures.test_cold_start_count_and_experience_components) ... ok
+test_dealbreaker_modes_and_veto (__main__.ScoringFixtures.test_dealbreaker_modes_and_veto) ... ok
+test_explanations_preserve_match_and_mismatch_direction (__main__.ScoringFixtures.test_explanations_preserve_match_and_mismatch_direction) ... ok
+test_nominal_exact_partial_and_mismatch (__main__.ScoringFixtures.test_nominal_exact_partial_and_mismatch) ... ok
+test_only_ranking_short_circuits_series_ineligibility (__main__.ScoringFixtures.test_only_ranking_short_circuits_series_ineligibility) ... ok
+test_ordinal_similarity_uses_normalized_distance (__main__.ScoringFixtures.test_ordinal_similarity_uses_normalized_distance) ... ok
+test_policies_agree_on_scores_with_optional_adjustments_inactive (__main__.ScoringFixtures.test_policies_agree_on_scores_with_optional_adjustments_inactive) ... ok
+test_prevalence_discounts_field_and_trope_weights_with_floor (__main__.ScoringFixtures.test_prevalence_discounts_field_and_trope_weights_with_floor) ... ok
+test_profile_learns_separating_field_in_both_directions (__main__.ScoringFixtures.test_profile_learns_separating_field_in_both_directions) ... ok
+test_redundancy_discount_is_candidate_conditional (__main__.ScoringFixtures.test_redundancy_discount_is_candidate_conditional) ... ok
+test_series_position_requires_every_earlier_installment (__main__.ScoringFixtures.test_series_position_requires_every_earlier_installment) ... ok
+test_series_repeat_penalizes_disliked_not_liked_mates (__main__.ScoringFixtures.test_series_repeat_penalizes_disliked_not_liked_mates) ... ok
+test_trajectory_penalizes_divergent_entry_only (__main__.ScoringFixtures.test_trajectory_penalizes_divergent_entry_only) ... ok
+test_user_rules_exclude_reduce_and_leave_nonmatches_unchanged (__main__.ScoringFixtures.test_user_rules_exclude_reduce_and_leave_nonmatches_unchanged) ... ok
+
+======================================================================
+FAIL: test_cold_start_applies_only_to_ranking_and_audit (__main__.ScoringFixtures.test_cold_start_applies_only_to_ranking_and_audit) (policy='ranking', book='pace-slow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/2v/bh1zl26s4sbgznrl92t3gc8c0000gn/T/codx-task19-r97gz2o9/scripts/scoring/tests/test_fixtures.py", line 205, in test_cold_start_applies_only_to_ranking_and_audit
+    self.assertEqual(cold['scores']['final'], expected)
+AssertionError: 0.0 != 0.75
+
+======================================================================
+FAIL: test_cold_start_applies_only_to_ranking_and_audit (__main__.ScoringFixtures.test_cold_start_applies_only_to_ranking_and_audit) (policy='ranking', book='pace-fast')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/2v/bh1zl26s4sbgznrl92t3gc8c0000gn/T/codx-task19-r97gz2o9/scripts/scoring/tests/test_fixtures.py", line 205, in test_cold_start_applies_only_to_ranking_and_audit
+    self.assertEqual(cold['scores']['final'], expected)
+AssertionError: 1.0 != 0.75
+
+======================================================================
+FAIL: test_cold_start_applies_only_to_ranking_and_audit (__main__.ScoringFixtures.test_cold_start_applies_only_to_ranking_and_audit) (policy='audit', book='pace-slow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/2v/bh1zl26s4sbgznrl92t3gc8c0000gn/T/codx-task19-r97gz2o9/scripts/scoring/tests/test_fixtures.py", line 205, in test_cold_start_applies_only_to_ranking_and_audit
+    self.assertEqual(cold['scores']['final'], expected)
+AssertionError: 0.0 != 0.75
+
+======================================================================
+FAIL: test_cold_start_applies_only_to_ranking_and_audit (__main__.ScoringFixtures.test_cold_start_applies_only_to_ranking_and_audit) (policy='audit', book='pace-fast')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/private/var/folders/2v/bh1zl26s4sbgznrl92t3gc8c0000gn/T/codx-task19-r97gz2o9/scripts/scoring/tests/test_fixtures.py", line 205, in test_cold_start_applies_only_to_ranking_and_audit
+    self.assertEqual(cold['scores']['final'], expected)
+AssertionError: 1.0 != 0.75
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.004s
+
+FAILED (failures=4)

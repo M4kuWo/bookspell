@@ -1,0 +1,2 @@
+- if policy in ("ranking", "audit") and cold_start > 0:
++ if False:  # deliberate mutation: no cold-start blending

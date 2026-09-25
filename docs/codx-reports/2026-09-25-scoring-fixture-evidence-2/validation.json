@@ -1,0 +1,33 @@
+{
+  "python": "3.12.9 (main, Mar 10 2025, 03:37:10) [Clang 13.1.6 (clang-1316.0.21.2.5)]",
+  "clean": {
+    "command": [
+      "/opt/homebrew/opt/python@3.12/bin/python3.12",
+      "-S",
+      "scripts/scoring/tests/test_fixtures.py"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06141570908948779
+  },
+  "broken_copies": {
+    "prevalence": {
+      "command": [
+        "/opt/homebrew/opt/python@3.12/bin/python3.12",
+        "-S",
+        "scripts/scoring/tests/test_fixtures.py"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 0.06371954223141074
+    },
+    "cold-start": {
+      "command": [
+        "/opt/homebrew/opt/python@3.12/bin/python3.12",
+        "-S",
+        "scripts/scoring/tests/test_fixtures.py"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 0.06523545831441879
+    }
+  },
+  "real_engine_and_test_files_unchanged": true
+}
