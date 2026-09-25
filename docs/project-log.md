@@ -21923,3 +21923,16 @@ or not.
 This closes out both fixture-testing tasks from the 2026-09-23 GPT
 review's R3. Next CODX task not yet decided -- candidates from
 `docs/TODO.md` to pick from at the next sync.
+
+## 2026-09-25, later still -- Osnat/Magic Burns TODO item was stale, fixed
+
+Found while surveying `docs/TODO.md` for what's next: the P1 item for
+Osnat's *Magic Burns* ranking anomaly still said "flagged 2026-09-22,
+not investigated," but CODX's Task 17 (2026-09-23,
+`docs/codx-reviews/2026-09-23-magic-burns-ranking.md`) had already done
+a rigorous investigation and reached a real, high-confidence
+conclusion -- the TODO entry was just never updated after that report
+landed. Fixed: marked done, summarized the actual finding (not a
+scoring bug -- sparse negative evidence, same root blocker as the
+already-tracked P3 graduated-dealbreaker-veto item, not a new separate
+problem), linked to the full report.
