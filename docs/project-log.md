@@ -22658,3 +22658,19 @@ This is now a genuinely thoroughly-measured policy -- not just design-
 reviewed (CODX's Task 23) but empirically validated across the full
 scenario space CODX itself proposed. No further measurement planned
 unless real usage surfaces a gap.
+
+## 2026-09-26, later still -- CODX Task 24 queued: audit the experimental scoring functions
+
+Moving to CODX's established code-review task type from AGENTS.md's own
+list (not a new authorization) now that the task-class routing effort
+is fully closed out. Confirmed the real current state before writing
+the task rather than assigning blind: `scripts/scoring/experimental.py`
+is 834 lines, 9 functions (2 trope-weighting variants, 3 series-dedup
+variants, 3 per-value nominal-field-weighting functions), all
+apparently still uncalled by production code (per Task 9's older
+finding -- asked CODX to re-verify, not assume). Real reason to re-audit
+now rather than leave it: these functions predate the Phase B
+submodule split, this session's redundancy/prevalence-discount work,
+the confidence-instrumentation module, and the new fixture-test suite
+-- an experimental variant that faithfully mirrored the real pipeline
+on 2026-09-17 may have silently drifted since.

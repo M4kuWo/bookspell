@@ -8,117 +8,99 @@ See `docs/persona-workflow.md` if you haven't read it yet. Report to
 
 ---
 
-## Task 23 — review a concrete "route by task class" proposal (per the structural-change review gate)
+## Task 24 — audit the experimental/deferred scoring functions in `scripts/scoring/experimental.py`
 
-This is your own idea, from Task 21's report ("Additional ideas grounded
-in this repo" section): "Route by task class. A tiny map can direct
-scoring work to its protocol and engine contracts, tagging to full
-vocabulary/evidence guidance and the active gap tracker, audiobook/UI
-work to edition contracts and relevant skills, and infrastructure-only
-work to infrastructure rules... This gives larger savings than
-permanently requiring a somewhat shorter schema for every task." Your
-Task 22 review of the `book-dna.md` split also explicitly said this
-needs its own separate, deliberate review, not to be folded into that
-split: "Defer the larger change to global reading obligations by task
-class... Measure it and review it explicitly; don't smuggle it into a
-relocation." This task is that separate review.
+This is your own established task type from `AGENTS.md`'s "Concrete
+tasks" list ("Auditing the pile of deferred/experimental functions...
+for whether they're still accurate or worth keeping") — not a new
+authorization, and not something that needs the structural-change
+review gate (this task IS a review, of code, not a proposal to change
+a convention). Review/propose only, same posture as always: findings
+and any proposed fix go in your report, nothing gets applied by you.
 
-**Real context you should know**: after the `book-dna.md` split landed
-(and was measured — 26/26 acceptance-test checklist items, zero
-regressions), CLDO closed out `docs/TODO.md`'s tracking item and
-described "route by task class" as an unscoped follow-up, without
-flagging at the time that it was a genuinely unfinished piece of the
-same effort. The repo owner caught this the next session and asked for
-a standing rule against it — see CLAUDE.md's new "Multi-phase task
-closure" section (2026-09-26) for the full incident. This task is that
-follow-up now actually being picked up, not dropped.
+### What's actually there (confirmed 2026-09-26, so you don't have to
+### re-derive this)
 
-Same posture as Tasks 21/22: review/ideation only for the tiered
-question below, but see "What to actually do" -- some review-only,
-some genuine can-implement-if-you're-confident territory, spelled out.
+`scripts/scoring/experimental.py` is 834 lines, 9 functions, all
+confirmed uncalled by any production code path (per Task 9/CLDO's own
+prior confirmation, re-verify this still holds):
 
-### The real, measured opportunity (verified 2026-09-26)
+- `build_profile_trope_shrinkage()` / `build_profile_trope_backoff()`
+  — alternative trope-weighting schemes.
+- `_dedup_factor_for_field()` / `build_profile_series_field_dedup()` /
+  `_dedup_factor_plain()` / `build_profile_series_field_dedup_protected()`
+  — alternative series-dedup approaches (the "protected" variant sounds
+  like it was meant to address a specific gap in the plain version —
+  confirm what that gap was and whether it's the same one
+  `docs/scoring-test-protocol.md`'s dedup entries already discuss).
+- `build_profile_per_value()` / `score_book_per_value()` /
+  `explain_book_per_value()` — an alternative per-value nominal-field
+  weight-learning scheme, matched in the `docs/schema/book-dna-decisions.md`
+  "Per-value nominal-field weight learning" entry (a real architectural
+  idea logged there — check whether this file's implementation is what
+  that entry describes, or a different/older attempt).
 
-`CLAUDE.md` is 914 lines. Its sections split into two real categories:
-
-**Universal (every session needs these regardless of task)**: `Persona
-system`, `Cross-session destructive-action gate`, `Structural/
-methodology-change review gate`, `Safety / credentials`, `Multi-phase
-task closure`, `Agent/token efficiency`, `Logging`.
-
-**Task-specific (~530 of 914 lines, ~58%) — genuinely irrelevant to
-many real task types**: `Database & migrations` (294-444), `Database
-backups` (445-473), `Data quality / tagging` (474-606), `Catalog scope
-& series hierarchy` (607-676), `Recommendation engine` (677-755), `v1
-web app` (756-826). A pure CI-infrastructure task (like your own Tasks
-18-19) or a frontend-only CSS tweak currently pays the full cost of
-reading migration rules, tagging evidence standards, and catalog-scope
-policy that have nothing to do with the actual work.
-
-### Two tiers, deliberately not decided yet -- this is the actual review question
-
-**Tier 1 (proposed default, lower risk): a purely additive routing
-table.** Add a new short section near the top of `CLAUDE.md` (right
-after the existing always-read instructions) that's just a map: task
-class -> which of CLAUDE.md's OWN sections are relevant, plus which
-external files (skills, schema companions, `scoring-test-protocol.md`)
-round it out. Nothing gets removed, hidden, or gated behind search --
-every section stays exactly where it is, always fully readable by
-anyone who wants to be thorough. This only adds a fast, explicit
-shortcut for a session with a narrowly-scoped task; it doesn't change
-what a maximally-careful session would already do. Candidate task
-classes (not final, critique these too): tagging a batch / vocabulary
-gap sweep / proposing a new scalar field / scoring-engine change /
-audiobook-table or UI work / infrastructure-only (CI, workflows,
-deploy) / migration-and-DB work.
-
-**Tier 2 (bigger, NOT proposed as this session's default): actually
-split CLAUDE.md** the way `book-dna.md` was split -- move the
-task-specific sections into companion files, leave only a slim routing
-core as the mandatory always-read. Real, structurally-similar risk to
-the book-dna.md split (CLAUDE.md is referenced by `AGENTS.md`,
-`docs/persona-workflow.md`, and implicitly by every skill file and every
-session's own operating assumptions) -- likely MORE cross-file risk
-given CLAUDE.md's centrality, not less. Per your own Task 22 finding
-("never move permission boundaries, credentials restrictions,
-destructive-action gates... behind optional search"), the two safety
-gates and the credentials section can NEVER move out of the always-read
-core regardless of which tier gets built.
+**Real reason this needs re-auditing now, not just "eventually"**:
+these functions haven't been touched since the Phase B `scripts/scoring/`
+submodule split (2026-09-17) — CLDO's own prior QA pass on them
+(Tasks 9/10-era) predates that split, this session's redundancy/
+prevalence-discount work, the confidence-instrumentation module
+(`scripts/scoring/confidence.py`), and the fixture-test suite
+(`scripts/scoring/tests/test_fixtures.py`, Tasks 18-19). An experimental
+alternative that was a faithful variant of `build_profile()`/`score_book()`
+on 2026-09-17 may now be silently out of sync with what the REAL
+functions actually do today — worth confirming either way, not assumed.
 
 ### What to actually do
 
-1. **Critique the task-specific/universal classification above.** Is
-   anything mis-classified? (E.g., is `Database backups` really
-   task-specific, or universal enough — "before anything genuinely
-   risky" — that it should stay in core regardless?)
-2. **If Tier 1 looks right, design it concretely**: propose the actual
-   routing table's rows/columns, and where exactly it should live
-   (CLAUDE.md itself vs. a separate small file, given the same
-   "shrink routing before shrinking evidence" principle from Task 21).
-   You may write this table yourself as a proposal (a diff, not applied)
-   in your report -- this is squarely "implementing a proposed design
-   and validating it in your own sandbox," which your existing scope
-   already covers, not a bypass of "review only."
-3. **Answer directly: is Tier 2 worth doing at all, and if so, when
-   relative to Tier 1?** Your own words already leaned toward "measure
-   Tier 1 first" -- confirm or revise that view now that you can see the
-   real section sizes.
-4. **Say whether `AGENTS.md`/`docs/persona-workflow.md` need equivalent
-   treatment** -- they have their own "read CLAUDE.md in full" pointers;
-   would a task-class map in CLAUDE.md automatically help you (CODX) and
-   CLDA too, or does each persona's own entry file need its own routing
-   note?
-5. Don't implement Tier 2 or touch any file's actual content beyond a
-   proposed diff in your report for Tier 1, if you get that far.
+1. **For each function/pair, confirm it still imports/runs cleanly**
+   against the current `scripts/scoring/` module layout — a stale
+   import path or removed dependency would be a real, concrete finding
+   on its own (this file predates and postdates several real refactors).
+2. **Compare each experimental variant against the CURRENT real
+   equivalent** (`build_profile()`/`score_book()`/`explain_book()` in
+   `scripts/scoring/profile.py`/`pipeline.py`/`explanations.py`) —
+   is the experimental version still doing the SAME thing as the real
+   one, plus its one deliberate variation, or has it drifted (e.g. the
+   real function gained a redundancy/prevalence discount or a
+   confidence-floor check the experimental one never got, making it not
+   a fair A/B variant anymore even if someone did test it today)?
+3. **Check `docs/scoring-test-protocol.md`'s own history** for each of
+   these — several were apparently tested once already (the file's
+   dated entries should say what happened: landed, rejected, or
+   inconclusive). Confirm the current code matches what the log says
+   was actually tested, and flag any function whose fate isn't recorded
+   there at all.
+4. **Recommend, per function/pair**: keep as-is (still a live, correctly
+   isolated experiment worth someone eventually re-testing), fix (drifted
+   from the real pipeline in a way that would invalidate a future test —
+   say exactly what changed), or remove (already tested and rejected,
+   or superseded by something that actually landed, e.g. check whether
+   `build_profile_per_value()` is now moot given whatever
+   `docs/schema/book-dna-decisions.md`'s "Per-value nominal-field weight
+   learning" entry's real status is).
+5. **Confirm none of these 9 functions are actually called anywhere**
+   in the real pipeline, tests, or app/API code — re-verify Task 9's
+   old finding rather than trust it's still true after 9 days of changes
+   (`grep -rn` for each function name across `scripts/`, `api/`, `app/`
+   is enough; this file existing and being imported by nothing outside
+   itself is exactly the kind of thing that's easy to get wrong by
+   assumption).
+
+### What NOT to do
+
+Don't run `scripts/scoring_tests.py` against any of these (that's a
+real benchmark run, CLDO's own exclusive territory per CLAUDE.md's
+persona rules) and don't touch `scripts/recommend.py`. This is a static
+code/documentation-consistency review, not a live A/B test — if you
+find something worth actually testing, say so as a recommendation for
+CLDO to run, not something to execute yourself.
 
 ### Deliverable
 
-A report at `docs/codx-reports/<date>-task-class-routing-review.md`:
-your verdict on the classification, a concrete Tier 1 proposal (or a
-reasoned alternative if you think this framing is wrong), your Tier 2
-recommendation, and the AGENTS.md/persona-workflow.md question answered.
-CLDO implements after reading this, independently re-verifying it the
-same way every other CODX output gets verified before being trusted --
-and will explicitly ask before moving on to anything else if a genuine
-piece of this is still unfinished when this task's own conversation
-turn ends, per the new "Multi-phase task closure" rule.
+A report at `docs/codx-reports/<date>-experimental-functions-audit.md`:
+per-function verdict (keep/fix/remove) with reasoning, confirmation of
+the "uncalled anywhere" check, and any real drift found between an
+experimental variant and its current real counterpart. CLDO reviews,
+independently re-verifies, and applies whatever's agreed (likely a
+mix of deleting some functions and leaving others, logged either way).
