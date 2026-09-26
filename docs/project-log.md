@@ -22736,3 +22736,62 @@ reference and task description to reflect the audit is done.
 Full test suite re-run clean after every change (syntax check,
 functional test of the repaired functions against the real calling
 convention, full `scripts/scoring_tests.py` run) before landing.
+
+## 2026-09-26 -- Context-load measurement: static baseline done, behavioral test queued
+
+The repo owner asked directly, after this session's overhaul (the
+`book-dna.md` split + task-class routing policy, both landed and
+measured earlier today), what it actually gained -- and pointed out
+this was a good moment to prepare a real test, since the conversation
+had just been compacted and a fresh terminal was about to start.
+CLAUDE.md's own routing-policy section already says not to claim
+context savings from the table alone, only from measuring real
+sessions -- this is that measurement, done in two parts. Written up in
+full in the new `docs/context-load-measurement-protocol.md`; this entry
+is the summary.
+
+**Part 1 (done today)**: a static baseline, computed directly from real
+files via `wc -w`, not estimated. OLD (the `pre-book-dna-split` tag --
+last commit before either the split or the routing table existed):
+`CLAUDE.md` 7,657 + `docs/TODO.md` 4,626 + monolithic `book-dna.md`
+19,578 = 31,861 words, read in full every session regardless of task.
+NEW: `CLAUDE.md` broke down into 4,124 words of universal
+always-read sections (persona, both destructive/structural review
+gates, safety, multi-phase closure, agent efficiency, logging) plus six
+conditional sections (1,423-104 words each) the routing table only adds
+per task type. Computed required reading for 5 representative routes:
+
+- Tagging/ingestion/confidence QA: 17,557 words (44.9% less than old)
+- Scoring behavior change: 15,504 words (51.3% less)
+- CI/workflows/tooling only: 8,840 words (72.3% less)
+- v1 web app UI-only: 9,414 words (70.5% less)
+- New scalar field/schema design (heaviest route): 29,375 words (7.8%
+  less -- this route legitimately needs almost everything: tagging
+  conventions, catalog scope, the scoring protocol, migration
+  conventions, the schema core, AND the full decisions history)
+
+Flagged honestly in the protocol doc: the 4-file schema split alone,
+read with no routing at all, totals 34,929 words -- *more* than the old
+single 19,578-word file. The split only pays off because the routing
+table sits on top of it; the split by itself would have been a net
+loss. Worth remembering if either piece is ever touched independently
+of the other.
+
+**Part 2 (written, not yet run)**: Part 1 measures what the policy asks
+a session to read, not what a real fresh session actually reads. 5
+task prompts (one per route above) are ready in the protocol doc, each
+instructing a genuinely fresh, non-forked agent to read whatever
+CLAUDE.md and other files the task requires and self-report every file
+read plus its word count, before doing any other work. Run this in a
+new terminal/session (deliberately not this one, to get a genuinely
+untouched fresh-session state), grade each result against Part 1's
+prescribed total (match/over-read/under-read), and log results back
+into the protocol doc and here. An under-read on any route would be a
+real routing-table bug (the table not actually triggering the reading
+it prescribes) and should be fixed in CLAUDE.md directly.
+
+`docs/TODO.md` updated with a new P1 item pointing at this (kept
+separate from the now-closed "fresh-session context-load reduction"
+item above it, per the multi-phase-closure rule -- this is a genuinely
+new follow-up task the repo owner just asked for, not a reopening of
+the closed one).
