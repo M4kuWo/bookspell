@@ -1,0 +1,32 @@
+Imported all 9 functions
+build_profile_trope_shrinkage empty/populated OK; length keys: ['audiobook_length', 'book_length']
+  current positional contract: unsupported operand type(s) for +: 'int' and 'str'
+  keyword contract: build_profile_trope_shrinkage() got an unexpected keyword argument 'format_preference'
+build_profile_trope_backoff empty/populated OK; length keys: ['audiobook_length', 'book_length']
+  current positional contract: unsupported operand type(s) for +: 'int' and 'str'
+  keyword contract: build_profile_trope_backoff() got an unexpected keyword argument 'format_preference'
+build_profile_series_field_dedup empty/populated OK; length keys: ['audiobook_length', 'book_length']
+  current positional contract: build_profile_series_field_dedup() takes from 2 to 3 positional arguments but 4 were given
+  keyword contract: build_profile_series_field_dedup() got an unexpected keyword argument 'format_preference'
+build_profile_series_field_dedup_protected empty/populated OK; length keys: ['audiobook_length', 'book_length']
+  current positional contract: build_profile_series_field_dedup_protected() takes from 2 to 3 positional arguments but 4 were given
+  keyword contract: build_profile_series_field_dedup_protected() got an unexpected keyword argument 'format_preference'
+build_profile_per_value empty/populated OK; length keys: ['audiobook_length', 'book_length']
+  current positional contract: build_profile_per_value() takes from 2 to 3 positional arguments but 4 were given
+  keyword contract: build_profile_per_value() got an unexpected keyword argument 'format_preference'
+field divisors: {'a': 1, 'b': 1}
+plain divisors: {'a': 2, 'b': 2}
+per-value score/explain populated: (1.0, [('trope:revenge', 0.5), ('overall_pace', 0.425), ('person', 0.425)]) ([('trope:revenge', 0.5), ('overall_pace', 0.425), ('person', 0.425)], [])
+per-value score/explain empty: (0.0, []) ([], [])
+production default length keys: ['book_length']
+Four confidence-aware builders: all 8 zero-confidence nominal checks passed
+low-confidence learned keys production: ({'book_length': 0.6666666666666666}, {'book_length': 0.3, 'tropes': {'revenge': 0.0}})
+low-confidence learned keys per-value: ({'overall_pace': 1.0, 'book_length': 0.6666666666666666, 'audiobook_length': 1.0, 'person': 'first'}, {'overall_pace': 0.3, 'book_length': 0.3, 'audiobook_length': 0.3, 'person': {'first': 0.5}, 'tropes': {'revenge': 0.5}})
+low-confidence candidate production: (0.0, [('overall_pace', 0.0)]) ([], [])
+low-confidence candidate per-value: (1.0, [('overall_pace', 0.2)]) ([('overall_pace', 0.2)], [])
+prevalence contract: score_book_per_value() got an unexpected keyword argument 'field_prevalence'
+prevalence contract: explain_book_per_value() got an unexpected keyword argument 'field_prevalence'
+External executable references: []
+Experimental module/named imports: []
+Internal executable references: [('scripts/scoring/experimental.py', 382, '_dedup_factor_for_field'), ('scripts/scoring/experimental.py', 383, '_dedup_factor_for_field'), ('scripts/scoring/experimental.py', 405, '_dedup_factor_for_field'), ('scripts/scoring/experimental.py', 406, '_dedup_factor_for_field'), ('scripts/scoring/experimental.py', 526, '_dedup_factor_plain'), ('scripts/scoring/experimental.py', 527, '_dedup_factor_plain'), ('scripts/scoring/experimental.py', 529, '_dedup_factor_for_field'), ('scripts/scoring/experimental.py', 530, '_dedup_factor_for_field'), ('scripts/scoring/experimental.py', 553, '_dedup_factor_plain'), ('scripts/scoring/experimental.py', 554, '_dedup_factor_plain'), ('scripts/scoring/experimental.py', 556, '_dedup_factor_for_field'), ('scripts/scoring/experimental.py', 557, '_dedup_factor_for_field')]
+PASS: nine functions run; contract drift reproduced; external dormancy confirmed statically

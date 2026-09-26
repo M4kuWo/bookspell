@@ -22674,3 +22674,65 @@ submodule split, this session's redundancy/prevalence-discount work,
 the confidence-instrumentation module, and the new fixture-test suite
 -- an experimental variant that faithfully mirrored the real pipeline
 on 2026-09-17 may have silently drifted since.
+
+## 2026-09-26, later still -- CODX Task 24 landed: experimental scoring functions audit, 7 removed / 2 repaired
+
+CODX's report: `docs/codx-reports/2026-09-26-experimental-functions-audit.md`.
+Independently re-verified before trusting it -- every claim checked
+came back exact: `profile.py:356`'s real 4-positional-argument call to
+`build_profile()` confirmed directly; the `EXPERIMENTAL_ENTRY_POINTS`
+dormancy guard in `scripts/scoring_tests.py` confirmed to currently
+list all 9 names (my own file, so I could check this precisely); the
+stale `book-dna-decisions.md` "not built"/"not attempted yet" claim
+for per-value nominal weight learning confirmed word-for-word (it
+predates the actual 2026-09-04 build-and-revert); the 3 false "LANDED
+2026-09-04" docstrings confirmed verbatim; `git log -- scripts/scoring/
+experimental.py` confirmed showing only the single Phase B creation
+commit CODX cited (`d9a0c6a`).
+
+**Verdict, independently confirmed sound: fix 2, remove 7.**
+- **Fixed** (`build_profile_trope_shrinkage`, `build_profile_trope_backoff`)
+  -- genuinely still-open deferred research questions per
+  `docs/scoring-test-protocol.md`'s 2026-09-06 entries (mixed real
+  results, not rejected), not superseded by anything that landed. Real,
+  concrete drift found and repaired: both had silently fallen out of
+  sync with `build_profile()`'s real current calling convention
+  (`format_preference` landed 2026-09-07, after these were written) --
+  calling either with today's actual 4-positional-argument convention
+  would have silently bound `format_preference` to `k`, then crashed on
+  string+integer arithmetic. Verified this exact failure mode myself
+  before fixing it. Repair: added the same `exclude_length_fields`
+  format-gating `build_profile()` itself uses, made `k` keyword-only so
+  this can't recur silently. Functionally tested against the real
+  calling convention post-fix (print/audiobook/mixed all gate
+  `book_length`/`audiobook_length` correctly, matching production
+  exactly).
+- **Removed** (`_dedup_factor_for_field`, `build_profile_series_field_dedup`,
+  `_dedup_factor_plain`, `build_profile_series_field_dedup_protected`,
+  `build_profile_per_value`, `score_book_per_value`,
+  `explain_book_per_value`) -- all already tested and rejected/reverted
+  per the protocol's own history (dedup: real regressions traced and
+  documented; per-value: built and reverted 2026-09-04 after a
+  corrected benchmark regressed real rater accuracy, Mathias 91%->73%,
+  Dandan 71%->29%), never superseded by anything that actually landed.
+  Kept the file's total line count honest (834 -> 316 lines) rather
+  than leaving 7 stale, permanently-uncallable functions with false
+  "LANDED" docstrings sitting in the tree.
+
+**Also fixed**, per CODX's own flagged discrepancy: `docs/schema/
+book-dna-decisions.md`'s per-value entry (which I had restored verbatim
+from the pre-split tag during the 2026-09-25 book-dna.md
+restructuring, without independently checking ITS OWN accuracy at the
+time) incorrectly said "not built"/"not attempted yet" -- corrected
+with the real history and an explicit note that the underlying
+architectural limitation remains real and unresolved even though this
+specific implementation attempt didn't work. Updated `scripts/
+scoring_tests.py`'s `EXPERIMENTAL_ENTRY_POINTS` dormancy-guard set to
+drop the 5 now-deleted names (my own exclusive-territory file, done
+directly rather than asking CODX, per its own task's "what NOT to do"
+scope). Updated `AGENTS.md`'s stale `scripts/recommend.py` path
+reference and task description to reflect the audit is done.
+
+Full test suite re-run clean after every change (syntax check,
+functional test of the repaired functions against the real calling
+convention, full `scripts/scoring_tests.py` run) before landing.

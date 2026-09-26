@@ -290,10 +290,16 @@ bias toward this codebase's own history:**
   2026-09-11 entries — the kind of thing worth checking for elsewhere
   too).
 - Auditing the pile of deferred/experimental functions in
-  `scripts/recommend.py` (`build_profile_per_value`,
-  `build_profile_trope_shrinkage`, `build_profile_trope_backoff`,
-  `build_profile_series_field_dedup`) for whether they're still
-  accurate or worth keeping.
+  `scripts/scoring/experimental.py` (moved there from `scripts/
+  recommend.py` in the Phase B split) for whether they're still
+  accurate or worth keeping — **done 2026-09-26, Task 24**: 7 of 9
+  removed (tested and rejected/reverted per `docs/scoring-test-
+  protocol.md`'s history, never superseded by anything that landed);
+  the 2 genuinely still-open experiments (`build_profile_trope_shrinkage`/
+  `build_profile_trope_backoff`) repaired to match production's current
+  `format_preference` calling convention, which had drifted since this
+  file was last touched. Worth a repeat pass if this file accumulates
+  new dormant functions again.
 - An independent QA pass on CLDA's own large migrations — a genuine
   third opinion, not redundant with CLDO's own verification of the same
   work.

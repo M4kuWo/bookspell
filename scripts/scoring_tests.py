@@ -1253,15 +1253,21 @@ def run_user_rules_tests(catalog):
     return failures
 
 
-# Names of the dormant experimental profile/scoring builders CODX's
-# 2026-09-15 structural audit (F9) confirmed have zero live callers in
-# scripts/, api/, or tools/. Kept as data here (not just prose) so the
-# check below can assert this stays true rather than silently drifting
-# if one is ever wired in without updating this list.
+# Names of the dormant experimental profile/scoring builders confirmed
+# to have zero live callers in scripts/, api/, or tools/ (originally
+# CODX's 2026-09-15 structural audit, F9; re-confirmed by CODX's Task 24
+# audit, 2026-09-26, which also removed 5 of these entirely --
+# build_profile_series_field_dedup/_protected and the 3 per-value
+# functions were tested and rejected/reverted per docs/scoring-test-
+# protocol.md's history, never superseded by anything that landed, so
+# they're gone from scripts/scoring/experimental.py now, not just
+# dormant. Only the 2 genuinely still-open, deferred experiments
+# remain, plus 2 unrelated dormant names elsewhere. Kept as data here
+# (not just prose) so the check below can assert this stays true rather
+# than silently drifting if one is ever wired in without updating this
+# list.
 EXPERIMENTAL_ENTRY_POINTS = {
     "build_profile_trope_shrinkage", "build_profile_trope_backoff",
-    "build_profile_series_field_dedup", "build_profile_series_field_dedup_protected",
-    "build_profile_per_value", "score_book_per_value", "explain_book_per_value",
     "build_prevalence_lookup_grouped", "_apply_dealbreaker_veto_graduated",
 }
 

@@ -412,14 +412,36 @@ re-derive a finding already recorded here without checking first.
   that correct detection currently contributes nothing regardless. This
   is a real limitation for EVERY nominal field, not specific to `drive`
   or this user: any value other than the mode is currently invisible to
-  weight-learning even with real per-value evidence. Proposed fix, not
-  built: treat nominal field VALUES more like tropes — each with its
-  own learned `liked_freq - disliked_freq` weight, rather than one
-  scalar tied to the mode. This is a real scoring-architecture change
-  (not a schema/tagging one) and needs the standard 2-scenario test
-  discipline in `scripts/scoring_tests.py` before landing, same as any
-  other scoring change — flagged in
-  `docs/scoring-test-protocol.md`, not attempted yet.
+  weight-learning even with real per-value evidence. Proposed fix:
+  treat nominal field VALUES more like tropes — each with its own
+  learned `liked_freq - disliked_freq` weight, rather than one scalar
+  tied to the mode.
+
+  **Status correction (2026-09-26, CODX Task 24 audit): this WAS built
+  and tested for real the same day it was proposed, then reverted** —
+  the paragraph above previously said "not built"/"not attempted yet,"
+  which was already stale the moment it was written (it describes the
+  architecture, predating the actual experiment). See
+  `docs/scoring-test-protocol.md`'s "Per-value nominal weight learning
+  -- tried for real, REVERTED (2026-09-04, same day)" entry for the
+  full story: an initial "safe" result was invalidated by a monkeypatch
+  targeting the wrong imported module (see CLAUDE.md's own "A/B testing
+  an experimental scoring variant..." section for that exact bug
+  class); the corrected re-run regressed real rater accuracy (Mathias
+  91% -> 73%, Dandan 71% -> 29% on their respective held-out buckets).
+  The architectural limitation described above remains real and
+  unresolved — reverting the implementation doesn't mean the underlying
+  problem is solved, only that this specific attempt didn't work. The
+  now-dormant implementation (`build_profile_per_value()`/
+  `score_book_per_value()`/`explain_book_per_value()` in
+  `scripts/scoring/experimental.py`) was removed 2026-09-26 (same
+  audit) rather than kept as a stale, silently-uncallable relic — its
+  3 docstrings incorrectly claimed "LANDED" status referencing
+  bottom-of-file aliases that never existed. A future attempt at this
+  idea should start from this history, not from scratch, and still
+  needs the standard 2-scenario test discipline plus
+  `docs/scoring-test-protocol.md`'s 10-question gate before landing,
+  same as any other scoring change.
 - **Crossovers/easter eggs referencing other books** — raised by the
   repo owner 2026-09-12, explicitly low-priority ("cool idea for the
   future," not P1). Two examples he gave, deliberately spanning both
