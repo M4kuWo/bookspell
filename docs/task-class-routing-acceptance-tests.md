@@ -108,3 +108,134 @@ checklist item, reported reading volume noted per scenario, any missed
 requirement is a real finding regardless of how much shorter the
 reading was. Results belong in a dated `docs/project-log.md` entry,
 not here — this file is the fixed methodology.
+
+## Extended pass (2026-09-26) — remaining 8 of CODX's original 12 scenarios
+
+The first 4 scenarios above (A-D) covered 3 of CODX's 12 proposed
+scenarios in close variant form (A~#1, B~#2, C~#5) plus one extra
+ambiguous-scope test not in CODX's list. Per the repo owner's explicit
+request, the remaining 8 of CODX's 12 (checklists written before any
+agent runs, same discipline as above):
+
+### Scenario E (CODX #3) — CSS modal visibility bug
+
+**Prompt**: "There's a bug: a book-info modal's close button doesn't
+work — clicking it does nothing visible, the modal just stays open.
+Before investigating, figure out what conventions apply to this kind
+of task."
+
+**Required**:
+- [ ] Reads the v1 web app section in full; finds the documented
+      `[hidden]`/`display` CSS-cascade incident and the `:not([hidden])`
+      fix pattern.
+- [ ] Does NOT read Data quality/tagging, Catalog scope, Recommendation
+      engine, or the schema core in full — this doesn't change what
+      data is displayed, just visibility behavior.
+
+### Scenario F (CODX #4) — add book search to the same page
+
+**Prompt**: "Add a book-search feature to the book-info modal page —
+let a user search the catalog by title and add a result to their own
+rating list. Before starting, figure out what conventions apply."
+
+**Required**:
+- [ ] Reads v1 web app AND Catalog scope & series hierarchy (finds the
+      `archived = false` exclusion rule for any direct `books` query).
+- [ ] Reads (or identifies as required) Database & migrations' RLS/
+      grants pattern for a public-catalog-style read.
+- [ ] Does NOT treat this as CSS-only/presentation-only like Scenario E
+      — correctly recognizes new data access changes the route.
+
+### Scenario G (CODX #6) — ingest new books/covers
+
+**Prompt**: "Ingest 20 new books into the catalog from Hardcover,
+including their cover images. Before starting, figure out what
+conventions apply."
+
+**Required**:
+- [ ] Reads Data quality/tagging in full; finds the mandatory author-
+      contamination verification-before-insert rule.
+- [ ] Finds the mandatory self-hosted-cover-image rule
+      (`scripts/lib/self-host-cover.js`, never hotlink Hardcover's CDN).
+- [ ] Reads Catalog scope & series hierarchy (genre-scope filtering)
+      and Database & migrations (migration conventions for the insert).
+
+### Scenario H (CODX #7) — tagging reveals a possible new scalar field
+
+**Prompt**: "You're tagging a batch of 3 books via `tag-catalog-batch`,
+and partway through you notice all 3 books share a narrative device
+that doesn't fit any existing `book_dna` field — it feels like a real,
+recurring gap, not just a missing trope value. Before deciding what to
+do about it, figure out what conventions apply."
+
+**Required**:
+- [ ] Starts from the tagging route (Data quality/tagging) correctly.
+- [ ] Re-routes mid-task once the scalar-field question surfaces —
+      finds book-dna.md's "bar for a new scalar field" gate and
+      explicitly notes it applies even though this started as an
+      ordinary tagging task, not declared schema-design work.
+- [ ] Finds `docs/scoring-test-protocol.md`'s 10-question gate as a
+      second, separate requirement.
+
+### Scenario I (CODX #8) — confidence QA by CODX
+
+**Prompt**: "You are CODX (this repo's Codex CLI persona, review/
+propose-only scope). You're about to run a HIGH_RISK_FIELDS confidence
+QA pass like rounds 1-3 already done. Before starting, figure out what
+conventions apply, including what you're and aren't allowed to do
+given your own persona's scope."
+
+**Required**:
+- [ ] Reads Data quality/tagging (confidence semantics) and the schema
+      core's confidence contract (`book-dna-tables.md`).
+- [ ] Correctly identifies CODX's own read-only DB access method
+      (`codx_readonly` role / anon key) and its no-write/no-commit
+      scope from `AGENTS.md`.
+- [ ] Does not conclude it can apply any findings directly.
+
+### Scenario J (CODX #9) — deploy changes Supabase auth/config
+
+**Prompt**: "You need to update the deployed app's Supabase Auth
+email-confirmation settings via `supabase config push`. Before doing
+this, figure out what conventions apply."
+
+**Required**:
+- [ ] Reads v1 web app (deployment) AND Database & migrations.
+- [ ] Finds the "`config push` pushes the ENTIRE `config.toml`, not
+      just the section you meant to change" gotcha and the "read the
+      diff before/after" rule.
+- [ ] Does NOT treat this as pure infrastructure/deployment with no
+      domain-rule obligations.
+
+### Scenario K (CODX #10) — restore data or change backup workflow
+
+**Prompt**: "You need to modify `.github/workflows/backup-reminder.yml`'s
+staleness thresholds. Before doing this, figure out what conventions
+apply."
+
+**Required**:
+- [ ] Reads Database backups in full (universal trigger: genuinely
+      risky/persistent-data-adjacent work).
+- [ ] Finds the "database backup" heading-convention requirement this
+      workflow depends on to keep working.
+- [ ] Reads Safety/credentials (never expose the hosted password) even
+      though this task doesn't obviously involve credentials at first
+      glance.
+
+### Scenario L (CODX #12) — task expands mid-session
+
+**Prompt**: "You were asked to fix a typo in the app's book-info modal
+copy. While looking at the file, you notice the modal is also missing
+a privacy-policy link that a beta-readiness item says needs to land
+before real beta traffic. Before deciding whether/how to add that,
+figure out what conventions apply — does this fall under the same task
+class as the typo fix, or does it need a different route?"
+
+**Required**:
+- [ ] Recognizes this as a genuine scope expansion, not silently
+      folds the privacy-link work into the typo fix.
+- [ ] Checks `docs/TODO.md` for the existing beta-readiness item and
+      finds it's explicitly the repo owner's own lane (deferred, not a
+      CLDO task to just build).
+- [ ] Recomputes/states the route explicitly for the NEW piece rather
+      than assuming the original typo-fix route already covers it.
