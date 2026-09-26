@@ -1,5 +1,18 @@
 # Working conventions for this repo
 
+**If you're a sub-agent (launched mid-session by another Claude Code
+session), the copy of this file handed to you in your system prompt
+may already be stale** — confirmed to happen repeatedly (4 independent
+sub-agents in one afternoon, 2026-09-26, each mid-way through a task)
+when this file was edited earlier in the same parent session. Symptoms:
+a routing/gate section your own reasoning expects to exist (referenced
+by a project-log entry, another file, or the task itself) doesn't
+appear in what you were handed. If anything about this file seems
+incomplete relative to what the task or other files imply, `grep`/`Read`
+it directly from disk rather than trusting the system-prompt snapshot —
+it takes one command and has caught a real gap every time it's been
+checked so far.
+
 Read the startup policy below before doing anything else in this project.
 It exists because
 this project has been worked on from multiple machines and Claude

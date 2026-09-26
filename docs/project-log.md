@@ -22552,3 +22552,56 @@ next phase just because it was mentioned. Genuinely deferred, not
 dropped -- see the open question posed back to the repo owner about
 whether/how to measure Tier 1 before considering this closed, per the
 new multi-phase-closure discipline.
+
+## 2026-09-26, later still -- task-class routing policy measured: 16/16, zero regressions, plus a real tooling finding
+
+Ran the 4-scenario methodology (`docs/task-class-routing-acceptance-tests.md`)
+against the new "Startup reading and task routes" policy, per the repo
+owner's explicit choice ("Option A" -- measure before considering this
+done, not just assume the design review was enough).
+
+**Result: 16/16 checklist items passed across all 4 scenarios, zero
+regressions.** Scenario A (narrow infra task): correctly excluded all 6
+task-specific sections + the schema core, real reading volume ~5,800
+words vs. an ~13,500-word regression ceiling (the old "read everything"
+baseline) -- AND caught a real issue with the task itself (changing
+`keep-warm.yml`'s cron from 10 to 15 minutes would remove the safety
+margin against Render's 15-minute spin-down, quietly reintroducing the
+cold-start problem the workflow exists to prevent; correctly refused to
+make the edit silently). Scenario B (the reclassification trap CODX
+flagged): correctly rejected "just CI/testing" framing for a task that
+touches `.github/workflows/` and `tests/` but is actually scoring-
+semantics work; read the Recommendation engine section + scoring
+protocol in full, and found a genuine non-obvious reason (leaf/parent
+series grouping feeds cluster counting) to also read Catalog scope,
+validating the routing table's own classification rather than blindly
+following it. Scenario C (audiobook UI, no-miss check): 5/5, all
+current facts correct, no gap caused by conditional reading. Scenario D
+(ambiguous scope): correctly recognized the task genuinely spans 2
+routes (scoring engine + v1 web app/import), read both rather than
+under-scoping to one, and surfaced a real code finding along the way
+(the `ratings` table's `source` column is never actually read anywhere
+in the scoring path -- manual and Goodreads-imported ratings are
+already treated identically today).
+
+**Real tooling finding, independently confirmed 4 times (once per
+scenario agent)**: each sub-agent's system-prompt-supplied copy of
+CLAUDE.md was a stale snapshot from before today's edits landed --
+missing the new routing section, the structural-review gate, and
+multi-phase-closure section entirely. Every agent caught this only by
+noticing an inconsistency (a project-log entry or another file
+referencing something not in their own copy) and independently
+re-reading the live file from disk. Added an explicit warning about
+this at the very top of CLAUDE.md itself so a future sub-agent doesn't
+have to rediscover it by luck. Also filed as product/tooling feedback
+(SendFeedback) -- this is a real, reproducible harness behavior
+(sub-agent system-prompt file injections not reflecting same-session
+edits to that file), not a project-specific issue, worth Anthropic's
+attention independent of this repo.
+
+This closes out CODX's Task 21 "route by task class" recommendation --
+all 3 of Task 21's original proposals (bounded read window, book-dna.md
+split, task-class routing) are now landed and measured. Tier 2 (an
+actual CLAUDE.md file split) remains explicitly deferred per CODX's own
+recommendation, not silently dropped -- revisit only if real usage
+shows Tier 1 isn't enough.
