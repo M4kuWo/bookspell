@@ -20,6 +20,10 @@ information from one session to another. Keep that model in mind before
 assuming any session "already knows" something that only happened in a
 different session's conversation.
 
+Startup reading for all three personas follows CLAUDE.md's "Startup
+reading and task routes" policy. Use every matching route; this changes
+neither task-selection mechanics below nor any persona's permissions.
+
 ## The two trigger phrases (use these exact words)
 
 - **CLDA**: *"Sync with the repo and get your next instructions."*
@@ -35,7 +39,7 @@ not a vague backlog pointer they have to figure out cold.
 
 | | Reads its task from | Writes output to | Who reviews/lands it |
 |---|---|---|---|
-| **CLDA** | `docs/TODO.md` — the shared, cross-cutting backlog (also read by CLDO/CODX). She syncs, reads the project-log tail + TODO.md + relevant skills per `CLAUDE.md`'s standing instruction, then tells the repo owner what she'd work on next; he picks. | Commits/pushes directly — real migration files, `docs/project-log.md` entries (append-only), `docs/TODO.md` updates. She has real, if gated, write access (see `CLAUDE.md`'s "Cross-session destructive-action gate"). | No separate review step for routine batch work, per her established track record. CLDO reviews anything she flags in `docs/PENDING_APPROVALS.md`. |
+| **CLDA** | `docs/TODO.md` — the shared, cross-cutting backlog (also read by CLDO/CODX). She syncs, reads the bounded project-log window + TODO.md + relevant skills per `CLAUDE.md`'s standing instruction, then tells the repo owner what she'd work on next; he picks. | Commits/pushes directly — real migration files, `docs/project-log.md` entries (append-only), `docs/TODO.md` updates. She has real, if gated, write access (see `CLAUDE.md`'s "Cross-session destructive-action gate"). | No separate review step for routine batch work, per her established track record. CLDO reviews anything she flags in `docs/PENDING_APPROVALS.md`. |
 | **CODX** | `docs/codx-tasks/current-task.md` — a single, always-current assignment, written by CLDO, **committed in the shared, tracked repo** (not CODX's own clone). An ordinary `git pull` gets it — no copy-pasted prompt text, same mechanism as CLDA's TODO.md now. | Its own clone's local, **untracked** `docs/codx-reports/<date>-<slug>.md` — CODX cannot commit or push, ever, so this file only exists on disk on this machine until CLDO copies it out. | CLDO reads the report directly from CODX's clone (same machine, same disk — a plain file read, not a git operation), independently re-verifies every claim, and — if it lands — copies the reviewed report into the shared, tracked `docs/codx-reviews/` (the permanent record) and applies the real change. |
 | **CLDO** | Live conversation with the repo owner — not file-driven. | Commits/pushes directly, same as CLDA. Also writes/overwrites `docs/TODO.md` entries for CLDA and `docs/codx-tasks/current-task.md` for CODX when their next task is ready. | Reviews `docs/PENDING_APPROVALS.md` at the start of every sync; independently re-verifies every CODX proposal before applying it (never trusts a report at face value, regardless of how thorough it looks). |
 

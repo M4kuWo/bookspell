@@ -87,16 +87,25 @@ and what data-quality caveats should the UI account for before trusting
 **Required to find/state**:
 - [ ] Identifies `audiobook_editions` (not a column on `book_dna`) as
       the real source table.
-- [ ] Lists the real current `edition_type` values including
-      `audio_original` (not just the original 4-value set from the
-      create-table migration).
+- [ ] Lists the real current `edition_type` values: `standard`,
+      `dramatized_full_cast`, `abridged`, `other` -- and correctly does
+      NOT include `audio_original` (that's a separate, real value on
+      `books.work_type`, a different table/column -- this checklist
+      itself originally claimed `audio_original` belonged here, a stale
+      claim from before this exact correction landed 2026-09-25; fixed
+      2026-09-26 after CODX's Task 23 review caught the rubric itself
+      hadn't been updated to match).
 - [ ] States `narrators` is a flat name array, no character-role
       mapping (a known gap, not a bug).
 - [ ] Mentions the GraphicAudio episodic-release caveat
       (`release_status`/part counts — a lookup mid-release can
       misrepresent availability).
-- [ ] Mentions the known, flagged (not fixed) data-quality issue: some
-      GraphicAudio full-cast productions are mislabeled `standard`.
+- [ ] Correctly states the CURRENT status of the GraphicAudio-
+      mislabeling concern: a 2026-09-18 sweep found zero confirmed
+      mislabeled rows catalog-wide -- a clean one-time result, not a
+      standing guarantee, worth a light re-check after future batches
+      but not an active, unfixed issue (fixed wording 2026-09-26; this
+      item previously read as if it were still confirmed/unfixed).
 
 ## Scenario 4 — new scalar field proposal
 

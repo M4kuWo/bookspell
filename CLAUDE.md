@@ -1,17 +1,15 @@
 # Working conventions for this repo
 
-Read this before doing anything else in this project. It exists because
+Read the startup policy below before doing anything else in this project.
+It exists because
 this project has been worked on from multiple machines and Claude
 accounts, and a few real mistakes have already happened from one session
 not knowing what another had already established. This file is the fix.
 
-Also read `docs/schema/book-dna.md` (the core schema reference — as of
-2026-09-25 split from one file into four; this one stays always-read,
-its three companions are read only when the task needs them, see its
-own "Schema map" section for which) and `docs/TODO.md` (the
-prioritized, cross-cutting task backlog — mutable, not append-only)
-before making non-trivial changes — don't re-litigate decisions already
-made there, and check `docs/TODO.md` before picking your own next task.
+Read `docs/TODO.md` before non-trivial work and before choosing a task.
+Read `docs/schema/book-dna.md` and its companions when required by
+"Startup reading and task routes" below. Do not re-litigate decisions
+already recorded in the applicable references.
 
 For `docs/project-log.md` (the running, append-only history — tens of
 thousands of lines and growing): **read the 3 most recent complete
@@ -56,6 +54,55 @@ falling behind hosted's real data (not a tracking-table issue — the
 actual rows) has recurred three times in three days; see the "Database
 & migrations" section below for the full incident history and why this
 is no longer safe to assume away.
+
+## Startup reading and task routes
+
+Always read this preamble and routing policy, plus these complete
+sections: Persona system; Cross-session destructive-action gate;
+Structural/methodology-change review gate; Safety / credentials;
+Multi-phase task closure; Agent/token efficiency; Logging. Persona
+scope and authorization rules apply to every route. Routing grants no
+write, commit, push or deployment permission.
+
+Select routes from the actual behavior, data and operations involved,
+not just filenames or the task's label. Read every matching CLAUDE
+section in full and the external prerequisites below before acting.
+Combine routes for mixed work; reroute before expanding scope. If the
+scope is unclear, read all of CLAUDE.md and the schema core. Search may
+locate a required section, but does not replace reading its caveats.
+Explicit assignment prerequisites and applicable skill steps still apply.
+
+Before any DB access, schema/policy change or database configuration
+operation, take the database route, including for a new UI table read.
+Before genuinely risky persistent-data work or a restore, also read
+Database backups. Before proposing any new scalar field, even one
+noticed during another task, read the schema core's scalar-field gate
+and the scoring protocol. Keep the local-Postgres sync check above.
+
+For substantive catalog, schema or scoring work, read the schema core
+in full and use its Schema map for companions. Pure infrastructure or
+presentation-only work may omit it until its scope crosses that boundary.
+Keep the TODO, bounded history, persona task-selection and skill-discovery
+requirements above. This policy changes required reading, not the
+applicability of any convention; all sections remain in this file.
+
+| Trigger / task | Additional CLAUDE sections | External prerequisites |
+|---|---|---|
+| Tagging, ingestion, metadata corrections or confidence QA | Data quality / tagging; Catalog scope & series hierarchy; database route if accessing DB | Schema core; exact YAML vocabulary; applicable tagging skill; gap tracker before tagging; relevant table/confidence contract |
+| Vocabulary-gap sweep or new trope/content-warning proposal | Data quality / tagging; Catalog scope & series hierarchy; database route if accessing DB | Schema core and full YAML; vocabulary-gap tracker; decisions/rejections; gap-sweep skill when running a sweep |
+| New scalar field or schema design | Data quality / tagging; Catalog scope & series hierarchy; Recommendation engine; Database & migrations | Schema core including scalar-field gate; YAML; relevant decisions/table contracts; scoring-test-protocol.md; affected skills |
+| Scoring behavior, scoring refactor or designing/changing tests that assert scoring semantics | Recommendation engine; Catalog scope & series hierarchy; database route if accessing DB | Schema core; scoring-test-protocol.md with its existing pre-change gate; applicable contracts and prior decisions |
+| Audiobook data or an edition display | v1 web app for UI/API work; Data quality / tagging; Catalog scope & series hierarchy; database route if accessing DB | Schema core; book-dna-tables.md edition contract; tag-audiobook-editions skill; Tier A/B guidance as applicable |
+| Frontend, API, auth/config or deployment | v1 web app; add catalog/data/scoring/database routes when those behaviors are involved | Relevant feature contracts and skills; schema core for catalog/scoring behavior, not isolated CSS |
+| DB access, migration, schema, grants/RLS, restore or DB configuration | Database & migrations; Database backups for backup/restore or risky persistent-data work; other domain routes as applicable | Relevant schema/table contracts and migration history; persona-specific authorized connection method |
+| CI/workflows/dependencies/tooling only | None beyond universal unless changing domain behavior or performing DB/deployment/backup operations; backup jobs add Database backups | Actual workflow/tool configuration; add engine route for scoring fixtures, web route for deployment, DB route for DB jobs |
+| Documentation/process review | Sections governing the proposed change; structural-review gate remains universal | Referenced contracts, skills and decisions; no exemption merely because the patch is Markdown |
+
+External schema names above live in `docs/schema/`; the scoring protocol
+is `docs/scoring-test-protocol.md`; skills live in `.claude/skills/`.
+Briefly record the routes used and any later scope expansion in the work
+report. Do not claim context savings solely from this table: measure
+content actually loaded/read in representative sessions.
 
 ## Persona system
 

@@ -5,19 +5,16 @@ You are **CODX** — this project's name for Codex CLI specifically (see
 counterpart to). This is a short, CODX-specific supplement, not a
 separate rulebook: **every convention in `CLAUDE.md` applies to you
 too** (migrations, catalog scope, safety rules, logging discipline, all
-of it) — read it in full before doing anything else in this repo, the
-same way it tells every Claude Code session to. This file exists only to
+of it) — follow its "Startup reading and task routes" policy before
+working in this repo. This file exists only to
 avoid duplicating that content here (which would just drift out of sync
 over time) and to say what's specific to your role.
 
 Also read, same as `CLAUDE.md` tells every session to: `docs/project-log.md`
 per its own bounded-read rule (the 3 most recent complete entries,
 capped at 1,500 words — search for anything older/specific instead of
-reading further back), `docs/schema/book-dna.md` (the core schema
-reference — as of 2026-09-25 split into 4 files; this one stays
-always-read, its companions `book-dna-vocabulary-gaps.md`/
-`book-dna-tables.md`/`book-dna-decisions.md` only when the task needs
-them, see its own "Schema map" section), `docs/TODO.md` (the broader
+reading further back), the schema core and companions required by
+CLAUDE.md's task routes, and `docs/TODO.md` (the broader
 cross-cutting backlog, for context/rationale
 — your own specific next assignment is a separate file, see "Getting
 your next task" below), and check `.claude/skills/` for anything

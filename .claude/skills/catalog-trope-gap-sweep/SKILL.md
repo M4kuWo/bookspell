@@ -29,8 +29,8 @@ real reason to expect this pass finds more, not less, this time.
 
 ## Before you start
 
-Read, in order: `CLAUDE.md` (all of it -- especially "Data quality /
-tagging"'s vocabulary rules and the closed-vocabulary bar), then
+Read, in order: `CLAUDE.md` per its "Startup reading and task routes"
+policy (the vocabulary-gap route and every other matching route), then
 `docs/schema/book-dna.md` (the core reference) and
 `docs/schema/book-dna.schema.yaml` in full (the exact machine-readable
 list -- **this is the authoritative, exhaustive vocabulary as of the

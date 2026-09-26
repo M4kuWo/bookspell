@@ -15,8 +15,9 @@ reference plus three companion files, per a measured fresh-session
 context-load problem and CODX's reviewed split plan
 (`docs/codx-reports/2026-09-25-book-dna-split-review.md`,
 `docs/project-log.md`'s 2026-09-25 "CODX Task 22 landed" entry). This
-file is still read in full every session, per CLAUDE.md — the other
-three are read only when the task actually needs them:
+file is read in full for the tasks identified by CLAUDE.md's "Startup
+reading and task routes" policy. The other three are required when
+the task or an applicable skill needs them:
 
 - **`book-dna-vocabulary-gaps.md`** — the active, running tracker of
   flagged single-occurrence vocabulary gaps. Read before
@@ -625,8 +626,9 @@ trope tracker's own discipline (see `book-dna-vocabulary-gaps.md`)
 rather than inventing a separate one. **Kept in this core file, not
 moved to the decisions file** — it applies before proposing a field,
 including when an ordinary tagging task discovers a possible new
-dimension, not just declared schema-design work, so it needs to stay
-somewhere every session actually reads.
+dimension, not just declared schema-design work. CLAUDE.md's universal
+routing rule requires reading this gate before any scalar proposal,
+including one discovered while working on a different task.
 
 1. **A repeated failure class, not one book.** The same standard as a
    trope's second-occurrence rule, applied here too — a single
