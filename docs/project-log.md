@@ -22500,3 +22500,55 @@ skill/session's operating assumptions). Both of CODX's own hard rules
 from the schema-split review carried forward explicitly: never move
 the two safety gates or credentials section out of the always-read
 core, regardless of which tier gets built.
+
+## 2026-09-26, later -- CODX Task 23 landed: task-class routing policy (Tier 1), Tier 2 deferred
+
+CODX's report: `docs/codx-reports/2026-09-26-task-class-routing-review.md`.
+Independently re-verified before trusting it -- every claim checked
+came back exact: CLAUDE.md's real word count (8,154 words, 914 lines,
+matching CODX's figure precisely), 3 spot-checked section word counts
+(Persona system 1,105, Database & migrations 1,423, Recommendation
+engine 626, all exact), and 3 cross-file "still says read CLAUDE.md in
+full" claims (AGENTS.md:8, catalog-trope-gap-sweep/SKILL.md:32, plus a
+`persona-workflow.md` leftover saying "project-log tail" that I'd
+missed when fixing that phrase elsewhere on 2026-09-25). The full
+5-file diff was verified to apply cleanly (`git apply --check`) before
+landing, not just eyeballed.
+
+The single most important finding: CODX corrected my own Tier 1 framing.
+I had proposed a "purely additive navigation table" -- CODX pointed out
+this can't actually deliver any reading-volume reduction while the
+existing "read CLAUDE.md in full"/"read book-dna.md in full every
+session" instructions remain unchanged; a table next to unchanged
+mandatory-read text is navigation, not context-load reduction. Real
+savings require an actual change to what's REQUIRED, which is a real
+methodology change even though no file content moves. Landed CODX's
+revised version: a new "Startup reading and task routes" section
+making CLAUDE.md's 6 task-specific sections (Database & migrations,
+Database backups, Data quality/tagging, Catalog scope, Recommendation
+engine, v1 web app) conditional on real task-class triggers, while the
+7 universal sections (both safety gates, credentials, persona system,
+closure discipline, agent efficiency, logging) stay always-read
+regardless of task -- matching CODX's own hard rule from the
+book-dna.md review that permission/safety boundaries never move behind
+optional routing.
+
+Also caught and fixed: `docs/book-dna-split-acceptance-tests.md` had 2
+checklist items (Scenario 3, the audiobook UI task) that were
+themselves stale -- one claimed `audio_original` should be found as a
+real `edition_type` value (backwards from the 2026-09-25 correction),
+one described the GraphicAudio-mislabeling concern as still
+confirmed/unfixed (backwards from the same day's sweep finding it
+clean). Neither had actually caused a real grading error in practice
+(I graded the earlier test runs against the true current facts, not
+the stale checklist wording), but the checklist document itself was
+wrong and would mislead a future literal re-run.
+
+Tier 2 (an actual physical CLAUDE.md split, mirroring book-dna.md's)
+explicitly NOT done -- CODX's own recommendation is to measure Tier 1's
+real effect first before deciding whether the bigger restructuring is
+warranted at all, and flagged it should never be treated as an implied
+next phase just because it was mentioned. Genuinely deferred, not
+dropped -- see the open question posed back to the repo owner about
+whether/how to measure Tier 1 before considering this closed, per the
+new multi-phase-closure discipline.
