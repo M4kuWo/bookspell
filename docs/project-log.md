@@ -22605,3 +22605,56 @@ split, task-class routing) are now landed and measured. Tier 2 (an
 actual CLAUDE.md file split) remains explicitly deferred per CODX's own
 recommendation, not silently dropped -- revisit only if real usage
 shows Tier 1 isn't enough.
+
+## 2026-09-26, later still -- task-class routing policy: full 12-scenario measurement complete, 43/43, zero regressions
+
+Extended the earlier 4-scenario pass (A-D) to CODX's complete original
+12-scenario list, per the repo owner's explicit request ("if it isn't
+too taxing, do the whole 12" -- it wasn't; ran E-L in parallel as
+background agents, same as A-D). **Final result: 43/43 checklist items
+passed across all 12 scenarios, zero misses, zero regressions.**
+
+Per-scenario one-line summary (E-L, the 8 new ones; A-D already logged
+above): E (CSS modal bug) 2/2, correctly scoped to v1 web app alone,
+verified the documented `:not([hidden])` fix is still intact via real
+git/file archaeology. F (book search feature) 3/3, correctly
+distinguished from CSS-only work via the `archived=false` rule,
+surfaced a real product-design ambiguity (no "want to read" list
+exists). G (ingest books/covers) 3/3, exhaustive and correct on
+author-verification, self-hosted covers, genre-filter vote-count
+floor, migration mechanics -- plus a genuine strategic catch (20 new
+untagged books grows the existing 139-book backlog against CLAUDE.md's
+own "finish partial series first" priority). H (scalar field mid-
+tagging) 3/3, correctly re-routed once the gap surfaced, precisely
+distinguished the gate's real "repeated recommendation failure" bar
+from a superficial "3 books share a fact" reading. I (CODX confidence
+QA) 3/3, exhaustive and correct on CODX's real DB-access mechanics,
+and caught that `current-task.md` doesn't actually hold a round-4
+assignment right now -- said it would surface that rather than
+self-assign scope. J (Supabase config push) 3/3, with an unusually
+honest self-report of almost misclassifying this as pure deployment
+before the repo's own documented incident corrected it. K (backup
+workflow tuning) 3/3, verified the 3-way heading-convention consistency
+directly, reasonably concluded pure threshold-tuning doesn't need a
+CODX structural review (flagged the judgment call rather than silently
+assuming). L (mid-session scope expansion: typo fix reveals a missing
+privacy link) 3/3, correctly applied the "Multi-phase task closure"
+principle to flag rather than silently build or silently ignore,
+independently arriving at essentially the same reasoning already used
+earlier this session when this exact privacy-note question came up
+with the repo owner directly.
+
+**The stale-sub-agent-CLAUDE.md issue is now confirmed 12/12** -- every
+single one of the 12 test agents independently hit and caught it. This
+is no longer treated as a curiosity; it's a fully-established, 100%-
+reproducible behavior for this kind of multi-agent session. The
+CLAUDE.md warning added earlier today helped in every case where an
+agent got far enough to notice an inconsistency, but (per Scenario E's
+own honest report) does NOT guarantee a catch when the specific content
+needed happens not to have changed that day -- a real, disclosed limit
+of the mitigation, not oversold.
+
+This is now a genuinely thoroughly-measured policy -- not just design-
+reviewed (CODX's Task 23) but empirically validated across the full
+scenario space CODX itself proposed. No further measurement planned
+unless real usage surfaces a gap.
