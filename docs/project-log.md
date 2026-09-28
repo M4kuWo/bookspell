@@ -23055,3 +23055,41 @@ enough" failure mode: the rule requires complete entries and later
 corrections.
 
 Next: D (TODO archiving), then the after-arm measurement.
+
+## 2026-09-28, later still -- closed TODO items archived (CODX Task 25 lever D)
+
+The third approved lever. CODX's D candidate was built against an older
+TODO.md (baseline 2827739), and several items had changed since. So D was
+regenerated from the current file with the same method, not pasted:
+- Each of the 30 `- [x]` items became a one-line pointer: checkbox, original
+  bold title, and a link to its full original text in the new
+  `docs/TODO-completed.md` (anchors `done-01`…`done-30`). Titles were kept
+  because other docs refer to items by title.
+- A script checked that every archived block exists verbatim in the old
+  file, that the archive count equals the closed-item count, and that all 18
+  open items are unchanged apart from one deliberate correction (next list).
+- `docs/TODO.md`: 4,873 → 3,012 words.
+
+**Unfinished phases split out instead of hidden.** CODX found these, and
+CLDO confirmed each against the live docs. Each became a live P3 item:
+1. The audiobook runtime/release-date data backfill. The schema landed on
+   2026-09-18, but every date is still null and 306 rows lack a runtime.
+   The closed parent item was retitled to say the backfill remains open.
+2. The import-coverage admin display. The aggregation landed; the display
+   is deferred until import volume justifies it.
+3. A recheck of the recorded 1-row local/hosted `audiobook_length` gap.
+
+The P3 dramatized-audio item's stale claim that the `release_date` column is
+"not built" was corrected. The columns exist but are empty.
+
+A closure rule was added to TODO.md's intro. Before archiving a closed item,
+link each unfinished phase it mentions to a live item or tracker. This
+strengthens the multi-phase-closure rule, whose original incident was
+exactly an unfinished phase hidden inside a checked parent.
+
+**Expected real saving is smaller than 1,861 words.** The before-arm showed
+agents mostly grep or skim TODO.md rather than read it in full. The after-arm
+will show the real effect.
+
+All three levers (A, C, D) are now landed. Next: the after-arm measurement,
+the same 7 prompts from `docs/codx-reviews/context-load-e/e-prompts.json`.
