@@ -11,9 +11,12 @@ description: Tag a batch of untagged Bookspell catalog books with full Book DNA 
 > standard, confidence conventions and high-risk-field guidance ("The
 > evidence standard", "Confidence conventions", Step 3's high-risk
 > section), plus `docs/conventions/tagging.md` and
-> `docs/conventions/database.md`. How a migration is applied is governed
-> by `docs/conventions/database.md`, which wins over any
-> direct-to-hosted wording in this skill.
+> `docs/conventions/database.md`. A bounded correction applies its
+> migration the standard way (local via psycopg2, hosted via `supabase db
+> push`). The direct-to-hosted flow in Setup/Step 3/Step 4 is a
+> documented exception for **batch runs only** (see
+> `docs/conventions/database.md`), and it always ends with CLDO's
+> tracking repair (Step 4, item 3).
 
 Bookspell is a sci-fi/fantasy book recommendation app built on structured
 "Book DNA" attributes instead of star ratings. The catalog has real
@@ -394,7 +397,10 @@ CLAUDE.md's own documented incidents) -- via `ls supabase/migrations/ |
 sort | uniq -d`. Since you're working directly against hosted (see
 "Setup" above), you don't need a separate local-apply step yourself --
 test-in-transaction, apply to hosted, then commit the migration file so
-it's part of the tracked history.
+it's part of the tracked history. Because you apply it over a direct
+connection rather than `supabase db push`, hosted's migration-tracking
+table won't record it: flag the version for CLDO's repair (Step 4,
+item 3).
 
 **A real, already-corrected mistake, worth knowing about even though
 it's not your job to fix**: this section used to say the repo owner's
@@ -1018,6 +1024,15 @@ reaches whoever's local development database:
      doesn't grant push access), don't try to push. Instead, hand the
      `.sql` file's contents back directly (paste it, share the file) --
      the repo owner will commit it on their end.
+3. **Flag the version for tracking repair.** Your inserts went in over a
+   direct connection, not `supabase db push`, so hosted's
+   migration-tracking table doesn't record this migration, and a later
+   `db push` would try to re-run it. In your Step 5 report, list the
+   file's version (its timestamp prefix) and say it was applied directly
+   to hosted. CLDO then confirms the data matches on hosted (row counts
+   or a spot-checked row) and runs `supabase migration repair --status
+   applied --linked <version>`, per `docs/conventions/database.md`.
+   **Never run `supabase db push` for this file yourself.**
 
 Do NOT skip this step because "the data's already in the hosted
 database" -- an untracked change with no corresponding migration file
@@ -1028,7 +1043,8 @@ out of sync with hosted.
 ## Step 5: report back
 
 For each book tagged, note anything genuinely uncertain or any
-vocabulary gap you noticed. Report the total tagged, how many partial
+vocabulary gap you noticed. List each migration version you applied
+directly to hosted, for CLDO's tracking repair (Step 4, item 3). Report the total tagged, how many partial
 series moved closer to (or reached) full completion, your batch's
 tropes/book and content-warnings/book from the density self-check above
 alongside the catalog average you compared against (not just "I did the

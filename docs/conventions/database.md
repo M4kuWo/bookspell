@@ -47,6 +47,14 @@ convention set (`CLAUDE.md` plus `docs/conventions/`).*
   more than once (not a one-off), so check for it routinely via
   `supabase migration list --linked` (entries with a `local` timestamp
   but no matching `remote` one), not just when something breaks loudly.
+  **One documented exception (formalized 2026-09-28):**
+  `.claude/skills/tag-catalog-batch/SKILL.md` batch runs insert directly
+  against hosted by design (CLDA's established workflow). Such a run must
+  flag each directly-applied migration version in its report. CLDO then
+  verifies the data on hosted and runs `migration repair` for exactly
+  those versions, and nobody runs `db push` on them first. Nothing else
+  gets this exception: bounded corrections and every other hosted change
+  go through `supabase db push`.
 - **A separate, equally recurring drift: local Postgres's actual DATA
   falling behind hosted's, even when every migration file is correctly
   tracked on both sides.** Different failure mode than the one above —

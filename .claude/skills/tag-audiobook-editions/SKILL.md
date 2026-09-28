@@ -207,10 +207,17 @@ For Book DNA on an audio_original entry:
   genre) applies exactly as normal -- an audio original still has a
   real story with real pacing/tone/tropes, this isn't a lesser or
   partial tagging pass.
-- Populate its OWN `audiobook_editions` row too (edition_type
-  `'audio_original'`, unless it's better described as
-  `dramatized_full_cast` if that's the more informative distinction --
-  use judgment, note which you picked and why in your report).
+- Populate its OWN `audiobook_editions` row too. Pick `edition_type` by
+  how it was produced: `dramatized_full_cast` for a full-cast production
+  (what all 3 Audible Originals ingested so far used, migration
+  `20260909130000`), `standard` for a single-narrator reading. **Never
+  `'audio_original'`**: that's a `books.work_type` value, and the
+  `edition_type` CHECK constraint rejects it (the allowed values are
+  `standard`, `dramatized_full_cast`, `abridged`, `other`; see
+  `docs/conventions/web.md`). The audio-original status is already
+  carried by `books.work_type`. Note which you picked and why in your
+  report. (Corrected 2026-09-28; this line previously said
+  `'audio_original'`, which would have failed the insert.)
 
 ### Candidate discovery -- its own session, stop before tagging anything
 

@@ -23239,3 +23239,42 @@ from 4,551 to 4,675 words.
 costs in extra tool calls, is unmeasured. The fixed counter
 (`--repo-root . --revision <sha>`) can check completeness from transcripts
 the next time a measurement runs.
+
+## 2026-09-28, later still -- two skill bugs fixed: tagging direct-to-hosted flow formalized, audiobook edition_type corrected
+
+Both applied by the repo owner through a CLDO-written all-or-nothing script
+(a copy is at `docs/codx-reviews/context-load-e/apply_skill_fixes.py`), the
+same route as the earlier CLAUDE.md and skill edits.
+
+**1. `tag-catalog-batch` vs `docs/conventions/database.md`.** The skill's
+whole batch design (Setup, Step 3, Step 4) has CLDA insert directly into
+hosted over `DATABASE_URL`, then save a migration file. That's exactly the
+pattern database.md forbids and names as a past incident, because hosted's
+tracking table never learns the version was applied. CODX flagged the
+conflict in Task 25.
+
+The repo owner chose to formalize the existing practice rather than switch
+CLDA to `db push`. Switching would change CLDA's process, need a linked CLI
+on CLDA's machine, and require a CODX review under the structural gate.
+The changes:
+- **Step 4** gains item 3: list each directly-applied migration version in
+  the report, and never `db push` it. CLDO then verifies the data on hosted
+  and runs `supabase migration repair --status applied --linked <version>`.
+- **Step 3 and Step 5** point to that item.
+- **The skill's scope note** now says bounded corrections use the standard
+  psycopg2 + `db push` route, and that the direct flow is a batch-only
+  exception.
+- **`docs/conventions/database.md`** gains one scoped, documented exception
+  for exactly this skill. CLDO's repair duty was already listed in
+  CLAUDE.md's persona section.
+
+**2. `tag-audiobook-editions`.** The skill told audio-original ingestion to
+set `edition_type 'audio_original'`, a `books.work_type` value that the
+`edition_type` CHECK constraint rejects. A context-load test agent found
+it; CLDO confirmed it at SKILL.md lines 210–211. The skill now picks by
+production: `dramatized_full_cast` for full cast, which is what all 3
+ingested Audible Originals used (migration `20260909130000`), or `standard`
+for a single narrator.
+
+Both TODO items are closed. The audiobook item was archived as `done-31`
+per the TODO closure rule.
