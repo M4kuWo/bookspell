@@ -1,7 +1,8 @@
 # Working conventions for this repo
 
 **If you're a sub-agent (launched by another Claude Code session),
-read `CLAUDE.md` from disk once before acting — don't rely on the copy
+read `CLAUDE.md` from disk once before acting (all parts, via
+`scripts/read_full.py`) — don't rely on the copy
 in your system prompt.** That copy is a snapshot from when the parent
 session started, and has been confirmed stale repeatedly (12/12 test
 sub-agents on 2026-09-26) when this file changed during the parent's
@@ -132,6 +133,19 @@ complete relevant entries or sections (found by searching the whole file
 for the identifiers, concepts and older names involved), including their
 later corrections, never isolated matching lines. If relevance or a
 reversal is unclear, read more, up to the whole file.
+
+**Full reads use `scripts/read_full.py`** (adopted 2026-09-28, CODX Task
+26). Whenever a rule or route requires a file "in full" (the YAML, a
+skill, the schema core, `docs/TODO.md`, a `docs/conventions/` file, a
+sub-agent's CLAUDE.md re-read), run `python3 scripts/read_full.py <file>
+--part 1`, then every remaining part its header advertises (`PART k/N`),
+passing `--expect-sha <SHA256 from part 1>` on each later part. If it
+reports the source changed, restart from part 1. A preview, a truncated
+or `cut`/`head`-limited output, or a persisted-output notice you did not
+read back is **not** a full read. Targeted reads of relevant sections
+still use ordinary tools. The receipts make an incomplete full read
+detectable (two measured test agents believed they had read files in
+full and hadn't).
 External schema names above live in `docs/schema/`; the scoring protocol
 is `docs/scoring-test-protocol.md`; skills live in `.claude/skills/`.
 Briefly record the routes used and any later scope expansion in the work

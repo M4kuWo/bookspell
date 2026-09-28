@@ -23207,3 +23207,35 @@ Both passed their checklists anyway. So true full compliance would cost
 cheaper without relaxing them. The heavy-route cost is the real price of
 the compliance the repo owner chose to keep. The remaining lever is to
 enforce completeness (the reader plus harness checks), not to cut words.
+
+## 2026-09-28, later still -- scripts/read_full.py now required for every "full" read
+
+At the repo owner's direction, CLAUDE.md gained a "Full reads use
+`scripts/read_full.py`" rule, directly after the read-depth rule. Whenever a
+rule or route requires a file in full, a session must:
+- read part 1 and then every advertised part (`PART k/N`), passing
+  `--expect-sha` from part 1 on each later part;
+- restart from part 1 if the file changed mid-read.
+
+This covers the YAML, a skill, the schema core, TODO, a conventions file,
+and a sub-agent's CLAUDE.md re-read. The sub-agent re-read rule was updated
+to match. A preview, `cut`/`head`-limited output, or an unread
+persisted-output notice explicitly doesn't count as a full read.
+
+**Why.** CODX Task 26 showed that two after-arm test agents believed they
+had read files in full and hadn't: T2's YAML came back as a 329-word preview,
+and R5 skipped 368 lines of the tagging skill. The reader's hash receipts
+make that detectable.
+
+**Testing.** CLDO confirmed that 4 parts reconstruct `docs/TODO.md`
+byte-for-byte and that a wrong `--expect-sha` is rejected.
+
+**How it was applied.** The same repo-owner-run, all-or-nothing script route
+as A and C; a copy is at
+`docs/codx-reviews/context-load-e/apply_read_full_rule.py`. CLAUDE.md went
+from 4,551 to 4,675 words.
+
+**Not yet verified.** Whether agents actually follow the rule, and what it
+costs in extra tool calls, is unmeasured. The fixed counter
+(`--repo-root . --revision <sha>`) can check completeness from transcripts
+the next time a measurement runs.
