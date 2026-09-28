@@ -116,6 +116,8 @@ worth deferring to a later session rather than batching in for
 
 ## P2 (ongoing/routine, not new decisions)
 
+- [ ] **UI overhaul -- in progress, by the repo owner, separately from CLDO/CLDA sessions (added 2026-09-28).** A visual overhaul of `app/`. Before any session changes `app/` styling, layout or page structure (`shared.css` tokens, page markup), check with the repo owner first to avoid conflicting edits. The engineering-side beta-readiness work in P1 stays non-overlapping with it.
+
 - [x] **Fix `tag-audiobook-editions` skill: invalid `edition_type 'audio_original'`.** [Archived detail](TODO-completed.md#done-31).
 
 - [ ] **MOVED to P3, 2026-09-17.** Recurring HIGH_RISK_FIELDS confidence QA pass (CODX) -- see the matching P3 entry. Two rounds landed with real value proven; paused for token-budget reasons, not because it stopped being worth doing.
