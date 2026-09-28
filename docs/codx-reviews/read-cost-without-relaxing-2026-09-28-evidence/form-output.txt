@@ -1,0 +1,93 @@
+{
+  "baseline_after": "65cbe69",
+  "source_forms": {
+    "docs/schema/book-dna.schema.yaml": {
+      "plain_words": 11239,
+      "lines": 877,
+      "numbered_words": 12116,
+      "pages": 14,
+      "paged_words": 11351,
+      "saving_vs_numbered": 765
+    },
+    "docs/schema/book-dna.md": {
+      "plain_words": 5430,
+      "lines": 662,
+      "numbered_words": 6092,
+      "pages": 6,
+      "paged_words": 5478,
+      "saving_vs_numbered": 614
+    },
+    ".claude/skills/tag-catalog-batch/SKILL.md": {
+      "plain_words": 8025,
+      "lines": 1036,
+      "numbered_words": 9061,
+      "pages": 9,
+      "paged_words": 8097,
+      "saving_vs_numbered": 964
+    },
+    "docs/TODO.md": {
+      "plain_words": 3017,
+      "lines": 144,
+      "numbered_words": 3161,
+      "pages": 4,
+      "paged_words": 3049,
+      "saving_vs_numbered": 112
+    }
+  },
+  "routes": {
+    "R1-tagging": {
+      "conventions_before": 3533,
+      "conventions_bundle": 3415,
+      "bundle_saved": 118,
+      "paged_bundle": 3447
+    },
+    "R2-scoring": {
+      "conventions_before": 1439,
+      "conventions_bundle": 1388,
+      "bundle_saved": 51,
+      "paged_bundle": 1404
+    },
+    "R3-ci": {
+      "conventions_before": 317,
+      "conventions_bundle": 317,
+      "bundle_saved": 0,
+      "paged_bundle": 325
+    },
+    "R4-ui": {
+      "conventions_before": 644,
+      "conventions_bundle": 644,
+      "bundle_saved": 0,
+      "paged_bundle": 652
+    },
+    "R5-scalar": {
+      "conventions_before": 4259,
+      "conventions_bundle": 4074,
+      "bundle_saved": 185,
+      "paged_bundle": 4114
+    },
+    "T1-audiobook-panel": {
+      "conventions_before": 4177,
+      "conventions_bundle": 3992,
+      "bundle_saved": 185,
+      "paged_bundle": 4032
+    },
+    "T2-possession-trope": {
+      "conventions_before": 2040,
+      "conventions_bundle": 1989,
+      "bundle_saved": 51,
+      "paged_bundle": 2005
+    }
+  },
+  "yaml_comments": {
+    "full_line_count": 472,
+    "full_line_prose_words": 4062,
+    "inline_prose_words": 5025
+  },
+  "skill_split": {
+    "before": 8025,
+    "done": 1481,
+    "main": 6567,
+    "companion": 1485,
+    "total": 8052
+  }
+}

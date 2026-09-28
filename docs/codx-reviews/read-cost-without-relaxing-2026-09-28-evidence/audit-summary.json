@@ -1,0 +1,444 @@
+{
+  "before": {
+    "R1-tagging": {
+      "total_words": 24435,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 31,
+          "total_nonblank": 95,
+          "complete": false
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 582,
+          "total_nonblank": 582,
+          "complete": true
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 69,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 122,
+          "total_nonblank": 909,
+          "complete": false
+        }
+      },
+      "TODO": {
+        "words": 289,
+        "calls": 1
+      },
+      "log": {
+        "words": 1305,
+        "calls": 1
+      }
+    },
+    "R2-scoring": {
+      "total_words": 24147,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 95,
+          "complete": false
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 582,
+          "complete": false
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 0,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 909,
+          "complete": false
+        }
+      },
+      "TODO": {},
+      "log": {
+        "words": 1305,
+        "calls": 1
+      }
+    },
+    "R3-ci": {
+      "total_words": 10370,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 95,
+          "complete": false
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 582,
+          "complete": false
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 0,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 909,
+          "complete": false
+        }
+      },
+      "TODO": {},
+      "log": {
+        "words": 136,
+        "calls": 1
+      }
+    },
+    "R4-ui": {
+      "total_words": 10485,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 95,
+          "complete": false
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 582,
+          "complete": false
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 0,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 909,
+          "complete": false
+        }
+      },
+      "TODO": {},
+      "log": {
+        "words": 196,
+        "calls": 1
+      }
+    },
+    "R5-scalar": {
+      "total_words": 27754,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 45,
+          "total_nonblank": 95,
+          "complete": false
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 240,
+          "total_nonblank": 582,
+          "complete": false
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 50,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 20,
+          "total_nonblank": 909,
+          "complete": false
+        }
+      },
+      "TODO": {
+        "words": 506,
+        "calls": 1
+      },
+      "log": {
+        "words": 2017,
+        "calls": 2
+      }
+    },
+    "T1-audiobook-panel": {
+      "total_words": 18952,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 3,
+          "total_nonblank": 95,
+          "complete": false
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 79,
+          "total_nonblank": 582,
+          "complete": false
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 0,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 909,
+          "complete": false
+        }
+      },
+      "TODO": {
+        "words": 150,
+        "calls": 1
+      },
+      "log": {
+        "words": 1305,
+        "calls": 1
+      }
+    },
+    "T2-possession-trope": {
+      "total_words": 21552,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 35,
+          "total_nonblank": 95,
+          "complete": false
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 112,
+          "total_nonblank": 582,
+          "complete": false
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 0,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 909,
+          "complete": false
+        }
+      },
+      "TODO": {
+        "words": 335,
+        "calls": 1
+      },
+      "log": {
+        "words": 1056,
+        "calls": 2
+      }
+    }
+  },
+  "after": {
+    "R1-tagging": {
+      "total_words": 24820,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 28,
+          "total_nonblank": 106,
+          "complete": false
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 585,
+          "complete": false
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 46,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 322,
+          "total_nonblank": 918,
+          "complete": false
+        }
+      },
+      "TODO": {
+        "words": 536,
+        "calls": 2
+      },
+      "log": {
+        "words": 1268,
+        "calls": 1
+      }
+    },
+    "R2-scoring": {
+      "total_words": 38841,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 106,
+          "total_nonblank": 106,
+          "complete": true
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 585,
+          "total_nonblank": 585,
+          "complete": true
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 0,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 918,
+          "complete": false
+        }
+      },
+      "TODO": {
+        "words": 3017,
+        "calls": 1
+      },
+      "log": {
+        "words": 1531,
+        "calls": 2
+      }
+    },
+    "R3-ci": {
+      "total_words": 12020,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 106,
+          "complete": false
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 585,
+          "complete": false
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 0,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 918,
+          "complete": false
+        }
+      },
+      "TODO": {},
+      "log": {}
+    },
+    "R4-ui": {
+      "total_words": 13665,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 106,
+          "complete": false
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 585,
+          "complete": false
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 0,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 918,
+          "complete": false
+        }
+      },
+      "TODO": {},
+      "log": {}
+    },
+    "R5-scalar": {
+      "total_words": 60972,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 106,
+          "total_nonblank": 106,
+          "complete": true
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 585,
+          "total_nonblank": 585,
+          "complete": true
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 858,
+          "total_nonblank": 858,
+          "complete": true
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 601,
+          "total_nonblank": 918,
+          "complete": false
+        }
+      },
+      "TODO": {
+        "words": 3017,
+        "calls": 1
+      },
+      "log": {
+        "words": 2428,
+        "calls": 3
+      }
+    },
+    "T1-audiobook-panel": {
+      "total_words": 26897,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 106,
+          "complete": false
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 77,
+          "total_nonblank": 585,
+          "complete": false
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 0,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 918,
+          "complete": false
+        }
+      },
+      "TODO": {},
+      "log": {
+        "words": 2202,
+        "calls": 2
+      }
+    },
+    "T2-possession-trope": {
+      "total_words": 35375,
+      "coverage": {
+        "docs/TODO.md": {
+          "matched_nonblank": 106,
+          "total_nonblank": 106,
+          "complete": true
+        },
+        "docs/schema/book-dna.md": {
+          "matched_nonblank": 585,
+          "total_nonblank": 585,
+          "complete": true
+        },
+        "docs/schema/book-dna.schema.yaml": {
+          "matched_nonblank": 146,
+          "total_nonblank": 858,
+          "complete": false
+        },
+        ".claude/skills/tag-catalog-batch/SKILL.md": {
+          "matched_nonblank": 0,
+          "total_nonblank": 918,
+          "complete": false
+        }
+      },
+      "TODO": {
+        "words": 3017,
+        "calls": 1
+      },
+      "log": {
+        "words": 2231,
+        "calls": 4
+      }
+    }
+  }
+}

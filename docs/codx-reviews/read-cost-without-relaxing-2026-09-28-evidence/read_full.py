@@ -1,0 +1,59 @@
+"""Proposed lossless, byte-bounded reader. No recorded shell command is executed.
+
+Example: python3 read_full.py docs/schema/book-dna.schema.yaml --part 1
+Read EVERY advertised part. Pass the first part's --expect-sha on later parts.
+This receipt tracks returned bytes, not whether a model retains or understands them.
+"""
+import argparse
+import hashlib
+from pathlib import Path
+
+
+def pages(data, budget=7000):
+    if budget < 64:
+        raise ValueError('budget must be at least 64 bytes')
+    data.decode('utf-8')
+    result, offset = [], 0
+    while offset < len(data):
+        end = min(offset + budget, len(data))
+        if end < len(data):
+            boundary = data.rfind(b'\n', offset, end)
+            if boundary < offset:
+                boundary = max(data.rfind(b' ', offset, end), data.rfind(b'\t', offset, end))
+            if boundary < offset:
+                raise ValueError('a single unbroken token exceeds the page budget; raise the budget explicitly')
+            end = boundary + 1
+        result.append((offset, end, data[offset:end]))
+        offset = end
+    assert b''.join(p[2] for p in result) == data
+    return result
+
+
+def render(path, data, part, budget=7000):
+    chunks = pages(data, budget)
+    start, end, body = chunks[part - 1]
+    sha = hashlib.sha256(data).hexdigest()
+    header = f'SOURCE {path} SHA256 {sha} PART {part}/{len(chunks)} BYTES {start}:{end}\n'
+    return header.encode() + body
+
+
+def main():
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('file', type=Path)
+    p.add_argument('--part', type=int, required=True)
+    p.add_argument('--max-bytes', type=int, default=7000)
+    p.add_argument('--expect-sha')
+    a = p.parse_args()
+    data = a.file.read_bytes()
+    sha = hashlib.sha256(data).hexdigest()
+    if a.expect_sha and a.expect_sha != sha:
+        p.error('source changed since the earlier part; restart the full read')
+    chunks = pages(data, a.max_bytes)
+    if not 1 <= a.part <= len(chunks):
+        p.error(f'part must be in 1..{len(chunks)}')
+    import sys
+    sys.stdout.buffer.write(render(str(a.file), data, a.part, a.max_bytes))
+
+
+if __name__ == '__main__':
+    main()

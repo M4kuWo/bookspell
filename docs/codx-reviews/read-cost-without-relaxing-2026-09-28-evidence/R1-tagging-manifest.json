@@ -1,0 +1,21 @@
+{
+  "revision": "65cbe69",
+  "shared_notice_sha256": "75501fb86a7887d13312c32b77726b46ecfe1c5b6382c1c720d77840bf3a7f3b",
+  "sources": [
+    {
+      "path": "docs/conventions/tagging.md",
+      "sha256": "9cd60f2d91a536b5075b26195359ed087357098265103c6e11c2a9865ebdeec5",
+      "shared_insertion_byte": 26
+    },
+    {
+      "path": "docs/conventions/database.md",
+      "sha256": "e7e2b899531a79177e6e8d0fc732985240d1e917c86001bc2fc3a8e5537b3a6f",
+      "shared_insertion_byte": 25
+    },
+    {
+      "path": "docs/conventions/catalog.md",
+      "sha256": "e90d212b5e6568311c70290eb81b7f7101ac464ce1fc4f06d7f9e4f8cca93b03",
+      "shared_insertion_byte": 36
+    }
+  ]
+}

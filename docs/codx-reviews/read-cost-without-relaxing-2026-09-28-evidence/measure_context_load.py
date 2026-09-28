@@ -17,8 +17,6 @@ Counts, per transcript:
 
 Usage:
   python3 scripts/measure_context_load.py <transcript.jsonl> [...] [--json]
-  Add --repo-root . --revision <commit the agent ran against> for exact per-file
-  attribution; without them, multi-file commands show as <mixed/unattributed>.
 Transcripts live at ~/.claude/projects/<project>/<session>/subagents/agent-<id>.jsonl.
 """
 import json

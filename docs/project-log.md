@@ -23159,3 +23159,51 @@ mostly from one 5,051-word repo-wide search output. Run-to-run variance in
 search breadth is as large as A's effect on narrow tasks, so Part 3's
 per-route percentages are single-run indications only. Recorded in the
 protocol doc; relevant to CODX Task 26's counter-attribution lever.
+
+## 2026-09-28, later still -- CODX Task 26 reviewed: no lossless big saving exists; counter fixed; after-arm compliance overstated
+
+CODX's report on making C's full reads cheaper without relaxing them
+(`docs/codx-reviews/codx-read-cost-without-relaxing-2026-09-28.md` plus its
+evidence) was reviewed by CLDO:
+- re-ran its 8 unit tests: pass;
+- re-ran its transcript audit: all 14 original totals preserved;
+- `git apply --check` for both patches: clean;
+- spot-checked its key transcript claims against the raw events.
+
+**Verdicts on the levers, all accepted:**
+- A compact YAML vocabulary instead of the full read: rejected. About 81% of
+  the YAML is comment prose carrying distinctions and evidence standards,
+  so an index can't stand in for it without relaxing the rule.
+- Splitting out the tagging skill's DONE sections: rejected as a saving.
+  A full read would still need both files, so the net change is +27 words.
+- Deduplicating the repeated conventions notice: 0–185 words per route.
+  Probably not worth the generator machinery.
+- The project-log growth was mostly TODO misattributed by the old counter.
+  No rule change.
+- Real under-reads of TODO in some runs. Keep D, and enforce a complete read
+  operationally.
+
+**A correction to CLDO's own Part 3 claim** that "C made agents comply." That
+was overstated. The after-arm agents still under-read:
+- T2's "full YAML" command returned only a 329-word preview;
+- R5 skipped lines 311–678 of the tagging skill that its route requires.
+
+Both passed their checklists anyway. So true full compliance would cost
+*more* than Part 3 measured, not less.
+
+**Landed:**
+- CODX's `counter.patch`. `scripts/measure_context_load.py` now attributes
+  output by exact matching against a pinned git revision (`--repo-root .
+  --revision <sha>`), and tracks persisted-output lineage and errors
+  separately. Totals are unchanged. It also exposed the after-arm R3's
+  295-word read of the grading checklist.
+- CODX's `reader.patch`, adding `scripts/read_full.py`: a lossless, paged,
+  SHA-256-receipted full-file reader. It saves line-number overhead (~5–10%
+  on big files) and makes an incomplete "full read" detectable. It's
+  available as a tool only. No convention tells agents to use it yet,
+  because that would be a CLAUDE.md change for the repo owner to decide.
+
+**Bottom line on Task 26.** C's full reads can't be made meaningfully
+cheaper without relaxing them. The heavy-route cost is the real price of
+the compliance the repo owner chose to keep. The remaining lever is to
+enforce completeness (the reader plus harness checks), not to cut words.
