@@ -385,3 +385,15 @@ limit (~$9.5). After arm plus the implementation work for A, C and D:
 **Follow-up.** The repo owner chose not to relax C, and asked instead for a
 way to make its full reads cheaper. That was queued to CODX as Task 26
 (`docs/codx-tasks/current-task.md`).
+
+**Fresh-session confirmation (2026-09-28, new terminal, one R3 agent).**
+Injected CLAUDE.md measured at **4,551 words** (was 8,893), so A's saving
+of ~4,340 words per session and per sub-agent is confirmed. The agent's
+total, however, was **12,502 words**, not the ~7,680 estimated: its tool
+reads were 7,898 words, against 3,074 for the after-arm R3, and 5,051 of
+those came from a single repo-wide search whose output was saved to a
+file. So between-run variance in search breadth is as large as A's effect
+on narrow tasks. Treat Part 3's per-route percentages as single-run
+indications, not effect sizes. Only the injection saving is deterministic.
+(This is also relevant to CODX Task 26's counter-attribution lever: large
+searches landing in persisted outputs are the biggest unattributed cost.)

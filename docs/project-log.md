@@ -23145,3 +23145,17 @@ information, never the obligation to see it. Candidate levers:
 The re-test spec must keep prompts outside the repo until every arm has
 run, and must run from a fresh session. Measured cost of the before and
 after arms, from `/usage`, is recorded in the protocol doc.
+
+## 2026-09-28, later still -- Fresh-session check: CLAUDE.md injection confirmed at 4,551 words
+
+The repo owner ran one R3 (CI cron) agent from a new terminal, so it had no
+stale session snapshot. The injected CLAUDE.md measured 4,551 words (was
+8,893), which confirms lever A's deterministic ~4,340-word saving per
+session and per sub-agent.
+
+The agent's total was 12,502 words rather than the ~7,680 estimated. Its tool
+reads (7,898 words) were more than double the after-arm R3's (3,074),
+mostly from one 5,051-word repo-wide search output. Run-to-run variance in
+search breadth is as large as A's effect on narrow tasks, so Part 3's
+per-route percentages are single-run indications only. Recorded in the
+protocol doc; relevant to CODX Task 26's counter-attribution lever.
