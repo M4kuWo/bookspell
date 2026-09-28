@@ -1,0 +1,2 @@
+PASS: six moved sections preserved verbatim; all 18 original open blocks retained;
+all 30 closed blocks archived intact; equal-word/equal-heading edit changes SHA-256.

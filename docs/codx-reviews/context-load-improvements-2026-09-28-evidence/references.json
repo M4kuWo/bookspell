@@ -1,0 +1,4677 @@
+[
+  {
+    "path": ".claude/skills/catalog-trope-gap-sweep/SKILL.md",
+    "line": 32,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/catalog-trope-gap-sweep/SKILL.md",
+    "line": 43,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/catalog-trope-gap-sweep/SKILL.md",
+    "line": 45,
+    "match": "TODO.md"
+  },
+  {
+    "path": ".claude/skills/catalog-trope-gap-sweep/SKILL.md",
+    "line": 178,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/catalog-trope-gap-sweep/SKILL.md",
+    "line": 178,
+    "match": "Database & migrations"
+  },
+  {
+    "path": ".claude/skills/catalog-trope-gap-sweep/SKILL.md",
+    "line": 178,
+    "match": "Data quality /\ntagging"
+  },
+  {
+    "path": ".claude/skills/catalog-trope-gap-sweep/SKILL.md",
+    "line": 193,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/catalog-trope-gap-sweep/SKILL.md",
+    "line": 197,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/catalog-trope-gap-sweep/SKILL.md",
+    "line": 231,
+    "match": "TODO.md"
+  },
+  {
+    "path": ".claude/skills/convert-romance-worldbuilding-fields/SKILL.md",
+    "line": 208,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/tag-audiobook-editions/SKILL.md",
+    "line": 159,
+    "match": "TODO.md"
+  },
+  {
+    "path": ".claude/skills/tag-audiobook-editions/SKILL.md",
+    "line": 169,
+    "match": "TODO.md"
+  },
+  {
+    "path": ".claude/skills/tag-audiobook-editions/SKILL.md",
+    "line": 222,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/tag-audiobook-editions/SKILL.md",
+    "line": 222,
+    "match": "Catalog scope"
+  },
+  {
+    "path": ".claude/skills/tag-audiobook-editions/SKILL.md",
+    "line": 240,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/tag-catalog-batch/SKILL.md",
+    "line": 11,
+    "match": "recommendation engine"
+  },
+  {
+    "path": ".claude/skills/tag-catalog-batch/SKILL.md",
+    "line": 103,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/tag-catalog-batch/SKILL.md",
+    "line": 103,
+    "match": "Data quality / tagging"
+  },
+  {
+    "path": ".claude/skills/tag-catalog-batch/SKILL.md",
+    "line": 128,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/tag-catalog-batch/SKILL.md",
+    "line": 380,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/tag-catalog-batch/SKILL.md",
+    "line": 383,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/tag-catalog-batch/SKILL.md",
+    "line": 534,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/tag-catalog-batch/SKILL.md",
+    "line": 575,
+    "match": "recommendation engine"
+  },
+  {
+    "path": ".claude/skills/tag-catalog-batch/SKILL.md",
+    "line": 655,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".claude/skills/tag-catalog-batch/SKILL.md",
+    "line": 655,
+    "match": "Catalog\nscope"
+  },
+  {
+    "path": ".github/workflows/backup-reminder.yml",
+    "line": 22,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": ".github/workflows/backup-reminder.yml",
+    "line": 22,
+    "match": "Database backups"
+  },
+  {
+    "path": ".github/workflows/impression-count-check.yml",
+    "line": 3,
+    "match": "TODO.md"
+  },
+  {
+    "path": ".github/workflows/impression-count-check.yml",
+    "line": 43,
+    "match": "TODO.md"
+  },
+  {
+    "path": ".github/workflows/keep-warm.yml",
+    "line": 5,
+    "match": "TODO.md"
+  },
+  {
+    "path": ".gitignore",
+    "line": 20,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 4,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 6,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 7,
+    "match": "catalog scope"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 13,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 17,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 17,
+    "match": "TODO.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 41,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 77,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 106,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 184,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 184,
+    "match": "Database &\nmigrations"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 279,
+    "match": "TODO.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 307,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 325,
+    "match": "TODO.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 344,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "AGENTS.md",
+    "line": 352,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 22,
+    "match": "TODO.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 60,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 67,
+    "match": "Database\n& migrations"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 84,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 91,
+    "match": "Database backups"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 104,
+    "match": "Data quality / tagging"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 104,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 105,
+    "match": "Data quality / tagging"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 105,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 106,
+    "match": "Data quality / tagging"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 106,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 106,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 106,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 107,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 107,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 108,
+    "match": "v1 web app"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 108,
+    "match": "Data quality / tagging"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 108,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 109,
+    "match": "v1 web app"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 110,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 110,
+    "match": "Database backups"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 111,
+    "match": "Database backups"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 149,
+    "match": "TODO.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 151,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 299,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 299,
+    "match": "TODO.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 310,
+    "match": "Database &\nmigrations"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 324,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 354,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 505,
+    "match": "Database backups"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 534,
+    "match": "Data quality / tagging"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 574,
+    "match": "catalog scope"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 667,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 737,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 816,
+    "match": "v1 web app"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 882,
+    "match": "TODO.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 913,
+    "match": "TODO.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 957,
+    "match": "TODO.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 961,
+    "match": "TODO.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 963,
+    "match": "TODO.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 964,
+    "match": "TODO.md"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 967,
+    "match": "v1 web\n  app"
+  },
+  {
+    "path": "CLAUDE.md",
+    "line": 972,
+    "match": "TODO.md"
+  },
+  {
+    "path": "README.md",
+    "line": 16,
+    "match": "TODO.md"
+  },
+  {
+    "path": "README.md",
+    "line": 35,
+    "match": "v1 web app"
+  },
+  {
+    "path": "README.md",
+    "line": 41,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "README.md",
+    "line": 51,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "README.md",
+    "line": 153,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "README.md",
+    "line": 165,
+    "match": "v1 web app"
+  },
+  {
+    "path": "README.md",
+    "line": 189,
+    "match": "TODO.md"
+  },
+  {
+    "path": "README.md",
+    "line": 189,
+    "match": "TODO.md"
+  },
+  {
+    "path": "README.md",
+    "line": 260,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "README.md",
+    "line": 260,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "README.md",
+    "line": 302,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "README.md",
+    "line": 302,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "README.md",
+    "line": 311,
+    "match": "TODO.md"
+  },
+  {
+    "path": "README.md",
+    "line": 334,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "README.md",
+    "line": 339,
+    "match": "v1 web app"
+  },
+  {
+    "path": "README.md",
+    "line": 365,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "README.md",
+    "line": 378,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "api/README.md",
+    "line": 3,
+    "match": "v1 web app"
+  },
+  {
+    "path": "api/README.md",
+    "line": 10,
+    "match": "v1 web app"
+  },
+  {
+    "path": "api/main.py",
+    "line": 150,
+    "match": "TODO.md"
+  },
+  {
+    "path": "api/main.py",
+    "line": 206,
+    "match": "TODO.md"
+  },
+  {
+    "path": "api/main.py",
+    "line": 355,
+    "match": "TODO.md"
+  },
+  {
+    "path": "app/dashboard.html",
+    "line": 78,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "app/dashboard.html",
+    "line": 297,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "app/dashboard.html",
+    "line": 322,
+    "match": "TODO.md"
+  },
+  {
+    "path": "app/rate.html",
+    "line": 119,
+    "match": "TODO.md"
+  },
+  {
+    "path": "app/rate.html",
+    "line": 128,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/PENDING_APPROVALS.md",
+    "line": 3,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/PENDING_APPROVALS.md",
+    "line": 8,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 31,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 47,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 47,
+    "match": "Database backups"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 48,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 55,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 55,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 55,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 57,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 58,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 58,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 100,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 116,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 131,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/TODO.md",
+    "line": 131,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "docs/book-dna-split-acceptance-tests.md",
+    "line": 138,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reports/2026-09-25-book-dna-split-review.md",
+    "line": 96,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reports/2026-09-25-book-dna-split-review.md",
+    "line": 97,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reports/2026-09-25-book-dna-split-review.md",
+    "line": 98,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reports/2026-09-25-book-dna-split-review.md",
+    "line": 99,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reports/2026-09-25-book-dna-split-review.md",
+    "line": 107,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reports/2026-09-25-book-dna-split-review.md",
+    "line": 146,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reports/2026-09-25-context-load-review.md",
+    "line": 13,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reports/2026-09-25-context-load-review.md",
+    "line": 15,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reports/2026-09-25-context-load-review.md",
+    "line": 32,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reports/2026-09-25-context-load-review.md",
+    "line": 79,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reports/2026-09-25-context-load-review.md",
+    "line": 80,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-a2-canonical-scorer-proposal-2026-09-16.md",
+    "line": 240,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-a2-factor-evaluator-proposal-2026-09-16.md",
+    "line": 9,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-a2-factor-evaluator-proposal-2026-09-16.md",
+    "line": 17,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-a3-recommend-migration-proposal-2026-09-16.md",
+    "line": 251,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md",
+    "line": 275,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-a5-full-score-migration-proposal-2026-09-16.md",
+    "line": 213,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-highrisk-confidence-qa-pass-2026-09-17.md",
+    "line": 11,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-highrisk-confidence-qa-round2-2026-09-17.md",
+    "line": 241,
+    "match": "catalog scope"
+  },
+  {
+    "path": "docs/codx-reviews/codx-phase-b-shim-removal-2026-09-17.md",
+    "line": 75,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-phase-b-shim-removal-2026-09-17.md",
+    "line": 83,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md",
+    "line": 11,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md",
+    "line": 13,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md",
+    "line": 13,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md",
+    "line": 27,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md",
+    "line": 369,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md",
+    "line": 1244,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md",
+    "line": 1246,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md",
+    "line": 1251,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-recommend-review-2026-09-14.md",
+    "line": 29,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reviews/codx-recommendation-engine-review-2026-09-19.md",
+    "line": 135,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 4185,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 4442,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 4714,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 4780,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 4836,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 4907,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 5665,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 5717,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 6556,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 6650,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 6746,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 7555,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 7667,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 8039,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch",
+    "line": 8193,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/split.py",
+    "line": 75,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/phase-b-shim-removal-2026-09-17-evidence/proposal.patch",
+    "line": 1048,
+    "match": "recommendation\n engine"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 41,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 81,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 82,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 83,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 84,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 85,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 86,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 87,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 88,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 89,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 90,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 91,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 92,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 93,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 94,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 95,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 96,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 97,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 98,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt",
+    "line": 99,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/scoring_task13_old.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/task13_intermediate_routes.py",
+    "line": 173,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendations-all-partial-failure-fix-2026-09-19-evidence/before/api/main.py",
+    "line": 164,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendations-all-partial-failure-fix-2026-09-19-evidence/before/app/dashboard.html",
+    "line": 78,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/codx-reviews/recommendations-all-partial-failure-fix-2026-09-19-evidence/before/app/dashboard.html",
+    "line": 280,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendations-all-partial-failure-fix-2026-09-19-evidence/before/app/dashboard.html",
+    "line": 305,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-reviews/recommendations-all-partial-failure-fix-2026-09-19-evidence/proposal.patch",
+    "line": 172,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 18,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 50,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 51,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 54,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 54,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 57,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 59,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 71,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 82,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 91,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 95,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 98,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 106,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 107,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 109,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 111,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 112,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 130,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/codx-tasks/current-task.md",
+    "line": 130,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 6,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 20,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 21,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 28,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 29,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 33,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 49,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 50,
+    "match": "Database backups"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 51,
+    "match": "Data quality / tagging"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 52,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 53,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 54,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 62,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 63,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 71,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 85,
+    "match": "catalog scope"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 91,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 91,
+    "match": "Database backups"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 107,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 145,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 157,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 164,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 169,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 172,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 181,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 198,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 201,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 209,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 210,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 216,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 217,
+    "match": "Database backups"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 218,
+    "match": "Database backups"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 227,
+    "match": "Database backups"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 229,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 232,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 232,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 235,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 245,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 252,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 260,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 261,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 270,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 279,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/context-load-measurement-protocol.md",
+    "line": 280,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/external-reviews/2026-09-23-gpt-review.md",
+    "line": 5,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/external-reviews/2026-09-23-gpt-review.md",
+    "line": 28,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/external-reviews/2026-09-23-gpt-review.md",
+    "line": 370,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/persona-workflow.md",
+    "line": 5,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/persona-workflow.md",
+    "line": 23,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/persona-workflow.md",
+    "line": 42,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/persona-workflow.md",
+    "line": 42,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/persona-workflow.md",
+    "line": 42,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/persona-workflow.md",
+    "line": 42,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/persona-workflow.md",
+    "line": 42,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/persona-workflow.md",
+    "line": 43,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/persona-workflow.md",
+    "line": 44,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/persona-workflow.md",
+    "line": 56,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 191,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 210,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 219,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 428,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 669,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 813,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 819,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 1073,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 1172,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 1316,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 2102,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 2112,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 2121,
+    "match": "catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 3046,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 3154,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 3754,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 3764,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 3797,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 4404,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 4542,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 4614,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 4663,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 4708,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 4823,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 5112,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 5228,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 5289,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 5328,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 5328,
+    "match": "Database &\nmigrations"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 5368,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 5443,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 5456,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 5478,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 6346,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 6527,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 6753,
+    "match": "Recommendation Engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 6775,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 6785,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 6791,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 6989,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 6991,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 6993,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7063,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7077,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7083,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7113,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7115,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7140,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7472,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7595,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7637,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7683,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7699,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7700,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7906,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 7948,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8087,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8090,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8105,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8106,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8333,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8597,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8681,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8706,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8797,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8849,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8898,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8898,
+    "match": "catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8900,
+    "match": "catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8907,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 8923,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9035,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9050,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9061,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9077,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9083,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9087,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9208,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9233,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9256,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9284,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9408,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9442,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9505,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9536,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9570,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9667,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9701,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9709,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9719,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9770,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 9790,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10038,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10079,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10106,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10106,
+    "match": "Database backups"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10203,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10247,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10296,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10321,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10330,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10423,
+    "match": "catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10679,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10729,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10729,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10742,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10824,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10880,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 10892,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11007,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11043,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11047,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11150,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11182,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11430,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11434,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11548,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11553,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11559,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11636,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11655,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11690,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11694,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11828,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11907,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11913,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11914,
+    "match": "Data quality / tagging"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11938,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11943,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11952,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11996,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 11999,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12006,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12222,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12303,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12606,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12695,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12710,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12743,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12750,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12789,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12793,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12797,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12801,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12805,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12847,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12894,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 12900,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13124,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13167,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13240,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13285,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13287,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13293,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13305,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13333,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13334,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13481,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13489,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13506,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13510,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13638,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13638,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13682,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13687,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13704,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13704,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13754,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13836,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13855,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13860,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 13889,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14006,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14039,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14164,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14195,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14254,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14264,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14321,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14358,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14382,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14387,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14592,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14598,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14783,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 14881,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15014,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15014,
+    "match": "Data quality /\ntagging"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15024,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15060,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15064,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15192,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15201,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15297,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15322,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15471,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15502,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15681,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15704,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15765,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15823,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15845,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15881,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15886,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15970,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 15977,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16029,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16075,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16088,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16103,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16144,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16224,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16231,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16239,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16371,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16391,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16419,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16459,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16463,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16480,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16527,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16538,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16591,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16603,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16633,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16674,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16688,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16742,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16760,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16769,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16769,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16771,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16781,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 16885,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17045,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17062,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17071,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17073,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17077,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17162,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17229,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17251,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17327,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17754,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17755,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17764,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17871,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17885,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 17974,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18006,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18048,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18054,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18068,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18075,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18098,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18193,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18229,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18235,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18243,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18272,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18280,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18305,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18328,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18373,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18386,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18436,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18451,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18620,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18715,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18726,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18784,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18788,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18813,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18837,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18841,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18847,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18883,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18915,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18916,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18931,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 18954,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 19028,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 19079,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 19146,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 19310,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 19484,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 19888,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 19941,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20032,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20036,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20088,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20088,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20092,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20130,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20274,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20283,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20337,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20407,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20420,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20449,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20503,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20582,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20701,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 20898,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21011,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21083,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21110,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21113,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21115,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21119,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21123,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21123,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21126,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21127,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21131,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21139,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21184,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21277,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21517,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21523,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21525,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21530,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21535,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21686,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21811,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21925,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21929,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21963,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21964,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21965,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21969,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21969,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 21980,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22009,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22018,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22026,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22099,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22101,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22122,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22128,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22149,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22157,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22227,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22283,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22285,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22328,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22332,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22332,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22335,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22340,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22341,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22343,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22346,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22348,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22359,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22362,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22372,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22374,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22391,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22433,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22439,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22454,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22461,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22467,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22471,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22485,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22486,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22486,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22495,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22497,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22508,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22510,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22510,
+    "match": "Recommendation\nengine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22511,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22521,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22527,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22527,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22528,
+    "match": "Database backups"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22528,
+    "match": "Data quality/tagging"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22528,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22528,
+    "match": "Recommendation\nengine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22529,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22547,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22574,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22576,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22581,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22589,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22595,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22605,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22618,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22626,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22647,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22651,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22747,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22756,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22756,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22758,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22767,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22770,
+    "match": "catalog scope"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22784,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22791,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22793,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22805,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22809,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22818,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22818,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22822,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22829,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22831,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22836,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22848,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22859,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22862,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22865,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/project-log.md",
+    "line": 22875,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/recommendation-engine/v1-findings.md",
+    "line": 1,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "docs/schema/book-dna-decisions.md",
+    "line": 58,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/schema/book-dna-decisions.md",
+    "line": 205,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/schema/book-dna-decisions.md",
+    "line": 428,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-decisions.md",
+    "line": 750,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/schema/book-dna-decisions.md",
+    "line": 994,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-decisions.md",
+    "line": 1030,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-decisions.md",
+    "line": 1069,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-decisions.md",
+    "line": 1319,
+    "match": "v1\nweb app"
+  },
+  {
+    "path": "docs/schema/book-dna-decisions.md",
+    "line": 1320,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 32,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 32,
+    "match": "v1-web-app"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 36,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 38,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 70,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 72,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 75,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 81,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 94,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 140,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 197,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna-tables.md",
+    "line": 198,
+    "match": "Data quality / tagging"
+  },
+  {
+    "path": "docs/schema/book-dna-vocabulary-gaps.md",
+    "line": 18,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna.md",
+    "line": 18,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna.md",
+    "line": 74,
+    "match": "recommendation\n  engine"
+  },
+  {
+    "path": "docs/schema/book-dna.md",
+    "line": 231,
+    "match": "recommendation\nengine"
+  },
+  {
+    "path": "docs/schema/book-dna.md",
+    "line": 340,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/schema/book-dna.md",
+    "line": 367,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/schema/book-dna.md",
+    "line": 505,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/schema/book-dna.md",
+    "line": 566,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/schema/book-dna.md",
+    "line": 617,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/schema/book-dna.md",
+    "line": 629,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/schema/book-dna.schema.yaml",
+    "line": 12,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/schema/book-dna.schema.yaml",
+    "line": 304,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/schema/book-dna.schema.yaml",
+    "line": 824,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 566,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 2425,
+    "match": "Recommendation Engine"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 2790,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 2798,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 2844,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 2848,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 2918,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 2922,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 2990,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 2994,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 3078,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 3082,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 3122,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 3163,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 3256,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 3384,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 3413,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 3445,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 3480,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/scoring-test-protocol.md",
+    "line": 3559,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 1,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 11,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 33,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 33,
+    "match": "Data quality/tagging"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 33,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 34,
+    "match": "Recommendation engine"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 34,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 36,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 40,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 56,
+    "match": "Recommendation\n      engine"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 86,
+    "match": "recommendation\nengine"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 96,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 128,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 131,
+    "match": "Data quality/tagging"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 131,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 131,
+    "match": "Recommendation\n      engine"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 142,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 142,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 144,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 156,
+    "match": "Data quality/tagging"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 160,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 161,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 172,
+    "match": "Data quality/tagging"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 189,
+    "match": "Data quality/tagging"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 203,
+    "match": "v1 web app"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 203,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 217,
+    "match": "Database backups"
+  },
+  {
+    "path": "docs/task-class-routing-acceptance-tests.md",
+    "line": 237,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/universe-linking-negatives.md",
+    "line": 5,
+    "match": "TODO.md"
+  },
+  {
+    "path": "docs/universe-linking-negatives.md",
+    "line": 12,
+    "match": "TODO.md"
+  },
+  {
+    "path": "scripts/backfill-round5-covers.js",
+    "line": 4,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/backfill-round5-covers.js",
+    "line": 52,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/backfill-standard-narrators.js",
+    "line": 4,
+    "match": "TODO.md"
+  },
+  {
+    "path": "scripts/check_db_sync.py",
+    "line": 15,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/check_db_sync.py",
+    "line": 15,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "scripts/check_db_sync.py",
+    "line": 21,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/check_db_sync.py",
+    "line": 124,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/check_db_sync.py",
+    "line": 124,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "scripts/ingest-catalog-round5.js",
+    "line": 23,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/ingest-catalog-round5.js",
+    "line": 214,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/ingest-catalog-round5.js",
+    "line": 377,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/ingest-egg-and-other-stories.js",
+    "line": 11,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/ingest-egg-and-other-stories.js",
+    "line": 63,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/ingest-ruin.js",
+    "line": 8,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/ingest-traitor-god.js",
+    "line": 6,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/lib/self-host-cover.js",
+    "line": 7,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "scripts/recommend.py",
+    "line": 2,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/api.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/audit.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/calibration.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/catalog.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/cold_start.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/confidence.py",
+    "line": 27,
+    "match": "TODO.md"
+  },
+  {
+    "path": "scripts/scoring/constants.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/encoding.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/experimental.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/explanations.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/feedback.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/pipeline.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/prevalence.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/profile.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/rules.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "scripts/scoring/series.py",
+    "line": 1,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "supabase/config.toml",
+    "line": 159,
+    "match": "v1 web app"
+  },
+  {
+    "path": "supabase/config.toml",
+    "line": 160,
+    "match": "v1 web app"
+  },
+  {
+    "path": "supabase/migrations/20260829025000_seed_universe_table.sql",
+    "line": 8,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260829025000_seed_universe_table.sql",
+    "line": 8,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "supabase/migrations/20260830231854_batch_tag_20_more_books.sql",
+    "line": 13,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "supabase/migrations/20260830234428_batch_tag_final_20_books.sql",
+    "line": 13,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "supabase/migrations/20260831010000_delete_out_of_scope_books.sql",
+    "line": 1,
+    "match": "catalog scope"
+  },
+  {
+    "path": "supabase/migrations/20260903160000_delete_mistagged_girl_with_dragon_tattoo.sql",
+    "line": 13,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260903170000_targeted_ingestion_mathias_priority_list.sql",
+    "line": 57,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260903220000_fix_witcher_translator_contamination.sql",
+    "line": 6,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260903240000_tag_city_simak.sql",
+    "line": 18,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260904040000_fix_death_masks_author_contamination.sql",
+    "line": 9,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260905120000_batch_tag_20_more_books.sql",
+    "line": 12,
+    "match": "catalog scope"
+  },
+  {
+    "path": "supabase/migrations/20260905230000_fix_blinding_knife_author_contamination.sql",
+    "line": 5,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260906030000_fix_battle_royale_author_contamination.sql",
+    "line": 7,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260908070000_audiobook_editions_unique_constraint.sql",
+    "line": 8,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260909020000_audiobook_editions_graphicaudio_batch6.sql",
+    "line": 21,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260909040000_fix_white_night_author_contamination.sql",
+    "line": 8,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260909090000_catalog_tagging_batch2.sql",
+    "line": 9,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260909110000_worldbuilding_delivery_sweep_batch19.sql",
+    "line": 3,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260909120000_tag_final_3_untagged_standalones.sql",
+    "line": 4,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260909120000_tag_final_3_untagged_standalones.sql",
+    "line": 7,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260909130000_ingest_audible_originals.sql",
+    "line": 3,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911110000_delete_old_romance_worldbuilding_tropes.sql",
+    "line": 14,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911110000_delete_old_romance_worldbuilding_tropes.sql",
+    "line": 20,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260911120000_backfill_standard_narrators.sql",
+    "line": 4,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911120000_backfill_standard_narrators.sql",
+    "line": 26,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911130000_backfill_standard_narrators_batch2.sql",
+    "line": 31,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911140000_backfill_standard_narrators_batch3.sql",
+    "line": 23,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911180000_backfill_standard_narrators_final3_classics.sql",
+    "line": 11,
+    "match": "recommendation engine"
+  },
+  {
+    "path": "supabase/migrations/20260911190000_fix_series_status_book_count_batch1.sql",
+    "line": 2,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911200000_first_law_universe.sql",
+    "line": 4,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911200000_first_law_universe.sql",
+    "line": 23,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260911210000_ingest_sharp_ends.sql",
+    "line": 3,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911210000_ingest_sharp_ends.sql",
+    "line": 12,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260911220000_broken_empire_universe.sql",
+    "line": 4,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911230000_ingest_book_of_the_ice_and_abeth_universe.sql",
+    "line": 4,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911230000_ingest_book_of_the_ice_and_abeth_universe.sql",
+    "line": 38,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911240000_tag_book_of_the_ice.sql",
+    "line": 3,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260911240000_tag_book_of_the_ice.sql",
+    "line": 11,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260911260000_foundation_universe.sql",
+    "line": 3,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260911270000_westeros_universe.sql",
+    "line": 5,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912000000_catalog_expansion_round4_378_books.sql",
+    "line": 8,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260912100000_fix_series_status_book_count_batch2.sql",
+    "line": 2,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912200000_realm_of_the_elderlings_grishaverse_enderverse.sql",
+    "line": 2,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912400000_fix_series_status_book_count_batch3.sql",
+    "line": 2,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912500000_riordanverse_four_londons_cosmere_gaps.sql",
+    "line": 1,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912600000_fix_series_status_book_count_batch4.sql",
+    "line": 2,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912600000_fix_series_status_book_count_batch4.sql",
+    "line": 72,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260912700000_shared_universe_audit_batch5.sql",
+    "line": 1,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912800000_fix_series_status_book_count_batch5.sql",
+    "line": 2,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912800000_fix_series_status_book_count_batch5.sql",
+    "line": 22,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912800000_fix_series_status_book_count_batch5.sql",
+    "line": 25,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912800000_fix_series_status_book_count_batch5.sql",
+    "line": 64,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260912800000_fix_series_status_book_count_batch5.sql",
+    "line": 83,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912900000_fix_series_status_book_count_batch6.sql",
+    "line": 2,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912900000_fix_series_status_book_count_batch6.sql",
+    "line": 50,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260912900000_fix_series_status_book_count_batch6.sql",
+    "line": 93,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260912900000_fix_series_status_book_count_batch6.sql",
+    "line": 93,
+    "match": "Data quality / tagging"
+  },
+  {
+    "path": "supabase/migrations/20260913000000_shared_universe_audit_batch7.sql",
+    "line": 1,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913010000_v1_app_user_tables.sql",
+    "line": 1,
+    "match": "v1 web app"
+  },
+  {
+    "path": "supabase/migrations/20260913010000_v1_app_user_tables.sql",
+    "line": 1,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913010000_v1_app_user_tables.sql",
+    "line": 2,
+    "match": "v1 web app"
+  },
+  {
+    "path": "supabase/migrations/20260913010000_v1_app_user_tables.sql",
+    "line": 11,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913030000_tag_catalog_batch_18_books.sql",
+    "line": 9,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913030000_tag_catalog_batch_18_books.sql",
+    "line": 16,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913120000_backfill_missing_dramatized_cast_lists.sql",
+    "line": 3,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913130000_fix_series_status_book_count_batch7.sql",
+    "line": 2,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913130000_fix_series_status_book_count_batch7.sql",
+    "line": 82,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913140000_shared_universe_audit_batch8.sql",
+    "line": 1,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913170000_catalog_trope_gap_sweep_5_new_tropes.sql",
+    "line": 17,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913170000_catalog_trope_gap_sweep_5_new_tropes.sql",
+    "line": 18,
+    "match": "Database & migrations"
+  },
+  {
+    "path": "supabase/migrations/20260913170000_catalog_trope_gap_sweep_5_new_tropes.sql",
+    "line": 25,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913200000_fix_series_status_book_count_batch8.sql",
+    "line": 2,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913200000_fix_series_status_book_count_batch8.sql",
+    "line": 67,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913200000_fix_series_status_book_count_batch8.sql",
+    "line": 67,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "supabase/migrations/20260913200000_fix_series_status_book_count_batch8.sql",
+    "line": 88,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913200000_fix_series_status_book_count_batch8.sql",
+    "line": 88,
+    "match": "Catalog scope"
+  },
+  {
+    "path": "supabase/migrations/20260913220000_catalog_trope_gap_sweep_2_7_new_tropes_1_cw.sql",
+    "line": 5,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913220000_catalog_trope_gap_sweep_2_7_new_tropes_1_cw.sql",
+    "line": 53,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913230000_catalog_trope_gap_sweep_3_11_new_tropes.sql",
+    "line": 8,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913230000_catalog_trope_gap_sweep_3_11_new_tropes.sql",
+    "line": 74,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913240000_fix_5_author_field_contamination_cases.sql",
+    "line": 5,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913240000_fix_5_author_field_contamination_cases.sql",
+    "line": 5,
+    "match": "Data quality / tagging"
+  },
+  {
+    "path": "supabase/migrations/20260913240000_fix_5_author_field_contamination_cases.sql",
+    "line": 9,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913250000_backfill_2_incomplete_trope_inserts.sql",
+    "line": 13,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913250000_backfill_2_incomplete_trope_inserts.sql",
+    "line": 40,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913260000_shared_universe_audit_batch9.sql",
+    "line": 8,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913270000_catalog_tagging_batch_17_books_9_series_completed.sql",
+    "line": 12,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260913280000_fix_series_status_book_count_batch9.sql",
+    "line": 3,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913290000_fix_series_status_book_count_batch10.sql",
+    "line": 2,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260913310000_fix_series_status_book_count_batch12.sql",
+    "line": 1,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260916000000_catalog_tagging_batch_20_standalone_sff_books.sql",
+    "line": 4,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260916000000_catalog_tagging_batch_20_standalone_sff_books.sql",
+    "line": 6,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260916010000_catalog_tagging_batch_20_cldo_screened_books.sql",
+    "line": 4,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260917040000_fix_series_status_book_count_batch14.sql",
+    "line": 17,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260917040000_fix_series_status_book_count_batch14.sql",
+    "line": 140,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260918220000_fix_cover_url_storage_pointer_titlematch.sql",
+    "line": 5,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260918231000_audiobook_editions_release_date_range.sql",
+    "line": 3,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260919000000_ingest_the_traitor_god.sql",
+    "line": 10,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260920000000_admin_view_book_suggestions.sql",
+    "line": 5,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260920040000_fix_4_author_field_contamination_batch8_followup.sql",
+    "line": 11,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260921000000_catalog_tagging_batch9_20books.sql",
+    "line": 8,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260921010000_archive_non_sff_leakage_and_permanent_skips.sql",
+    "line": 18,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260921010000_archive_non_sff_leakage_and_permanent_skips.sql",
+    "line": 24,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260921010000_archive_non_sff_leakage_and_permanent_skips.sql",
+    "line": 33,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260921020000_catalog_expansion_round5_226_books.sql",
+    "line": 38,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260921040000_catalog_tagging_batch11_18books.sql",
+    "line": 39,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260922000000_fix_remote_control_series_and_archive_thorn_of_emberlain.sql",
+    "line": 10,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260922010000_ingest_ruin.sql",
+    "line": 10,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260922030000_archive_holly_delete_egg_standalone.sql",
+    "line": 26,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260922040000_ingest_egg_and_other_stories.sql",
+    "line": 8,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260922060000_backfill_round5_covers.sql",
+    "line": 4,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260924010000_import_coverage_tracking.sql",
+    "line": 10,
+    "match": "CLAUDE.md"
+  },
+  {
+    "path": "supabase/migrations/20260924010000_import_coverage_tracking.sql",
+    "line": 67,
+    "match": "TODO.md"
+  },
+  {
+    "path": "supabase/migrations/20260925000000_recommendation_impressions.sql",
+    "line": 2,
+    "match": "TODO.md"
+  },
+  {
+    "path": "tools/dogfood/app.py",
+    "line": 1,
+    "match": "recommendation\nengine"
+  }
+]

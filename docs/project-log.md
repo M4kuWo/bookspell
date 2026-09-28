@@ -22873,3 +22873,77 @@ The task asks for ranked verdicts on five candidate levers:
 It explicitly allows "don't do this" as a verdict. It also counts as the
 structural-review gate's independent review for the two proposals the
 Part 2 entry queued. `docs/TODO.md`'s follow-up item now points at Task 25.
+
+## 2026-09-28, later -- CODX Task 25 reviewed: context-load improvements, verified with one pushback, nothing implemented yet
+
+CODX's report on further context-load improvements
+(`docs/codx-reviews/codx-context-load-improvements-2026-09-28.md`, plus
+evidence directory) was reviewed and re-verified by CLDO.
+
+**Verified directly, not trusted:**
+- Re-ran CODX's `measure.py` and `check_candidates.py`. Result: PASS. The
+  six moved sections are byte-for-byte substrings of CLAUDE.md, all 18 open
+  TODO blocks are retained, and all 30 closed blocks are archived intact.
+- Independently re-counted the candidate sizes: root 8,893→4,293 (A) and
+  4,302 (A+B); TODO 4,887→2,947 (D); scoring protocol front 1,962 of 30,830;
+  schema files 21,320.
+- Confirmed each claimed documentation inconsistency against the live files:
+  - The scoring protocol's "What's been tried" table still calls the
+    prevalence discount "Promising, not yet landed", though it landed later.
+  - `tag-catalog-batch` Step 4 says inserts "already went live against the
+    hosted database". That conflicts with CLAUDE.md's rule never to apply
+    hosted-bound changes via a raw connection instead of `supabase db push`.
+  - `docs/TODO.md`'s P3 dramatized-audio item says the audiobook
+    `release_date` column is "not built". The closed item above it and
+    `book-dna-tables.md` both show `release_date_start`/`_end` exist.
+
+**CODX caught two errors in CLDO's own measurement:**
+- The schema split is 21,320 words combined, not 34,929.
+- The scoring-route gain is ~18.5% on a consistent full-injection basis,
+  not the ~24% reported.
+Both were corrected via a dated note in `docs/context-load-measurement-protocol.md`.
+The earlier log entries were left as written (append-only).
+
+**CODX's ranking:**
+1. C: an explicit read-depth contract. Front section plus complete relevant
+   entries for the scoring protocol (~25k saved in a worked scoring example)
+   and a route-specific minimum for decisions, YAML and skills.
+2. D: collapse closed TODO items to one-line pointers, with the full text in
+   an archive. Saves 1,940 on every route, and adds a closure rule that
+   strengthens multi-phase closure.
+3. A: move the 6 conditional CLAUDE.md sections to `docs/conventions/*.md`,
+   verbatim, keeping forwarding headings. Saves 652–4,353 per route.
+4. B: required as a companion to A. At every fresh-session startup, read
+   CLAUDE.md from disk and hash it. This makes A+B net-negative on heavier
+   routes.
+5. E: transcript-based accounting, 3 runs × 5 routes × 2 arms, plus held-out
+   adversarial cases.
+
+**CLDO pushback on B's scope.** The documented staleness failure (12/12 on
+2026-09-26) is a *sub-agent* phenomenon: a sub-agent inherits a snapshot
+taken when its parent session started, before the parent edited the file. A
+top-level fresh session is injected from disk at startup, so an
+unconditional disk re-read doubles the root cost for the common case, for
+little benefit. CODX's point that cheap checks (headings, `wc`, `git log`)
+can't prove what the injected bytes are is correct. But the re-read should be
+scoped to sub-agents, and possibly only when the parent session has changed
+CLAUDE.md, not applied universally. Scoped that way, A's own 652–4,353 saving
+largely stands for top-level sessions. This goes back to the repo owner as a
+design choice rather than being decided here.
+
+**Also noted:**
+- C's "front section" includes the status table that already carries stale
+  statuses. CODX says front-only is insufficient, but landing C should also
+  mean correcting those statuses.
+- E's 30-session re-test is a real token cost, so that decision belongs to
+  the repo owner.
+- A workflow friction resurfaced in CODX's sync. Since 2026-09-25, landed
+  CODX reports were committed under `docs/codx-reports/`, the same path
+  CODX writes its untracked output to. `git pull` then collided with CODX's
+  local copies (CODX preserved them in /tmp and disclosed it).
+  `docs/persona-workflow.md` says landed reports belong in
+  `docs/codx-reviews/`. This one was filed there, as the workflow says.
+
+**Nothing implemented.** A, B and C are CLAUDE.md/convention changes, and D
+touches TODO structure. The repo owner picks which to implement.
+`docs/codx-tasks/current-task.md` was reset to "nothing queued".

@@ -1,132 +1,145 @@
-# Project TODO
+# Completed TODO detail — archived from 2827739
 
-**This file IS the project's roadmap** -- there is no separate
-"roadmap" document anywhere in this repo. If you're looking for where
-the roadmap lives, it's here (clarified 2026-09-24 after the repo owner
-asked and there wasn't a clean answer).
+Historical snapshots, not a new task queue. Active work remains in TODO.md.
 
-A prioritized, cross-cutting task backlog -- distinct from the two docs
-that already exist and cover different ground:
-
-- `docs/project-log.md` is append-only HISTORY (what already happened,
-  dated, never rewritten).
-- `docs/schema/book-dna-decisions.md`'s "Deferred / open proposals"
-  section is specifically SCHEMA/FIELD ideas (new DNA values, deferred
-  vocabulary) -- moved out of `book-dna.md` itself during the
-  2026-09-25 core/companion-file schema split (see that file's own
-  "Schema map" section for the full 4-file structure).
-- **This file** is forward-looking and mutable: things we've decided
-  are worth doing, ordered by priority, checked off or re-ordered as
-  the project moves. Update it directly (not append-only) as work
-  starts/finishes/gets reprioritized. Where an item is really a schema
-  idea, it stays tracked in `book-dna-decisions.md` and this file just
-  points to it rather than duplicating the writeup.
-
-**Keep every item short.** A checkbox, a bold one-line title, and 1-3
-lines of *current* status/next-step -- that's it. The full story (what
-happened, why, what was verified) belongs in `docs/project-log.md` as a
-dated entry; this file just points to it (`see project-log.md's <date>
-entry`). Don't paste UPDATE paragraphs in here as work progresses --
-log the update there, then come back and just refresh this item's one-
-or-two-line summary. See CLAUDE.md's "Logging" section for why this
-matters (it drifted badly once already, full rewrite 2026-09-22).
-
-Priority is P0 (do next) / P1 (soon, real value) / P2 (ongoing/routine)
-/ P3 (blocked or parked -- not actionable right now, don't pick these
-up without checking whether the blocker cleared).
-
-**Token-economy note (2026-09-07)**: a heavy session today -- pace
-future work accordingly. Cheap/quick items are ordered first within
-each tier on purpose; the genuinely taxing ones (marked below) are
-worth deferring to a later session rather than batching in for
-"efficiency," which just concentrates cost instead of reducing it.
-
-## P0
+## done-01
 
 - [x] **Gate `book_length`/`audiobook_length` by listener format preference.** Done 2026-09-07. See `docs/scoring-test-protocol.md`.
+
+## done-02
+
 - [x] **Set up a real database backup policy.** Done 2026-09-11 -- separate [`bookspell-backups`](https://github.com/M4kuWo/bookspell-backups) repo, manual cadence. See CLAUDE.md's "Database backups" section for the process.
+
+## done-03
+
 - [x] **Bookspell v1 web app -- built and shipped.** Started 2026-09-12, initial build complete 2026-09-18 (real accounts/auth, manual rating, recommendations, Goodreads import, book-info modal, mobile-viewport pass with 2 real bugs found and fixed by the repo owner's own phone testing). Full build history in `docs/project-log.md`'s 2026-09-12 through 2026-09-18 entries. Ongoing feature/bug work on the live app is tracked as its own items below, not here.
+
+## done-04
+
 - [x] **`book_suggestions` admin view.** Done 2026-09-20 -- `app/suggestions.html`, two new RLS policies scoped to the repo owner's Auth user id. See `docs/project-log.md`'s 2026-09-20 entry.
 
 *(Nothing currently open at P0 -- everything above shipped. Pull the next item down from P1 when something becomes genuinely urgent/blocking.)*
 
-## P1
+
+## done-05
 
 - [x] **Fresh-session context-load reduction -- all 3 CODX Task 21 recommendations done and measured.** Step 1 (2026-09-25): bounded project-log read window (3 entries/1,500 words). Step 2 (2026-09-25): `book-dna.md` split into 4 files, ~72% smaller always-read core; measured 26/26 checklist items, zero regressions (see project-log's 2026-09-25 "after results" entry). Step 3 (2026-09-26): task-class routing policy in `CLAUDE.md` -- CLDO's original "purely additive table" framing was corrected by CODX's Task 23 review into a real reading-requirement policy (6 task-specific sections now conditional, 7 universal sections including both safety gates stay always-read); measured against CODX's FULL original 12-scenario proposal (extended from an initial lighter 4-scenario pass at the repo owner's explicit request), **43/43 checklist items passed, zero regressions**, plus several real bonus findings (a caught would-be regression, a real code insight about ratings-source handling, a correct flag-don't-build call on a scope-expansion case). Also surfaced and mitigated a genuine tooling issue: sub-agent system-prompt CLAUDE.md snapshots going stale mid-session, confirmed independently 12/12 times across every test agent -- now warned about at the top of the file itself and filed as product feedback. Tier 2 (an actual CLAUDE.md file split) explicitly deferred, not dropped -- revisit only if real usage shows Tier 1 isn't enough. See `docs/project-log.md`'s 2026-09-26 entries (the initial "measured" entry and the later full-12-scenario entry).
 
+
+## done-06
+
 - [x] **Quantify the routing policy's real context-load gain.** Both parts done 2026-09-26. Real fresh-agent runs on 5 routes found no under-reads (no routing bug). Part 1's totals had left out required external files, notably `scoring-test-protocol.md`, so the scoring route's corrected gain is ~24%, not 51%; the narrow routes are ~53% below the old baseline even counting CLAUDE.md's full auto-load. See `docs/context-load-measurement-protocol.md`'s Results and `docs/project-log.md`'s 2026-09-26 "Context-load measurement Part 2 run" entry.
-- [ ] **Context-load improvements -- CODX Task 25 reviewed 2026-09-28, awaiting repo owner's pick of levers.** CODX's ranked proposals (C: read-depth contract for the scoring protocol/decisions, D: collapse done TODO items to pointers + archive, A: move the 6 conditional CLAUDE.md sections to `docs/conventions/`, B: freshness check, E: transcript-based re-test) were verified by CLDO, with one pushback on B's scope. None are implemented yet. See `docs/codx-reviews/codx-context-load-improvements-2026-09-28.md` and `docs/project-log.md`'s 2026-09-28 "CODX Task 25 reviewed" entry.
+
+## done-07
 
 - [x] **A book Osnat hated ranks #4 of 695 in her real recommendations -- investigated 2026-09-23 by CODX (Task 17).** Rigorous root-cause dig (exact factor arithmetic reproduced, leave-one-out sensitivity check across all 4 of her usable negatives), independently spot-checked by CLDO. Conclusion: not a scoring bug -- no engine-level error found, the arithmetic reproduces exactly. Real cause is data sparsity: only 2 negative ratings meant `validated_dealbreaker_fields()` returns empty (needs >=3 each side), so no veto can fire, and the coarse profile representation can't distinguish this hated sequel from attributes of books she liked. Same root blocker as the P3 "graduated dealbreaker veto" item below (empty validation across all real raters) -- not a new, separate problem, and not actionable without more real negative rating data (ties to the rater-recruitment item above). See `docs/codx-reviews/2026-09-23-magic-burns-ranking.md` for the full analysis.
 
+
+## done-08
+
 - [x] **Fix `/recommendations` slowness.** Raised 2026-09-18; real cause found (`explain_match()` redundantly re-resolving the whole profile on every call, plus the dashboard firing 3 parallel requests). Backend fix (`resolve_explain_profile()`/`explain_match_with_profile()`, resolved once per request) and dashboard fix (`GET /recommendations/all`, one shared request instead of 3) both landed 2026-09-20. CODX's follow-up review (Tasks 13-14) caught and fixed a title-validation-ordering regression and a partial-failure resilience gap the same week. See `docs/project-log.md`'s 2026-09-18/19/20 entries and `docs/scoring-test-protocol.md`.
+
+
+## done-09
 
 - [x] **Audiobook edition data gaps: missing `runtime_minutes` (27% of rows), no `release_date` field.** Raised and schema-fixed 2026-09-18 -- added `release_date_start`/`release_date_end` (a range, for multi-part editions) via migration `20260918231000`; `docs/schema/book-dna.md` and the tagging skill updated same session. Data backfill (306 rows missing runtime, all release-date values) is queued to `tag-audiobook-editions`'s research backlog, not yet done.
 
+
+## done-10
+
 - [x] **Self-host book cover images instead of hotlinking Hardcover's CDN.** Done 2026-09-18, prompted by Hardcover's CDN breaking for 7 already-ingested books with no warning. New `book-covers` Supabase Storage bucket, all 1254 covers migrated, `books.cover_url` repointed; reusable `scripts/lib/self-host-cover.js` helper is now mandatory for any new ingestion script. Two mistakes caught and fixed same session (a migration hardcoding local UUIDs; 6 books with stale local `author` data, see next item). See `docs/project-log.md`'s 2026-09-18 entries.
+
+
+## done-11
 
 - [x] **Local/hosted `books.author` field drift.** Found and fixed 2026-09-18 as a side effect of the cover-image backfill above -- 6 books had contaminated (translator/narrator/etc.) `author` values on local Postgres that hosted already had cleaned up via an earlier fix that never made it back to local. Fixed directly on local (no migration needed, hosted was already correct). See `docs/project-log.md`'s 2026-09-18 entry.
 
-- [ ] **External AI consultation precedent -- ChatGPT ("Astra") full independent repo review, 2026-09-14 (parallel to CODX's code-level review).** Kept as a precedent for outside-persona review, not a one-off. Every point independently re-verified by CLDO against the codebase; original .docx not committed, record lives in `docs/project-log.md`'s 2026-09-14 entries.
-  - Already built before the review (don't redo): Goodreads/reading-history import, "Why this recommendation?" match explanations.
-  - Confirmed real and done since: spoiler-safety fix landed 2026-09-20 (collapsed "Spoilers" disclosure for tropes/content-warnings/`emotional_resolution`/`ends_on_cliffhanger`) -- the deeper per-series `spoiler_horizon` design was deliberately not built (needs reader-progress tracking this app doesn't collect).
-  - Done since: `ranking_metrics()` + `rank_percentile_report()` landed 2026-09-22 in `scoring_tests.py` -- a product-surface check (does a held-out title literally land in the top-K a user would see), NOT an accuracy metric; `pairwise_accuracy()` remains the real taste-discrimination signal. See `docs/scoring-test-protocol.md`'s two matching 2026-09-22 entries (the landing, then a same-day correction on what the numbers actually prove) for the full reasoning -- worth reading both before citing a number from this. CI landed 2026-09-22 too (CODX Task 15, `.github/workflows/ci.yml`).
-  - Done since: active-learning onboarding landed 2026-09-23 -- a 16-book curated starter list spanning the DNA space, shown below 5 ratings, dismissible. Simple/curated version only; the fully adaptive per-answer version (next question chosen by what's already been answered) is a real, larger follow-up, not built. See `docs/project-log.md`'s 2026-09-23 entry.
-  - Lower priority / conditional: decomposing `genre_accessibility` into sub-signals (gated behind real cold-start evidence); freezing a gold eval set never touched during scoring design (gated behind more raters); `scripts/` folder reorganization into research/engine/backend/frontend (real but overstated -- `api/main.py` already treats `recommend.py` as a clean dependency).
-  - Reader-count bottleneck: adopt the review's staged milestones as the framework -- ~10 readers x 30 ratings (surface broken assumptions) -> ~25 readers x 30-50 (start measuring generalization) -> ~100 readers (real comparative experiments).
 
-- [ ] **Recruit more raters -- active priority since 2026-09-17, the single biggest lever on the reader-count bottleneck above. Paused (NOT deprioritized) 2026-09-24** -- the repo owner is still working it personally but wanted engineering effort to shift to beta-polish work in parallel rather than wait on it. Revisit the pitch/channels below once there's real signal on what's/isn't landing. r/Fantasy's subreddit front page bans standalone recruiting posts; post through looser-norm channels instead. Pitch drafts exist (long/short/one-liner) -- deliberately vague about what the project does, ask for a Goodreads/StoryGraph export or a manually rated book list, explicitly solicit disliked/hated books, not just favorites. Candidate channels: r/Fantasy's Discord + weekly self-promo/rec threads, 17th Shard, Sword & Laser, StoryGraph's community, Goodreads Groups, r/PrintSF / r/RomanceBooks / r/suggestmeabook, Indie Hackers, Show HN, personal network (highest trust, best fit for the first ~10 readers). Open, untested concern: raters likely skew toward liked books (a reading hobby survives occasional misses, not a high rate of them), which could leave dealbreaker/negative-signal fields chronically data-poor -- watch once real rater data comes in; the pitch already asks for disliked books to counteract it at collection time.
-
-- [ ] **Beta-readiness polish pass -- active as of 2026-09-24.** Repo owner is doing a visual overhaul on his own side; engineering-side beta-readiness work (below) runs in parallel, not overlapping the visual work. Render cold start (confirmed live 2026-09-24: 25.65s cold, 0.55s warm) now has a keep-warm mitigation (see the item below) -- not fully eliminated, worth re-measuring once there's real beta traffic. Still open: `index.html` has no real explanation of what the app does before asking a stranger to sign up (fine for a personal invite, not for cold beta traffic), and there's no privacy note anywhere despite collecting reading history + email. See `docs/project-log.md`'s 2026-09-24 entries for the source (a second external AI review, `docs/external-reviews/2026-09-23-gpt-review.md`, independently fact-checked before trusting any of it).
+## done-12
 
 - [x] **Render cold-start mitigation.** Done 2026-09-24 -- `.github/workflows/keep-warm.yml`, pings `GET /rule-targets` every 10min. Doesn't eliminate cold starts entirely (a long idle stretch, or GitHub's own schedule slipping under load, can still open a gap) but should catch the vast majority of real visits during active hours. The other real option, upgrading Render's paid tier, remains a cost decision for the repo owner, not an engineering one -- worth revisiting if the ping alone isn't enough once there's real beta traffic.
 
+
+## done-13
+
 - [x] **CI fixture-based deterministic scoring/API tests.** Landed 2026-09-25 via CODX Tasks 18-19, both independently re-verified by CLDO (clean run + a real negative-control mutation, reproduced myself, not just re-read). `scripts/scoring/tests/test_fixtures.py`, 15 methods, all synthetic/DB-free, run as `.github/workflows/ci.yml`'s 4th check. Covers ordinal/nominal similarity, `build_profile()` sign correctness, all 4 `score_candidate()` policies, series-position gating, prevalence/redundancy discounts, series-repeat/trajectory, both cold-start components, user rules, explanation-text direction, and both dealbreaker-veto modes. See `docs/project-log.md`'s 2026-09-25 "CODX Task 18/19 landed" entries.
+
+
+## done-14
 
 - [x] **Import-coverage aggregation + cross-user unmatched-title tracking.** Done 2026-09-24 -- new `import_events`/`import_unmatched_titles` tables (migration `20260924010000`), written from `api/main.py`'s existing import endpoint. Real coverage % and repeated-unmatched-title queries now possible (see the migration file's own comment for the exact SQL); nothing built yet to actually SURFACE this to anyone (no admin view) -- a real, still-open follow-up once there's enough import volume to make the numbers meaningful. See `docs/project-log.md`'s 2026-09-24 entry for the verification (a real end-to-end `TestClient` request, not just a syntax check).
 
+
+## done-15
+
 - [x] **Prospective recommendation-outcome tracking.** Design pass done + landed 2026-09-25 with the repo owner (retention, privacy-notice scope) before any schema was written. `recommendation_impressions` table logs what `/recommendations` actually shows (book, rank, score, `evidence_confidence`); "outcome" is computed by joining against the existing `ratings` table rather than new frontend click-tracking. Retention: indefinite, with a 100,000-row early-warning check (`.github/workflows/impression-count-check.yml`, a new `impression_count_monitor` role scoped to count-only). See `docs/project-log.md`'s 2026-09-25 "recommendation-outcome tracking" entry for the full reasoning and the privacy-notice discussion (deferred, tied to a real public launch, not before).
+
+
+## done-16
 
 - [x] **Recommendation-confidence instrumentation, diagnostic/UI-only.** Landed 2026-09-25 (`scripts/scoring/confidence.py`), wired into `explain_match_with_profile()`/`/recommendations`' `evidence_confidence` key -- NOT fed into ranking/score. Learned-weight stability deliberately deferred (no cheap proxy found yet). Not yet surfaced in the frontend (the user's own in-progress visual pass) or measured against real outcomes (blocked on the outcome-tracking item above). See `docs/project-log.md`'s 2026-09-25 entry.
 
+
+## done-17
+
 - [x] **`recommend.py` structural refactor (Phase A: canonical `score_candidate()` pipeline; Phase B: split into `scripts/scoring/` submodules).** Fully landed 2026-09-17 via CODX Tasks 4-12, each independently re-verified by CLDO before landing (byte-identical scorecards, AST diffs, real consumer checks). Originally proposed by the GPT review above, 2026-09-14. `scripts/recommend.py` is now a 105-line CLI demo; the real engine lives under `scripts/scoring/`. Full step-by-step record in `docs/scoring-test-protocol.md`'s "Phase A"/"Phase B" entries and `docs/codx-reviews/`.
+
+
+## done-18
 
 - [x] **Catalog-wide trope/content-warning vocabulary gap sweep #1.** Run 2026-09-13 by CLDA (methodology in `.claude/skills/catalog-trope-gap-sweep/SKILL.md`), covering 377 books across 31 authors (~39% of the tagged catalog). 5 new tropes landed (migration `20260913170000`), 3 real candidates deferred to `docs/schema/book-dna-vocabulary-gaps.md`'s tracker, docs verified zero-diff against the DB. Applied directly to hosted (CLDA's sandbox has no linked Supabase project); migration-tracking repaired in sweep #3's session. See `docs/project-log.md`'s 2026-09-13 entries.
 
+
+## done-19
+
 - [x] **Catalog-wide trope/content-warning vocabulary gap sweep #2.** Run 2026-09-13 by CLDA, same day, covering the remaining ~366-book pool (117 authors). 7 new tropes + 1 new content warning landed (migration `20260913220000`); `caste_or_faction_stratified_society` deliberately deferred pending a dystopia-overlap check (later promoted in sweep #3); 6 more single-occurrence leads added to the tracker. Same hosted-direct-apply situation as sweep #1. See `docs/project-log.md`'s 2026-09-13 entries.
+
+
+## done-20
 
 - [x] **Catalog-wide trope/content-warning vocabulary gap sweep #3.** Run 2026-09-13 by CLDA, the third and (for now) final regular pass, covering the remaining ~224-book pool clustered by subgenre/theme. 11 new tropes landed (migration `20260913230000`, including promoting `caste_or_faction_stratified_society`), plus 2 smaller flagged-item fixes (an incomplete trope insert, 5 author-contamination cases) same session. All 3 sweeps' pending migration-tracking repairs were completed this session via `supabase migration repair --db-url`. Coverage across all 3 sweeps is effectively full deliberate-sweep coverage of the ~961-tagged catalog -- closes the proactive-sweep phase for now; future gaps surface reactively via ordinary tagging. See `docs/project-log.md`'s 2026-09-13 entries and `docs/schema/book-dna-vocabulary-gaps.md`'s tracker for remaining Open items.
 
-- [ ] **CODX (Codex CLI) as a third working entity.** Set up 2026-09-13 (`AGENTS.md`, persona system in CLAUDE.md, a stricter destructive-action gate than CLDA's). Real environment: separate clone `~/Documents/bookspell-codex`, push blocked via a tracked `.githooks/pre-push` hook, a genuinely read-only Postgres role `codx_readonly` (2026-09-15) for running `scoring_tests.py`, the public anon key for everything else; every task ends with a report in `docs/codx-reports/`. Active and productive since 2026-09-14 -- its review tasks led to and executed the full `recommend.py` refactor above (through Phase B). Concrete task list and current review/propose-only scope live in `AGENTS.md`; deliberately NOT handed Book DNA tagging or scoring-algorithm design. See `docs/project-log.md`'s 2026-09-13 through 2026-09-17 entries and `docs/codx-reviews/` for the full task-by-task record.
+
+## done-21
 
 - [x] **Bulk-populate `audiobook_editions` standard-edition narrator data via Hardcover's API.** Done 2026-09-11: 1026 `standard` rows across 786 of 869 books with a `hardcover_id`, grouped by narrator-set identity (not publisher/date) to avoid conflating distinct narrations of the same book. Six migration batches (`20260911120000` through `20260911180000`); five real content-leakage categories found and excluded (a narrator-name typo variant, full-cast re-recordings under a generic imprint, placeholder "narrator" values, an unofficial fan recording, radio dramatizations under generic publisher names). Remaining 83 books have no narrator data in Hardcover at all -- not actionable without a different source. See `docs/project-log.md`'s 2026-09-11 entries.
 
-- [ ] **MOVED to P3, 2026-09-11** -- dramatized-audio edition data (GraphicAudio/BBC Audio/Audible Originals). See the P3 entry for current status; kept as a pointer here so a P1 skim doesn't miss the move.
+
+## done-22
 
 - [x] **Promote `romance_tone`/`worldbuilding_delivery` from trope pairs to real scalar `book_dna` fields.** Done 2026-09-11, both schema+backfill and scoring-engine halves. Columns added with a 3rd `mixed` value for genuine confidence ties; backfilled (`romance_tone` 160/864, `worldbuilding_delivery` 117/864 non-null); old trope rows and vocabulary entries deleted only after direct repo-owner go-ahead, backed up to a tracked manifest first. Scoring side: both added as content-scoped `NOMINAL_FIELDS` with partial credit for `mixed`; also fixed two general latent bugs found while testing (an untagged nominal field scoring as a full mismatch; a possible divide-by-zero in `build_profile()`). See `docs/project-log.md`'s 2026-09-09/2026-09-11 entries and `docs/scoring-test-protocol.md`'s 2026-09-11 entry.
 
-## P2 (ongoing/routine, not new decisions)
 
-- [ ] **MOVED to P3, 2026-09-17.** Recurring HIGH_RISK_FIELDS confidence QA pass (CODX) -- see the matching P3 entry. Two rounds landed with real value proven; paused for token-budget reasons, not because it stopped being worth doing.
-- [ ] **MOVED to P3, 2026-09-11.** Dramatized-audio edition tracking (Throne of Glass 2-9, Dresden Files 6-14, Murderbot's 2 prequels) folded into the demoted P3 item -- same "wait for the producer" shape, no reason to track separately.
-- [ ] **SUPERSEDED 2026-09-11 -- read before touching, the mechanism this item used to describe no longer exists.** Used to track tagging books with the `understated_romance`/`melodramatic_romance_subplot`/`worldbuilding_woven_into_narrative`/`worldbuilding_via_exposition_dump` trope pairs. Those 4 trope IDs and their `book_tropes` rows were permanently deleted 2026-09-11 (Step 4 of `convert-romance-worldbuilding-fields`) once the data was converted into real `book_dna.romance_tone`/`worldbuilding_delivery` scalar columns. **Any future sweep must write directly to those scalar columns via a new migration per batch** (values: `understated`/`melodramatic`/`mixed` for romance_tone, `woven`/`exposition_dump`/`mixed` for worldbuilding_delivery -- see the skill doc's tie-resolution rule), not `book_tropes` inserts -- the old ~136/~395 candidate-pool estimates are stale and unusable. Should be rescoped as a fresh item before anyone resumes it, not picked back up as-is.
+## done-23
+
 - [x] **Catalog tagging completion (initial pass) -- FULLY DONE as of 2026-09-09.** 871 books total, 861 tagged, 10 untagged and all 10 confirmed permanent exceptions (4 omnibus/compilation duplicates, 2 unpublished sequels, 4 graphic novels -- out of v1 scope). Shōgun and The Screwtape Letters deleted the same day as confirmed out-of-scope (dependent tables checked first). See project-log.md's 2026-09-09 entries.
+
+## done-24
+
 - [x] **Catalog expansion round 4 -- landed 2026-09-12, 378 new untagged books.** Catalog grew to 1256 books / 484 series (was 878/366). Batches 1-9 (2026-09-13 through 2026-09-21, mixed CLDO/CLDA sessions) tagged the pool via `tag-catalog-batch`, completing dozens of series and routinely catching author-field contamination and density shortfalls along the way. **Closed 2026-09-21**: rather than deleting, a new `books.archived`/`archived_reason`/`archived_at` mechanism (per the repo owner's direct instruction) archived 115 of the 118 remaining untagged books (96 `non_sff_genre_leakage`, 11 `graphic_novel`, 5 `omnibus_duplicate`, 3 `unpublished`); `app/rate.html`'s book-search queries updated to filter `archived = false`. The 3 titles deliberately left open (Holly, The Lottery, The Egg) were resolved 2026-09-22 -- see the round-5 item below. Untagged-but-not-archived from this round is effectively 0; stays closed until new books are ingested. See project-log.md's dated "Catalog tagging batch N" entries for full per-batch detail.
-- [ ] **Catalog expansion round 5 -- landed 2026-09-21, 226 new untagged books (a real pre-insertion quality filter this time, via Hardcover's `book_category_id`/`cached_tags.Genre` vote data, so less scope-audit cleanup expected than round 4).** Catalog now 1483 books / 570 series (was 1257/485). Batches 10-14 (2026-09-21, CLDA, ~90 books total) tagged via `tag-catalog-batch`, partial-series-first, completing dozens of series and backfilling `narrator_cast` catalog-wide (739 of 1193 books; a new `multi_narrator` enum value later added and backfilled to 21 more, 35 left NULL by design). 5 flagged issues from these batches (Remote Control's wrong `series_id`, an unpublished book archived, and the Holly/Lottery/Egg scope questions) all **RESOLVED 2026-09-22 (CLDO)** -- Holly and The Lottery archived as `non_sff_genre_leakage`, The Egg's standalone row replaced with the real in-scope "The Egg and Other Stories" collection. **139 untagged, not-archived books remain** (catalog 1229/1483 tagged, as of the 2026-09-21 batch-14 count -- query fresh before trusting this as it ages). Next batch continues per the skill's normal partial-series-first order. See project-log.md's dated "Catalog tagging batch N" / "Round-5 tagging batch N" entries for full per-batch detail.
-- [ ] **`series.status`/`book_count` data-quality fix -- ongoing, batch-by-batch (display-only, doesn't affect scoring -- neither field is read by `scripts/recommend.py`).** Root cause (found 2026-09-08): `status` defaults to `'ongoing'` whenever Hardcover's `is_completed` flag isn't explicitly true; `book_count` is Hardcover's raw edition/omnibus count, not a curated mainline-installment number. Approach: batches of ~15-20 highest-profile series (ranked by Hardcover's raw `book_count` once the "currently linked" ranking signal saturated at 1 book/series around batch 8), each value verified via live search before writing, tested in a rolled-back transaction, applied and pushed/repaired per CLAUDE.md's migration-tracking rules. **213 of 484 series fixed as of batch 14 (2026-09-17).** Batches have also surfaced (and left unfixed, as separate bug classes for someone else to pick up) duplicate/parent-vs-leaf series rows, wrong `books.series_id` linkages, likely out-of-scope series names, and author-field contamination fixed inline when caught. **Each batch re-derives its own accurate checked/flagged name list directly from the migration files (ground truth) before starting, rather than trusting this summary** -- so nothing here needs to be treated as authoritative. See project-log.md's dated "series.status/book_count fix, batch N" entries (1-14) for full per-series reasoning, sourcing, and the current flagged-name list.
+
+## done-25
+
 - [x] **Cosmere universe linking -- FIXED 2026-09-08.** Only 3 of Sanderson's real Cosmere books were actually linked to the "The Cosmere" universe row (plus a duplicate "Cosmere" series row holding 2 misplaced books). Linked 22 more books (Mistborn both eras, full Stormlight Archive, Elantris novellas, 2 real Secret Projects entries), deleted the duplicate row. See project-log.md.
+
+## done-26
+
 - [x] **Catalog-wide shared-universe linking audit -- functionally complete as of batch 9 (2026-09-13).** Checks every multi-series author for a genuine structural connection (not just thematic/cameo overlap) before linking `series.universe_id`. Batches 1-9 checked 70 author-groupings: 16 confirmed connected and built (Westeros, Foundation, Cosmere gap-fixes, Maasverse, Riordanverse, Wizarding World, Grishaverse, Enderverse, First Law World, and others -- `universe` table has 21 rows), 51 confirmed not connected, 2 flagged as series-table duplicate-row issues rather than true universe questions, 1 flagged ambiguous/thin and left deliberately unlinked. **The 2 naming calls ("Lyra's World", "The Legend Universe") confirmed 2026-09-24** -- neither is an established fandom/author term, both kept as their original fallback names per the repo owner's direct call. **A real, separate bug found while confirming this**: local Postgres was silently missing both of these plus a 3rd universe row (Meridian Empire) since 2026-09-13 -- `check_db_sync.py` never monitored `universe`/`series`, now fixed to. See `docs/project-log.md`'s 2026-09-24 entry. **Candidate pool fully exhausted as of batch 9** -- every author in the query has been checked at least once; a future batch just re-runs the candidate query fresh, since only catalog growth produces genuinely new candidates. **Full confirmed-negative roster (don't re-research these) lives in `docs/universe-linking-negatives.md`** -- pulled out to its own file since it's a reference list, not narrative; see project-log.md's dated "shared-universe audit batch N" entries for the evidence behind each verdict.
 
-## P3 (blocked or parked -- check the blocker before picking up)
 
-- [ ] **Database backup dumps contain real bcrypt password hashes (`auth.users.encrypted_password`) in a private repo.** Noticed 2026-09-25 while taking a fresh snapshot -- not new (the 2026-09-11/09-16 backups already have the same thing, it's inherent to a full Supabase Auth data dump) and not urgent right now: `bookspell-backups` is confirmed private, and there are only a couple of real/test accounts. Repo owner's call: address properly once multiple real users are stored (e.g. exclude `auth.users`/`auth.identities` from future `--data-only` dumps, or a separate lower-sensitivity dump path) -- revisit before real beta traffic, not before.
-- [ ] **Recurring HIGH_RISK_FIELDS confidence QA pass (CODX).** Round 3 (Task 20) landed 2026-09-25 -- 22 pairs/16 books, 3 value corrections + 5 confidence increases, 14 left genuinely inconclusive, independently re-verified (including 2 direct source re-fetches) before landing. Rounds 1-3 combined: 9 corrections + 19 confidence increases. 240 rows were below 0.6 catalog-wide before this round (query fresh before assigning round 4 -- catalog growth keeps outpacing these passes). See `docs/project-log.md`'s 2026-09-25 "CODX Task 20 landed" entry.
-- [ ] **Dramatized-audio edition data (GraphicAudio/BBC Audio/Audible Originals).** Demoted P1 -> P3, 2026-09-11. See `.claude/skills/tag-audiobook-editions/SKILL.md`. Blocked: every currently-known candidate pool is genuinely exhausted (not under-resourced) -- what's left is waiting on external producers to release new material, a freshness/maintenance concern rather than core product-building work. Full sourcing history (Steps A1/A2 batches, BBC Audio sweep, Sub-task B Audible Originals discovery, the 3 ingested-and-tagged Audible Originals) is in `docs/project-log.md`'s 2026-09-08/09/11/13/18 "audiobook-editions skill" entries. Open threads to re-check when resuming: Throne of Glass books 2-9 (GraphicAudio has a real public "in production" announcement), Dresden Files 6-14 and Murderbot's 2 prequels (release-cadence inference only, no actual announcement), Elantris/Warbreaker each have a second, unrecorded "Tenth Anniversary" GraphicAudio edition pending confirmed runtime/completion data, and the Riyria-omnibus judgment call (does a dramatized-edition record belong on an omnibus row?) is still unresolved. Also not built: a real `audiobook_editions.release_date` column + manual verification step (flagged 2026-09-18 after a Dragon Reborn UX gap) -- Hardcover's own `release_date` field proved unreliable for this (confirmed wrong for one real edition), so this can't just be an automated field copy. Repo owner's suggested paths forward, neither built yet: revisit as a P2 routine checkup once the product is stable, or build a real new-release alert instead of periodic re-research.
-- [ ] **Graduated dealbreaker veto** (`_apply_dealbreaker_veto_graduated()` in `recommend.py`). Built and structurally verified 2026-09-07, but can't be proven against real data because `validated_dealbreaker_fields()` is currently empty for all 4 real raters -- rechecked 2026-09-12 (Mathias at 143 ratings), still empty, see project-log.md's 2026-09-12 entry. Blocked on more real per-rater rating data, not on more engineering. Revisit once a field/user pair actually validates.
-- [ ] **Series-aware field-conditional dedup.** Parked 2026-09-06. One real lead not yet built: protect the minority subgroup within a series split (not just validated-dealbreaker fields, which was tried and found to be a no-op since nothing currently validates). See `docs/scoring-test-protocol.md`'s dedup entries for the full trajectory.
-- [ ] **Schema-field ideas** (protagonist gender, protagonist competence trajectory, narrative sympathy between co-leads, `message_themes`/`anti_militarist_message` probe). Tracked in full in `docs/schema/book-dna-decisions.md`'s "Deferred / open proposals" section, not duplicated here. All explicitly waiting on more real rating evidence before committing to vocabulary.
-- [ ] **Tier 4 "audiobook-native" `book_dna` fields are still 0% tagged catalog-wide** (`narrator_performance`, `narrator_cast`, `narration_pace_vs_prose`, `accent_authenticity`, `production_quality` -- confirmed 2026-09-13: 0 of 941 tagged books have any of the 5 set). `docs/schema/book-dna.md` already documents this as "skipped for the pilot corpus"; it's what blocks the "medium" (text vs. audio) `recommend()` parameter floated as a deferred idea in `docs/schema/book-dna-decisions.md`. Surfaced again 2026-09-13 by a real user noticing no narrator/cast/production info for audiobooks they'd listened to in the app's book-info modal (the modal now explains the gap transparently in-product rather than showing a misleading blank section, but the underlying tagging gap is unaddressed). Needs a real tagging pass verified against a real source (e.g. Hardcover's own audiobook-edition data), not guessed -- not undertaken yet, scope/size unassessed.
+## done-27
+
 - [x] **`audiobook_editions.audiobook_length` backfilled from real edition runtime data.** Done 2026-09-13 (864 -> 904 of 941 tagged books) and completed 2026-09-18 (remaining 14 books with multiple standard-edition runtimes -- none actually straddled a bucket boundary, so no judgment call was needed after all). Migrations `20260913090000_backfill_audiobook_length_from_editions.sql`, `20260918232000_backfill_audiobook_length_remaining_14.sql`. Local (1035/1058) vs. hosted (1036/1058) 1-row gap is the same pre-existing, already-deferred drift noted back in the 2026-09-13 batch, not something this backfill introduced.
+
+## done-28
+
 - [x] **Data quality: swept for GraphicAudio full-cast rows mislabeled `edition_type = 'standard'`.** Done 2026-09-18 -- no confirmed mislabeled rows found catalog-wide (the originally-suspected "A Court of Frost and Starlight" row was already correctly tagged `dramatized_full_cast`; the 2026-09-13 report was a local-Postgres-drift artifact, not a real hosted data issue). Re-check after any future GraphicAudio/BBC batch (`tag-audiobook-editions` Sub-task A) -- this was a one-time sweep, not a standing guarantee.
+
+## done-29
+
 - [x] **`audiobook_editions` had RLS disabled and no grant to EITHER `anon` or `authenticated`.** Fixed 2026-09-13 (`20260913100000_expose_audiobook_editions_to_app.sql` for `authenticated`, `20260913110000_grant_audiobook_editions_to_anon.sql` for `anon`), verified with real REST calls under each role against hosted, not just a grants check. See CLAUDE.md's "Database & migrations" section for the resulting standing rule on new public-catalog-style tables.
+
+## done-30
+
 - [x] **21 of 97 `dramatized_full_cast` `audiobook_editions` rows were missing their cast list.** Done 2026-09-13 -- 12 recovered directly from each row's GraphicAudio `source_url` (via curl, since `WebFetch`'s markdown conversion was dropping the cast section), 9 confirmed genuinely unavailable rather than left as a silent gap (6 are the deliberate Earthsea/Foundation BBC bundled-dramatization no-op; the other 3 have no "Starring" attribute published anywhere on GraphicAudio's site). Migration `20260913120000_backfill_missing_dramatized_cast_lists.sql`, verified post-push: exactly the 9 confirmed-unavailable rows still missing cast.
+

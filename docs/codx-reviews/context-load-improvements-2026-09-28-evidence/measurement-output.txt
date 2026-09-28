@@ -1,0 +1,93 @@
+{
+  "baseline": "28277399c4d0acdb7c77d308c99d0658936e3fdd",
+  "source_sha256": "154b6af26b521a7b5e8373fa965ed52e86db9b8131dd8e5f3febbadfd5c95824",
+  "CLAUDE_sections_wc": {
+    "# Working conventions for this repo": 629,
+    "Startup reading and task routes": 645,
+    "Persona system": 1105,
+    "Cross-session destructive-action gate": 396,
+    "Structural/methodology-change review gate": 526,
+    "Database & migrations": 1423,
+    "Database backups": 247,
+    "Data quality / tagging": 1256,
+    "Catalog scope & series hierarchy": 643,
+    "Recommendation engine (`scripts/recommend.py`)": 626,
+    "v1 web app (`app/`, `api/`)": 574,
+    "Safety / credentials": 174,
+    "Multi-phase task closure": 243,
+    "Agent/token efficiency": 104,
+    "Logging": 302
+  },
+  "A_root": 4293,
+  "AB_root": 4302,
+  "routes": {
+    "CI reminder": {
+      "conditional": 247,
+      "A_loaded_once": 4540,
+      "A_saving_vs_8893": 4353,
+      "AB_injection_plus_first_disk_read": 8851,
+      "AB_saving_vs_one_old_copy": 42,
+      "AB_saving_vs_two_old_copies": 8935
+    },
+    "UI only": {
+      "conditional": 574,
+      "A_loaded_once": 4867,
+      "A_saving_vs_8893": 4026,
+      "AB_injection_plus_first_disk_read": 9178,
+      "AB_saving_vs_one_old_copy": -285,
+      "AB_saving_vs_two_old_copies": 8608
+    },
+    "Tag correction with DB read": {
+      "conditional": 3322,
+      "A_loaded_once": 7615,
+      "A_saving_vs_8893": 1278,
+      "AB_injection_plus_first_disk_read": 11926,
+      "AB_saving_vs_one_old_copy": -3033,
+      "AB_saving_vs_two_old_copies": 5860
+    },
+    "Scoring without DB": {
+      "conditional": 1269,
+      "A_loaded_once": 5562,
+      "A_saving_vs_8893": 3331,
+      "AB_injection_plus_first_disk_read": 9873,
+      "AB_saving_vs_one_old_copy": -980,
+      "AB_saving_vs_two_old_copies": 7913
+    },
+    "Scalar/schema": {
+      "conditional": 3948,
+      "A_loaded_once": 8241,
+      "A_saving_vs_8893": 652,
+      "AB_injection_plus_first_disk_read": 12552,
+      "AB_saving_vs_one_old_copy": -3659,
+      "AB_saving_vs_two_old_copies": 5234
+    }
+  },
+  "TODO": {
+    "before": 4887,
+    "closed_count": 30,
+    "closed_block_words": 2458,
+    "closed_checkbox_line_words": 2437,
+    "open_checkbox_line_words": 1817,
+    "open_count": 18,
+    "open_words": 2069,
+    "D_after": 2947,
+    "D_saved": 1940
+  },
+  "protocol": {
+    "full": 30830,
+    "front": 1962,
+    "history": 28868,
+    "C_front": 2146,
+    "C_avoidable_before_lookups": 28684
+  },
+  "decisions": {
+    "full": 11192,
+    "base_slice": 439,
+    "avoidable_before_lookups": 10753
+  },
+  "skill": {
+    "full": 7949,
+    "DONE_sections": 1481
+  },
+  "schema_total": 21320
+}

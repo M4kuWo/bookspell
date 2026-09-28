@@ -295,3 +295,20 @@ flagged for the same structural-review proposal.
 **Route 1 note.** It skipped `book-dna-vocabulary-gaps.md`. The row says
 "gap tracker before tagging", and the task was a single-scalar correction
 that adds no vocabulary. Defensible, and not graded as an under-read.
+
+### Corrections from CODX Task 25 review (2026-09-28, re-verified by CLDO)
+
+Two arithmetic errors in this doc were found by CODX and independently re-checked
+with `wc -w`. The text above is left as written, and these notes supersede it.
+
+1. **The 4-file schema split is 21,320 words combined, not 34,929**
+   (5,395 + 3,001 + 1,732 + 11,192). That is 1,742 more than the old 19,578-word
+   monolith, not ~15k more. The qualitative point still stands (unrouted,
+   the split is slightly larger), but the size of the effect was badly overstated.
+2. **The scoring route's reduction is ~18.5%, not ~24%.** The Results
+   section's ~47,580 figure used section-level CLAUDE.md counts, even
+   though the same section says CLAUDE.md is auto-loaded in full. On a
+   consistent full-injection basis the figure is 8,893 + TODO 4,868 + log 1,093 + core 5,395
+   + protocol 30,830 = 51,079, against the old 62,664. That is still only
+   illustrative, since the old side has no bounded-log allowance. The CI/UI
+   ~53% figure was already on the full-injection basis and stands.

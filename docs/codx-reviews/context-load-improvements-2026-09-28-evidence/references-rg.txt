@@ -1,0 +1,851 @@
+.claude/skills/catalog-trope-gap-sweep/SKILL.md:32:Read, in order: `CLAUDE.md` per its "Startup reading and task routes"
+.claude/skills/catalog-trope-gap-sweep/SKILL.md:43:`docs/project-log.md` per CLAUDE.md's own bounded-read rule (3 most
+.claude/skills/catalog-trope-gap-sweep/SKILL.md:45:file was written, and `docs/TODO.md` for current
+.claude/skills/catalog-trope-gap-sweep/SKILL.md:178:project (see CLAUDE.md's "Database & migrations" and "Data quality /
+.claude/skills/catalog-trope-gap-sweep/SKILL.md:193:  connection against hosted -- see CLAUDE.md's explicit warning on why).
+.claude/skills/catalog-trope-gap-sweep/SKILL.md:197:  same session** -- this rule already exists in CLAUDE.md for exactly
+.claude/skills/catalog-trope-gap-sweep/SKILL.md:231:- Update `docs/TODO.md`'s entry for this sweep with the outcome and
+.claude/skills/convert-romance-worldbuilding-fields/SKILL.md:208:Per CLAUDE.md's standing rule, check dependent rows first (should be
+.claude/skills/tag-audiobook-editions/SKILL.md:159:(confirmed 2026-09-18, see `docs/TODO.md`), and every row has
+.claude/skills/tag-audiobook-editions/SKILL.md:169:Dragon Reborn entry in `docs/TODO.md` for a concrete example of why.
+.claude/skills/tag-audiobook-editions/SKILL.md:222:fantasy, per this catalog's v1 scope -- see CLAUDE.md's "Catalog scope"
+.claude/skills/tag-audiobook-editions/SKILL.md:240:Same as everywhere else in this project (see CLAUDE.md): idempotent SQL
+.claude/skills/tag-catalog-batch/SKILL.md:11:loaded, but a book only becomes usable by the recommendation engine once
+.claude/skills/tag-catalog-batch/SKILL.md:103:is now a standing CLAUDE.md rule ("Data quality / tagging"), and this
+.claude/skills/tag-catalog-batch/SKILL.md:128:the CLAUDE.md rule above).
+.claude/skills/tag-catalog-batch/SKILL.md:380:CLAUDE.md): title+author-scoped (never a raw UUID), tested in a
+.claude/skills/tag-catalog-batch/SKILL.md:383:CLAUDE.md's own documented incidents) -- via `ls supabase/migrations/ |
+.claude/skills/tag-catalog-batch/SKILL.md:534:Same conventions as everywhere else in this project (CLAUDE.md): one
+.claude/skills/tag-catalog-batch/SKILL.md:575:sitting untagged and invisible to the recommendation engine while the
+.claude/skills/tag-catalog-batch/SKILL.md:655:they're out of v1 scope** (decided 2026-09-04, CLAUDE.md's Catalog
+.github/workflows/backup-reminder.yml:22:# README and CLAUDE.md's "Database backups" section): every project-log
+.github/workflows/impression-count-check.yml:3:# Alerts well before recommendation_impressions (see docs/TODO.md's
+.github/workflows/impression-count-check.yml:43:            echo "::warning::recommendation_impressions has $count rows, over the 100,000 early-warning threshold -- see docs/TODO.md's outcome-tracking item for the retention decision this was meant to flag, not a hard failure."
+.github/workflows/keep-warm.yml:5:# docs/TODO.md's "Render cold-start mitigation" item and
+.gitignore:20:# Per-machine persona marker (see CLAUDE.md's "Persona system") --
+AGENTS.md:4:`CLAUDE.md`'s "Persona system" section, which this file is the Codex-CLI
+AGENTS.md:6:separate rulebook: **every convention in `CLAUDE.md` applies to you
+AGENTS.md:7:too** (migrations, catalog scope, safety rules, logging discipline, all
+AGENTS.md:13:Also read, same as `CLAUDE.md` tells every session to: `docs/project-log.md`
+AGENTS.md:17:CLAUDE.md's task routes, and `docs/TODO.md` (the broader
+AGENTS.md:41:file/process CLDA uses for its own, narrower gate — see `CLAUDE.md`'s
+AGENTS.md:77:it keeps `CLAUDE.md`/schema files current. **This tracked file does
+AGENTS.md:106:never needed auth in the first place) — stay current with `CLAUDE.md`/
+AGENTS.md:184:start`, migrations applied there, see CLAUDE.md's "Database &
+AGENTS.md:279:## Concrete tasks (decided 2026-09-11, see docs/TODO.md's original CODX
+AGENTS.md:307:  implemented** — CLAUDE.md's own "Structural/methodology-change review
+AGENTS.md:325:plan (`docs/TODO.md`) reaches a step whose design is already decided —
+AGENTS.md:344:  CLDO-only territory per `CLAUDE.md`'s persona system, specifically
+AGENTS.md:352:  `scripts/recommend.py`** (clarified 2026-09-16, in `CLAUDE.md`'s CODX
+CLAUDE.md:22:Read `docs/TODO.md` before non-trivial work and before choosing a task.
+CLAUDE.md:60:in CLAUDE.md is not evidence it's unused — check the skills directory,
+CLAUDE.md:84:scope is unclear, read all of CLAUDE.md and the schema core. Search may
+CLAUDE.md:91:Database backups. Before proposing any new scalar field, even one
+CLAUDE.md:104:| Tagging, ingestion, metadata corrections or confidence QA | Data quality / tagging; Catalog scope & series hierarchy; database route if accessing DB | Schema core; exact YAML vocabulary; applicable tagging skill; gap tracker before tagging; relevant table/confidence contract |
+CLAUDE.md:105:| Vocabulary-gap sweep or new trope/content-warning proposal | Data quality / tagging; Catalog scope & series hierarchy; database route if accessing DB | Schema core and full YAML; vocabulary-gap tracker; decisions/rejections; gap-sweep skill when running a sweep |
+CLAUDE.md:106:| New scalar field or schema design | Data quality / tagging; Catalog scope & series hierarchy; Recommendation engine; Database & migrations | Schema core including scalar-field gate; YAML; relevant decisions/table contracts; scoring-test-protocol.md; affected skills |
+CLAUDE.md:107:| Scoring behavior, scoring refactor or designing/changing tests that assert scoring semantics | Recommendation engine; Catalog scope & series hierarchy; database route if accessing DB | Schema core; scoring-test-protocol.md with its existing pre-change gate; applicable contracts and prior decisions |
+CLAUDE.md:108:| Audiobook data or an edition display | v1 web app for UI/API work; Data quality / tagging; Catalog scope & series hierarchy; database route if accessing DB | Schema core; book-dna-tables.md edition contract; tag-audiobook-editions skill; Tier A/B guidance as applicable |
+CLAUDE.md:109:| Frontend, API, auth/config or deployment | v1 web app; add catalog/data/scoring/database routes when those behaviors are involved | Relevant feature contracts and skills; schema core for catalog/scoring behavior, not isolated CSS |
+CLAUDE.md:110:| DB access, migration, schema, grants/RLS, restore or DB configuration | Database & migrations; Database backups for backup/restore or risky persistent-data work; other domain routes as applicable | Relevant schema/table contracts and migration history; persona-specific authorized connection method |
+CLAUDE.md:111:| CI/workflows/dependencies/tooling only | None beyond universal unless changing domain behavior or performing DB/deployment/backup operations; backup jobs add Database backups | Actual workflow/tool configuration; add engine route for scoring fixtures, web route for deployment, DB route for DB jobs |
+CLAUDE.md:149:  capacity; see `docs/TODO.md`'s original CODX entry for the full
+CLAUDE.md:151:  convention file, the same role CLAUDE.md plays for Claude Code) —
+CLAUDE.md:299:fresh-session context-load problem (CLAUDE.md + `docs/TODO.md` +
+CLAUDE.md:324:- Any change to CLAUDE.md itself.
+CLAUDE.md:354:## Database & migrations
+CLAUDE.md:505:## Database backups
+CLAUDE.md:534:## Data quality / tagging
+CLAUDE.md:574:  it deleted — see "catalog scope" below).
+CLAUDE.md:667:## Catalog scope & series hierarchy
+CLAUDE.md:737:## Recommendation engine (`scripts/recommend.py`)
+CLAUDE.md:816:## v1 web app (`app/`, `api/`)
+CLAUDE.md:882:  `docs/TODO.md`) — a one-time clean result, not a standing guarantee,
+CLAUDE.md:913:first two were implemented and `docs/TODO.md`'s item was marked `[x]`
+CLAUDE.md:957:- **A `docs/TODO.md` item is a short pointer, never a second copy of the
+CLAUDE.md:961:  back to the TODO.md item and update it to a line or two: current
+CLAUDE.md:963:  detail`. Don't leave the full account sitting in TODO.md too. This
+CLAUDE.md:964:  was already the stated design (TODO.md is meant to be forward-looking
+CLAUDE.md:972:  sessions did this too. Fixed with a full TODO.md rewrite the same
+README.md:16:[Roadmap](docs/TODO.md)
+README.md:35:| 🌐 v1 web app | **Live** — real accounts, manual rating, live recommendations, Goodreads/Fable CSV import |
+README.md:41:- [How the recommendation engine works](#-how-the-recommendation-engine-works)
+README.md:51:## 🧠 How the recommendation engine works
+README.md:153:- **Recommendation engine** ([`scripts/recommend.py`](scripts/recommend.py)):
+README.md:165:- **v1 web app is live**: real Supabase Auth accounts, per-genre
+README.md:189:[`docs/TODO.md`](docs/TODO.md):
+README.md:260:  is now documented in [`CLAUDE.md`](CLAUDE.md) so it doesn't happen twice.
+README.md:302:[`CLAUDE.md`](CLAUDE.md) (repo conventions every session reads first), and
+README.md:311:  TODO.md                       prioritized, mutable task backlog
+README.md:334:  recommend.py                  the recommendation engine
+README.md:339:app/                             v1 web app — static HTML/CSS/JS, no build
+README.md:365:CLAUDE.md                        working conventions — read before touching
+README.md:378:**Recommendation engine** (reads `DATABASE_URL`, defaults to local):
+api/README.md:3:The only part of the v1 web app that genuinely needs live Python: calling
+api/README.md:10:"Bookspell v1 web app" entries for how it was built.
+api/main.py:150:    """Records what was actually shown (docs/TODO.md's "Prospective
+api/main.py:206:    # docs/TODO.md's 2026-09-18 entry: ~0.42s per 10 calls, ballooning to
+api/main.py:355:        # docs/TODO.md's import-coverage item) -- persists what the
+app/dashboard.html:78:    <span>Waking up the recommendation engine — this can take up to a minute the first time. Hang tight…</span>
+app/dashboard.html:297:// change (CLDO-only territory, see CLAUDE.md) for what's really just a
+app/dashboard.html:322:    // it (see docs/TODO.md's 2026-09-18 entry).
+app/rate.html:119:// Active-learning onboarding (simple/curated version -- see docs/TODO.md's
+app/rate.html:128:// has hit real duplicate-title collisions before (see CLAUDE.md).
+docs/PENDING_APPROVALS.md:3:See CLAUDE.md's "Cross-session destructive-action gate" section for the
+docs/PENDING_APPROVALS.md:8:added 2026-09-13, see AGENTS.md/CLAUDE.md's persona system) has a
+docs/TODO.md:31:or-two-line summary. See CLAUDE.md's "Logging" section for why this
+docs/TODO.md:47:- [x] **Set up a real database backup policy.** Done 2026-09-11 -- separate [`bookspell-backups`](https://github.com/M4kuWo/bookspell-backups) repo, manual cadence. See CLAUDE.md's "Database backups" section for the process.
+docs/TODO.md:48:- [x] **Bookspell v1 web app -- built and shipped.** Started 2026-09-12, initial build complete 2026-09-18 (real accounts/auth, manual rating, recommendations, Goodreads import, book-info modal, mobile-viewport pass with 2 real bugs found and fixed by the repo owner's own phone testing). Full build history in `docs/project-log.md`'s 2026-09-12 through 2026-09-18 entries. Ongoing feature/bug work on the live app is tracked as its own items below, not here.
+docs/TODO.md:55:- [x] **Fresh-session context-load reduction -- all 3 CODX Task 21 recommendations done and measured.** Step 1 (2026-09-25): bounded project-log read window (3 entries/1,500 words). Step 2 (2026-09-25): `book-dna.md` split into 4 files, ~72% smaller always-read core; measured 26/26 checklist items, zero regressions (see project-log's 2026-09-25 "after results" entry). Step 3 (2026-09-26): task-class routing policy in `CLAUDE.md` -- CLDO's original "purely additive table" framing was corrected by CODX's Task 23 review into a real reading-requirement policy (6 task-specific sections now conditional, 7 universal sections including both safety gates stay always-read); measured against CODX's FULL original 12-scenario proposal (extended from an initial lighter 4-scenario pass at the repo owner's explicit request), **43/43 checklist items passed, zero regressions**, plus several real bonus findings (a caught would-be regression, a real code insight about ratings-source handling, a correct flag-don't-build call on a scope-expansion case). Also surfaced and mitigated a genuine tooling issue: sub-agent system-prompt CLAUDE.md snapshots going stale mid-session, confirmed independently 12/12 times across every test agent -- now warned about at the top of the file itself and filed as product feedback. Tier 2 (an actual CLAUDE.md file split) explicitly deferred, not dropped -- revisit only if real usage shows Tier 1 isn't enough. See `docs/project-log.md`'s 2026-09-26 entries (the initial "measured" entry and the later full-12-scenario entry).
+docs/TODO.md:57:- [x] **Quantify the routing policy's real context-load gain.** Both parts done 2026-09-26. Real fresh-agent runs on 5 routes found no under-reads (no routing bug). Part 1's totals had left out required external files, notably `scoring-test-protocol.md`, so the scoring route's corrected gain is ~24%, not 51%; the narrow routes are ~53% below the old baseline even counting CLAUDE.md's full auto-load. See `docs/context-load-measurement-protocol.md`'s Results and `docs/project-log.md`'s 2026-09-26 "Context-load measurement Part 2 run" entry.
+docs/TODO.md:58:- [ ] **Two CLAUDE.md read-depth proposals from the Part 2 run -- queued to CODX as Task 25 (2026-09-28), widened to "find further context-load improvements" (incl. Tier 2, TODO archiving, better re-test method).** (1) The preamble's stale-snapshot warning led one agent to re-read all of CLAUDE.md from disk (~8.9k words duplicated). A cheaper heading/`wc -w` check would miss an in-place edit, so the design isn't obvious. (2) The routing rows don't say how deep to read very large reference files (scoring protocol, decisions, YAML), which allows a ~25k-word spread between two plausible sessions. See the same project-log entry.
+docs/TODO.md:100:- [ ] **CODX (Codex CLI) as a third working entity.** Set up 2026-09-13 (`AGENTS.md`, persona system in CLAUDE.md, a stricter destructive-action gate than CLDA's). Real environment: separate clone `~/Documents/bookspell-codex`, push blocked via a tracked `.githooks/pre-push` hook, a genuinely read-only Postgres role `codx_readonly` (2026-09-15) for running `scoring_tests.py`, the public anon key for everything else; every task ends with a report in `docs/codx-reports/`. Active and productive since 2026-09-14 -- its review tasks led to and executed the full `recommend.py` refactor above (through Phase B). Concrete task list and current review/propose-only scope live in `AGENTS.md`; deliberately NOT handed Book DNA tagging or scoring-algorithm design. See `docs/project-log.md`'s 2026-09-13 through 2026-09-17 entries and `docs/codx-reviews/` for the full task-by-task record.
+docs/TODO.md:116:- [ ] **`series.status`/`book_count` data-quality fix -- ongoing, batch-by-batch (display-only, doesn't affect scoring -- neither field is read by `scripts/recommend.py`).** Root cause (found 2026-09-08): `status` defaults to `'ongoing'` whenever Hardcover's `is_completed` flag isn't explicitly true; `book_count` is Hardcover's raw edition/omnibus count, not a curated mainline-installment number. Approach: batches of ~15-20 highest-profile series (ranked by Hardcover's raw `book_count` once the "currently linked" ranking signal saturated at 1 book/series around batch 8), each value verified via live search before writing, tested in a rolled-back transaction, applied and pushed/repaired per CLAUDE.md's migration-tracking rules. **213 of 484 series fixed as of batch 14 (2026-09-17).** Batches have also surfaced (and left unfixed, as separate bug classes for someone else to pick up) duplicate/parent-vs-leaf series rows, wrong `books.series_id` linkages, likely out-of-scope series names, and author-field contamination fixed inline when caught. **Each batch re-derives its own accurate checked/flagged name list directly from the migration files (ground truth) before starting, rather than trusting this summary** -- so nothing here needs to be treated as authoritative. See project-log.md's dated "series.status/book_count fix, batch N" entries (1-14) for full per-series reasoning, sourcing, and the current flagged-name list.
+docs/TODO.md:131:- [x] **`audiobook_editions` had RLS disabled and no grant to EITHER `anon` or `authenticated`.** Fixed 2026-09-13 (`20260913100000_expose_audiobook_editions_to_app.sql` for `authenticated`, `20260913110000_grant_audiobook_editions_to_anon.sql` for `anon`), verified with real REST calls under each role against hosted, not just a grants check. See CLAUDE.md's "Database & migrations" section for the resulting standing rule on new public-catalog-style tables.
+docs/book-dna-split-acceptance-tests.md:138:      `HIGH_RISK_FIELDS`'s definition in CLAUDE.md/`constants.py`).
+docs/codx-reports/2026-09-25-book-dna-split-review.md:96:| `CLAUDE.md:8` | Keep the same core path; change its description and explicitly define required conditional routes. There is no path rename necessary for core. |
+docs/codx-reports/2026-09-25-book-dna-split-review.md:97:| `CLAUDE.md:45,561,654,792,841` | Update audiobook-discoverability, cover-variants, omnibus, audiobook contract, and future-idea logging destinations. The logging destination at 841 is especially important: otherwise new proposals keep accumulating in the supposedly compact core. |
+docs/codx-reports/2026-09-25-book-dna-split-review.md:98:| `CLAUDE.md:469` | Preserve same-session YAML/core/skill synchronization and specify the additional owning reference when a tracker/table contract changes. Do not require rewriting unrelated history on every new value. |
+docs/codx-reports/2026-09-25-book-dna-split-review.md:99:| `CLAUDE.md:235–249` | Historical worked example: preserve its meaning; optionally add a present-location pointer instead of rewriting the incident as if it happened under the new layout. |
+docs/codx-reports/2026-09-25-book-dna-split-review.md:107:| **`docs/TODO.md:13,19,52,88,92,121,122`** | Update current ownership of ideas/tracker and contextual pointers. At 52, bounded log reading is already implemented; update the stale next step. Historical completed-item narration need not be rewritten, but its live tracker links should work. |
+docs/codx-reports/2026-09-25-book-dna-split-review.md:146:rg -n --hidden 'book-dna\.md|Future fields backlog|Flagged single-occurrence|Vocabulary growth process' README.md CLAUDE.md AGENTS.md docs/persona-workflow.md docs/scoring-test-protocol.md scripts .claude/skills
+docs/codx-reports/2026-09-25-context-load-review.md:13:| CLAUDE.md | 6,870 | 8,931 |
+docs/codx-reports/2026-09-25-context-load-review.md:15:| TODO.md | 4,383 | 5,698 |
+docs/codx-reports/2026-09-25-context-load-review.md:32:- The backlog's `audiobook_editions` entry documents an already-built table and its rationale (`book-dna.md:1544` onward). The audiobook skill points there. Making it discoverable only to schema designers would recreate the exact “table exists but the UI implementer missed it” failure documented in CLAUDE.md.
+docs/codx-reports/2026-09-25-context-load-review.md:79:rg -n -i 'audiobook_editions|narrator_cast' docs .claude/skills CLAUDE.md
+docs/codx-reports/2026-09-25-context-load-review.md:80:git diff <last-reviewed-commit> HEAD -- CLAUDE.md AGENTS.md docs/codx-tasks/current-task.md
+docs/codx-reviews/codx-a2-canonical-scorer-proposal-2026-09-16.md:240: docs/TODO.md                                       |   28 +-
+docs/codx-reviews/codx-a2-factor-evaluator-proposal-2026-09-16.md:9:prerequisite extraction for Phase A2 of docs/TODO.md, building on landed A1.
+docs/codx-reviews/codx-a2-factor-evaluator-proposal-2026-09-16.md:17:Commit 2b76625 is an ancestor. AGENTS.md and CLAUDE.md were reread in full,
+docs/codx-reviews/codx-a3-recommend-migration-proposal-2026-09-16.md:251: docs/TODO.md                                       |   23 +-
+docs/codx-reviews/codx-a4-explain-match-migration-proposal-2026-09-16.md:275: docs/TODO.md                                       |   27 +-
+docs/codx-reviews/codx-a5-full-score-migration-proposal-2026-09-16.md:213: docs/TODO.md                                       |   33 +-
+docs/codx-reviews/codx-highrisk-confidence-qa-pass-2026-09-17.md:11:This assignment supersedes the completed scorer migrations. The task was read from `docs/codx-tasks/current-task.md` after `git pull --ff-only`, following `docs/persona-workflow.md`. Baseline: **c41933e6b6a7e1c2f345b93d225f8c43552c12f4**. Read CLAUDE.md, the project-log tail and the two September 16 batch entries, the CODX backlog, schema guidance, and `.claude/skills/tag-catalog-batch/SKILL.md`. Applied that skill's identity and evidence standards to a review only; did not invoke its tagging/write procedure.
+docs/codx-reviews/codx-highrisk-confidence-qa-round2-2026-09-17.md:241:**Cursed Bunny is an already-recognised structural problem, not four freshly discovered missing facts.** The September 17 round-4 project-log entry explicitly says its anthology structure did not map cleanly to several scalar fields and records deliberate best guesses at low confidence. The migration preserves those values without per-field explanatory comments. This review independently supports that diagnosis for drive, POV count and reliability. Hardness has a potentially useful collection-level interpretation but still lacks sufficient evidence here. No new tags, nulling operation, collection exclusion, or scoring adjustment is proposed. Being in catalog scope and fitting every existing field are different questions; this finding does not reopen the decision that short-story collections belong in the catalog.
+docs/codx-reviews/codx-phase-b-shim-removal-2026-09-17.md:75:**`CLAUDE.md:568–569` is stale after this proposal**:
+docs/codx-reviews/codx-phase-b-shim-removal-2026-09-17.md:83:The suite no longer defines `R`, and recommend.py no longer represents the scoring engine. The earlier example at line 555 (`R.build_profile = R.build_profile_per_value`) is likewise not a usable post-split monkeypatch route. CLAUDE.md is untouched, as instructed.
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:11:The original audit examined commit `bf480b7d373a4db29a7bbf28a9dfd3ef02743d9f`. Line numbers below refer to that revision. The reconstruction task subsequently ran `git pull --ff-only`, advancing this clone to `8ee6740`; the fast-forward changed AGENTS.md, docs/TODO.md, and docs/project-log.md only. It did not change the audited engine or tests. No database requests were made during reconstruction.
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:13:Task 2 read root AGENTS.md, CLAUDE.md, the prior report at docs/codx-reviews/codx-recommend-review-2026-09-14.md, the September 14 fix writeups in docs/scoring-test-protocol.md, the GPT/Astra review and Phase A/B plan in docs/TODO.md, project-log history, and relevant schema/skill references. The first review's four bugs were already fixed by CLDO and are not claimed as new findings here.
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:27:The existing docs/TODO.md plan separates consolidation from file movement:
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:369: docs/TODO.md        | 46 ++++++++++++++++++++++++++-
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:1244:cat CLAUDE.md
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:1246:rg -n 'Phase A|Phase B|A1|A2|Astra|structural refactor|2026-09-14' docs/TODO.md docs/scoring-test-protocol.md
+docs/codx-reviews/codx-recommend-refactor-audit-2026-09-15.md:1251:sed -n '130,335p' docs/TODO.md
+docs/codx-reviews/codx-recommend-review-2026-09-14.md:29:Read root AGENTS.md and the local clone's full CLAUDE.md, including Persona
+docs/codx-reviews/codx-recommendation-engine-review-2026-09-19.md:135:The task asks for two corresponding scoring-test-protocol entries. Only the first exists: `docs/scoring-test-protocol.md:3366` documents the profile-resolution fix and ends by saying the dashboard change remains open. The consolidation is documented in project-log.md and TODO.md, but there is no matching protocol entry in current HEAD. This is a minor documentation omission; I read both other accounts and verified the code independently. The first entry should also qualify its unchanged error-behavior/cost assertion per the missing-title finding.
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:4185:+"""Api components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:4442:+"""Audit components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:4714:+"""Calibration components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:4780:+"""Catalog components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:4836:+"""Cold start components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:4907:+"""Constants components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:5665:+"""Encoding components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:5717:+"""Experimental components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:6556:+"""Explanations components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:6650:+"""Feedback components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:6746:+"""Pipeline components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:7555:+"""Prevalence components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:7667:+"""Profile components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:8039:+"""Rules components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/proposal.patch:8193:+"""Series components of the recommendation engine."""
+docs/codx-reviews/phase-b-module-split-2026-09-17-evidence/split.py:75:    header = f'"""{mod.replace("_", " ").capitalize()} components of the recommendation engine."""\n\n'
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:41:docs/scoring-test-protocol.md:2949:Implements Phase A step 4 from `docs/TODO.md`: `explain_match()` now
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:81:docs/TODO.md:406:  - **`explain_match()` redundantly re-resolves the ENTIRE profile
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:82:docs/TODO.md:424:    `explain_match()` cost 5x on top of the 3x from the parallel genre
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:83:docs/TODO.md:429:  `explain_match()` call for that request instead of letting each one
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:84:docs/TODO.md:438:  smaller and more contained than the `explain_match()` fix, worth
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:85:docs/TODO.md:452:  anything -- it did; A4 only changed what `explain_match()` does after
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:86:docs/TODO.md:456:  `scripts/scoring/api.py`; `explain_match()` itself is now a 2-line
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:87:docs/TODO.md:460:  old-vs-new `explain_match()` direct comparison (1,440 calls, 0
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:88:docs/TODO.md:461:  mismatches), the new function against old `explain_match()` given an
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:89:docs/TODO.md:865:  canonical scoring entry point that `recommend()`, `explain_match()`,
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:90:docs/TODO.md:892:      a book (`recommend()`'s loop, `explain_match()`,
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:91:docs/TODO.md:909:    - A4. Migrate `explain_match()`/`explain_book()` to build on the
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:92:docs/TODO.md:1290:  (including cold-start blend + user rules), not `explain_match()`'s
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:93:docs/TODO.md:1347:  **A4 LANDED, 2026-09-16** — CODX's Task 6: `explain_match()` now
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:94:docs/TODO.md:1352:  migration silently truncated `explain_match(..., top_n=None)`
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:95:docs/TODO.md:1358:  `explain_match()` alone. Also verified up front that
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:96:docs/TODO.md:1359:  `scoring_tests.py` never actually calls `explain_match()` anywhere,
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:97:docs/TODO.md:1368:  "A4: `explain_match()` migrated onto `score_candidate()`" entry and
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:98:docs/TODO.md:1410:  through `score_candidate()`** — `recommend()`, `explain_match()`,
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/caller-search.txt:99:docs/TODO.md:1436:  `recommend()`/`explain_match()`/`audit_book_score()` through both the
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/scoring_task13_old.py:1:"""Api components of the recommendation engine."""
+docs/codx-reviews/recommendation-engine-review-2026-09-19-evidence/task13_intermediate_routes.py:173:    # docs/TODO.md's 2026-09-18 entry: ~0.42s per 10 calls, ballooning to
+docs/codx-reviews/recommendations-all-partial-failure-fix-2026-09-19-evidence/before/api/main.py:164:    # docs/TODO.md's 2026-09-18 entry: ~0.42s per 10 calls, ballooning to
+docs/codx-reviews/recommendations-all-partial-failure-fix-2026-09-19-evidence/before/app/dashboard.html:78:    <span>Waking up the recommendation engine — this can take up to a minute the first time. Hang tight…</span>
+docs/codx-reviews/recommendations-all-partial-failure-fix-2026-09-19-evidence/before/app/dashboard.html:280:// change (CLDO-only territory, see CLAUDE.md) for what's really just a
+docs/codx-reviews/recommendations-all-partial-failure-fix-2026-09-19-evidence/before/app/dashboard.html:305:    // it (see docs/TODO.md's 2026-09-18 entry).
+docs/codx-reviews/recommendations-all-partial-failure-fix-2026-09-19-evidence/proposal.patch:172:     // it (see docs/TODO.md's 2026-09-18 entry).
+docs/codx-tasks/current-task.md:18:that CLAUDE.md's structural/methodology-change gate requires before any
+docs/codx-tasks/current-task.md:50:2. **Section routing inside CLAUDE.md saves ~0 on *loading*.** Claude
+docs/codx-tasks/current-task.md:51:   Code auto-injects all of CLAUDE.md (8,893 words) into every session
+docs/codx-tasks/current-task.md:54:   words: full CLAUDE.md + `docs/TODO.md` (4,871) + the bounded log
+docs/codx-tasks/current-task.md:57:3. **The stale-snapshot warning in CLAUDE.md's preamble caused
+docs/codx-tasks/current-task.md:59:   CLAUDE.md from disk, putting ~8.9k words in context twice. The other 4
+docs/codx-tasks/current-task.md:71:5. **`docs/TODO.md` is read in full every session, and half of it is
+docs/codx-tasks/current-task.md:82:  CLAUDE.md** (e.g. into `docs/conventions/*.md` files the routing table
+docs/codx-tasks/current-task.md:91:    doesn't recreate the discoverability failure CLAUDE.md's
+docs/codx-tasks/current-task.md:95:  hash / `git log -1 --format=%H -- CLAUDE.md` compared against something
+docs/codx-tasks/current-task.md:98:  hopeful. Note: if A shrinks CLAUDE.md a lot, B's cost shrinks with it.
+docs/codx-tasks/current-task.md:106:  history marked as search-don't-read. Check what CLAUDE.md's
+docs/codx-tasks/current-task.md:107:  Recommendation engine section and the schema core's scalar-field gate
+docs/codx-tasks/current-task.md:109:- **D. `docs/TODO.md` done items** (finding 5): consider moving closed
+docs/codx-tasks/current-task.md:111:  (if anything) relies on done items being in TODO.md, including the
+docs/codx-tasks/current-task.md:112:  multi-phase-closure rule, which uses TODO.md to notice an unfinished
+docs/codx-tasks/current-task.md:130:- Don't edit CLAUDE.md, AGENTS.md, TODO.md, the protocol doc or any
+docs/context-load-measurement-protocol.md:6:what did we actually gain? CLAUDE.md's own routing-policy section says
+docs/context-load-measurement-protocol.md:20:**OLD baseline** — the pre-overhaul convention was "read CLAUDE.md in
+docs/context-load-measurement-protocol.md:21:full, `docs/TODO.md` in full, `docs/schema/book-dna.md` in full" every
+docs/context-load-measurement-protocol.md:28:| `CLAUDE.md` | 7,657 |
+docs/context-load-measurement-protocol.md:29:| `docs/TODO.md` | 4,626 |
+docs/context-load-measurement-protocol.md:33:**NEW state** — current `CLAUDE.md` section word counts (universal
+docs/context-load-measurement-protocol.md:49:| Database & migrations | 1,423 | conditional |
+docs/context-load-measurement-protocol.md:50:| Database backups | 247 | conditional |
+docs/context-load-measurement-protocol.md:51:| Data quality / tagging | 1,256 | conditional |
+docs/context-load-measurement-protocol.md:52:| Catalog scope & series hierarchy | 643 | conditional |
+docs/context-load-measurement-protocol.md:53:| Recommendation engine | 626 | conditional |
+docs/context-load-measurement-protocol.md:54:| v1 web app | 574 | conditional |
+docs/context-load-measurement-protocol.md:62:**Required reading by representative route** (universal CLAUDE.md +
+docs/context-load-measurement-protocol.md:63:`docs/TODO.md` [4,716 words, current] + route-specific sections +
+docs/context-load-measurement-protocol.md:71:| v1 web app, UI-only (no catalog/scoring) | 9,414 | 31,861 | 70.5% |
+docs/context-load-measurement-protocol.md:85:needs almost everything (tagging conventions, catalog scope, the
+docs/context-load-measurement-protocol.md:91:sections (`v1 web app`, `Database backups`) are no longer read on a
+docs/context-load-measurement-protocol.md:107:over-read (falling back to "read all of CLAUDE.md" out of caution) or
+docs/context-load-measurement-protocol.md:145:> (`/Users/mathiaskurin/Documents/bookspell`). Read whatever CLAUDE.md
+docs/context-load-measurement-protocol.md:157:> CLAUDE.md and other files it points you to that this task requires.
+docs/context-load-measurement-protocol.md:164:> behavior changes. Before editing anything, read whatever CLAUDE.md
+docs/context-load-measurement-protocol.md:169:**Route 4 — v1 web app UI-only:**
+docs/context-load-measurement-protocol.md:172:> involved. Before touching anything, read whatever CLAUDE.md and other
+docs/context-load-measurement-protocol.md:181:> Before proposing anything, read whatever CLAUDE.md and other files it
+docs/context-load-measurement-protocol.md:198:in CLAUDE.md directly, then re-tested. If a route over-reads
+docs/context-load-measurement-protocol.md:201:own "if the scope is unclear, read all of CLAUDE.md" allowance.
+docs/context-load-measurement-protocol.md:209:reporting addendum: list which CLAUDE.md sections were relied on vs.
+docs/context-load-measurement-protocol.md:210:skimmed, say whether CLAUDE.md came from the system prompt or disk, give
+docs/context-load-measurement-protocol.md:216:CLAUDE.md was not changed.** Every agent picked the correct route
+docs/context-load-measurement-protocol.md:217:(Route 3 also added Database backups, a defensible call per the table's
+docs/context-load-measurement-protocol.md:218:"backup jobs add Database backups" clause, since the task touches the
+docs/context-load-measurement-protocol.md:227:| 3 CI/tooling | ~15,300 | 8,840 | ~10,330 (incl. Database backups) | **Over-read (mild)**, cause below |
+docs/context-load-measurement-protocol.md:229:| 5 New scalar field | ~19,000 disk + CLAUDE.md from prompt (~28,000 effective) | 29,375 | not a single number: "relevant" slices of 4 large files | **Match**, with a depth note |
+docs/context-load-measurement-protocol.md:232:routing rows.** It counted only CLAUDE.md sections, TODO.md, and the
+docs/context-load-measurement-protocol.md:235:  row, the scalar-field row, the Recommendation engine section, and
+docs/context-load-measurement-protocol.md:245:- TODO.md drift: 4,716 → 4,868 since Part 1 was computed.
+docs/context-load-measurement-protocol.md:252:(`pre-book-dna-split`) CLAUDE.md already required
+docs/context-load-measurement-protocol.md:260:**Structural confound: CLAUDE.md is always fully in context.** Claude
+docs/context-load-measurement-protocol.md:261:Code auto-injects the whole of CLAUDE.md (8,893 words) into every
+docs/context-load-measurement-protocol.md:270:**Why Route 3 over-read.** It re-read all of CLAUDE.md from disk because of
+docs/context-load-measurement-protocol.md:279:preamble is a CLAUDE.md change, so it needs the structural-review gate. It is
+docs/context-load-measurement-protocol.md:280:not an under-read fix. Queued as a proposal in `docs/TODO.md`.
+docs/external-reviews/2026-09-23-gpt-review.md:5:entries and docs/TODO.md's "External AI consultation" item). Unlike the
+docs/external-reviews/2026-09-23-gpt-review.md:28:* `recommend.py` had become a very large monolithic recommendation engine.
+docs/external-reviews/2026-09-23-gpt-review.md:370:→ CLAUDE.md / AGENTS.md
+docs/persona-workflow.md:5:from, where output lands, and who reviews it. `CLAUDE.md`'s "Persona
+docs/persona-workflow.md:23:Startup reading for all three personas follows CLAUDE.md's "Startup
+docs/persona-workflow.md:42:| **CLDA** | `docs/TODO.md` — the shared, cross-cutting backlog (also read by CLDO/CODX). She syncs, reads the bounded project-log window + TODO.md + relevant skills per `CLAUDE.md`'s standing instruction, then tells the repo owner what she'd work on next; he picks. | Commits/pushes directly — real migration files, `docs/project-log.md` entries (append-only), `docs/TODO.md` updates. She has real, if gated, write access (see `CLAUDE.md`'s "Cross-session destructive-action gate"). | No separate review step for routine batch work, per her established track record. CLDO reviews anything she flags in `docs/PENDING_APPROVALS.md`. |
+docs/persona-workflow.md:43:| **CODX** | `docs/codx-tasks/current-task.md` — a single, always-current assignment, written by CLDO, **committed in the shared, tracked repo** (not CODX's own clone). An ordinary `git pull` gets it — no copy-pasted prompt text, same mechanism as CLDA's TODO.md now. | Its own clone's local, **untracked** `docs/codx-reports/<date>-<slug>.md` — CODX cannot commit or push, ever, so this file only exists on disk on this machine until CLDO copies it out. | CLDO reads the report directly from CODX's clone (same machine, same disk — a plain file read, not a git operation), independently re-verifies every claim, and — if it lands — copies the reviewed report into the shared, tracked `docs/codx-reviews/` (the permanent record) and applies the real change. |
+docs/persona-workflow.md:44:| **CLDO** | Live conversation with the repo owner — not file-driven. | Commits/pushes directly, same as CLDA. Also writes/overwrites `docs/TODO.md` entries for CLDA and `docs/codx-tasks/current-task.md` for CODX when their next task is ready. | Reviews `docs/PENDING_APPROVALS.md` at the start of every sync; independently re-verifies every CODX proposal before applying it (never trusts a report at face value, regardless of how thorough it looks). |
+docs/persona-workflow.md:56:cannot commit or push *at all*, by design (see `CLAUDE.md`'s persona
+docs/project-log.md:191:Follow-up clarification: confirmed the recommendation engine's weighted-
+docs/project-log.md:210:against a database; the recommendation engine can be built and tuned as a
+docs/project-log.md:219:→ **build the recommendation engine as a standalone module** (tuned
+docs/project-log.md:428:  across the full catalog, then step 05 (recommendation engine). A batch
+docs/project-log.md:669:prerequisite before the recommendation engine (step 05). Single static
+docs/project-log.md:813:## 2026-08-29 — Recommendation engine v1: designed, built, validated
+docs/project-log.md:819:books is enough to validate against; the recommendation engine is the
+docs/project-log.md:1073:- Recommendation engine should discount/avoid recommending a later
+docs/project-log.md:1172:Ran the first real-user recommendation engine test: the user's wife's
+docs/project-log.md:1316:good, calibratable recommendation engine is) and correctly pushed back
+docs/project-log.md:2102:## 2026-08-31 (later) -- added CLAUDE.md
+docs/project-log.md:2112:Added `CLAUDE.md` at the repo root -- automatically loaded into context
+docs/project-log.md:2121:prioritization), catalog scope (out-of-scope books get deleted not left
+docs/project-log.md:3046:issue CLAUDE.md already documents one instance of. Confirmed the data
+docs/project-log.md:3154:benchmark for a recommendation engine. Reviewed it against the actual
+docs/project-log.md:3754:from the entry above, and asked to fix `CLAUDE.md` so the SAME mistake
+docs/project-log.md:3764:just `CLAUDE.md`'s policy summary): Step 3's tagging instructions were
+docs/project-log.md:3797:Also sharpened `CLAUDE.md`'s existing (too-passive) version of this rule
+docs/project-log.md:4404:  CLAUDE.md's data-quality section): Prince of Fools (dropped "Tim
+docs/project-log.md:4542:CLAUDE.md's standing instruction) -- unlike the earlier documented
+docs/project-log.md:4614:bibliographic data, the exact contamination pattern CLAUDE.md already
+docs/project-log.md:4663:**Strengthened CLAUDE.md's author-contamination guidance** after it
+docs/project-log.md:4708:via the tag-catalog-batch skill or an agent, per CLAUDE.md's
+docs/project-log.md:4823:standing policy warns against (see CLAUDE.md's tagging-accuracy
+docs/project-log.md:5112:blanket filter (verified query row counts directly, per CLAUDE.md's
+docs/project-log.md:5228:"passes every check, still wrong" failure mode CLAUDE.md already warns
+docs/project-log.md:5289:treatment as any other confirmed-out-of-scope title. Added a CLAUDE.md
+docs/project-log.md:5328:there's no corresponding migration file" bug CLAUDE.md's Database &
+docs/project-log.md:5368:CLAUDE.md warns causes hosted's tracking table to desync. **The very
+docs/project-log.md:5443:kind of test CLAUDE.md's "test example SQL/code before trusting it"
+docs/project-log.md:5456:recurring author-contamination failure CLAUDE.md already tracks (the
+docs/project-log.md:5478:partial-series-completion backlog CLAUDE.md already prioritizes.
+docs/project-log.md:6346:Per this project's own UI-testing convention (CLAUDE.md: "start the dev
+docs/project-log.md:6527:module-identity pitfall CLAUDE.md documents from the 2026-09-04
+docs/project-log.md:6753:claim in this same session (the Recommendation Engine Schematic
+docs/project-log.md:6775:file, the same pattern CLAUDE.md already documents). Resolved by
+docs/project-log.md:6785:problem CLAUDE.md warns about**: all 14 of the other session's new
+docs/project-log.md:6791:first, per CLAUDE.md's explicit requirement: applied all 14 migration
+docs/project-log.md:6989:## 2026-09-07 (later): created docs/TODO.md; landed format-preference gating for book_length/audiobook_length
+docs/project-log.md:6991:Created `docs/TODO.md` -- a prioritized, mutable, cross-cutting task
+docs/project-log.md:6993:book-dna.md's schema-specific "Future fields backlog". CLAUDE.md now
+docs/project-log.md:7063:Reordered `docs/TODO.md`: cheap/done items first, genuinely taxing
+docs/project-log.md:7077:CLAUDE.md already documents, this time between that file and
+docs/project-log.md:7083:local/remote match) -- so per CLAUDE.md, that one could not be renamed.
+docs/project-log.md:7113:New session, picked up from `docs/TODO.md`'s catalog-tagging-completion
+docs/project-log.md:7115:the 6 partially-tagged series (the CLAUDE.md priority — finishing these
+docs/project-log.md:7140:exact vocabulary) and updated `docs/TODO.md`'s catalog-completion item
+docs/project-log.md:7472:   answer, and updated TODO.md so any session (including the other
+docs/project-log.md:7595:gap. Not restructured here -- flagged in TODO.md instead.
+docs/project-log.md:7637:Generalized `docs/TODO.md`'s First-Law-specific entry into a proper
+docs/project-log.md:7683:Lawrence in `docs/TODO.md`, just discovered a third time on a universe
+docs/project-log.md:7699:edition-duplicate case found earlier today. Both recorded in CLAUDE.md's
+docs/project-log.md:7700:"Catalog scope & series hierarchy" section so future tagging sessions
+docs/project-log.md:7906:with `book_count = 0`, exactly the leaf-vs-umbrella pattern CLAUDE.md
+docs/project-log.md:7948:K. Vaughan), the out-of-scope graphic novel CLAUDE.md already documents
+docs/project-log.md:8087:guessing instead of real research -- same reasoning CLAUDE.md already
+docs/project-log.md:8090:## 2026-09-08 (later still): search-budget blocker resolved, handoff note left in CLAUDE.md
+docs/project-log.md:8105:in CLAUDE.md pointing her at exactly where things left off (via
+docs/project-log.md:8106:TODO.md's already-thorough audiobook item, not re-derived here) and
+docs/project-log.md:8333:per CLAUDE.md's standing policy on this exact failure mode: "White
+docs/project-log.md:8597:checkable, confidently-wrong mistake CLAUDE.md's tagging-failure
+docs/project-log.md:8681:  caper" -- CLAUDE.md's v1 scope section doesn't set an age-category
+docs/project-log.md:8706:  from v1 scope per CLAUDE.md's 2026-09-04 decision.
+docs/project-log.md:8797:idempotency re-run check) per CLAUDE.md's convention. `book_dna` row
+docs/project-log.md:8849:against CLAUDE.md's explicit caution about pattern-matching this
+docs/project-log.md:8898:CLAUDE.md's "catalog scope" section. **The Screwtape Letters** (C. S.
+docs/project-log.md:8900:tempter), not genre fantasy/sci-fi as this catalog scopes those terms.
+docs/project-log.md:8907:interim too, not just this batch's 18). See `docs/TODO.md`'s updated
+docs/project-log.md:8923:already a documented, permanent-skip case (see `docs/TODO.md`'s
+docs/project-log.md:9035:the "confidently wrong" pattern-matching CLAUDE.md's tagging section
+docs/project-log.md:9050:(Shōgun, The Screwtape Letters) -- see `docs/TODO.md`'s updated
+docs/project-log.md:9061:to be deleted, per CLAUDE.md's standing "flag, then delete once
+docs/project-log.md:9077:pattern CLAUDE.md documents and asks to check for routinely**: a
+docs/project-log.md:9083:anti-pattern CLAUDE.md warns about. Confirmed both migrations are
+docs/project-log.md:9087:CLAUDE.md is still `supabase migration repair`, not letting `db push`
+docs/project-log.md:9208:recurring author-field contamination CLAUDE.md documents, flagged here
+docs/project-log.md:9233:matching failure mode CLAUDE.md warns about (Dungeon Crawler Carl and
+docs/project-log.md:9256:for ingestion+tagging. Recorded in TODO.md.
+docs/project-log.md:9284:per CLAUDE.md's standing policy -- confirmed Wizard's Guide is a
+docs/project-log.md:9408:weren't -- TODO.md only had a one-paragraph summary, not something a
+docs/project-log.md:9442:CLAUDE.md's "test in a rolled-back transaction before trusting it
+docs/project-log.md:9505:scope creep CLAUDE.md warns against). Left `docker ps -a` clean
+docs/project-log.md:9536:this choice on future migrations by default -- CLAUDE.md's "apply to
+docs/project-log.md:9570:the other's identity). CLAUDE.md's new "Persona system" section
+docs/project-log.md:9667:main conversation to review and commit; `docs/TODO.md` and
+docs/project-log.md:9701:the 4 tropes vocabulary entries -- dependent-row order, per CLAUDE.md).
+docs/project-log.md:9709:instead of `supabase db push` -- precisely the anti-pattern CLAUDE.md
+docs/project-log.md:9719:transaction) before repairing -- per CLAUDE.md's explicit warning not
+docs/project-log.md:9770:from P1 to P3 in `docs/TODO.md`, folding in the former separate P2
+docs/project-log.md:9790:`docs/TODO.md` (replacing the demoted dramatized-audio item in that
+docs/project-log.md:10038:narrator backfill item for real; `docs/TODO.md` updated accordingly.
+docs/project-log.md:10079:TODO.md rather than decided unilaterally.
+docs/project-log.md:10106:the whole setup in CLAUDE.md's new "Database backups" section so a
+docs/project-log.md:10203:to guess at scale. Logged the full list in docs/TODO.md rather than
+docs/project-log.md:10247:follow-ups in docs/TODO.md, not silently dropped.
+docs/project-log.md:10296:limited, single POV -- caught exactly the failure CLAUDE.md's
+docs/project-log.md:10321:re-run (CLAUDE.md's standing testing convention) surfaced a real
+docs/project-log.md:10330:link -- same display bug as docs/TODO.md's separate catalog-wide fix
+docs/project-log.md:10423:catalog). Checked our actual catalog scope first: `Holly Gibney`
+docs/project-log.md:10679:that time -- see TODO.md's "Graduated dealbreaker veto" entry). Enough
+docs/project-log.md:10729:(see CLAUDE.md's "Catalog scope & series hierarchy" section, and the
+docs/project-log.md:10742:a few Ayn Rand novels) -- expected per CLAUDE.md's documented pattern,
+docs/project-log.md:10824:Continuation of docs/TODO.md's P2 item (root cause documented
+docs/project-log.md:10880:CLAUDE.md's standard pattern) -- **not yet pushed via `supabase db
+docs/project-log.md:10892:scope per CLAUDE.md's catalog-scope section) still has a 'series'
+docs/project-log.md:11007:  audit's "Confirmed NOT connected" list in `docs/TODO.md`) -- not
+docs/project-log.md:11043:`docs/TODO.md` updated with the new exclude list and a batch-4 pointer.
+docs/project-log.md:11047:Continuing docs/TODO.md's P2 shared-universe linking audit as CLDA,
+docs/project-log.md:11150:  out of v1 scope per CLAUDE.md's catalog-scope policy, same as the
+docs/project-log.md:11182:Continuing docs/TODO.md's P2 shared-universe linking audit (batch 5).
+docs/project-log.md:11430:Continuing docs/TODO.md's P2 shared-universe linking audit (batch 6).
+docs/project-log.md:11434:Filtered out every author already listed in docs/TODO.md as checked
+docs/project-log.md:11548:**A real bookkeeping gap caught before use**: docs/TODO.md's own "next
+docs/project-log.md:11553:docs/TODO.md and this log's own batch-4 entry, not just a one-off typo).
+docs/project-log.md:11559:total in docs/TODO.md below so batch 6 doesn't inherit the same gap.
+docs/project-log.md:11636:  violating CLAUDE.md's "series_id always points at a leaf series, never
+docs/project-log.md:11655:The Inheritance Games), are now all carried in docs/TODO.md's flagged
+docs/project-log.md:11690:Continuing docs/TODO.md's P2 shared-universe linking audit (batch 7),
+docs/project-log.md:11694:docs/TODO.md as checked across batches 1-6, leaving the same
+docs/project-log.md:11828:-- the single-space version this file and TODO.md had been carrying
+docs/project-log.md:11907:untouched, added to docs/TODO.md's flagged-name exclude list.
+docs/project-log.md:11913:narrator ("Ray Porter") -- the same contamination pattern CLAUDE.md's
+docs/project-log.md:11914:"Data quality / tagging" section already tracks (the
+docs/project-log.md:11938:over + 2 new this batch). `docs/TODO.md` updated with the new exclude
+docs/project-log.md:11943:names (see docs/TODO.md's updated entry for the full lists). A
+docs/project-log.md:11952:## 2026-09-12 — Bookspell v1 web app: architecture decided, build started
+docs/project-log.md:11996:exactly as CLAUDE.md already documents; anyone who wants to use the real
+docs/project-log.md:11999:Build order (see TODO.md's new P0 entry for the full list): migration
+docs/project-log.md:12006:## 2026-09-13 — Bookspell v1 web app: steps 1/3/4 built, step 2 half-done, 2 real bugs caught
+docs/project-log.md:12222:contamination pattern CLAUDE.md already documents catalog-wide; noted
+docs/project-log.md:12303:CLAUDE.md already documents.
+docs/project-log.md:12606:`docs/TODO.md` (added now). The book-info modal now explains this
+docs/project-log.md:12695:rather than guessed at -- noted in `docs/TODO.md` as a real, smaller
+docs/project-log.md:12710:reclassification. Noted in `docs/TODO.md`.
+docs/project-log.md:12743:has a `source_url` pointing at where to look. Added to `docs/TODO.md`
+docs/project-log.md:12750:CLAUDE.md's top-level "before doing anything else" reading list now
+docs/project-log.md:12789:`audiobook_editions` grants fix covered above). `CLAUDE.md` updated
+docs/project-log.md:12793:unconditional-`display` CSS gotcha, and a new "v1 web app" section
+docs/project-log.md:12797:**Open threads for the next session** (also see `docs/TODO.md`'s P1-P3
+docs/project-log.md:12801:  more live testing, or picking up whichever `docs/TODO.md` item the
+docs/project-log.md:12805:  ready-to-pick-up items (see `docs/TODO.md`'s P3 section).
+docs/project-log.md:12847:`docs/TODO.md`.
+docs/project-log.md:12894:Continuing `docs/TODO.md`'s P2 shared-universe linking audit (batch 8),
+docs/project-log.md:12900:"confirmed NOT connected" lists in `docs/TODO.md`), leaving the same
+docs/project-log.md:13124:slot after `140000` was safe per CLAUDE.md's own renaming rule, and
+docs/project-log.md:13167:scoring-engine change (CLDO-only territory per CLAUDE.md, with its own
+docs/project-log.md:13240:`docs/TODO.md` entry needed for this batch. The 3 rows whose recorded
+docs/project-log.md:13285:**CODX setup -- DONE**, per `docs/TODO.md`'s original 2026-09-11 entry
+docs/project-log.md:13287:root, pointing back at `CLAUDE.md` for every shared convention rather
+docs/project-log.md:13293:tagging or scoring-algorithm design). `CLAUDE.md`'s persona system
+docs/project-log.md:13305:behalf. `docs/TODO.md`'s CODX entry updated to reflect setup being
+docs/project-log.md:13333:tag-catalog-batch's mandatory list all updated together, per CLAUDE.md).
+docs/project-log.md:13334:Added to `docs/TODO.md`'s P1 section, ready for CLDA to pick up
+docs/project-log.md:13481:added to docs/TODO.md's flagged-name list so future batches' ranking
+docs/project-log.md:13489:per CLAUDE.md's duplicate-timestamp rule) --
+docs/project-log.md:13506:in this exact spot). `docs/TODO.md` updated with the new 156-name
+docs/project-log.md:13510:now-checked names across batches 1-7 (see docs/TODO.md's updated entry
+docs/project-log.md:13638:for the exact pattern docs/TODO.md's "Catalog scope & series hierarchy"
+docs/project-log.md:13682:17 fixed this batch + 0 confirmed-correct this batch). `docs/TODO.md`
+docs/project-log.md:13687:now-checked names across batches 1-8 (see docs/TODO.md's updated entry
+docs/project-log.md:13704:`docs/TODO.md`. Read CLAUDE.md, `docs/schema/book-dna.md` in full,
+docs/project-log.md:13754:Per CLAUDE.md's agent-efficiency guidance (large batch work, each agent
+docs/project-log.md:13836:CLAUDE.md's own standing instruction to cross-check against the schema
+docs/project-log.md:13855:after confirming row counts match on both sides, per CLAUDE.md's
+docs/project-log.md:13860:the ~961-book tagged catalog) -- see `docs/TODO.md`'s updated entry for
+docs/project-log.md:13889:(per CLAUDE.md's agent-efficiency guidance), each given the DB
+docs/project-log.md:14006:verified the real data), per CLAUDE.md's documented recovery procedure.
+docs/project-log.md:14039:CLAUDE.md's agent-efficiency guidance), each given the DB connection
+docs/project-log.md:14164:case, worth a backfill check. Also, per CLAUDE.md's mandatory
+docs/project-log.md:14195:CLAUDE.md's documented recovery procedure. This is now the THIRD
+docs/project-log.md:14254:sandbox (worth updating CLAUDE.md's "structurally unavailable" framing
+docs/project-log.md:14264:per CLAUDE.md's mandatory author-field verification standard -- not just
+docs/project-log.md:14321:`docs/TODO.md`'s sweep-#3 entry updated to mark both flagged items
+docs/project-log.md:14358:on any future re-clone) and `CLAUDE.md`'s persona entry.
+docs/project-log.md:14382:session's own `AGENTS.md`/`CLAUDE.md` work) -- full detail is in that
+docs/project-log.md:14387:Continuing `docs/TODO.md`'s P2 shared-universe linking audit (batch 9),
+docs/project-log.md:14592:`docs/TODO.md` and found **all 53 have now been checked at least once**
+docs/project-log.md:14598:linked. `docs/TODO.md`'s audit section updated with the full batch-9
+docs/project-log.md:14783:`AGENTS.md`/`CLAUDE.md` updated to describe the one-command setup
+docs/project-log.md:14881:from batches 1-8's own project-log.md/TODO.md entries** (standard
+docs/project-log.md:15014:same author-field-contamination pattern CLAUDE.md's "Data quality /
+docs/project-log.md:15024:(14+14+17+17+15+14+16+17+16). `docs/TODO.md`'s
+docs/project-log.md:15060:established, repeated process; see CLAUDE.md's persona section and this
+docs/project-log.md:15064:from batches 1-9's own project-log.md/TODO.md entries** (standard
+docs/project-log.md:15192:(14+14+17+17+15+14+16+17+16+15). docs/TODO.md's series.status/book_count
+docs/project-log.md:15201:established, repeated process; see CLAUDE.md's persona section and this
+docs/project-log.md:15297:(14+14+17+17+15+14+16+17+16+15+13). docs/TODO.md's series.status/
+docs/project-log.md:15322:CLAUDE.md and batch 5's own precedent of a running-total-only approach
+docs/project-log.md:15471:(14+14+17+17+15+14+16+17+16+15+13+16). docs/TODO.md's
+docs/project-log.md:15502:update statements, not the 16 its own TODO.md/project-log header
+docs/project-log.md:15681:docs/TODO.md's series.status/book_count entry updated with this
+docs/project-log.md:15704:only the actual push/data-transfer step -- `AGENTS.md`/`CLAUDE.md`
+docs/project-log.md:15765:## 2026-09-14 (later still) -- GPT/Astra repository review: verified point-by-point, logged to docs/TODO.md; recommend.py refactor proposal scoped but not started
+docs/project-log.md:15823:All of the above logged into `docs/TODO.md`'s P1 section with the
+docs/project-log.md:15845:hard to partially revert. Full detail in `docs/TODO.md`.
+docs/project-log.md:15881:project's real write-capable connection string. `AGENTS.md`/`CLAUDE.md`
+docs/project-log.md:15886:refactor plan already in `docs/TODO.md`) was handed to CODX for its
+docs/project-log.md:15970:`docs/TODO.md`'s CODX entry too**: CODX's Task 2 report (the
+docs/project-log.md:15977:captured as a properly scoped, prioritized `docs/TODO.md` item with no
+docs/project-log.md:16029:permanent record (same pattern as Task 1) and updated `docs/TODO.md`'s
+docs/project-log.md:16075:Updated `docs/TODO.md`'s CODX entry to reflect all 7 decisions resolved
+docs/project-log.md:16088:Confirmed yes, this doesn't relax anything: CLAUDE.md's "CODX
+docs/project-log.md:16103:`CLAUDE.md`'s CODX section so it doesn't need re-litigating.
+docs/project-log.md:16144:2b76625` failing, the A1 kickoff protocol entry and CLAUDE.md
+docs/project-log.md:16224:"A2 (prerequisite)" entry, and updated `docs/TODO.md` -- next real step
+docs/project-log.md:16231:permanent" language in CLAUDE.md's CODX section was written to let grow
+docs/project-log.md:16239:CLAUDE.md clarification was enough) found a real gap: the "Deliberately
+docs/project-log.md:16371:tail, `docs/TODO.md`'s P0 section, and `docs/PENDING_APPROVALS.md`
+docs/project-log.md:16391:CLAUDE.md calls for): `supabase migration list --linked` shows every
+docs/project-log.md:16419:The report implements the real Phase A step 2 from `docs/TODO.md` (not
+docs/project-log.md:16459:`docs/TODO.md` updated. Next real step: A3 (migrate `recommend()`'s own
+docs/project-log.md:16463:CLAUDE.md's persona rules even though CODX could again build and
+docs/project-log.md:16480:The report implements Phase A step 3 from `docs/TODO.md`:
+docs/project-log.md:16527:`docs/TODO.md` updated. Next real step: A4 (migrate
+docs/project-log.md:16538:The report implements Phase A step 4 from `docs/TODO.md`:
+docs/project-log.md:16591:`docs/TODO.md` updated. Next real step: A5 (migrate
+docs/project-log.md:16603:The report implements Phase A step 5 from `docs/TODO.md` -- the step
+docs/project-log.md:16633:object" pitfall CLAUDE.md warns about, asserting `O.R is N.R is R`
+docs/project-log.md:16674:`docs/TODO.md` updated. **Phase A is now functionally complete for
+docs/project-log.md:16688:untagged-book count against hosted's (routine per CLAUDE.md's "verify
+docs/project-log.md:16742:already-tagged book (the "partial series" priority CLAUDE.md's tagging
+docs/project-log.md:16760:`docs/TODO.md`'s "Catalog expansion round 4" entry, "CLDA: next task,
+docs/project-log.md:16769:  `CLAUDE.md`'s "Catalog scope & series hierarchy" section, same
+docs/project-log.md:16771:  identified). Not tagged, added to the skip list (see `docs/TODO.md`
+docs/project-log.md:16781:  Flagged in `docs/TODO.md` for the repo owner rather than tagged or
+docs/project-log.md:16885:explicit "not part of this batch" boundary -- see `docs/TODO.md` update).
+docs/project-log.md:17045:stack here, the same thinner-safety-net gap CLAUDE.md's destructive-
+docs/project-log.md:17062:own handoff -- sync, read `docs/TODO.md`, self-direct, report back to
+docs/project-log.md:17071:reviews it), explicitly distinct from `CLAUDE.md`'s persona section
+docs/project-log.md:17073:do). Both `CLAUDE.md` and `AGENTS.md` now point to it instead of
+docs/project-log.md:17077:had no equivalent of CLDA's `docs/TODO.md` -- its only path to a
+docs/project-log.md:17162:`docs/TODO.md`, once the repo owner is ready to schedule it -- or an
+docs/project-log.md:17229:shared universes), and written before the v1 web app existed, before
+docs/project-log.md:17251:workflow and pointing to `docs/persona-workflow.md`/`CLAUDE.md`/
+docs/project-log.md:17327:ingestion) per CLAUDE.md's "Short-story collections are in scope"
+docs/project-log.md:17754:   very top of `CLAUDE.md` (in the "read this before doing anything
+docs/project-log.md:17755:   else" section) plus a full entry in "Database & migrations"
+docs/project-log.md:17764:same title CLAUDE.md's own apostrophe-type incident already flagged,
+docs/project-log.md:17871:**Moved the confidence QA pass entry from P2 to P3** in `docs/TODO.md`,
+docs/project-log.md:17885:anything off: the original 8-file sketch in `docs/TODO.md`'s Phase B
+docs/project-log.md:17974:`docs/codx-reviews/codx-phase-b-module-split-2026-09-17.md`, `docs/TODO.md`
+docs/project-log.md:18006:documentation staleness this task will create: CLAUDE.md's monkeypatch
+docs/project-log.md:18048:CLAUDE.md's monkeypatch A/B-testing guidance checked a single `R is
+docs/project-log.md:18054:this fix to CLAUDE.md myself after reviewing it, same process as every
+docs/project-log.md:18068:docs/codx-reviews/codx-phase-b-shim-removal-2026-09-17.md, docs/TODO.md
+docs/project-log.md:18075:## 2026-09-17 (later still): docs/TODO.md hygiene fix -- stale `recommend.py` refactor entry marked done
+docs/project-log.md:18098:pick up ready CLDO-appropriate work from `docs/TODO.md`.
+docs/project-log.md:18193:research, fixed in the same migration** (per CLAUDE.md's standing
+docs/project-log.md:18229:docs/TODO.md updated with the full batch detail and a corrected
+docs/project-log.md:18235:The reader-count bottleneck (docs/TODO.md's existing note, sourced from
+docs/project-log.md:18243:pitch text and posting list logged in docs/TODO.md's new "Recruit more
+docs/project-log.md:18272:Picked up the P0 v1 web app's still-open verification item (item 5 of
+docs/project-log.md:18280:"waking up the recommendation engine" loading state fires and resolves
+docs/project-log.md:18305:docs/TODO.md rather than resolved unilaterally; needs the repo owner to
+docs/project-log.md:18328:docs/TODO.md's P0 entry updated to reflect this precisely rather than
+docs/project-log.md:18373:CLAUDE.md's own instruction that the hosted password/connection string
+docs/project-log.md:18386:overwrite of the kind CLAUDE.md's own incident history warns about.
+docs/project-log.md:18436:CLAUDE.md) -- confirmed 143/143 rows inserted, exact rating-label
+docs/project-log.md:18451:from docs/TODO.md's P0 next-steps list rather than left open
+docs/project-log.md:18620:(`docs/TODO.md`): self-hosting cover images (download once at ingestion
+docs/project-log.md:18715:CLAUDE.md, same status as the existing author-contamination check.
+docs/project-log.md:18726:CLAUDE.md's own "reference via a title subselect, never a raw UUID"
+docs/project-log.md:18784:not an uncertain one -- the same failure shape CLAUDE.md's tagging
+docs/project-log.md:18788:docs/TODO.md rather than building something on data just shown to be
+docs/project-log.md:18813:in docs/TODO.md -- proposed shape is `release_date_start`/
+docs/project-log.md:18837:fixed**: this touches the scoring engine, which per CLAUDE.md needs
+docs/project-log.md:18841:Logged as a real, well-scoped P1 item in docs/TODO.md with the exact
+docs/project-log.md:18847:Ran the sweep `docs/TODO.md` had been flagging since 2026-09-13
+docs/project-log.md:18883:now.** Marked done in `docs/TODO.md`, with a note to re-check after any
+docs/project-log.md:18915:work for future sessions) in the same session, per CLAUDE.md's rule for
+docs/project-log.md:18916:schema changes. `docs/TODO.md` marked done for the schema half, with
+docs/project-log.md:18931:this is exactly the kind of mechanical-but-checkable step CLAUDE.md
+docs/project-log.md:18954:backfill caused. `docs/TODO.md` marked done.
+docs/project-log.md:19028:how this one was found. Flagged in `docs/TODO.md`, not built this
+docs/project-log.md:19079:CLAUDE.md's rule against raw-connection hosted writes applies to
+docs/project-log.md:19146:matching entry, per CLAUDE.md's rule that scoring changes get logged
+docs/project-log.md:19310:logged in `project-log.md`/`TODO.md` only. No action needed beyond this
+docs/project-log.md:19484:duplicate-migration-timestamp check CLAUDE.md already documents doing
+docs/project-log.md:19888:the 138-book untagged round-4 pool (see `docs/TODO.md`). Unlike prior
+docs/project-log.md:19941:tagging per CLAUDE.md's rule.
+docs/project-log.md:20032:anymore (see `docs/TODO.md`'s updated "Catalog expansion round 4" entry).
+docs/project-log.md:20036:left untouched per instructions, flagged again in TODO.md).
+docs/project-log.md:20088:**Docs**: CLAUDE.md's "Catalog scope & series hierarchy" section
+docs/project-log.md:20092:mis-ingests) and the (title, author)-scoping lesson. `docs/TODO.md`'s
+docs/project-log.md:20130:   deliberately kept eligible per CLAUDE.md's "short-story collections
+docs/project-log.md:20274:this is the hosted-direct-apply path CLAUDE.md documents, not
+docs/project-log.md:20283:on `book_dna`, same as every prior round. `docs/TODO.md` updated with
+docs/project-log.md:20337:**Author-field contamination found and fixed inline** (per CLAUDE.md,
+docs/project-log.md:20407:hosted-direct-apply path CLAUDE.md documents). Verified post-apply: all
+docs/project-log.md:20420:(was 229). `docs/TODO.md`'s round-5 entry updated with this batch's
+docs/project-log.md:20449:CLAUDE.md's schema-doc-sync rule. Computed `narrator_cast` from
+docs/project-log.md:20503:CLAUDE.md, not deferred):
+docs/project-log.md:20582:(was 211). `docs/TODO.md`'s round-5 entry updated with this batch's
+docs/project-log.md:20701:(was 193). `docs/TODO.md`'s round-5 entry updated with this batch's
+docs/project-log.md:20898:(was 175). `docs/TODO.md`'s round-5 entry updated with this batch's
+docs/project-log.md:21011:(was 157). `docs/TODO.md`'s round-5 entry updated with this batch's
+docs/project-log.md:21083:(`20260922060000`), pushed clean. Same class of issue CLAUDE.md already
+docs/project-log.md:21110:## 2026-09-22, later still -- docs/TODO.md rewritten into short-backlog format; the rule that should have prevented the drift now stated explicitly
+docs/project-log.md:21113:stated convention by pasting full narrative into TODO.md items instead
+docs/project-log.md:21115:Answer: the split was described (TODO.md forward-looking/mutable vs.
+docs/project-log.md:21119:P0 entries (the v1 web app item, ~370 lines of inline "UPDATE" paragraphs
+docs/project-log.md:21123:- Added an explicit rule to CLAUDE.md's "Logging" section: a TODO.md
+docs/project-log.md:21126:  collapse the TODO.md item to 1-3 lines plus a pointer.
+docs/project-log.md:21127:- Reinforced the same rule directly in TODO.md's own header, since
+docs/project-log.md:21131:  per CLAUDE.md's own large-batch-work convention), each given the
+docs/project-log.md:21139:  leaving it bloating TODO.md. Every other closed item collapsed to a
+docs/project-log.md:21184:`docs/TODO.md`.
+docs/project-log.md:21277:`docs/TODO.md`'s P1 the same day it surfaced). Explicitly scoped as
+docs/project-log.md:21517:from CLAUDE.md's own scoring-change rules alongside the existing
+docs/project-log.md:21523:TODO.md item -- not separately re-logged here.
+docs/project-log.md:21525:## 2026-09-24 -- TODO.md updated with the review's genuinely new, real items
+docs/project-log.md:21530:literally named that; `docs/TODO.md` has always been serving that role
+docs/project-log.md:21535:New items added (see `docs/TODO.md` for the actual entries, kept
+docs/project-log.md:21686:Built the `docs/TODO.md` item from the 2026-09-23 GPT review's R7
+docs/project-log.md:21811:Built `docs/TODO.md`'s outcome-tracking item, which had been explicitly
+docs/project-log.md:21925:`docs/TODO.md` to pick from at the next sync.
+docs/project-log.md:21929:Found while surveying `docs/TODO.md` for what's next: the P1 item for
+docs/project-log.md:21963:core schema. Measured it concretely rather than estimating: CLAUDE.md
+docs/project-log.md:21964:(~9k tokens) + TODO.md (~5.7k tokens) + book-dna.md (~25k tokens, ALL
+docs/project-log.md:21965:read unconditionally every session per CLAUDE.md's own instructions)
+docs/project-log.md:21969:than CLAUDE.md itself. This is the same failure mode TODO.md already
+docs/project-log.md:21980:"grep over full linear reads" as an explicit CLAUDE.md convention so
+docs/project-log.md:22009:CLAUDE.md itself already documents as the exact kind of discoverability
+docs/project-log.md:22018:CLAUDE.md alone would be insufficient; any real split needs a
+docs/project-log.md:22026:   verified link audit -- not a quick CLAUDE.md-only pointer change.
+docs/project-log.md:22099:**1. New CLAUDE.md section, "Structural/methodology-change review
+docs/project-log.md:22101:CLAUDE.md itself, restructuring a document other files depend on, a
+docs/project-log.md:22122:CLAUDE.md and `../bookspell-backups`' own README so it doesn't silently
+docs/project-log.md:22128:**Also**: added a real TODO.md P3 item for the bcrypt-password-hash
+docs/project-log.md:22149:gate). Replaced CLAUDE.md's undefined "read the tail of project-log.md"
+docs/project-log.md:22157:that no longer appears in CLAUDE.md) and point at the same rule
+docs/project-log.md:22227:lines from a real grep, not left for CODX to re-derive): CLAUDE.md,
+docs/project-log.md:22283:  spanning CLAUDE.md itself (6 more locations beyond the one CLDO
+docs/project-log.md:22285:  `docs/TODO.md` (7 locations), `README.md`, and 2 scoring-engine
+docs/project-log.md:22328:- Two agents (scenarios 1 and 5) independently caught that CLAUDE.md's
+docs/project-log.md:22332:- Scenario 3's agent caught that CLAUDE.md's "v1 web app" section lists
+docs/project-log.md:22335:  `standard`/`dramatized_full_cast`/`abridged`/`other`). CLAUDE.md is
+docs/project-log.md:22340:- Scenario 3's agent also caught that CLAUDE.md's GraphicAudio-
+docs/project-log.md:22341:  mislabeling caveat is now overstated -- `docs/TODO.md`'s own more
+docs/project-log.md:22343:  rows catalog-wide, but CLAUDE.md still reads as if this is a live,
+docs/project-log.md:22346:These 2 CLAUDE.md factual bugs are being fixed as a small separate
+docs/project-log.md:22348:CLAUDE.md content errors, not book-dna.md structure).
+docs/project-log.md:22359:## 2026-09-25, later still -- fixed 2 real CLAUDE.md bugs the baseline agents found
+docs/project-log.md:22362:itself (CLAUDE.md content errors, not book-dna.md structure):
+docs/project-log.md:22372:   of sync with `docs/TODO.md`'s own more current entry (a 2026-09-18
+docs/project-log.md:22374:   result, not the live ongoing concern CLAUDE.md still described).
+docs/project-log.md:22391:schema.yaml, or TODO.md in full" since the scalar-field gate stayed
+docs/project-log.md:22433:split, `643bf34` two pre-existing CLAUDE.md bugs the baseline testing
+docs/project-log.md:22439:This closes out the `docs/TODO.md` "Fresh-session context-load
+docs/project-log.md:22454:split, "route by task class"); the first 2 landed and `docs/TODO.md`
+docs/project-log.md:22461:Added CLAUDE.md's new "Multi-phase task closure" section: before
+docs/project-log.md:22467:the actual instance this was caught on: `docs/TODO.md`'s context-load
+docs/project-log.md:22471:Did not send this specific CLAUDE.md addition through a CODX review
+docs/project-log.md:22485:just asserting CODX's original idea was right: CLAUDE.md is 914 lines,
+docs/project-log.md:22486:of which ~530 (Database & migrations through v1 web app, ~58%) are
+docs/project-log.md:22495:move faster) as the proposed default; Tier 2 (an actual CLAUDE.md split
+docs/project-log.md:22497:likely MORE cross-file risk than the schema split given CLAUDE.md's
+docs/project-log.md:22508:came back exact: CLAUDE.md's real word count (8,154 words, 914 lines,
+docs/project-log.md:22510:(Persona system 1,105, Database & migrations 1,423, Recommendation
+docs/project-log.md:22511:engine 626, all exact), and 3 cross-file "still says read CLAUDE.md in
+docs/project-log.md:22521:existing "read CLAUDE.md in full"/"read book-dna.md in full every
+docs/project-log.md:22527:making CLAUDE.md's 6 task-specific sections (Database & migrations,
+docs/project-log.md:22528:Database backups, Data quality/tagging, Catalog scope, Recommendation
+docs/project-log.md:22529:engine, v1 web app) conditional on real task-class triggers, while the
+docs/project-log.md:22547:Tier 2 (an actual physical CLAUDE.md split, mirroring book-dna.md's)
+docs/project-log.md:22574:semantics work; read the Recommendation engine section + scoring
+docs/project-log.md:22576:series grouping feeds cluster counting) to also read Catalog scope,
+docs/project-log.md:22581:routes (scoring engine + v1 web app/import), read both rather than
+docs/project-log.md:22589:CLAUDE.md was a stale snapshot from before today's edits landed --
+docs/project-log.md:22595:this at the very top of CLAUDE.md itself so a future sub-agent doesn't
+docs/project-log.md:22605:actual CLAUDE.md file split) remains explicitly deferred per CODX's own
+docs/project-log.md:22618:above): E (CSS modal bug) 2/2, correctly scoped to v1 web app alone,
+docs/project-log.md:22626:untagged books grows the existing 139-book backlog against CLAUDE.md's
+docs/project-log.md:22647:**The stale-sub-agent-CLAUDE.md issue is now confirmed 12/12** -- every
+docs/project-log.md:22651:CLAUDE.md warning added earlier today helped in every case where an
+docs/project-log.md:22747:CLAUDE.md's own routing-policy section already says not to claim
+docs/project-log.md:22756:`CLAUDE.md` 7,657 + `docs/TODO.md` 4,626 + monolithic `book-dna.md`
+docs/project-log.md:22758:NEW: `CLAUDE.md` broke down into 4,124 words of universal
+docs/project-log.md:22767:- v1 web app UI-only: 9,414 words (70.5% less)
+docs/project-log.md:22770:  conventions, catalog scope, the scoring protocol, migration
+docs/project-log.md:22784:CLAUDE.md and other files the task requires and self-report every file
+docs/project-log.md:22791:it prescribes) and should be fixed in CLAUDE.md directly.
+docs/project-log.md:22793:`docs/TODO.md` updated with a new P1 item pointing at this (kept
+docs/project-log.md:22805:which CLAUDE.md sections it relied on vs. skimmed, with no DB access and
+docs/project-log.md:22809:**No under-reads, so no routing-table bug and no CLAUDE.md change.** All 5
+docs/project-log.md:22818:counted only CLAUDE.md sections, TODO.md, and `docs/schema/*.md`, and left
+docs/project-log.md:22822:`pre-book-dna-split` CLAUDE.md, line 660), so corrected on both sides, the
+docs/project-log.md:22829:of CLAUDE.md (8,893 words) into every session and sub-agent. Section
+docs/project-log.md:22831:loaded. The honest floor for any route is ~14.85k words (full CLAUDE.md +
+docs/project-log.md:22836:**Two proposals are queued, not applied.** Both are CLAUDE.md changes, so
+docs/project-log.md:22848:`docs/TODO.md`'s "Quantify the routing policy's real context-load gain"
+docs/project-log.md:22859:findings are the corrected per-route gains; CLAUDE.md being auto-loaded in
+docs/project-log.md:22862:and `docs/TODO.md` being ~50% closed items by word count.
+docs/project-log.md:22865:- A: Tier 2, a physical CLAUDE.md split. Its deferral condition,
+docs/project-log.md:22875:Part 2 entry queued. `docs/TODO.md`'s follow-up item now points at Task 25.
+docs/recommendation-engine/v1-findings.md:1:# Recommendation engine — v1 prototype
+docs/schema/book-dna-decisions.md:58:  self-hosting-images idea (see `docs/TODO.md`'s P1, added the same
+docs/schema/book-dna-decisions.md:205:  exists, `ratings`, built with the v1 web app; this proposal itself has
+docs/schema/book-dna-decisions.md:428:  targeting the wrong imported module (see CLAUDE.md's own "A/B testing
+docs/schema/book-dna-decisions.md:750:  tracked 306-row `runtime_minutes` gap, see `docs/TODO.md`) is real
+docs/schema/book-dna-decisions.md:994:agents per CLAUDE.md's agent-efficiency guidance): Terry Pratchett +
+docs/schema/book-dna-decisions.md:1030:  pattern-matched to genre convention" mistagging risk CLAUDE.md's
+docs/schema/book-dna-decisions.md:1069:each, per CLAUDE.md's agent-efficiency guidance) — see
+docs/schema/book-dna-decisions.md:1320:web app shipped 2026-09-18, see `docs/TODO.md`.)
+docs/schema/book-dna-tables.md:32:  CLAUDE.md's v1-web-app section currently lists a 5th value,
+docs/schema/book-dna-tables.md:36:  `audiobook_editions.edition_type`. Flag this for CLAUDE.md to be
+docs/schema/book-dna-tables.md:38:  reorganization to also hand-edit CLAUDE.md's substantive claims
+docs/schema/book-dna-tables.md:70:(306 rows as of 2026-09-18) is tracked in `docs/TODO.md`.
+docs/schema/book-dna-tables.md:72:**Data-quality history, current status verified 2026-09-25**: CLAUDE.md
+docs/schema/book-dna-tables.md:75:**This is stale.** `docs/TODO.md` records this was swept 2026-09-18 and
+docs/schema/book-dna-tables.md:81:any future GraphicAudio/BBC batch. Flag CLAUDE.md's own audiobook
+docs/schema/book-dna-tables.md:94:not just a grants check); see CLAUDE.md's "new public-catalog-style
+docs/schema/book-dna-tables.md:140:by design, not by oversight. This connects to CLAUDE.md's broader
+docs/schema/book-dna-tables.md:197:  (1.0)** — EXCEPT for fields in `HIGH_RISK_FIELDS` (see CLAUDE.md's
+docs/schema/book-dna-tables.md:198:  "Data quality / tagging" section for the current field list), which
+docs/schema/book-dna-vocabulary-gaps.md:18:what gets recommended," not "is this a real term" (see CLAUDE.md's "Data
+docs/schema/book-dna.md:18:file is read in full for the tasks identified by CLAUDE.md's "Startup
+docs/schema/book-dna.md:340:catalog-wide (see `docs/TODO.md`).
+docs/schema/book-dna.md:367:recommendation engine is a weighted sum across every DNA dimension, so a
+docs/schema/book-dna.md:505:the recommendation engine, not to `book_dna` itself.
+docs/schema/book-dna.md:566:"Spoilers" disclosure, landed 2026-09-20; see `docs/TODO.md`/
+docs/schema/book-dna.md:617:  fix — see `docs/TODO.md`'s `series.status`/`book_count` item for
+docs/schema/book-dna.md:629:dimension, not just declared schema-design work. CLAUDE.md's universal
+docs/schema/book-dna.schema.yaml:12:#   - spoiler: true means the recommendation engine always reads the real
+docs/schema/book-dna.schema.yaml:304:        # recommendation engine always reads the real value regardless.
+docs/schema/book-dna.schema.yaml:824:# "reveal anyway." The recommendation engine always reads the true value
+docs/scoring-test-protocol.md:566:CLAUDE.md). More fundamentally: every general mechanism previously
+docs/scoring-test-protocol.md:2425:earlier claim made in this same session (the Recommendation Engine
+docs/scoring-test-protocol.md:2790:and in `docs/TODO.md`'s CODX entry).
+docs/scoring-test-protocol.md:2798:"never delegated" -- see CLAUDE.md's CODX section): a new
+docs/scoring-test-protocol.md:2844:checking scorecard equivalence) per `docs/TODO.md`'s Phase A plan.
+docs/scoring-test-protocol.md:2848:Implements the actual Phase A step 2 from `docs/TODO.md` (not to be
+docs/scoring-test-protocol.md:2918:check before moving on) per `docs/TODO.md`'s Phase A plan.
+docs/scoring-test-protocol.md:2922:Implements Phase A step 3 from `docs/TODO.md`: `recommend()`'s
+docs/scoring-test-protocol.md:2990:again) per `docs/TODO.md`'s Phase A plan.
+docs/scoring-test-protocol.md:2994:Implements Phase A step 4 from `docs/TODO.md`: `explain_match()` now
+docs/scoring-test-protocol.md:3078:preventing test/production drift, per `docs/TODO.md`'s Phase A plan).
+docs/scoring-test-protocol.md:3082:Implements Phase A step 5 from `docs/TODO.md` -- the step the plan
+docs/scoring-test-protocol.md:3122:the same object" pitfall CLAUDE.md warns about (asserting `O.R is N.R
+docs/scoring-test-protocol.md:3163:`docs/TODO.md`, once the repo owner is ready to schedule it.
+docs/scoring-test-protocol.md:3256:(extracting into `scripts/scoring/` submodules) per `docs/TODO.md`,
+docs/scoring-test-protocol.md:3384:`CLAUDE.md`'s monkeypatch A/B-testing guidance checks a single
+docs/scoring-test-protocol.md:3413:Implements the fix `docs/TODO.md`'s 2026-09-18 entry scoped but
+docs/scoring-test-protocol.md:3445:**Verification** (both failure scenarios CLAUDE.md requires, plus a
+docs/scoring-test-protocol.md:3480:not-yet-built list (see `docs/TODO.md`'s P1 entry): a real, genuine gap
+docs/scoring-test-protocol.md:3559:tracks (`docs/TODO.md`'s P1 external-review entry) is the natural lens
+docs/task-class-routing-acceptance-tests.md:1:# Task-class routing (CLAUDE.md Tier 1) — acceptance test methodology
+docs/task-class-routing-acceptance-tests.md:11:policy, the literal instruction was "read CLAUDE.md in full," always,
+docs/task-class-routing-acceptance-tests.md:33:      Database & migrations, Data quality/tagging, Catalog scope,
+docs/task-class-routing-acceptance-tests.md:34:      Recommendation engine, v1 web app, or the schema core in full.
+docs/task-class-routing-acceptance-tests.md:36:      credentials, closure, agent efficiency, logging) plus TODO.md.
+docs/task-class-routing-acceptance-tests.md:40:      substantially below CLAUDE.md's full 8,154 words plus the 5,376-
+docs/task-class-routing-acceptance-tests.md:96:      import endpoint / v1 web app, cold-start logic specifically).
+docs/task-class-routing-acceptance-tests.md:128:- [ ] Reads the v1 web app section in full; finds the documented
+docs/task-class-routing-acceptance-tests.md:131:- [ ] Does NOT read Data quality/tagging, Catalog scope, Recommendation
+docs/task-class-routing-acceptance-tests.md:142:- [ ] Reads v1 web app AND Catalog scope & series hierarchy (finds the
+docs/task-class-routing-acceptance-tests.md:144:- [ ] Reads (or identifies as required) Database & migrations' RLS/
+docs/task-class-routing-acceptance-tests.md:160:- [ ] Reads Catalog scope & series hierarchy (genre-scope filtering)
+docs/task-class-routing-acceptance-tests.md:161:      and Database & migrations (migration conventions for the insert).
+docs/task-class-routing-acceptance-tests.md:203:- [ ] Reads v1 web app (deployment) AND Database & migrations.
+docs/task-class-routing-acceptance-tests.md:217:- [ ] Reads Database backups in full (universal trigger: genuinely
+docs/task-class-routing-acceptance-tests.md:237:- [ ] Checks `docs/TODO.md` for the existing beta-readiness item and
+docs/universe-linking-negatives.md:5:`docs/TODO.md`'s "Catalog-wide shared-universe linking audit" item for
+docs/universe-linking-negatives.md:12:across batches 1-9 is listed as connected (see `docs/TODO.md`'s item for
+scripts/backfill-round5-covers.js:4:// Hardcover's own CDN, which CLAUDE.md's 2026-09-18 rule says not to
+scripts/backfill-round5-covers.js:52:      '-- UPDATE is hardcover_id-scoped (never a raw local uuid, per CLAUDE.md\'s',
+scripts/backfill-standard-narrators.js:4:// cached_contributors -- confirmed 2026-09-11, see docs/TODO.md).
+scripts/check_db_sync.py:15:local Postgres access (see CLAUDE.md's Database & migrations section),
+scripts/check_db_sync.py:21:CLAUDE.md's own documented convention), bypassing the Supabase CLI
+scripts/check_db_sync.py:124:            "raw-psycopg2 method (CLAUDE.md's Database & migrations section) "
+scripts/ingest-catalog-round5.js:23://      stay eligible per CLAUDE.md's "short-story collections are in scope"
+scripts/ingest-catalog-round5.js:214:// and Collection (8) deliberately NOT included — in scope per CLAUDE.md.
+scripts/ingest-catalog-round5.js:377:    const manualReviewDocs = []; // full detail for the no-structured-signal fallback bucket -- see CLAUDE.md-directed synopsis screen
+scripts/ingest-egg-and-other-stories.js:11:// per CLAUDE.md's 2026-09-18 rule.
+scripts/ingest-egg-and-other-stories.js:63:    // per CLAUDE.md's author-contamination rule.
+scripts/ingest-ruin.js:8:// CLAUDE.md's 2026-09-18 ingestion rule.
+scripts/ingest-traitor-god.js:6:// Self-hosts the cover per CLAUDE.md's 2026-09-18 ingestion rule
+scripts/lib/self-host-cover.js:7:// starting 2026-09-18 -- see CLAUDE.md's ingestion conventions.
+scripts/recommend.py:2:Bookspell recommendation engine — v1 prototype.
+scripts/scoring/api.py:1:"""Api components of the recommendation engine."""
+scripts/scoring/audit.py:1:"""Audit components of the recommendation engine."""
+scripts/scoring/calibration.py:1:"""Calibration components of the recommendation engine."""
+scripts/scoring/catalog.py:1:"""Catalog components of the recommendation engine."""
+scripts/scoring/cold_start.py:1:"""Cold start components of the recommendation engine."""
+scripts/scoring/confidence.py:27:data yet to make that call (see docs/TODO.md's prospective-outcome-
+scripts/scoring/constants.py:1:"""Constants components of the recommendation engine."""
+scripts/scoring/encoding.py:1:"""Encoding components of the recommendation engine."""
+scripts/scoring/experimental.py:1:"""Experimental components of the recommendation engine."""
+scripts/scoring/explanations.py:1:"""Explanations components of the recommendation engine."""
+scripts/scoring/feedback.py:1:"""Feedback components of the recommendation engine."""
+scripts/scoring/pipeline.py:1:"""Pipeline components of the recommendation engine."""
+scripts/scoring/prevalence.py:1:"""Prevalence components of the recommendation engine."""
+scripts/scoring/profile.py:1:"""Profile components of the recommendation engine."""
+scripts/scoring/rules.py:1:"""Rules components of the recommendation engine."""
+scripts/scoring/series.py:1:"""Series components of the recommendation engine."""
+supabase/config.toml:159:# Set to the real v1 web app's GitHub Pages URL (2026-09-13, see
+supabase/config.toml:160:# docs/project-log.md's "Bookspell v1 web app" entry) -- this repo has
+supabase/migrations/20260829025000_seed_universe_table.sql:8:-- CLAUDE.md's Database & migrations section warns about -- it went
+supabase/migrations/20260830231854_batch_tag_20_more_books.sql:13:-- out of the recommendation engine's scope).
+supabase/migrations/20260830234428_batch_tag_final_20_books.sql:13:--     these stay invisible to the recommendation engine unless the catalog
+supabase/migrations/20260831010000_delete_out_of_scope_books.sql:1:-- Removes the 7 dangling untagged rows confirmed out of catalog scope
+supabase/migrations/20260903160000_delete_mistagged_girl_with_dragon_tattoo.sql:13:-- by title subselect (never a raw UUID -- see CLAUDE.md).
+supabase/migrations/20260903170000_targeted_ingestion_mathias_priority_list.sql:57:-- CLAUDE.md's data-quality section) before inserting:
+supabase/migrations/20260903220000_fix_witcher_translator_contamination.sql:6:-- contributor-contamination pattern CLAUDE.md already documents as a
+supabase/migrations/20260903240000_tag_city_simak.sql:18:-- genre-convention pattern-matching (per CLAUDE.md): person is
+supabase/migrations/20260904040000_fix_death_masks_author_contamination.sql:9:-- author. Per CLAUDE.md's standing author-contamination policy --
+supabase/migrations/20260905120000_batch_tag_20_more_books.sql:12:-- no sci-fi/fantasy content -- out of v1 catalog scope, should be confirmed for
+supabase/migrations/20260905230000_fix_blinding_knife_author_contamination.sql:5:-- CLAUDE.md already tracks (Death Masks/James Marsters earlier this
+supabase/migrations/20260906030000_fix_battle_royale_author_contamination.sql:7:-- CLAUDE.md tracks (Sapkowski/David French; Death Masks/Simon Vance
+supabase/migrations/20260908070000_audiobook_editions_unique_constraint.sql:8:-- requirement (CLAUDE.md).
+supabase/migrations/20260909020000_audiobook_editions_graphicaudio_batch6.sql:21:-- same caution CLAUDE.md flags for checkable specifics) -- left both
+supabase/migrations/20260909040000_fix_white_night_author_contamination.sql:8:-- (CLAUDE.md's "author field must contain only genuine author(s)"
+supabase/migrations/20260909090000_catalog_tagging_batch2.sql:9:-- author-verification check (CLAUDE.md's data-quality section) -- same
+supabase/migrations/20260909110000_worldbuilding_delivery_sweep_batch19.sql:3:-- Per CLAUDE.md/tag-catalog-batch's Step 0, ONLY the worldbuilding_delivery
+supabase/migrations/20260909120000_tag_final_3_untagged_standalones.sql:4:-- unpublished -- see docs/TODO.md's catalog-tagging-completion entry).
+supabase/migrations/20260909120000_tag_final_3_untagged_standalones.sql:7:-- than recalled from memory alone, per CLAUDE.md's standing policy.
+supabase/migrations/20260909130000_ingest_audible_originals.sql:3:-- see .claude/skills/tag-audiobook-editions/SKILL.md and docs/TODO.md's
+supabase/migrations/20260911110000_delete_old_romance_worldbuilding_tropes.sql:14:-- PENDING_APPROVALS.md gate -- see docs/TODO.md's note on this). Every row
+supabase/migrations/20260911110000_delete_old_romance_worldbuilding_tropes.sql:20:-- Dependent-row check per CLAUDE.md: book_tropes must be empty for these 4
+supabase/migrations/20260911120000_backfill_standard_narrators.sql:4:-- role, genuinely bulk-fetchable -- see docs/TODO.md). Generated by
+supabase/migrations/20260911120000_backfill_standard_narrators.sql:26:-- docs/TODO.md for the follow-up item.
+supabase/migrations/20260911130000_backfill_standard_narrators_batch2.sql:31:-- human pick of which to record -- see docs/TODO.md), 65 have no
+supabase/migrations/20260911140000_backfill_standard_narrators_batch3.sql:23:-- docs/TODO.md.
+supabase/migrations/20260911180000_backfill_standard_narrators_final3_classics.sql:11:-- has low practical value and adds noise for a recommendation engine
+supabase/migrations/20260911190000_fix_series_status_book_count_batch1.sql:2:-- (docs/TODO.md's P2 item, approach decided 2026-09-11: manually
+supabase/migrations/20260911200000_first_law_universe.sql:4:-- example and never actually implemented until now (docs/TODO.md's
+supabase/migrations/20260911200000_first_law_universe.sql:23:-- (dependent-row count confirmed zero first, per CLAUDE.md's standing
+supabase/migrations/20260911210000_ingest_sharp_ends.sql:3:-- docs/TODO.md's shared-universe linking audit. Confirmed in-scope for
+supabase/migrations/20260911210000_ingest_sharp_ends.sql:12:-- before inserting, per CLAUDE.md's mandatory ingestion policy.
+supabase/migrations/20260911220000_broken_empire_universe.sql:4:-- catalog-wide shared-universe linking audit (docs/TODO.md).
+supabase/migrations/20260911230000_ingest_book_of_the_ice_and_abeth_universe.sql:4:-- linking audit (docs/TODO.md).
+supabase/migrations/20260911230000_ingest_book_of_the_ice_and_abeth_universe.sql:38:-- book_count display bug as docs/TODO.md's separate catalog-wide fix
+supabase/migrations/20260911240000_tag_book_of_the_ice.sql:3:-- .claude/skills/tag-catalog-batch/SKILL.md's process and CLAUDE.md's
+supabase/migrations/20260911240000_tag_book_of_the_ice.sql:11:--   the kind of confidently-wrong-on-a-specific-detail error CLAUDE.md
+supabase/migrations/20260911260000_foundation_universe.sql:3:-- the catalog-wide shared-universe linking audit (docs/TODO.md).
+supabase/migrations/20260911270000_westeros_universe.sql:5:-- (docs/TODO.md).
+supabase/migrations/20260912000000_catalog_expansion_round4_378_books.sql:8:-- CLAUDE.md, left untagged/unflagged-for-deletion, not deleted) among the
+supabase/migrations/20260912100000_fix_series_status_book_count_batch2.sql:2:-- (docs/TODO.md's P2 item; root cause documented 2026-09-08, batch 1
+supabase/migrations/20260912200000_realm_of_the_elderlings_grishaverse_enderverse.sql:2:-- shared-universe linking audit (docs/TODO.md): "Realm of the Elderlings"
+supabase/migrations/20260912400000_fix_series_status_book_count_batch3.sql:2:-- (docs/TODO.md's P2 item; root cause documented 2026-09-08, batch 1
+supabase/migrations/20260912500000_riordanverse_four_londons_cosmere_gaps.sql:1:-- Shared-universe linking audit, batch 4 (docs/TODO.md P2 item).
+supabase/migrations/20260912600000_fix_series_status_book_count_batch4.sql:2:-- (docs/TODO.md's P2 item; root cause documented 2026-09-08, batch 1
+supabase/migrations/20260912600000_fix_series_status_book_count_batch4.sql:72:-- CLAUDE.md's catalog-scope policy.
+supabase/migrations/20260912700000_shared_universe_audit_batch5.sql:1:-- Shared-universe linking audit, batch 5 (docs/TODO.md P2 item).
+supabase/migrations/20260912800000_fix_series_status_book_count_batch5.sql:2:-- (docs/TODO.md's P2 item; root cause documented 2026-09-08, batch 1
+supabase/migrations/20260912800000_fix_series_status_book_count_batch5.sql:22:-- names) in both docs/TODO.md and docs/project-log.md -- this batch
+supabase/migrations/20260912800000_fix_series_status_book_count_batch5.sql:25:-- correcting the running count going forward; see docs/TODO.md's
+supabase/migrations/20260912800000_fix_series_status_book_count_batch5.sql:64:-- CLAUDE.md's "series_id always points at a leaf series" convention.
+supabase/migrations/20260912800000_fix_series_status_book_count_batch5.sql:83:-- docs/TODO.md's exclude list now to stop that waste.
+supabase/migrations/20260912900000_fix_series_status_book_count_batch6.sql:2:-- (docs/TODO.md's P2 item; root cause documented 2026-09-08, batch 1
+supabase/migrations/20260912900000_fix_series_status_book_count_batch6.sql:50:-- already-ranked candidate list waiting (see docs/TODO.md).
+supabase/migrations/20260912900000_fix_series_status_book_count_batch6.sql:93:-- CLAUDE.md's "Data quality / tagging" section already tracks (the
+supabase/migrations/20260913000000_shared_universe_audit_batch7.sql:1:-- Shared-universe linking audit, batch 7 (docs/TODO.md P2 item).
+supabase/migrations/20260913010000_v1_app_user_tables.sql:1:-- Bookspell v1 web app, step 1 of the build (see docs/TODO.md's P0
+supabase/migrations/20260913010000_v1_app_user_tables.sql:2:-- entry and docs/project-log.md's 2026-09-12 "Bookspell v1 web app"
+supabase/migrations/20260913010000_v1_app_user_tables.sql:11:-- data exactly as CLAUDE.md documents; these new tables are the LIVE
+supabase/migrations/20260913030000_tag_catalog_batch_18_books.sql:9:--     permanent-skip precedent (see docs/TODO.md).
+supabase/migrations/20260913030000_tag_catalog_batch_18_books.sql:16:-- CLAUDE.md convention): 3 books (A Hat Full of Sky, The Last Hero, Wintersmith)
+supabase/migrations/20260913120000_backfill_missing_dramatized_cast_lists.sql:3:-- flagged in docs/TODO.md 2026-09-13). Sourced from each edition's own
+supabase/migrations/20260913130000_fix_series_status_book_count_batch7.sql:2:-- (docs/TODO.md's P2 item; root cause documented 2026-09-08, batch 1
+supabase/migrations/20260913130000_fix_series_status_book_count_batch7.sql:82:-- shape flagged in docs/TODO.md's batch-7 pointer. Left completely
+supabase/migrations/20260913140000_shared_universe_audit_batch8.sql:1:-- Shared-universe linking audit, batch 8 (docs/TODO.md P2 item).
+supabase/migrations/20260913170000_catalog_trope_gap_sweep_5_new_tropes.sql:17:-- connection, per the established CLDA workaround (see CLAUDE.md's
+supabase/migrations/20260913170000_catalog_trope_gap_sweep_5_new_tropes.sql:18:-- "Database & migrations" section and every prior CLDA migration batch,
+supabase/migrations/20260913170000_catalog_trope_gap_sweep_5_new_tropes.sql:25:-- the real data directly), per CLAUDE.md's documented recovery
+supabase/migrations/20260913200000_fix_series_status_book_count_batch8.sql:2:-- (docs/TODO.md's P2 item; root cause documented 2026-09-08, batch 1
+supabase/migrations/20260913200000_fix_series_status_book_count_batch8.sql:67:-- (docs/TODO.md's "Catalog scope & series hierarchy" section, the same
+supabase/migrations/20260913200000_fix_series_status_book_count_batch8.sql:88:-- pattern docs/TODO.md's "Catalog scope & series hierarchy" section
+supabase/migrations/20260913220000_catalog_trope_gap_sweep_2_7_new_tropes_1_cw.sql:5:-- CLAUDE.md's agent-efficiency guidance), each covering a ~60-62 book
+supabase/migrations/20260913220000_catalog_trope_gap_sweep_2_7_new_tropes_1_cw.sql:53:-- directly), per CLAUDE.md's documented recovery procedure. Do not
+supabase/migrations/20260913230000_catalog_trope_gap_sweep_3_11_new_tropes.sql:8:-- background agents per CLAUDE.md's agent-efficiency guidance) -- full
+supabase/migrations/20260913230000_catalog_trope_gap_sweep_3_11_new_tropes.sql:74:-- real data directly), per CLAUDE.md's documented recovery procedure.
+supabase/migrations/20260913240000_fix_5_author_field_contamination_cases.sql:5:-- CLAUDE.md's "Data quality / tagging" section already tracks (the
+supabase/migrations/20260913240000_fix_5_author_field_contamination_cases.sql:9:-- (contribution role per name) before fixing, per CLAUDE.md's mandatory
+supabase/migrations/20260913250000_backfill_2_incomplete_trope_inserts.sql:13:-- per CLAUDE.md's standing evidence discipline for any trope asserting a
+supabase/migrations/20260913250000_backfill_2_incomplete_trope_inserts.sql:40:-- either skipping it or asserting it at full confidence, per CLAUDE.md's
+supabase/migrations/20260913260000_shared_universe_audit_batch9.sql:8:-- connected (no action, no row here, see docs/TODO.md batch 9 entry for
+supabase/migrations/20260913270000_catalog_tagging_batch_17_books_9_series_completed.sql:12:-- own `contributions` GraphQL data before fixing, per CLAUDE.md's mandatory
+supabase/migrations/20260913280000_fix_series_status_book_count_batch9.sql:3:-- docs/TODO.md's "series.status/book_count is systemically wrong
+supabase/migrations/20260913290000_fix_series_status_book_count_batch10.sql:2:-- Continuing the P2 task documented in docs/TODO.md ("series.status/book_count
+supabase/migrations/20260913310000_fix_series_status_book_count_batch12.sql:1:-- Batch 12 of the series.status/book_count catalog-wide fix (see docs/TODO.md
+supabase/migrations/20260916000000_catalog_tagging_batch_20_standalone_sff_books.sql:4:-- in-scope SFF standalones with no series dependencies (docs/TODO.md 'Catalog expansion
+supabase/migrations/20260916000000_catalog_tagging_batch_20_standalone_sff_books.sql:6:-- CLAUDE.md convention -- hosted/local have different row UUIDs for the same book.
+supabase/migrations/20260916010000_catalog_tagging_batch_20_cldo_screened_books.sql:4:-- standalone pool -- see docs/TODO.md's "Catalog expansion round 4" entry and
+supabase/migrations/20260917040000_fix_series_status_book_count_batch14.sql:17:-- names given in docs/TODO.md's "Next (batch 14)" pointer). Worked down
+supabase/migrations/20260917040000_fix_series_status_book_count_batch14.sql:140:-- a series.status/book_count fix, but the standing CLAUDE.md policy on
+supabase/migrations/20260918220000_fix_cover_url_storage_pointer_titlematch.sql:5:-- on hosted) -- exactly the mistake CLAUDE.md's own "reference via a
+supabase/migrations/20260918231000_audiobook_editions_release_date_range.sql:3:-- docs/TODO.md's 2026-09-18 runtime_minutes/release_date entry): a
+supabase/migrations/20260919000000_ingest_the_traitor_god.sql:10:-- book-covers storage bucket (per CLAUDE.md's 2026-09-18 rule), not
+supabase/migrations/20260920000000_admin_view_book_suggestions.sql:5:-- was querying the table directly (see docs/TODO.md's 2026-09-18
+supabase/migrations/20260920040000_fix_4_author_field_contamination_batch8_followup.sql:11:-- CLAUDE.md's mandatory author-field verification standard:
+supabase/migrations/20260921000000_catalog_tagging_batch9_20books.sql:8:-- books are non-SFF leakage needing a repo-owner scope decision (see TODO.md).
+supabase/migrations/20260921010000_archive_non_sff_leakage_and_permanent_skips.sql:18:--     fantasy (same pattern CLAUDE.md's catalog-scope section documents --
+supabase/migrations/20260921010000_archive_non_sff_leakage_and_permanent_skips.sql:24:--   'graphic_novel' -- comics/graphic novels, out of v1 scope per CLAUDE.md's
+supabase/migrations/20260921010000_archive_non_sff_leakage_and_permanent_skips.sql:33:-- (see docs/TODO.md): Holly (Stephen King, open SFF-scope question), The Lottery
+supabase/migrations/20260921020000_catalog_expansion_round5_226_books.sql:38:-- the 2026-09-18 self-hosting convention (see CLAUDE.md's ingestion
+supabase/migrations/20260921040000_catalog_tagging_batch11_18books.sql:39:-- split) in this same session, per CLAUDE.md's schema-doc-sync rule.
+supabase/migrations/20260922000000_fix_remote_control_series_and_archive_thorn_of_emberlain.sql:10:--    CLAUDE.md's migration convention, not title alone.
+supabase/migrations/20260922010000_ingest_ruin.sql:10:-- storage bucket (per CLAUDE.md's 2026-09-18 rule); the actual image was
+supabase/migrations/20260922030000_archive_holly_delete_egg_standalone.sql:26:--    deleting per CLAUDE.md's convention.
+supabase/migrations/20260922040000_ingest_egg_and_other_stories.sql:8:-- confirmed via contribution_types (Author vs Reading), per CLAUDE.md's
+supabase/migrations/20260922060000_backfill_round5_covers.sql:4:-- UPDATE is hardcover_id-scoped (never a raw local uuid, per CLAUDE.md's
+supabase/migrations/20260924010000_import_coverage_tracking.sql:10:-- Not public-catalog-style tables (see CLAUDE.md's "new public-catalog-
+supabase/migrations/20260924010000_import_coverage_tracking.sql:67:-- docs/TODO.md's import-coverage item actually get computed):
+supabase/migrations/20260925000000_recommendation_impressions.sql:2:-- (docs/TODO.md's item -- design pass done 2026-09-25 with the repo
