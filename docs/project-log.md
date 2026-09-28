@@ -23348,3 +23348,56 @@ The repo owner approved logging it this way:
   re-proposed without new evidence;
 - the share link is a P2 item, deliberately not deferred to post-users,
   because its purpose is bringing in the first users.
+
+## 2026-09-28, later still -- database backup (2026-09-28): first snapshot with auth secrets excluded
+
+A pre-beta task: keep real users' credentials out of backups. Checking the
+2026-09-25 dump found the problem was **wider than the P3 item said**. The
+old `supabase db dump --data-only` included the entire `auth` schema:
+- bcrypt password hashes;
+- live `auth.sessions`, `refresh_tokens` and `one_time_tokens`;
+- MFA claims and the auth audit log.
+
+Only table names and counts were inspected; no secret values were printed.
+
+**Fix: new `scripts/backup_snapshot.py`.** It writes three files to
+`../bookspell-backups/dumps/`:
+- the schema dump;
+- `public` and `storage` data only (`--schema public,storage`);
+- `auth-users-<date>.sql`, holding `auth.users` and `auth.identities` with
+  non-secret columns only. It leaves out `encrypted_password`, every
+  `*_token` column and the generated columns, and omits every other auth
+  table.
+
+Why the user rows are kept rather than dropping `auth` entirely: every app
+table has an FK to `auth.users`, so without them, ratings, profiles and the
+rest couldn't be restored. A restored user signs in again by magic link or
+password reset. The script refuses to overwrite a snapshot, scans its output
+for secret columns, secret auth tables, connection strings and JWTs, and
+deletes all three files if anything matches.
+
+**Snapshot taken and verified** (read-only on hosted):
+- 4 users and 4 identities;
+- zero `auth` sections in the data dump;
+- every public/storage table's row count identical to the 2026-09-25 dump:
+  ratings 28, profiles 3, book_dna 1,230, book_tropes 6,469, series 570,
+  storage objects 1,487, and so on;
+- the schema dump is byte-size identical to 09-25;
+- the auth file restored cleanly into local Postgres inside a rolled-back
+  transaction (0 → 4 users, then rolled back).
+
+It's committed and pushed to the private `bookspell-backups` repo (0fa2de1)
+with an updated README: new command, three-file format, restore order
+(schema, then auth-users, then data), and a warning about the older dumps.
+`docs/conventions/backups.md` still points to that README for the exact
+commands, so it needed no edit.
+
+**Still open, for the repo owner's call.** The three older data dumps
+(09-11, 09-16, 09-25) in the private repo's history still contain the
+hashes and the session and refresh tokens that existed then. Options:
+- accept it: the repo is private, and there are 4 accounts, all known
+  people;
+- sign all users out once on hosted, which makes any dumped refresh tokens
+  useless but leaves the hashes;
+- rewrite the backups repo's history to drop the old data dumps. That's
+  destructive (a force-push) and loses those snapshots.
