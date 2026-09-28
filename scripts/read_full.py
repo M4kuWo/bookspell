@@ -1,8 +1,14 @@
-"""Proposed lossless, byte-bounded reader. No recorded shell command is executed.
+"""Lossless, byte-bounded full-file reader (CODX Task 26; required for full reads
+by CLAUDE.md's "Full reads" rule since 2026-09-28).
 
-Example: python3 read_full.py docs/schema/book-dna.schema.yaml --part 1
-Read EVERY advertised part. Pass the first part's --expect-sha on later parts.
-This receipt tracks returned bytes, not whether a model retains or understands them.
+  python3 scripts/read_full.py <file> --part 1
+  python3 scripts/read_full.py <file> --part 2 --expect-sha <SHA256 from part 1>
+  ...  (every part up to the N in the "PART k/N" header)
+
+Each page starts with a SOURCE/SHA256/PART/BYTES header and splits only at
+whitespace, so the parts concatenate back to the exact file. --expect-sha makes
+a later part fail if the file changed mid-read; then restart from part 1.
+The receipt proves which bytes were returned, not that they were understood.
 """
 import argparse
 import hashlib
