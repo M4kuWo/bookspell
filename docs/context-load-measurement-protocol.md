@@ -312,3 +312,68 @@ with `wc -w`. The text above is left as written, and these notes supersede it.
    + protocol 30,830 = 51,079, against the old 62,664. That is still only
    illustrative, since the old side has no bounded-log allowance. The CI/UI
    ~53% figure was already on the full-injection basis and stands.
+
+## Part 3 — transcript-measured before/after (CODX Task 25 lever E, "Light", 2026-09-28)
+
+**Method.** The same 7 plan-only prompts were run before and after levers A, C
+and D landed: the 5 representative routes, plus 2 trap tasks (T1: an
+audiobook release-date panel whose data is all null; T2: a possession trope
+that is already an open, single-series candidate). Each ran as a fresh,
+non-forked sub-agent that was not told it was being measured. Reads were
+counted from the JSONL transcripts by `scripts/measure_context_load.py`
+(injected CLAUDE.md counted separately, repeated reads counted each time),
+not self-reported. Prompts, pre-registered checklists, raw results and
+agent ids are in `docs/codx-reviews/context-load-e/`. Before arm: commit
+ec00669. After arm: commit 65cbe69.
+
+**Quality:** 7/7 passed their checklists in both arms.
+
+**Contamination (after arm).** The prompts and checklists had been committed
+to the repo before the after arm ran. R3 read `e-checklists.md` and R2 found
+`e-prompts.json`. Both still passed, but their numbers are flagged. **Next
+time, keep prompts and checklists outside the repo until every arm has
+run.**
+
+**Confound: stale injection.** Sub-agents inherit the parent session's
+startup copy of CLAUDE.md. The parent session predates lever A, so every
+after-arm agent was still injected with the old 8,893-word file. They then
+read the new CLAUDE.md and convention files from disk, as rule B requires.
+The fresh-session estimate below therefore subtracts the known injection
+difference: 8,946 → 4,604 words (4,551 CLAUDE.md + 53 memory), i.e. 4,342
+per agent.
+
+| Task | Before (words) | After, measured | After, fresh-session est. | Change |
+|---|---:|---:|---:|---:|
+| R1 tagging correction | 24,435 | 24,820 | ~20,480 | −16% |
+| R2 scoring (contaminated) | 24,147 | 38,841 | ~34,500 | +43% |
+| R3 CI (contaminated) | 10,370 | 12,020 | ~7,680 | −26% |
+| R4 UI | 10,485 | 13,665 | ~9,320 | −11% |
+| R5 new scalar field | 27,754 | 60,972 | ~56,630 | +104% |
+| T1 audiobook panel | 18,952 | 26,897 | ~22,560 | +19% |
+| T2 possession trope | 21,552 | 35,375 | ~31,030 | +44% |
+
+**Interpretation.**
+- **Narrow and bounded tasks got cheaper** (−11% to −26%). This comes from
+  A's smaller injected file and D's shorter TODO.
+- **Heavy tasks got more expensive.** C's explicit "full" requirements made
+  agents actually read what their routes require: R5 read the full YAML
+  (691 → 12,918 words) and the tagging skill (0 → 5,567), and R2 read the
+  schema core (0 → 6,444), which its route always required. So the before
+  arm had been under-reading relative to the prescription. The requirement
+  isn't new; after C, agents follow it.
+- **No quality gain.** Quality was 7/7 in both arms, so the extra heavy-route
+  reading bought nothing this measurement can detect.
+- **TODO reads almost vanished after D** (R2, R3 and T2 read 0 words of
+  it). That's cheaper, but it may also be an under-read of the universal
+  "read TODO before non-trivial work" rule. Because of how the counter
+  attributes combined commands, this is uncertain.
+
+**Limits.** One run per task per arm, and variance is large (R5 went from 26
+to 44 tool calls). Word counts are words delivered to the model, not tokens
+or billing. The fresh-session estimate assumes that injection is the only
+difference between this session and a fresh one. A single agent in a new
+terminal would confirm that.
+
+**Open decision (repo owner):** keep C's "read in full" requirements for
+the YAML and skills on schema-design and vocabulary routes, or relax them to
+"complete relevant sections".

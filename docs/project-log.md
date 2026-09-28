@@ -23093,3 +23093,35 @@ will show the real effect.
 
 All three levers (A, C, D) are now landed. Next: the after-arm measurement,
 the same 7 prompts from `docs/codx-reviews/context-load-e/e-prompts.json`.
+
+## 2026-09-28, later still -- Context-load after-arm measured: narrow routes cheaper, heavy routes costlier, quality unchanged
+
+Ran the after arm of CODX Task 25's lever E: the same 7 prompts as the
+before arm, on commit 65cbe69, with A, C and D all landed. Quality: 7/7
+passed their pre-registered checklists, the same as before. Full table and
+method are in `docs/context-load-measurement-protocol.md`'s new Part 3; raw
+data is in `docs/codx-reviews/context-load-e/`.
+
+**Estimated per-session words, fresh-session basis:**
+- Narrow tasks are cheaper: CI −26%, tagging correction −16%, UI −11%.
+- Heavy tasks are costlier: audiobook panel +19%, scoring +43%, possession
+  trope +44%, new scalar field +104%.
+
+**Why the heavy tasks cost more.** C's explicit "full" rules made agents read
+what their routes already required and they had been skipping. The scalar
+agent read the full YAML and the full tagging skill. The scoring agent read
+the schema core, which its route always required; the before-arm R2 had
+under-read it. Checklist quality was the same in both arms, so this extra
+compliance bought nothing measurable here.
+
+**Two confounds, both disclosed in the doc:**
+- Stale injection. Sub-agents inherit this session's startup copy of the old
+  8,893-word CLAUDE.md. The fresh-session estimate subtracts the known
+  4,342-word difference.
+- Contamination. The prompts and checklists were committed to the repo
+  before the after arm ran. R3 read the checklist and R2 found the prompts.
+  Lesson recorded: keep test material outside the repo until every arm has
+  run.
+
+**Open decision** for the repo owner: keep or relax C's "read in full"
+requirements for YAML and skills on schema-design and vocabulary routes.
