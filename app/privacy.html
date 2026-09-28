@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy · Bookspell</title>
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+<div class="wrap">
+  <h1><img src="logo.svg" alt="" width="28" height="28" style="vertical-align:-6px; margin-right:6px;">Privacy</h1>
+  <p class="sub">What Bookspell stores about you, why, and how to get it deleted. Last updated 2026-09-28.</p>
+
+  <p>Bookspell is a small, independent sci-fi/fantasy recommendation project run by one maintainer. It has no ads, no analytics or tracking scripts, and your data is never sold or shared for marketing.</p>
+
+  <h2>What we store</h2>
+  <ul>
+    <li><strong>Your account:</strong> your email address and the name you chose. Your password is handled by our login provider (Supabase Auth) and stored only as a one-way hash. We never see it.</li>
+    <li><strong>Your reading preferences:</strong> whether you mostly read print, audio or both, plus any "show me less of this" rules you set.</li>
+    <li><strong>Your ratings:</strong> each book you rate, the rating, and any reasons, date and format you add.</li>
+    <li><strong>Goodreads imports:</strong> if you import a Goodreads export, we store the ratings, read dates and review text for books we could match. For books we couldn't match, we keep the title and author, so we know which books to add to the catalog. We also keep a count of how many books matched.</li>
+    <li><strong>Book suggestions:</strong> any book you suggest we add, with your note.</li>
+    <li><strong>Recommendations shown to you:</strong> each time recommendations are shown, we record which books appeared, in what position, and with what match score. We compare this with how you later rate those books to measure whether the recommendations are actually good. This is the only data we collect without you typing it in.</li>
+  </ul>
+
+  <h2>Who can see it</h2>
+  <p>Only you, through your account, and the maintainer, who can view it to run and improve the service. Your ratings aren't shown to other users.</p>
+
+  <h2>Services we rely on</h2>
+  <ul>
+    <li><strong>Supabase:</strong> hosts the database and handles sign-in, including the sign-in and confirmation emails.</li>
+    <li><strong>Render:</strong> runs the recommendation server, which reads your ratings to compute your matches.</li>
+    <li><strong>GitHub Pages and jsDelivr:</strong> serve this website and one of its code libraries. Like any web host, they may see your IP address when you load a page.</li>
+  </ul>
+
+  <h2>In your browser</h2>
+  <p>We save your light/dark theme choice (only if you change it) and a short-lived copy of your current recommendations, so reloading is fast. There are no advertising or tracking cookies.</p>
+
+  <h2>How long we keep it, and deleting it</h2>
+  <p>Your data is kept until you ask us to delete your account. Deleting an account removes everything listed above that's linked to it. Periodic private backups taken before the deletion may still contain your data for a while.</p>
+  <p>To delete your account or ask what we hold about you, contact the maintainer. A dedicated contact address will be listed here soon.</p>
+
+  <p class="sub" style="margin-top:28px;"><a href="index.html">← Back to Bookspell</a></p>
+</div>
+</body>
+</html>

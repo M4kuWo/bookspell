@@ -23278,3 +23278,73 @@ for a single narrator.
 
 Both TODO items are closed. The audiobook item was archived as `done-31`
 per the TODO closure rule.
+
+## 2026-09-28, later still -- privacy note added; friends-system ideas assessed
+
+**Privacy note.** `app/privacy.html` is new and linked from `index.html`'s
+sign-in/sign-up form. It closes the pre-beta requirement deliberately
+deferred on 2026-09-25, which was the first passive data collection,
+`recommendation_impressions`.
+
+Its content was written from the real table definitions, not memory:
+- profiles: name and format preference;
+- ratings: including reasons, date and format;
+- Goodreads imports, **including review text**;
+- `import_unmatched_titles` and import counts;
+- `user_rules`, `book_suggestions` and `recommendation_impressions`.
+
+It also covers:
+- that the maintainer can view the data;
+- the third parties (Supabase, Render, GitHub Pages, jsDelivr);
+- browser storage (the theme in localStorage, cached recommendations in
+  sessionStorage), and that there are no analytics or trackers;
+- indefinite retention until the account is deleted, with the honest
+  caveat that older private backups may still hold data;
+- deletion by contacting the maintainer, since there's no self-serve
+  delete yet.
+
+The contact address is left as "coming soon", at the repo owner's request:
+a domain email will be added once the domain is bought, and that's
+tracked in the P1 beta-readiness item. The page is a plain-language
+notice, not a legal or GDPR review. It uses only existing `shared.css`
+classes, to stay clear of the repo owner's separate UI overhaul.
+
+**Friends-system ideas, assessed at the repo owner's request.** Their ideas:
+- users add each other as friends;
+- friends recommend books to each other;
+- a "friend recommended" badge next to the match;
+- a "recommended by friends" list;
+- a per-friend recommendation accuracy score;
+- raising the match score when an accurate friend recommends a book;
+- points or rewards for accurate recommending.
+
+CLDO's ratings and pushback:
+- Friends system 6/10 as a direction but 3/10 now, because the friend graph
+  is empty at today's user count. It also brings the first cross-user
+  visibility, since every RLS policy is currently own-row-only.
+- Recommended-by-friends list 8/10 and badge 8/10, both display-only.
+- Accuracy score 5/10. A friend recommends only a handful of books, so the
+  sample is tiny; picks are self-selected (you read books from friends you
+  already trust); and accuracy is really per pair of people. So show plain
+  counts, never one score.
+- **Rejected: the match-score boost (3/10).** It blends a social signal
+  into a validated DNA model with no data to test it; friends recommend
+  books because they fit your taste, which the DNA already captures; and
+  boosted books get shown and rated more, which creates a feedback loop.
+  It could only come back through the scoring protocol's gate, once real
+  friend-recommendation data exists.
+- **Rejected: points or rewards (2/10).** They pressure recipients to rate
+  friends' picks kindly, inflating the ratings data the engine learns
+  from, and invite point-farming.
+
+CLDO also proposed a cheaper alternative with most of the near-term value:
+a "share a recommendation" link that lands on sign-up. That helps rater
+recruitment, the project's biggest bottleneck, without a social graph.
+
+The repo owner approved logging it this way:
+- the passing ideas are nested under a new P3 item, "Social features --
+  do after beta has real, active users";
+- both rejected ideas are recorded there and here, so they aren't
+  re-proposed without new evidence;
+- the share link is a P2 item, deliberately not deferred to post-users,
+  because its purpose is bringing in the first users.
