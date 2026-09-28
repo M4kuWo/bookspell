@@ -19,7 +19,7 @@ name: Backup reminder
 # need a new cross-repo credential for a low-value read). Instead reads
 # the LAST logged "database backup" entry in this repo's own
 # docs/project-log.md, per the convention (see ../bookspell-backups'
-# README and CLAUDE.md's "Database backups" section): every project-log
+# README and `docs/conventions/backups.md`): every project-log
 # entry that records taking a real snapshot must contain the literal
 # phrase "database backup" (case-insensitive) in its dated H2 heading --
 # already true of all 3 real snapshot entries logged so far, checked

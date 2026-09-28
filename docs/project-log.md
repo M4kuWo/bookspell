@@ -22947,3 +22947,59 @@ design choice rather than being decided here.
 **Nothing implemented.** A, B and C are CLAUDE.md/convention changes, and D
 touches TODO structure. The repo owner picks which to implement.
 `docs/codx-tasks/current-task.md` was reset to "nothing queued".
+
+## 2026-09-28, later still -- CLAUDE.md's six task-specific sections moved to docs/conventions/ (CODX Task 25 lever A + sub-agent-scoped B)
+
+The first of the three levers the repo owner approved from CODX Task 25,
+in the order A → C → D. That order was changed from CODX's own C → D → A
+ranking after a before-arm behavioral measurement. That measurement ran 7
+fresh agents on plan-only versions of 5 route tasks plus 2 trap tasks, with
+reads counted from their JSONL transcripts by the new
+`scripts/measure_context_load.py` rather than self-reported. It showed:
+- the auto-injected CLAUDE.md (8,946 words) was the largest fixed cost in
+  every run: 86% of the total on the CI/UI tasks;
+- agents that didn't know they were measured already read the big reference
+  files (scoring protocol, decisions, YAML) in targeted slices, so C's
+  projected savings were largely already realized;
+- TODO.md was usually grepped, not read in full.
+
+Quality: all 7 passed their pre-registered checklists. Raw results, prompts,
+checklists and agent-id mapping are in `docs/codx-reviews/context-load-e/`.
+The before-arm cost ~4% of the repo owner's weekly limit (18%→22%, rounded).
+
+**What changed:**
+- The Database & migrations, Database backups, Data quality / tagging, Catalog
+  scope & series hierarchy, Recommendation engine and v1 web app sections were
+  moved verbatim into `docs/conventions/{database,backups,tagging,catalog,scoring,web}.md`.
+  Each was checked byte-for-byte against CODX's verified copies and again
+  against the `pre-conventions-split` tag after applying. One cross-section
+  pointer in tagging.md ("catalog scope below") was repointed.
+- Each old heading stays in CLAUDE.md as a forwarding pointer. The routing
+  policy now says to read the linked file in full and never to `@`-import the
+  files, which would bring back the full-load cost.
+- CLAUDE.md is now 4,440 words, down from 8,893.
+- The stale-snapshot warning was replaced with the sub-agent-scoped rule
+  CLDO argued for in the Task 25 review. Sub-agents read CLAUDE.md from disk
+  once. A top-level session trusts its startup copy unless the file changes
+  mid-session.
+- Live pointers in 3 skills, AGENTS.md, the backup-reminder workflow comment,
+  `scripts/check_db_sync.py`, `book-dna-tables.md` and the routing
+  acceptance-tests doc were updated. Historical references (log entries, old
+  reviews, migrations, finished TODO items) were left alone; they still
+  resolve through the forwarding headings.
+
+**How it was applied.** Claude Code's auto-mode classifier blocked CLDO from
+editing CLAUDE.md, flagging it as self-modification. At the repo owner's
+direction, CLDO wrote an all-or-nothing script instead. The script aborts
+unless CLAUDE.md matches the `pre-conventions-split` tag, and verifies every
+replacement in memory before writing anything. The repo owner ran it
+themselves: dry run, then apply. A copy of the script is in
+`docs/codx-reviews/context-load-e/apply_conventions_split.py`.
+Backup: the git tag `pre-conventions-split` (commit ec00669).
+
+**Not done yet:** C (read-depth contract) and D (TODO archiving) follow, in
+that order. C's CLAUDE.md routing-row edits will need the same
+repo-owner-run step. The after-arm measurement (the same 7 prompts) runs once
+all three levers land. Caveat: after-arm agents will read this log entry as
+part of their bounded log window, so they'll know the rules just changed.
+That can't be avoided and is noted for the comparison.

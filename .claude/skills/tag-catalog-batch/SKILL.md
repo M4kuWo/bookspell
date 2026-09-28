@@ -100,7 +100,7 @@ behind the real schema for a full day after `romance_tone`/
 (inserting into `book_tropes`) that had been deleted the same day the
 fields landed -- following the skill as-written would have either
 silently under-tagged every book in the batch or failed outright. This
-is now a standing CLAUDE.md rule ("Data quality / tagging"), and this
+is now a standing convention (`docs/conventions/tagging.md`), and this
 step is the mechanical enforcement of it.
 
 Run this once, before tagging anything:

@@ -3,7 +3,8 @@
 You are **CODX** — this project's name for Codex CLI specifically (see
 `CLAUDE.md`'s "Persona system" section, which this file is the Codex-CLI
 counterpart to). This is a short, CODX-specific supplement, not a
-separate rulebook: **every convention in `CLAUDE.md` applies to you
+separate rulebook: **every convention in `CLAUDE.md` (and the
+`docs/conventions/` files its routing table points to) applies to you
 too** (migrations, catalog scope, safety rules, logging discipline, all
 of it) — follow its "Startup reading and task routes" policy before
 working in this repo. This file exists only to
@@ -181,8 +182,8 @@ the repo owner rather than working around it.
 ## Testing a migration or schema idea
 
 The project's own standing convention — local Supabase (`supabase
-start`, migrations applied there, see CLAUDE.md's "Database &
-migrations" section) — needs zero hosted credentials, so you can do
+start`, migrations applied there, see
+`docs/conventions/database.md`) — needs zero hosted credentials, so you can do
 this fully within your own clone. **One real, pre-existing limitation
 to know about, not something specific to your setup**: this repo's
 local Supabase stack has never been fully bootstrapped with the

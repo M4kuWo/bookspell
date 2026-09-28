@@ -219,8 +219,8 @@ For each one, check it's genuinely audio-only (no print/ebook edition
 exists anywhere -- if it turns out to have a print counterpart you
 find, it's a normal book, ingest it the regular way via
 `tag-catalog-batch`, not this path) and genuinely in scope (sci-fi/
-fantasy, per this catalog's v1 scope -- see CLAUDE.md's "Catalog scope"
-section, same bar as any other book). Report the candidate list and
+fantasy, per this catalog's v1 scope -- see
+`docs/conventions/catalog.md`, same bar as any other book). Report the candidate list and
 stop -- don't roll straight into ingestion+tagging in the same session,
 same reason as Steps A1a/A1b above.
 

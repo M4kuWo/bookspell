@@ -175,8 +175,8 @@ common tag that captures it. Concretely:
 ## Step 4: landing a real addition
 
 Same conventions as every other schema/vocabulary change in this
-project (see CLAUDE.md's "Database & migrations" and "Data quality /
-tagging" sections) -- nothing special here, but all of it applies:
+project (see `docs/conventions/database.md` and
+`docs/conventions/tagging.md`) -- nothing special here, but all of it applies:
 
 - A new `tropes`/`content_warning_types` row plus catalog-wide
   `book_tropes`/`book_content_warnings` backfill inserts, in one

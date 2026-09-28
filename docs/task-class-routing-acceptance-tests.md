@@ -1,5 +1,11 @@
 # Task-class routing (CLAUDE.md Tier 1) — acceptance test methodology
 
+> **Note (2026-09-28):** the six task-specific CLAUDE.md sections these checks name
+> (Database & migrations, Database backups, Data quality / tagging, Catalog scope &
+> series hierarchy, Recommendation engine, v1 web app) now live in `docs/conventions/`
+> (CODX Task 25, lever A); CLAUDE.md keeps each heading as a pointer. Read "reads
+> section X" below as "reads the linked `docs/conventions/` file in full".
+
 Written 2026-09-26, after landing CODX's Task 23 Tier 1 proposal
 (`docs/codx-reports/2026-09-26-task-class-routing-review.md`) and
 before considering it measured, per the repo owner's explicit choice

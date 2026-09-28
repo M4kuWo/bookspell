@@ -194,8 +194,8 @@ optional future idea.
 - **What a missing row means — verified directly against
   `scripts/scoring/calibration.py`'s `get_confidence()` 2026-09-25**:
   absence of a row means "unassessed," and defaults to **full trust
-  (1.0)** — EXCEPT for fields in `HIGH_RISK_FIELDS` (see CLAUDE.md's
-  "Data quality / tagging" section for the current field list), which
+  (1.0)** — EXCEPT for fields in `HIGH_RISK_FIELDS` (see
+  `docs/conventions/tagging.md` for the current field list), which
   default to **`HIGH_RISK_FIELD_DEFAULT` (0.85)** instead when
   unassessed — a deliberately lower default given this project's
   documented track record of confident-but-wrong tags specifically on

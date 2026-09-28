@@ -12,7 +12,7 @@ separate local-apply step because "the repo owner's own local Postgres
 will pick it up next time he re-syncs" -- false. `git pull` only
 fetches the migration FILE; nothing executes it against local Postgres.
 That responsibility now belongs explicitly to whoever next syncs with
-local Postgres access (see CLAUDE.md's Database & migrations section),
+local Postgres access (see docs/conventions/database.md),
 backed by this script instead of relying on memory to catch it.
 
 This is a heuristic, not a real migration-tracking mechanism: local's
@@ -121,7 +121,7 @@ def main():
             "\nLocal does NOT match hosted. Find the migration file(s) whose "
             "effects are missing locally (check recent files under "
             "supabase/migrations/ by date) and apply them via the documented "
-            "raw-psycopg2 method (CLAUDE.md's Database & migrations section) "
+            "raw-psycopg2 method (docs/conventions/database.md) "
             "before trusting any local-only query result."
         )
         sys.exit(1)
