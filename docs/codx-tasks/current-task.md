@@ -1,106 +1,149 @@
 # CODX current task
 
-**Assigned**: 2026-09-26, by CLDO.
+**Assigned**: 2026-09-28, by CLDO.
 **Status**: ready to start.
+**Baseline**: sync to the commit that added this file (`git log -1 -- docs/codx-tasks/current-task.md`).
 
 See `docs/persona-workflow.md` if you haven't read it yet. Report to
-`docs/codx-reports/<date>-<slug>.md` in your own clone as always.
+`docs/codx-reports/<date>-context-load-improvements.md` in your own
+clone as always.
 
 ---
 
-## Task 24 — audit the experimental/deferred scoring functions in `scripts/scoring/experimental.py`
+## Task 25 — find further ways to cut fresh-session context load, using the Part 2 measurement
 
-This is your own established task type from `AGENTS.md`'s "Concrete
-tasks" list ("Auditing the pile of deferred/experimental functions...
-for whether they're still accurate or worth keeping") — not a new
-authorization, and not something that needs the structural-change
-review gate (this task IS a review, of code, not a proposal to change
-a convention). Review/propose only, same posture as always: findings
-and any proposed fix go in your report, nothing gets applied by you.
+This task continues your own Task 21 (bounded log read, `book-dna.md`
+split) and Task 23 (task-class routing) reviews. Your posture is
+review/propose only, as always. This task **is** the independent review
+that CLAUDE.md's structural/methodology-change gate requires before any
+of the proposals below can be implemented. So give a real review: find
+the flaws, reject whatever doesn't hold up, and propose alternatives.
+Don't rubber-stamp.
 
-### What's actually there (confirmed 2026-09-26, so you don't have to
-### re-derive this)
+### Where things stand (read these first; don't re-derive them)
 
-`scripts/scoring/experimental.py` is 834 lines, 9 functions, all
-confirmed uncalled by any production code path (per Task 9/CLDO's own
-prior confirmation, re-verify this still holds):
+- `docs/context-load-measurement-protocol.md` — all of it, especially
+  Part 2's **"Results (2026-09-26)"** subsection. That is the evidence
+  base for this task.
+- `docs/project-log.md`'s 2026-09-26 entry "Context-load measurement
+  Part 2 run: no route under-reads, Part 1's totals corrected" (the
+  summary).
+- For history, `docs/codx-reports/2026-09-25-context-load-review.md` (your
+  Task 21 report) and the project-log's 2026-09-26 "CODX Task 23 landed"
+  entry.
 
-- `build_profile_trope_shrinkage()` / `build_profile_trope_backoff()`
-  — alternative trope-weighting schemes.
-- `_dedup_factor_for_field()` / `build_profile_series_field_dedup()` /
-  `_dedup_factor_plain()` / `build_profile_series_field_dedup_protected()`
-  — alternative series-dedup approaches (the "protected" variant sounds
-  like it was meant to address a specific gap in the plain version —
-  confirm what that gap was and whether it's the same one
-  `docs/scoring-test-protocol.md`'s dedup entries already discuss).
-- `build_profile_per_value()` / `score_book_per_value()` /
-  `explain_book_per_value()` — an alternative per-value nominal-field
-  weight-learning scheme, matched in the `docs/schema/book-dna-decisions.md`
-  "Per-value nominal-field weight learning" entry (a real architectural
-  idea logged there — check whether this file's implementation is what
-  that entry describes, or a different/older attempt).
+**Already settled; don't re-litigate:**
+- The routing table routes correctly: 43/43 on the 12-scenario test,
+  and 5/5 fresh agents picked the right route with no under-reads.
+- Both safety gates stay universal.
+- The 4-file `book-dna` split stays.
 
-**Real reason this needs re-auditing now, not just "eventually"**:
-these functions haven't been touched since the Phase B `scripts/scoring/`
-submodule split (2026-09-17) — CLDO's own prior QA pass on them
-(Tasks 9/10-era) predates that split, this session's redundancy/
-prevalence-discount work, the confidence-instrumentation module
-(`scripts/scoring/confidence.py`), and the fixture-test suite
-(`scripts/scoring/tests/test_fixtures.py`, Tasks 18-19). An experimental
-alternative that was a faithful variant of `build_profile()`/`score_book()`
-on 2026-09-17 may now be silently out of sync with what the REAL
-functions actually do today — worth confirming either way, not assumed.
+**What the measurement actually found** (CLDO's summary; verify it
+before building on it):
+
+1. **Real gains are smaller than first claimed for heavy routes.** The
+   narrow routes (CI, UI) are ~53% below the old 31,861-word baseline.
+   Tagging is roughly a third lower. Scoring is ~24% lower, not the 51%
+   Part 1 claimed, because Part 1 omitted `docs/scoring-test-protocol.md`
+   (30,830 words, required by both old and new conventions). Schema design
+   is roughly break-even.
+2. **Section routing inside CLAUDE.md saves ~0 on *loading*.** Claude
+   Code auto-injects all of CLAUDE.md (8,893 words) into every session
+   and sub-agent's system prompt, regardless of which sections the
+   routing says to "read". The honest floor for any route is ~14.85k
+   words: full CLAUDE.md + `docs/TODO.md` (4,871) + the bounded log
+   (~1.1k). Every real saving so far comes from external files a route
+   lets a session skip.
+3. **The stale-snapshot warning in CLAUDE.md's preamble caused
+   duplicate loading.** One of 5 agents obeyed it by re-reading all of
+   CLAUDE.md from disk, putting ~8.9k words in context twice. The other 4
+   compared `grep '^## '` and `wc -w` against the snapshot, then re-read
+   only the sections they used. But that cheap check can't catch an
+   in-place wording edit, and the staleness problem is real (12/12 test
+   agents saw it on 2026-09-26).
+4. **Read depth for very large reference files is unspecified.** Two
+   scalar-field-style sessions could plausibly differ by ~25k words. One
+   agent read `scoring-test-protocol.md` in full (30.8k). Another read
+   ~3.3k of it (the 10-question gate, the scenarios, the "What's been
+   tried" table, one relevant section) and read `book-dna-decisions.md`
+   (11.2k) by grep plus the Rejected section only. Both were defensible,
+   but the rules don't say which is right.
+5. **`docs/TODO.md` is read in full every session, and half of it is
+   closed work.** Of 4,871 words, ~2,437 are in 30 `- [x]` done items and
+   ~1,801 are in 18 open items.
 
 ### What to actually do
 
-1. **For each function/pair, confirm it still imports/runs cleanly**
-   against the current `scripts/scoring/` module layout — a stale
-   import path or removed dependency would be a real, concrete finding
-   on its own (this file predates and postdates several real refactors).
-2. **Compare each experimental variant against the CURRENT real
-   equivalent** (`build_profile()`/`score_book()`/`explain_book()` in
-   `scripts/scoring/profile.py`/`pipeline.py`/`explanations.py`) —
-   is the experimental version still doing the SAME thing as the real
-   one, plus its one deliberate variation, or has it drifted (e.g. the
-   real function gained a redundancy/prevalence discount or a
-   confidence-floor check the experimental one never got, making it not
-   a fair A/B variant anymore even if someone did test it today)?
-3. **Check `docs/scoring-test-protocol.md`'s own history** for each of
-   these — several were apparently tested once already (the file's
-   dated entries should say what happened: landed, rejected, or
-   inconclusive). Confirm the current code matches what the log says
-   was actually tested, and flag any function whose fate isn't recorded
-   there at all.
-4. **Recommend, per function/pair**: keep as-is (still a live, correctly
-   isolated experiment worth someone eventually re-testing), fix (drifted
-   from the real pipeline in a way that would invalidate a future test —
-   say exactly what changed), or remove (already tested and rejected,
-   or superseded by something that actually landed, e.g. check whether
-   `build_profile_per_value()` is now moot given whatever
-   `docs/schema/book-dna-decisions.md`'s "Per-value nominal-field weight
-   learning" entry's real status is).
-5. **Confirm none of these 9 functions are actually called anywhere**
-   in the real pipeline, tests, or app/API code — re-verify Task 9's
-   old finding rather than trust it's still true after 9 days of changes
-   (`grep -rn` for each function name across `scripts/`, `api/`, `app/`
-   is enough; this file existing and being imported by nothing outside
-   itself is exactly the kind of thing that's easy to get wrong by
-   assumption).
+Propose concrete improvements, ranked by words saved × confidence that
+nothing required gets lost. At minimum, give a verdict on each of these
+candidate levers. You're free to add others, and to reject any of these:
+
+- **A. Tier 2: move conditional content out of the auto-loaded
+  CLAUDE.md** (e.g. into `docs/conventions/*.md` files the routing table
+  points to). This was deferred on 2026-09-26 on your own advice: "measure
+  Tier 1's real effect first." Finding 2 is now that measurement.
+  - Decide whether it justifies Tier 2, and in what shape.
+  - Which sections could safely move, and which must stay auto-loaded?
+    Consider the safety gates, persona rules, and anything a session
+    needs *before* it knows its route.
+  - Grep every file that references each candidate section (skills,
+    `AGENTS.md`, `docs/persona-workflow.md`, other docs), so the move
+    doesn't recreate the discoverability failure CLAUDE.md's
+    structural-review gate example describes.
+- **B. The stale-snapshot check** (finding 3): design a check that is
+  both cheap and actually catches in-place edits. For example, a content
+  hash / `git log -1 --format=%H -- CLAUDE.md` compared against something
+  the snapshot carries, or a version line at the top of the file that
+  every edit must bump. Say whether each option is enforceable or just
+  hopeful. Note: if A shrinks CLAUDE.md a lot, B's cost shrinks with it.
+  Treat them together.
+- **C. Read-depth guidance** for `scoring-test-protocol.md`,
+  `book-dna-decisions.md`, `book-dna.schema.yaml` and
+  `tag-catalog-batch/SKILL.md` (finding 4). Say which parts are
+  mandatory in full, per route, and which are targeted lookups. Consider
+  whether `scoring-test-protocol.md` needs a short always-read front
+  section (the gate and scenarios are ~2k words) with the 28k-word dated
+  history marked as search-don't-read. Check what CLAUDE.md's
+  Recommendation engine section and the schema core's scalar-field gate
+  step 4 literally require before proposing to relax either.
+- **D. `docs/TODO.md` done items** (finding 5): consider moving closed
+  items to an archive file, or collapsing each to one line. Check what
+  (if anything) relies on done items being in TODO.md, including the
+  multi-phase-closure rule, which uses TODO.md to notice an unfinished
+  phase.
+- **E. The measurement method itself.** It used one run per route,
+  self-reported word counts, and agents that knew they were being
+  measured (a likely Hawthorne effect). Propose a better re-test that
+  CLDO can run after changes land (e.g. parsing sub-agent transcripts for
+  the actual Read/Bash calls instead of trusting self-reports). You can't
+  launch Claude Code agents yourself, so specify it for CLDO to execute.
+
+For every proposal you recommend:
+- give real `wc -w` numbers for the before/after words saved, per route;
+- name the specific requirement or incident-driven rule that could be
+  lost or made less discoverable, and how the proposal prevents that;
+- list the files that would need to change;
+- say whether it depends on or conflicts with another proposal.
 
 ### What NOT to do
 
-Don't run `scripts/scoring_tests.py` against any of these (that's a
-real benchmark run, CLDO's own exclusive territory per CLAUDE.md's
-persona rules) and don't touch `scripts/recommend.py`. This is a static
-code/documentation-consistency review, not a live A/B test — if you
-find something worth actually testing, say so as a recommendation for
-CLDO to run, not something to execute yourself.
+- Don't edit CLAUDE.md, AGENTS.md, TODO.md, the protocol doc or any
+  skill. You can include proposed diffs or text in your report, and that
+  is encouraged.
+- Don't run `scripts/scoring_tests.py`. It's not relevant here, and it's
+  CLDO's territory.
+- Don't treat any lever above as pre-approved just because it's listed.
+  "Don't do X" is a valid verdict.
 
 ### Deliverable
 
-A report at `docs/codx-reports/<date>-experimental-functions-audit.md`:
-per-function verdict (keep/fix/remove) with reasoning, confirmation of
-the "uncalled anywhere" check, and any real drift found between an
-experimental variant and its current real counterpart. CLDO reviews,
-independently re-verifies, and applies whatever's agreed (likely a
-mix of deleting some functions and leaving others, logged either way).
+A report at `docs/codx-reports/<date>-context-load-improvements.md`
+containing:
+- a verdict on the findings above (flag any you couldn't reproduce);
+- a verdict on each of A–E plus anything you add, ranked;
+- proposed text or diffs for anything you recommend;
+- a re-test spec for CLDO.
+
+CLDO re-verifies every claim, brings the recommendations to the repo
+owner, and implements whatever is agreed, then re-runs the behavioral
+measurement to confirm.

@@ -71,6 +71,13 @@ schema files the route's table row calls for):
 | v1 web app, UI-only (no catalog/scoring) | 9,414 | 31,861 | 70.5% |
 | New scalar field / schema design (heaviest route) | 29,375 | 31,861 | 7.8% |
 
+> **Correction (2026-09-26, from Part 2):** these totals leave out
+> external files the routing rows require, most importantly
+> `scoring-test-protocol.md` (30,830 words) for the scoring and
+> scalar-field routes. Correcting for it, the scoring route's reduction is
+> ~24%, not 51.3%. See Part 2's Results section for the corrected
+> figures. The table above is left as originally computed.
+
 **Honest reading of this table**: the routing policy is a real, large
 win for narrow/bounded tasks (CI-only, UI-only, a single-field tagging
 correction) — 70%+ less required reading. It is a near-non-event for
@@ -93,7 +100,7 @@ companions a given route calls for); the split by itself, without
 routing, would have been a net loss. This is worth remembering if
 either piece is ever changed independently of the other.
 
-## Part 2 — behavioral validation (queued, run this in the new terminal)
+## Part 2 — behavioral validation (run 2026-09-26 — see Results below)
 
 Part 1 measures what the policy *asks* a session to read. It does not
 prove a real fresh session actually reads only that — a session could
@@ -192,3 +199,99 @@ in CLAUDE.md directly, then re-tested. If a route over-reads
 consistently, that's more likely an agent being cautious than a policy
 bug — worth noting but not necessarily a fix, per the routing policy's
 own "if the scope is unclear, read all of CLAUDE.md" allowance.
+
+### Results (2026-09-26, run by CLDO in a fresh terminal)
+
+Run as the first action of a new session. There were 5 non-forked `general-purpose`
+agents, launched concurrently, each given its route's prompt above. Two
+adaptations: (a) "Same repo." was replaced with the full repo path,
+because a fresh agent has no "same" to refer back to. (b) Each prompt got a short
+reporting addendum: list which CLAUDE.md sections were relied on vs.
+skimmed, say whether CLAUDE.md came from the system prompt or disk, give
+approximate words for partial reads, and do no DB access or task work.
+All numbers below are the agents' own self-reports, cross-checked
+against `wc -w` of the named files.
+
+**Headline: no route under-read. No routing-table bug was found, and
+CLAUDE.md was not changed.** Every agent picked the correct route
+(Route 3 also added Database backups, a defensible call per the table's
+"backup jobs add Database backups" clause, since the task touches the
+backup-reminder workflow). Every agent read or targeted every file its
+row requires. The real findings are about Part 1's accounting, not the
+routing.
+
+| Route | Agent's actual read | Part 1 prescribed | Corrected prescription (see below) | Grade |
+|---|---|---|---|---|
+| 1 Tagging/correction | ~20,650 | 17,557 | ~18,800 + relevant YAML/contract/skill slices | **Match** |
+| 2 Scoring change | ~44,900 disk + ~3,950 universal from prompt copy | 15,504 | ~47,580 | **Match** |
+| 3 CI/tooling | ~15,300 | 8,840 | ~10,330 (incl. Database backups) | **Over-read (mild)**, cause below |
+| 4 UI-only | ~10,720 | 9,414 | ~10,660 | **Match** |
+| 5 New scalar field | ~19,000 disk + CLAUDE.md from prompt (~28,000 effective) | 29,375 | not a single number: "relevant" slices of 4 large files | **Match**, with a depth note |
+
+**Part 1 was incomplete. Its totals are not a faithful rendering of the
+routing rows.** It counted only CLAUDE.md sections, TODO.md, and the
+`docs/schema/*.md` files. It left out things the rows explicitly list:
+- `docs/scoring-test-protocol.md` (30,830 words), required by the scoring
+  row, the scalar-field row, the Recommendation engine section, and
+  step 4 of the schema core's scalar-field gate. This is the biggest error:
+  Route 2's real prescription is ~3x Part 1's figure.
+- `book-dna.schema.yaml` (11,239), the applicable skill
+  (`tag-catalog-batch`, 7,949), and `book-dna-tables.md` (1,732) for the
+  tagging and scalar-field rows. The rows say "exact YAML vocabulary" /
+  "relevant table contract" / "affected skills", and agents correctly read
+  the relevant slices (a few hundred words each), not whole files.
+- The bounded project-log read (~1,093 words today, cap 1,500), which every
+  route requires.
+- TODO.md drift: 4,716 → 4,868 since Part 1 was computed.
+
+In the other direction, Part 1 counted `book-dna-decisions.md` in full
+(11,192) for Route 5. The row only says "relevant decisions", and the
+schema core says to read it to check for a prior rejection.
+
+**Corrected old-vs-new for the scoring route.** The old
+(`pre-book-dna-split`) CLAUDE.md already required
+`scoring-test-protocol.md` before any scoring change (its line 660,
+30,803 words at that tag), so the protocol belongs on both sides. Old
+≈ 31,861 + 30,803 = 62,664. New ≈ 47,580. That is a **~24% reduction,
+not the 51.3% Part 1 claimed.** The narrow-route figures (CI, UI) hold
+up well against real behavior. Route 4's actual read landed within ~60
+words of the corrected prescription.
+
+**Structural confound: CLAUDE.md is always fully in context.** Claude
+Code auto-injects the whole of CLAUDE.md (8,893 words) into every
+session's and sub-agent's system prompt. Section-level routing therefore
+reduces what a session *relies on and re-reads*, not what is *loaded*.
+The real context floor for any route is 8,893 (not 4,124) + TODO + the
+bounded log ≈ 14,850 words. The genuine loading savings come entirely
+from external files the routing lets a session skip (the schema
+companions, the scoring protocol, the YAML). Measured against the old
+31,861, the narrow routes are still ~53% lower on that honest basis.
+
+**Why Route 3 over-read.** It re-read all of CLAUDE.md from disk because of
+the preamble's stale-snapshot warning ("`grep`/`Read` it directly from
+disk"), so ~8.9k words were in context twice. The other 4 agents
+handled the same warning more cheaply: they compared `grep '^## '`
+headings and/or `wc -w` against the snapshot, then re-read only the
+sections they relied on. The stale-snapshot problem is real
+(12/12 earlier), so the cheap check is only safe if it would actually
+catch staleness. Headings plus word count would catch an added or removed
+section, but not an in-place wording edit. **Not changed.** Tightening that
+preamble is a CLAUDE.md change, so it needs the structural-review gate. It is
+not an under-read fix. Queued as a proposal in `docs/TODO.md`.
+
+**Depth ambiguity for large reference files (Route 5 note).** Route 2 read
+`scoring-test-protocol.md` in full (correct: "read before changing any
+scoring logic"). Route 5 read ~3,300 of its words: the 10-question gate,
+the two scenarios, the "What's been tried" table, and the "would validation
+detect a new field" section. Route 5 also read `book-dna-decisions.md` by
+grep plus the Rejected/superseded section, not the full chronology the
+schema core suggests ("read it before proposing a new value"). Both are
+defensible for a scalar-field proposal, since the task stops at gate step 1
+anyway. But the rows don't say how deep to read, so two sessions on
+different scalar-field tasks could reasonably differ by ~25k words. This is
+not graded as an under-read because nothing required was skipped. It is
+flagged for the same structural-review proposal.
+
+**Route 1 note.** It skipped `book-dna-vocabulary-gaps.md`. The row says
+"gap tracker before tagging", and the task was a single-scalar correction
+that adds no vocabulary. Defensible, and not graded as an under-read.

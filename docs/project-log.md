@@ -22795,3 +22795,81 @@ separate from the now-closed "fresh-session context-load reduction"
 item above it, per the multi-phase-closure rule -- this is a genuinely
 new follow-up task the repo owner just asked for, not a reopening of
 the closed one).
+
+## 2026-09-26, later still -- Context-load measurement Part 2 run: no route under-reads, Part 1's totals corrected
+
+Ran Part 2 of `docs/context-load-measurement-protocol.md` (the behavioral
+test queued in the previous entry) as the first action of a fresh
+terminal. There were 5 fresh, non-forked `general-purpose` agents, one per
+route prompt. Each self-reported every file read, the word counts, and
+which CLAUDE.md sections it relied on vs. skimmed, with no DB access and
+no task work. Full per-route table and caveats are in the protocol doc's
+new "Results (2026-09-26)" subsection. This is the summary.
+
+**No under-reads, so no routing-table bug and no CLAUDE.md change.** All 5
+agents chose the correct route and read (or targeted the relevant slice
+of) every file their row requires. Grades: tagging/correction Match
+(~20.6k words), scoring Match (~44.9k + prompt copy), CI Over-read (mild,
+~15.3k vs ~10.3k corrected), UI-only Match (~10.7k, within ~60 words of
+the corrected prescription), and new scalar field Match with a depth
+note (~19k from disk, targeted).
+
+**The real finding was that Part 1's own numbers were incomplete.** It
+counted only CLAUDE.md sections, TODO.md, and `docs/schema/*.md`, and left
+out external files the routing rows explicitly require. The big one is
+`docs/scoring-test-protocol.md` (30,830 words), required for the scoring
+and scalar-field routes. The old baseline also required it (the
+`pre-book-dna-split` CLAUDE.md, line 660), so corrected on both sides, the
+scoring route's reduction is **~24%, not the 51.3% the previous entry
+reported**. The narrow-route figures (CI, UI) survived contact with real
+behavior. The protocol doc's Part 1 table was left as computed, with a
+correction note pointing at the results.
+
+**A structural confound worth knowing about.** Claude Code auto-injects all
+of CLAUDE.md (8,893 words) into every session and sub-agent. Section
+routing therefore cuts what a session relies on and re-reads, not what is
+loaded. The honest floor for any route is ~14.85k words (full CLAUDE.md +
+TODO + the bounded log). Real loading savings come only from external
+files a route lets a session skip. On that basis, the narrow routes are
+still ~53% below the old 31,861.
+
+**Two proposals are queued, not applied.** Both are CLAUDE.md changes, so
+they need the structural-review gate rather than an under-read fix.
+1. The CI agent's over-read came from the preamble's stale-snapshot
+   warning. It re-read the whole file from disk, putting ~8.9k words in
+   context twice. The other 4 compared headings/`wc -w` and re-read only
+   the sections they used, but that cheap check would miss an in-place
+   wording edit, so the fix isn't obvious.
+2. The rows don't say how deeply to read very large reference files.
+   Route 2 read the scoring protocol in full, while Route 5 read ~3.3k of
+   it plus decisions by grep. Both calls were defensible, but they imply a
+   ~25k-word spread between two plausible scalar-field sessions.
+
+`docs/TODO.md`'s "Quantify the routing policy's real context-load gain"
+item is marked done with a pointer here. A new item holds the two
+proposals.
+
+## 2026-09-28 -- CODX Task 25 queued: find further context-load improvements
+
+The repo owner asked for a report to CODX and a task to find more ways to
+improve fresh-session context load, following the Part 2 measurement
+(previous entry). Written to `docs/codx-tasks/current-task.md`,
+overwriting the already-landed Task 24. The task is self-contained: it
+summarizes the five measured findings for CODX to verify, not trust. Those
+findings are the corrected per-route gains; CLAUDE.md being auto-loaded in
+full, so section routing saves ~0 on loading; the stale-snapshot warning
+causing duplicate loads; unspecified read depth for large reference files;
+and `docs/TODO.md` being ~50% closed items by word count.
+
+The task asks for ranked verdicts on five candidate levers:
+- A: Tier 2, a physical CLAUDE.md split. Its deferral condition,
+  "measure Tier 1 first", is now met.
+- B: a staleness check that catches in-place edits.
+- C: per-route read-depth guidance for the scoring protocol, decisions,
+  YAML and skill files.
+- D: archiving done TODO items.
+- E: a better re-test method, such as transcript parsing instead of
+  self-report.
+It explicitly allows "don't do this" as a verdict. It also counts as the
+structural-review gate's independent review for the two proposals the
+Part 2 entry queued. `docs/TODO.md`'s follow-up item now points at Task 25.
