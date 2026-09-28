@@ -377,3 +377,11 @@ terminal would confirm that.
 **Open decision (repo owner):** keep C's "read in full" requirements for
 the YAML and skills on schema-design and vocabulary routes, or relax them to
 "complete relevant sections".
+
+**Cost (2026-09-28, from `/usage`).** Before arm: 18% → 22% of the weekly
+limit (~$9.5). After arm plus the implementation work for A, C and D:
+22% → 28% (~$16.9). The before arm alone was ~0.5% of the week per agent.
+
+**Follow-up.** The repo owner chose not to relax C, and asked instead for a
+way to make its full reads cheaper. That was queued to CODX as Task 26
+(`docs/codx-tasks/current-task.md`).

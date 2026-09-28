@@ -23125,3 +23125,23 @@ compliance bought nothing measurable here.
 
 **Open decision** for the repo owner: keep or relax C's "read in full"
 requirements for YAML and skills on schema-design and vocabulary routes.
+
+## 2026-09-28, later still -- CODX Task 26 queued: make C's full reads cheaper without relaxing them
+
+The repo owner decided to keep C's "read in full" requirements; the
+after-arm showed agents now comply with them. But they asked for a way to
+improve how those requirements are met. Queued as Task 26.
+
+The task asks for proposals that change the *form* of the required
+information, never the obligation to see it. Candidate levers:
+- a CI-checked vocabulary index generated from the YAML;
+- moving `tag-catalog-batch`'s DONE/reference sections to a companion file;
+- measuring real duplication between the schema core, the YAML and the
+  conventions files;
+- the growth in project-log reads;
+- whether TODO reads truly dropped to ~0 after D;
+- better attribution in `scripts/measure_context_load.py`.
+
+The re-test spec must keep prompts outside the repo until every arm has
+run, and must run from a fresh session. Measured cost of the before and
+after arms, from `/usage`, is recorded in the protocol doc.
