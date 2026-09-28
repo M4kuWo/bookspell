@@ -23401,3 +23401,13 @@ hashes and the session and refresh tokens that existed then. Options:
   useless but leaves the hashes;
 - rewrite the backups repo's history to drop the old data dumps. That's
   destructive (a force-push) and loses those snapshots.
+
+## 2026-09-28, later still -- old backups' auth secrets: accepted as-is
+
+The repo owner accepted the residual risk in the three pre-2026-09-28 data
+dumps: bcrypt hashes plus session and refresh tokens, in the private
+`bookspell-backups` history. The reasons: the repo is private, and there are
+only 4 accounts, all known people. No forced sign-out and no history
+rewrite. Every backup from 2026-09-28 on excludes auth secrets
+(`scripts/backup_snapshot.py`). The TODO item is closed and archived. Revisit
+only if the backups repo's visibility or access changes.
