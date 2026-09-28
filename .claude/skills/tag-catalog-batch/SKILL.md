@@ -5,6 +5,16 @@ description: Tag a batch of untagged Bookspell catalog books with full Book DNA 
 
 # Tag a batch of Bookspell catalog books
 
+> **Scope (2026-09-28):** read this skill in full whenever you run a
+> tagging batch. A bounded correction to already-tagged books (e.g. one
+> field on a few books) is not a batch invocation: follow its evidence
+> standard, confidence conventions and high-risk-field guidance ("The
+> evidence standard", "Confidence conventions", Step 3's high-risk
+> section), plus `docs/conventions/tagging.md` and
+> `docs/conventions/database.md`. How a migration is applied is governed
+> by `docs/conventions/database.md`, which wins over any
+> direct-to-hosted wording in this skill.
+
 Bookspell is a sci-fi/fantasy book recommendation app built on structured
 "Book DNA" attributes instead of star ratings. The catalog has real
 books with bibliographic data (title, author, series, etc.) already

@@ -31,7 +31,8 @@ the task or an applicable skill needs them:
 - **`book-dna-decisions.md`** — deferred/open proposals, rejected/
   superseded decisions, and the full dated implementation/review
   history. Read when proposing a new field/trope/content-warning
-  (check for a prior rejection first) or revisiting a past design call.
+  (check for a prior rejection first, per the reading rule at the top of
+  that file) or revisiting a past design call.
 
 ## A note on this file vs. the YAML
 
@@ -493,9 +494,11 @@ not the same as automatically worth adding.
 **The full, dated chronology of every growth round (7 so far), including
 every "real term but not added" rejection and the exact per-book
 evidence behind every value that DID land, moved to
-`book-dna-decisions.md`** — read it before proposing a new value, both
-to see the evidence bar in action and to check whether your candidate
-has already been considered and rejected once.
+`book-dna-decisions.md`** — before proposing a new value, read it per
+the reading rule at the top of that file, both to see the evidence bar
+in action and to check whether your candidate has already been
+considered and rejected once (many rejections live in the growth
+rounds, not only in the Rejected / superseded section).
 
 ## Known limitations — engine-level, not schema fixes
 

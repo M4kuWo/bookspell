@@ -1,5 +1,29 @@
 # Scoring engine test protocol
 
+## Reading contract (adopted 2026-09-28)
+
+Read this front section through "What's been tried" in full for scoring
+behavior changes, scoring-semantic tests, and scalar-field proposals. Answer
+all ten gate questions before implementing a scoring change. The table is
+historical navigation, not a complete or authoritative current-status index.
+Search the entire remaining protocol and project log for touched identifiers,
+related concepts, old names and known failure modes. Read complete relevant
+entries and their later corrections, not isolated matching lines. Consult
+current code and contracts before treating a historical status as current.
+Record search terms and the entries supporting the proposal. If a dependency
+or reversal cannot be resolved, broaden the read, including the full history
+when needed. No design change can be justified by a narrow search miss.
+
+Always include the latest canonical-pipeline/module-import conventions and
+metric-interpretation corrections when changing or evaluating scoring behavior.
+Both failure scenarios and applicable current validation requirements remain
+mandatory. This reading policy grants no implementation or benchmark authority.
+For a scalar proposal failing an earlier gate, report that stop explicitly;
+do not claim a complete design review or permission to bypass later gates.
+
+(Proposed by CODX, Task 25; see
+`docs/codx-reviews/codx-context-load-improvements-2026-09-28.md`.)
+
 ## Why this exists
 
 Every scoring-formula test run so far (2026-08-29 through 2026-09-01) has
@@ -117,7 +141,13 @@ change is considered safe to land.
 | Series-repeat signal (disliking an earlier book in a series should weigh heavily on a later one, unless its own DNA diverges a lot) | Real improvement -- Royal Assassin and Assassin's Quest both move substantially toward correct (0.539->0.427, 0.575->0.476), no effect on anything without an actual disliked series-mate | No interaction -- no shared series between liked/disliked books in this scenario | **Landed** (`SERIES_REPEAT_WEIGHT`, `series_repeat_worst_similarity()`) -- honest limitation: even at full weight, doesn't always cross all the way to "Poor match" (book_similarity()'s trope-overlap component dilutes it, since same-series books naturally differ on plot-specific tropes even when narrative style stays consistent); correctly produces NO effect on the sparse (16-book) scenario, since that training set doesn't include the disliked Farseer book needed to trigger it -- confirms the mechanism only acts on evidence that's actually present, not a coincidence |
 | Per-user calibrated Poor-match threshold (`user_calibrated_poor_threshold()`, replaces the fixed 0.35 `match_label()` cutoff) | Real improvement -- Mathias full: hated_rejection 0%->60%, bucket accuracy 36%->64%; Mathias sparse: 0%->50%, 33%->56%; zero regression on pairwise accuracy or loved recall in either | No interaction tested directly (WEIGHT_CAP_RATINGS has no disliked/hated distinction fine-grained enough), but the redundancy-discount/WEIGHT_CAP mechanisms are untouched -- this only changes label assignment on an already-computed score, never a weight | **Landed** 2026-09-02 -- see "Poor-match threshold diagnostic" section below for full reasoning/numbers. Honest limitation: does nothing for Osnat (still 0% hated_rejection in every variant) or Mathias's series-isolated scenario -- both are cases where the disliked book's raw score itself never drops low enough for ANY plausible threshold to catch, a genuine DNA-similarity/tagging gap (see the Magic Bites/Magic Burns case), not a labeling problem this fix can reach |
 | Trope-weight sample-size shrinkage (`build_profile_trope_shrinkage()`, `n/(n+k)` factor on each trope's raw weight, k swept 1-12) | Genuinely mixed at every k tested, all 4 real raters -- e.g. k=3: Mathias full pairwise 0.84->0.91 (real gain, no bucket/hated_rejection regression) but Osnat pairwise 0.67->0.61 and Dandan bucket 0.71->0.57 (real regressions); Mathias sparse hated_rejection 0.50->0.25 regresses at EVERY k from 1 to 12, never recovers | Confirmed no interaction with person/pov_count (ordinal/nominal loops untouched by construction) | **Deferred** 2026-09-06 -- mechanism does exactly what it's designed to (hidden_talent_prodigy: +0.267->+0.100 at k=5, well-evidenced tropes barely move), but at this dataset's scale you can't tell from sample size alone whether a thin-evidence trope is noise (helps) or a genuine minority signal (hurts, e.g. Royal Assassin/Mathias-sparse) -- same conclusion as the already-deferred Bayesian-average shrinkage above, now confirmed for a trope-only, more targeted version of the same idea. Kept as `build_profile_trope_shrinkage()` in recommend.py, not wired into production, same pattern as `build_profile_per_value()` |
-| Candidate-pool prevalence discount (`score_book_prevalence_discount()`, each field/trope's contribution scaled by `max(0.1, 1-prevalence)` where prevalence = fraction of the WHOLE CATALOG sharing that value -- the friend's IDF-style proposal) | Real improvement, no clear regression -- Mathias full: bucket 0.73->0.82, hated_rejection 0.80->1.00, pairwise unchanged; Mathias sparse: bucket 0.56->0.67, hated_rejection 0.50->0.75, pairwise 0.73->0.70 (small); Dandan: pairwise 0.73->0.87, bucket unchanged; Osnat: pairwise 0.67->0.61 (one real regression, on the rater already flagged with a structural 17-liked/1-disliked data skew) | Assassin's Apprentice (WEIGHT_CAP_RATINGS) raw score 0.257->0.192, moving further in the correct (disliked) direction, not reopening the bug | **Promising, not yet landed** 2026-09-06 -- directly confirms the friend's #2 concern with real numbers: `emotional_resolution`'s near-constant +0.323 (53.0% catalog prevalence) drops to +0.152 for every book sharing that value; `person`'s contribution for a `third_limited` match (53.3% prevalence, the modal/most-common value) drops from 0.227 to 0.106 -- directly answers point #4 (repo owner: "we still see person take a huge weight") for the common case that dominates the Ledger, while a genuinely rare mismatch value (`first`, 29.8% prevalence) stays closer to full strength, which is the mechanism working as intended, not a gap. Needs the isolated/author scenarios and a full scorecard run, plus understanding the Osnat regression, before this is a real landing candidate -- not done yet, this is a first-pass A/B only |
+| Candidate-pool prevalence discount (`score_book_prevalence_discount()`, each field/trope's contribution scaled by `max(0.1, 1-prevalence)` where prevalence = fraction of the WHOLE CATALOG sharing that value -- the friend's IDF-style proposal) | Real improvement, no clear regression -- Mathias full: bucket 0.73->0.82, hated_rejection 0.80->1.00, pairwise unchanged; Mathias sparse: bucket 0.56->0.67, hated_rejection 0.50->0.75, pairwise 0.73->0.70 (small); Dandan: pairwise 0.73->0.87, bucket unchanged; Osnat: pairwise 0.67->0.61 (one real regression, on the rater already flagged with a structural 17-liked/1-disliked data skew) | Assassin's Apprentice (WEIGHT_CAP_RATINGS) raw score 0.257->0.192, moving further in the correct (disliked) direction, not reopening the bug | **Landed** 2026-09-06 -- see "Candidate-pool prevalence discount -- LANDED for real" below (status corrected 2026-09-28; the row's original text follows). Originally: directly confirms the friend's #2 concern with real numbers: `emotional_resolution`'s near-constant +0.323 (53.0% catalog prevalence) drops to +0.152 for every book sharing that value; `person`'s contribution for a `third_limited` match (53.3% prevalence, the modal/most-common value) drops from 0.227 to 0.106 -- directly answers point #4 (repo owner: "we still see person take a huge weight") for the common case that dominates the Ledger, while a genuinely rare mismatch value (`first`, 29.8% prevalence) stays closer to full strength, which is the mechanism working as intended, not a gap. Needs the isolated/author scenarios and a full scorecard run, plus understanding the Osnat regression, before this is a real landing candidate -- not done yet, this is a first-pass A/B only |
+
+> **End of the always-read front section.** Everything below is dated
+> history: search it for your change's identifiers and concepts and read
+> complete matching entries, per the Reading contract at the top. Don't read
+> it linearly, and don't treat the table above as a complete current-status
+> index.
 
 ## Second rater: Osnat (2026-09-01, two rounds)
 

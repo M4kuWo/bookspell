@@ -23003,3 +23003,55 @@ repo-owner-run step. The after-arm measurement (the same 7 prompts) runs once
 all three levers land. Caveat: after-arm agents will read this log entry as
 part of their bounded log window, so they'll know the rules just changed.
 That can't be avoided and is noted for the comparison.
+
+## 2026-09-28, later still -- read-depth contract landed (CODX Task 25 lever C)
+
+The second of the approved levers, applied the same way as A: a CLDO-written
+all-or-nothing script, dry-run and then applied by the repo owner. The script
+is copied to `docs/codx-reviews/context-load-e/apply_read_depth_contract.py`.
+It aborts unless every touched file matches HEAD.
+
+**What changed:**
+- `docs/scoring-test-protocol.md` gained CODX's Reading contract at the top.
+  The front section through "What's been tried" is read in full. After that,
+  search the whole history and project log and read complete relevant entries
+  and their later corrections, never isolated lines. A narrow search miss
+  justifies nothing.
+- The protocol also gained an end-of-front-section marker before the dated
+  history.
+- The table's prevalence-discount row said "Promising, not yet landed". That
+  was stale: it landed on 2026-09-06, confirmed against the protocol's own
+  "LANDED for real" section and the live `scripts/scoring/prevalence.py`.
+  Corrected, with the original text kept.
+- CLAUDE.md's tagging, vocabulary, scalar-field and scoring routing rows now
+  state read depth explicitly:
+  - YAML and tagging skill in full for a batch, and the touched definitions
+    and evidence/confidence guidance for a bounded correction;
+  - decisions per its preamble's rule;
+  - the protocol per its Reading contract;
+  - affected skills in full for a scalar design.
+- CLAUDE.md also gained one general "Read depth" rule: "full" means the whole
+  file; otherwise read complete relevant entries found by search, and read
+  more when relevance or a reversal is unclear. CLAUDE.md grew 4,440→4,551
+  words.
+- Matching wording went into `docs/conventions/scoring.md`, the schema core's
+  Schema map and growth-chronology paragraph, and a new "How much to read"
+  rule in `book-dna-decisions.md`'s preamble. The rule says: read the preamble
+  and the whole Rejected / superseded section, then search the entire file,
+  because growth rounds hold rejections too.
+- `tag-catalog-batch/SKILL.md` gained a scope note: a bounded correction isn't
+  a batch invocation. The note also says `docs/conventions/database.md`
+  governs how migrations are applied and wins over the skill's
+  direct-to-hosted wording. That resolves, for corrections, the Step 4
+  conflict CODX flagged. The skill's Step 4 text itself is unchanged; a batch
+  run still reads it, so that conflict stays open as a separate item.
+
+**Why C matters, per the before-arm data.** It mostly doesn't cut reading.
+Agents unaware of measurement already read these files in targeted slices.
+What it does is make that behavior the stated rule instead of an unstated
+habit. In Part 2, a measured agent read the whole 30.8k-word protocol for the
+same task, so the variance was real. It also closes the "narrow grep is
+enough" failure mode: the rule requires complete entries and later
+corrections.
+
+Next: D (TODO archiving), then the after-arm measurement.

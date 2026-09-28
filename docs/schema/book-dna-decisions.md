@@ -21,6 +21,17 @@ decisions** (considered and explicitly turned down, or reopened and
 still pending), and **Dated implementation/review history** (a
 chronological record of how the schema got to its current shape).
 
+**How much to read (adopted 2026-09-28).** Before proposing a new
+field, trope or content warning: read this preamble and the whole
+**Rejected / superseded decisions** section. Then search the *entire*
+file for the candidate, related concepts and older names; the growth
+rounds hold many "real term but not added" rejections too. Read every
+matching entry in full, together with any later reopening or correction
+(e.g. the cannibalism entry's pending-reopening caveat). A narrow search
+miss is not proof an idea was never considered: if relevance is
+unclear, read more, up to the whole file. Other tasks read only the
+entries they need.
+
 ## Deferred / open proposals
 
 Ideas raised, considered against this schema's standing bar ("does

@@ -16,7 +16,10 @@ convention set (`CLAUDE.md` plus `docs/conventions/`).*
   don't re-litigate a rejected idea, or claim a win, without checking
   that table first. **Answer its "Before proposing any scoring change:
   the 10-question gate" section before writing any code** — a real,
-  binding pre-check (adopted 2026-09-24), not optional framing.
+  binding pre-check (adopted 2026-09-24), not optional framing. Read
+  the protocol per its own "Reading contract" (front section in full,
+  then complete relevant history entries found by search); its running
+  table is navigation, not an authoritative current-status index.
 - **Every scoring change must be checked against at least two failure
   scenarios before landing**, not just the one that motivated it: a
   fix that helps a real signal from getting diluted by many unrelated

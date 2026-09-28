@@ -113,10 +113,10 @@ moved to `docs/conventions/`, still applies.
 
 | Trigger / task | Additional convention files (see map below) | External prerequisites |
 |---|---|---|
-| Tagging, ingestion, metadata corrections or confidence QA | Data quality / tagging; Catalog scope & series hierarchy; database route if accessing DB | Schema core; exact YAML vocabulary; applicable tagging skill; gap tracker before tagging; relevant table/confidence contract |
-| Vocabulary-gap sweep or new trope/content-warning proposal | Data quality / tagging; Catalog scope & series hierarchy; database route if accessing DB | Schema core and full YAML; vocabulary-gap tracker; decisions/rejections; gap-sweep skill when running a sweep |
-| New scalar field or schema design | Data quality / tagging; Catalog scope & series hierarchy; Recommendation engine; Database & migrations | Schema core including scalar-field gate; YAML; relevant decisions/table contracts; scoring-test-protocol.md; affected skills |
-| Scoring behavior, scoring refactor or designing/changing tests that assert scoring semantics | Recommendation engine; Catalog scope & series hierarchy; database route if accessing DB | Schema core; scoring-test-protocol.md with its existing pre-change gate; applicable contracts and prior decisions |
+| Tagging, ingestion, metadata corrections or confidence QA | Data quality / tagging; Catalog scope & series hierarchy; database route if accessing DB | Schema core; exact YAML vocabulary (full for a tagging batch; the complete touched field definitions for a bounded correction); applicable tagging skill (full for a batch invocation; its evidence, confidence and high-risk-field guidance for a bounded correction); gap tracker before tagging new books; relevant table/confidence contract |
+| Vocabulary-gap sweep or new trope/content-warning proposal | Data quality / tagging; Catalog scope & series hierarchy; database route if accessing DB | Schema core and full YAML; vocabulary-gap tracker; decisions per its preamble's reading rule; gap-sweep skill in full when running a sweep |
+| New scalar field or schema design | Data quality / tagging; Catalog scope & series hierarchy; Recommendation engine; Database & migrations | Schema core including scalar-field gate; full YAML; decisions per its preamble's reading rule; relevant table contracts; scoring-test-protocol.md per its Reading contract; affected skills in full |
+| Scoring behavior, scoring refactor or designing/changing tests that assert scoring semantics | Recommendation engine; Catalog scope & series hierarchy; database route if accessing DB | Schema core; scoring-test-protocol.md per its Reading contract (front section in full, then complete relevant history entries); applicable contracts and prior decisions |
 | Audiobook data or an edition display | v1 web app for UI/API work; Data quality / tagging; Catalog scope & series hierarchy; database route if accessing DB | Schema core; book-dna-tables.md edition contract; tag-audiobook-editions skill; Tier A/B guidance as applicable |
 | Frontend, API, auth/config or deployment | v1 web app; add catalog/data/scoring/database routes when those behaviors are involved | Relevant feature contracts and skills; schema core for catalog/scoring behavior, not isolated CSS |
 | DB access, migration, schema, grants/RLS, restore or DB configuration | Database & migrations; Database backups for backup/restore or risky persistent-data work; other domain routes as applicable | Relevant schema/table contracts and migration history; persona-specific authorized connection method |
@@ -127,6 +127,11 @@ Convention file map: Database & migrations → `docs/conventions/database.md`;
 Database backups → `backups.md`; Data quality / tagging → `tagging.md`;
 Catalog scope & series hierarchy → `catalog.md`; Recommendation engine →
 `scoring.md`; v1 web app → `web.md` (all in `docs/conventions/`).
+**Read depth:** "full" means the whole file. Anywhere else, read the
+complete relevant entries or sections (found by searching the whole file
+for the identifiers, concepts and older names involved), including their
+later corrections, never isolated matching lines. If relevance or a
+reversal is unclear, read more, up to the whole file.
 External schema names above live in `docs/schema/`; the scoring protocol
 is `docs/scoring-test-protocol.md`; skills live in `.claude/skills/`.
 Briefly record the routes used and any later scope expansion in the work
