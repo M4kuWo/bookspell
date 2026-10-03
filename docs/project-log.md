@@ -23503,3 +23503,44 @@ holds:
 Each keeps its gate. The staged reader milestones (~10 → ~25 → ~100
 readers) moved into the P1 "Recruit more raters" item, which had pointed
 to them as "the bottleneck above".
+
+## 2026-10-03 -- lean-context-methodology skill gains a "still needed?" check (Step 0)
+
+The repo owner asked whether a future Claude model or Claude Code release
+could make the methodology skill obsolete. Partly, yes. Four of its pieces
+work around current behaviors:
+- **A1:** the whole CLAUDE.md is injected every session, which justifies
+  the `docs/conventions/` split.
+- **A2:** sub-agents get the parent's stale startup copy, which justifies
+  the re-read rule.
+- **A3:** large outputs are truncated or previewed, which justifies
+  `read_full.py`.
+- **A4:** the transcript format is what the measurement kit parses.
+
+Two more can't be read from logs:
+- **A5:** no native conditional rule loading exists.
+- **A6:** instruction-file edits are blocked.
+
+The process rules (log, TODO, closure, review gate) don't depend on any of
+these.
+
+**Added to the skill (outside this repo):**
+- `scripts/check_assumptions.py`, which tests A1–A4 at zero agent cost,
+  from existing transcripts plus git;
+- a mandatory **Step 0**: run the check, check the docs/changelog for A5/A6,
+  and drop or adapt each part whose assumption no longer holds;
+- a recorded validation baseline: Claude Code 2.1.283–2.1.288,
+  claude-opus-5-5, 2026-09-26 → 10-03.
+
+**Tested on this repo's real history.** The first version had two bugs,
+both fixed:
+- A1 compared the largest injection rather than the latest top-level one.
+- A2 compared each sub-agent against its parent's *first* injection, but a
+  resumed session gets a fresh copy, which inflated "fixed" counts.
+
+Final results:
+- A1 holds: the latest top-level injection was 4,551/4,551 words.
+- A2 holds: 35 sub-agents got their parent's old copy, 0 a newer one.
+- A3 holds: 829 truncation/persisted-output markers.
+- A4 holds: the kit parses current transcripts.
+- With no history, the check reports INCONCLUSIVE.
