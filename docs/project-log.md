@@ -23448,3 +23448,37 @@ sub-agents, the biggest fixed cost is rule B's re-read of CLAUDE.md
 **Run logistics.** The repo owner's session limit cut several run-2 agents
 off overnight, and some relaunches stalled. Only complete plans were
 counted. The throwaway worktrees and branches were removed afterwards.
+
+## 2026-10-03 -- methodology packaged as a reusable personal skill (lean-context-methodology)
+
+At the repo owner's request, the CLAUDE.md methodology developed and
+measured here (2026-09-25 → 10-03) was generalized into a personal Claude
+Code skill at `~/.claude/skills/lean-context-methodology/`, outside this
+repo, so it can be applied to other projects.
+
+**What it contains:**
+- `SKILL.md`: an assess → plan → recommend → approve → apply workflow,
+  covering both new projects and existing ones with a large CLAUDE.md;
+- templates for CLAUDE.md, TODO, the TODO archive and the project log;
+- `read_full.py`;
+- a generic all-or-nothing `split_claude_md.py` (dry run by default,
+  refuses to run on uncommitted changes, byte-for-byte round-trip check);
+- a generalized `measure_context_load.py` (no hard-coded Bookspell paths;
+  checked against this repo's known output);
+- the content-based `coverage.py` from the 42-agent test;
+- `reference/measurement-guide.md`.
+
+**Built-in cost warnings.** At the repo owner's request, the skill must warn
+about token costs using this project's real numbers before acting:
+- the restructure costs about 1–3% of a week;
+- per-task reading rises under explicit rules;
+- read_full adds +7–8%;
+- measurement costs about 0.5–0.7% of a week per agent, about 4% for a
+  7-agent check, and an estimated 25–30% for the 42-agent test.
+
+It also carries the measurement lessons: fresh sessions, hiding test
+material, no self-reports, transcript counting, blind grading, and 3 runs
+per task.
+
+Bookspell-specific content (personas, Supabase rules, schema, scoring
+protocol) was deliberately left out.
