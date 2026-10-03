@@ -23482,3 +23482,24 @@ per task.
 
 Bookspell-specific content (personas, Supabase rules, schema, scoring
 protocol) was deliberately left out.
+
+## 2026-10-03 -- TODO: external-review precedent item archived, its gated follow-ups kept live
+
+The P1 item "External AI consultation precedent" (the 2026-09-14 ChatGPT
+"Astra" review) was a record plus four delivered follow-ups:
+- the spoiler-safety fix;
+- `ranking_metrics()`;
+- CI;
+- curated onboarding.
+
+All of those are done. Per the TODO closure rule, its unfinished, gated
+phases were split out before archiving it as `done-36`. A new P3 item now
+holds:
+- fully adaptive onboarding;
+- decomposing `genre_accessibility`;
+- a frozen gold eval set;
+- reorganizing `scripts/`.
+
+Each keeps its gate. The staged reader milestones (~10 → ~25 → ~100
+readers) moved into the P1 "Recruit more raters" item, which had pointed
+to them as "the bottleneck above".
