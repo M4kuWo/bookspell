@@ -1,0 +1,1190 @@
+[
+ {
+  "arm": "1",
+  "run": "run1",
+  "task": "R1",
+  "aid": "a2ec3ed7add6fc977",
+  "total": 31230,
+  "returned": 26502,
+  "injected": 4728,
+  "calls": 21,
+  "tokens": 2471841,
+  "read_full_calls": 3,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/tagging.md": 0.0,
+   "docs/conventions/catalog.md": 0.0,
+   "docs/conventions/database.md": 0.0,
+   "docs/schema/book-dna.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run1",
+  "task": "R2",
+  "aid": "a50649883376173cd",
+  "total": 38253,
+  "returned": 33525,
+  "injected": 4728,
+  "calls": 28,
+  "tokens": 4648328,
+  "read_full_calls": 8,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run1",
+  "task": "R3",
+  "aid": "a0b18905d654f22c9",
+  "total": 13221,
+  "returned": 8493,
+  "injected": 4728,
+  "calls": 12,
+  "tokens": 1342441,
+  "read_full_calls": 4,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/backups.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/backups.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run1",
+  "task": "R4",
+  "aid": "a7a15a24fadce12ea",
+  "total": 17021,
+  "returned": 12293,
+  "injected": 4728,
+  "calls": 18,
+  "tokens": 2308718,
+  "read_full_calls": 5,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run1",
+  "task": "R5",
+  "aid": "a469ed8bc577477a5",
+  "total": 72320,
+  "returned": 67592,
+  "injected": 4728,
+  "calls": 50,
+  "tokens": 12145509,
+  "read_full_calls": 4,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/tagging.md": 0.0,
+   "docs/conventions/catalog.md": 0.0,
+   "docs/conventions/scoring.md": 0.0,
+   "docs/conventions/database.md": 0.0,
+   "docs/schema/book-dna.md": 0.0,
+   "docs/schema/book-dna.schema.yaml": 0.0,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 0.0,
+   "docs/scoring-test-protocol.md#front": 0.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 1.0,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run1",
+  "task": "T1",
+  "aid": "ac4151bb8e7cd663a",
+  "total": 32949,
+  "returned": 28221,
+  "injected": 4728,
+  "calls": 25,
+  "tokens": 3327712,
+  "read_full_calls": 3,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/web.md": 0.0,
+   "docs/conventions/tagging.md": 0.0,
+   "docs/conventions/catalog.md": 0.0,
+   "docs/conventions/database.md": 0.0,
+   "docs/schema/book-dna.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run1",
+  "task": "T2",
+  "aid": "a1b8ff6c24f09db97",
+  "total": 43553,
+  "returned": 38825,
+  "injected": 4728,
+  "calls": 26,
+  "tokens": 6051270,
+  "read_full_calls": 4,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/tagging.md": 0.0,
+   "docs/conventions/catalog.md": 0.0,
+   "docs/schema/book-dna.md": 0.0,
+   "docs/schema/book-dna.schema.yaml": 0.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.23431734317343172
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run2",
+  "task": "R1",
+  "aid": "a64f2b1d6b973bfe9",
+  "total": 29965,
+  "returned": 25237,
+  "injected": 4728,
+  "calls": 27,
+  "tokens": 4002666,
+  "read_full_calls": 7,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run2",
+  "task": "R2",
+  "aid": "a6b5f5067dcce181a",
+  "total": 39221,
+  "returned": 34493,
+  "injected": 4728,
+  "calls": 29,
+  "tokens": 4822415,
+  "read_full_calls": 7,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run2",
+  "task": "R3",
+  "aid": "ad77554df841ad6a1",
+  "total": 15385,
+  "returned": 10657,
+  "injected": 4728,
+  "calls": 13,
+  "tokens": 1436562,
+  "read_full_calls": 7,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/backups.md": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/backups.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run2",
+  "task": "R4",
+  "aid": "a7d59ff647c0adb97",
+  "total": 16883,
+  "returned": 12155,
+  "injected": 4728,
+  "calls": 25,
+  "tokens": 3239188,
+  "read_full_calls": 5,
+  "coverage": {
+   "CLAUDE.md": 0.006507592190889371,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run2",
+  "task": "R5",
+  "aid": "a9c27b74e4bf45fa1",
+  "total": 64025,
+  "returned": 59297,
+  "injected": 4728,
+  "calls": 55,
+  "tokens": 12180967,
+  "read_full_calls": 23,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 1.0,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.17896678966789667
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 1.0,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run2",
+  "task": "T1",
+  "aid": "a6e02983c8ffc49da",
+  "total": 31169,
+  "returned": 26441,
+  "injected": 4728,
+  "calls": 20,
+  "tokens": 2669887,
+  "read_full_calls": 3,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/web.md": 0.0,
+   "docs/conventions/tagging.md": 0.0,
+   "docs/conventions/catalog.md": 0.0,
+   "docs/conventions/database.md": 0.0,
+   "docs/schema/book-dna.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run2",
+  "task": "T2",
+  "aid": "ae08feea1baee994d",
+  "total": 42738,
+  "returned": 38010,
+  "injected": 4728,
+  "calls": 24,
+  "tokens": 4056672,
+  "read_full_calls": 3,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/tagging.md": 0.0,
+   "docs/conventions/catalog.md": 0.0,
+   "docs/schema/book-dna.md": 0.0,
+   "docs/schema/book-dna.schema.yaml": 0.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.22509225092250923
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run3",
+  "task": "R1",
+  "aid": "aad3cea6e3b82d956",
+  "total": 32140,
+  "returned": 27412,
+  "injected": 4728,
+  "calls": 25,
+  "tokens": 3407098,
+  "read_full_calls": 9,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run3",
+  "task": "R2",
+  "aid": "a74c338788ef91278",
+  "total": 40907,
+  "returned": 36179,
+  "injected": 4728,
+  "calls": 34,
+  "tokens": 5636064,
+  "read_full_calls": 10,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run3",
+  "task": "R3",
+  "aid": "af662b21f9acba76f",
+  "total": 11807,
+  "returned": 7079,
+  "injected": 4728,
+  "calls": 9,
+  "tokens": 824250,
+  "read_full_calls": 4,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/backups.md": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/backups.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run3",
+  "task": "R4",
+  "aid": "a979b492c9d8b2e8d",
+  "total": 17592,
+  "returned": 12864,
+  "injected": 4728,
+  "calls": 16,
+  "tokens": 2002577,
+  "read_full_calls": 6,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run3",
+  "task": "R5",
+  "aid": "a80deaca6fe62429d",
+  "total": 67343,
+  "returned": 62615,
+  "injected": 4728,
+  "calls": 45,
+  "tokens": 12247941,
+  "read_full_calls": 3,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/tagging.md": 0.0,
+   "docs/conventions/catalog.md": 0.0,
+   "docs/conventions/scoring.md": 0.0,
+   "docs/conventions/database.md": 0.0,
+   "docs/schema/book-dna.md": 0.0,
+   "docs/schema/book-dna.schema.yaml": 0.0,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 0.0,
+   "docs/scoring-test-protocol.md#front": 0.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.0996309963099631
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 1.0,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run3",
+  "task": "T1",
+  "aid": "ad32b8a96a82d450b",
+  "total": 33151,
+  "returned": 28423,
+  "injected": 4728,
+  "calls": 21,
+  "tokens": 3013630,
+  "read_full_calls": 3,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/web.md": 0.0,
+   "docs/conventions/tagging.md": 0.0,
+   "docs/conventions/catalog.md": 0.0,
+   "docs/conventions/database.md": 0.0,
+   "docs/schema/book-dna.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  }
+ },
+ {
+  "arm": "1",
+  "run": "run3",
+  "task": "T2",
+  "aid": "af719e16d41cb9b47",
+  "total": 43724,
+  "returned": 38996,
+  "injected": 4728,
+  "calls": 25,
+  "tokens": 4317353,
+  "read_full_calls": 8,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 0.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.2029520295202952
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run1",
+  "task": "R1",
+  "aid": "a09b30ec8c4d8a1bc",
+  "total": 24352,
+  "returned": 19748,
+  "injected": 4604,
+  "calls": 24,
+  "tokens": 3412593,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run1",
+  "task": "R2",
+  "aid": "a8949da8ff3b49c41",
+  "total": 36403,
+  "returned": 31799,
+  "injected": 4604,
+  "calls": 30,
+  "tokens": 5553652,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run1",
+  "task": "R3",
+  "aid": "a9e79e4ccd29c4217",
+  "total": 10427,
+  "returned": 5823,
+  "injected": 4604,
+  "calls": 11,
+  "tokens": 965205,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 0.43859649122807015,
+   "docs/conventions/backups.md": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 0.4951923076923077,
+   "docs/TODO.md": 0.42727272727272725,
+   "docs/conventions/backups.md": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run1",
+  "task": "R4",
+  "aid": "a7660eeb3ea8a4e56",
+  "total": 16875,
+  "returned": 12271,
+  "injected": 4604,
+  "calls": 16,
+  "tokens": 1877841,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run1",
+  "task": "R5",
+  "aid": "a39c2fc790ed0bc76",
+  "total": 50897,
+  "returned": 46293,
+  "injected": 4604,
+  "calls": 41,
+  "tokens": 9628999,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 0.0,
+   "docs/schema/book-dna.schema.yaml": 0.0,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.12361623616236163
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 0.0,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run1",
+  "task": "T1",
+  "aid": "ae918648ef6f07330",
+  "total": 33480,
+  "returned": 28876,
+  "injected": 4604,
+  "calls": 21,
+  "tokens": 2801602,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/web.md": 0.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 0.0,
+   "docs/schema/book-dna.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run1",
+  "task": "T2",
+  "aid": "a93460f26a6a374ec",
+  "total": 45303,
+  "returned": 40699,
+  "injected": 4604,
+  "calls": 27,
+  "tokens": 4946308,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.013392857142857142,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 0.0,
+   "docs/schema/book-dna.schema.yaml": 0.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.22509225092250923
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 0.9335394126738794,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run2",
+  "task": "R1",
+  "aid": "aa901461675989202",
+  "total": 31529,
+  "returned": 26925,
+  "injected": 4604,
+  "calls": 27,
+  "tokens": 3506008,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/tagging.md": 0.0,
+   "docs/conventions/catalog.md": 0.0,
+   "docs/conventions/database.md": 0.0,
+   "docs/schema/book-dna.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run2",
+  "task": "R2",
+  "aid": "a8441a2a2c8b50c53",
+  "total": 39754,
+  "returned": 35150,
+  "injected": 4604,
+  "calls": 29,
+  "tokens": 5083279,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run2",
+  "task": "R3",
+  "aid": "a9d86639a8110b089",
+  "total": 12564,
+  "returned": 7960,
+  "injected": 4604,
+  "calls": 7,
+  "tokens": 644533,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 0.43859649122807015,
+   "docs/conventions/backups.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.42727272727272725,
+   "docs/conventions/backups.md": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run2",
+  "task": "R4",
+  "aid": "afaf09501303d14cf",
+  "total": 15396,
+  "returned": 10792,
+  "injected": 4604,
+  "calls": 11,
+  "tokens": 1431221,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.8058035714285714,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 0.8966346153846154,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run2",
+  "task": "R5",
+  "aid": "ae77e91175f328243",
+  "total": 60609,
+  "returned": 56005,
+  "injected": 4604,
+  "calls": 40,
+  "tokens": 11049308,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 0.0,
+   "docs/schema/book-dna.schema.yaml": 0.0,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 0.0,
+   "docs/scoring-test-protocol.md#front": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.19557195571955718
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 1.0,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run2",
+  "task": "T1",
+  "aid": "a100c1e833726c1d2",
+  "total": 33371,
+  "returned": 28767,
+  "injected": 4604,
+  "calls": 21,
+  "tokens": 3334449,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run2",
+  "task": "T2",
+  "aid": "af1553a440a28e941",
+  "total": 43613,
+  "returned": 39009,
+  "injected": 4604,
+  "calls": 24,
+  "tokens": 4599612,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.15867158671586715
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run3",
+  "task": "R1",
+  "aid": "ab369754beaf389cb",
+  "total": 32305,
+  "returned": 27701,
+  "injected": 4604,
+  "calls": 24,
+  "tokens": 4340209,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/tagging.md": 0.0,
+   "docs/conventions/catalog.md": 0.0,
+   "docs/conventions/database.md": 0.0,
+   "docs/schema/book-dna.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run3",
+  "task": "R2",
+  "aid": "a66677052f2b0eb69",
+  "total": 38095,
+  "returned": 33491,
+  "injected": 4604,
+  "calls": 26,
+  "tokens": 5144647,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/scoring.md": 0.0,
+   "docs/conventions/catalog.md": 0.0,
+   "docs/schema/book-dna.md": 0.0,
+   "docs/scoring-test-protocol.md#front": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run3",
+  "task": "R3",
+  "aid": "aaafa387f41820439",
+  "total": 15374,
+  "returned": 10770,
+  "injected": 4604,
+  "calls": 11,
+  "tokens": 1099557,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/backups.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/backups.md": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run3",
+  "task": "R4",
+  "aid": "a234146c31cd1d378",
+  "total": 13569,
+  "returned": 8965,
+  "injected": 4604,
+  "calls": 13,
+  "tokens": 1368418,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/web.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 0.0,
+   "docs/conventions/web.md": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run3",
+  "task": "R5",
+  "aid": "a85a5c0164d86e8b6",
+  "total": 62099,
+  "returned": 57495,
+  "injected": 4604,
+  "calls": 46,
+  "tokens": 10382465,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.8058035714285714,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 0.5221445221445221,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.19557195571955718
+  },
+  "coverage_content": {
+   "CLAUDE.md": 0.8149038461538461,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/scoring.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 0.5749613601236476,
+   ".claude/skills/tag-catalog-batch/SKILL.md": 1.0,
+   "docs/scoring-test-protocol.md#front": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run3",
+  "task": "T1",
+  "aid": "a9657089a0f65d8ab",
+  "total": 25786,
+  "returned": 21182,
+  "injected": 4604,
+  "calls": 22,
+  "tokens": 3374899,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.8058035714285714,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 0.0
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/web.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/conventions/database.md": 1.0,
+   "docs/schema/book-dna.md": 0.16425992779783394
+  }
+ },
+ {
+  "arm": "2",
+  "run": "run3",
+  "task": "T2",
+  "aid": "aa3dac261c24c76da",
+  "total": 44245,
+  "returned": 39641,
+  "injected": 4604,
+  "calls": 24,
+  "tokens": 4265241,
+  "read_full_calls": 0,
+  "coverage": {
+   "CLAUDE.md": 0.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 0.0,
+   "docs/schema/book-dna-decisions.md#rejected": 0.1752767527675277
+  },
+  "coverage_content": {
+   "CLAUDE.md": 1.0,
+   "docs/TODO.md": 1.0,
+   "docs/conventions/tagging.md": 1.0,
+   "docs/conventions/catalog.md": 1.0,
+   "docs/schema/book-dna.md": 1.0,
+   "docs/schema/book-dna.schema.yaml": 1.0,
+   "docs/schema/book-dna-decisions.md#rejected": 1.0
+  }
+ }
+]

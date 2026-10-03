@@ -1,0 +1,296 @@
+[
+ {
+  "gid": "P01",
+  "task": "T2",
+  "arm": "2",
+  "run": "run2",
+  "aid": "af1553a440a28e941"
+ },
+ {
+  "gid": "P02",
+  "task": "R1",
+  "arm": "1",
+  "run": "run3",
+  "aid": "aad3cea6e3b82d956"
+ },
+ {
+  "gid": "P03",
+  "task": "R1",
+  "arm": "2",
+  "run": "run2",
+  "aid": "aa901461675989202"
+ },
+ {
+  "gid": "P04",
+  "task": "R1",
+  "arm": "2",
+  "run": "run3",
+  "aid": "ab369754beaf389cb"
+ },
+ {
+  "gid": "P05",
+  "task": "R3",
+  "arm": "2",
+  "run": "run3",
+  "aid": "aaafa387f41820439"
+ },
+ {
+  "gid": "P06",
+  "task": "R5",
+  "arm": "1",
+  "run": "run2",
+  "aid": "a9c27b74e4bf45fa1"
+ },
+ {
+  "gid": "P07",
+  "task": "R2",
+  "arm": "1",
+  "run": "run2",
+  "aid": "a6b5f5067dcce181a"
+ },
+ {
+  "gid": "P08",
+  "task": "R3",
+  "arm": "1",
+  "run": "run1",
+  "aid": "a0b18905d654f22c9"
+ },
+ {
+  "gid": "P09",
+  "task": "T2",
+  "arm": "1",
+  "run": "run2",
+  "aid": "ae08feea1baee994d"
+ },
+ {
+  "gid": "P10",
+  "task": "R2",
+  "arm": "2",
+  "run": "run2",
+  "aid": "a8441a2a2c8b50c53"
+ },
+ {
+  "gid": "P11",
+  "task": "T1",
+  "arm": "2",
+  "run": "run1",
+  "aid": "ae918648ef6f07330"
+ },
+ {
+  "gid": "P12",
+  "task": "R4",
+  "arm": "1",
+  "run": "run2",
+  "aid": "a7d59ff647c0adb97"
+ },
+ {
+  "gid": "P13",
+  "task": "T1",
+  "arm": "1",
+  "run": "run1",
+  "aid": "ac4151bb8e7cd663a"
+ },
+ {
+  "gid": "P14",
+  "task": "R3",
+  "arm": "2",
+  "run": "run1",
+  "aid": "a9e79e4ccd29c4217"
+ },
+ {
+  "gid": "P15",
+  "task": "R5",
+  "arm": "2",
+  "run": "run2",
+  "aid": "ae77e91175f328243"
+ },
+ {
+  "gid": "P16",
+  "task": "R2",
+  "arm": "2",
+  "run": "run1",
+  "aid": "a8949da8ff3b49c41"
+ },
+ {
+  "gid": "P17",
+  "task": "T2",
+  "arm": "2",
+  "run": "run1",
+  "aid": "a93460f26a6a374ec"
+ },
+ {
+  "gid": "P18",
+  "task": "R4",
+  "arm": "1",
+  "run": "run3",
+  "aid": "a979b492c9d8b2e8d"
+ },
+ {
+  "gid": "P19",
+  "task": "R1",
+  "arm": "1",
+  "run": "run2",
+  "aid": "a64f2b1d6b973bfe9"
+ },
+ {
+  "gid": "P20",
+  "task": "R3",
+  "arm": "2",
+  "run": "run2",
+  "aid": "a9d86639a8110b089"
+ },
+ {
+  "gid": "P21",
+  "task": "R3",
+  "arm": "1",
+  "run": "run3",
+  "aid": "af662b21f9acba76f"
+ },
+ {
+  "gid": "P22",
+  "task": "R2",
+  "arm": "2",
+  "run": "run3",
+  "aid": "a66677052f2b0eb69"
+ },
+ {
+  "gid": "P23",
+  "task": "R5",
+  "arm": "1",
+  "run": "run1",
+  "aid": "a469ed8bc577477a5"
+ },
+ {
+  "gid": "P24",
+  "task": "T2",
+  "arm": "1",
+  "run": "run3",
+  "aid": "af719e16d41cb9b47"
+ },
+ {
+  "gid": "P25",
+  "task": "R4",
+  "arm": "1",
+  "run": "run1",
+  "aid": "a7a15a24fadce12ea"
+ },
+ {
+  "gid": "P26",
+  "task": "R5",
+  "arm": "2",
+  "run": "run1",
+  "aid": "a39c2fc790ed0bc76"
+ },
+ {
+  "gid": "P27",
+  "task": "T1",
+  "arm": "1",
+  "run": "run2",
+  "aid": "a6e02983c8ffc49da"
+ },
+ {
+  "gid": "P28",
+  "task": "R2",
+  "arm": "1",
+  "run": "run3",
+  "aid": "a74c338788ef91278"
+ },
+ {
+  "gid": "P29",
+  "task": "R4",
+  "arm": "2",
+  "run": "run3",
+  "aid": "a234146c31cd1d378"
+ },
+ {
+  "gid": "P30",
+  "task": "T1",
+  "arm": "2",
+  "run": "run3",
+  "aid": "a9657089a0f65d8ab"
+ },
+ {
+  "gid": "P31",
+  "task": "T2",
+  "arm": "2",
+  "run": "run3",
+  "aid": "aa3dac261c24c76da"
+ },
+ {
+  "gid": "P32",
+  "task": "T1",
+  "arm": "1",
+  "run": "run3",
+  "aid": "ad32b8a96a82d450b"
+ },
+ {
+  "gid": "P33",
+  "task": "R4",
+  "arm": "2",
+  "run": "run1",
+  "aid": "a7660eeb3ea8a4e56"
+ },
+ {
+  "gid": "P34",
+  "task": "T2",
+  "arm": "1",
+  "run": "run1",
+  "aid": "a1b8ff6c24f09db97"
+ },
+ {
+  "gid": "P35",
+  "task": "T1",
+  "arm": "2",
+  "run": "run2",
+  "aid": "a100c1e833726c1d2"
+ },
+ {
+  "gid": "P36",
+  "task": "R5",
+  "arm": "1",
+  "run": "run3",
+  "aid": "a80deaca6fe62429d"
+ },
+ {
+  "gid": "P37",
+  "task": "R4",
+  "arm": "2",
+  "run": "run2",
+  "aid": "afaf09501303d14cf"
+ },
+ {
+  "gid": "P38",
+  "task": "R3",
+  "arm": "1",
+  "run": "run2",
+  "aid": "ad77554df841ad6a1"
+ },
+ {
+  "gid": "P39",
+  "task": "R1",
+  "arm": "2",
+  "run": "run1",
+  "aid": "a09b30ec8c4d8a1bc"
+ },
+ {
+  "gid": "P40",
+  "task": "R1",
+  "arm": "1",
+  "run": "run1",
+  "aid": "a2ec3ed7add6fc977"
+ },
+ {
+  "gid": "P41",
+  "task": "R5",
+  "arm": "2",
+  "run": "run3",
+  "aid": "a85a5c0164d86e8b6"
+ },
+ {
+  "gid": "P42",
+  "task": "R2",
+  "arm": "1",
+  "run": "run1",
+  "aid": "a50649883376173cd"
+ }
+]

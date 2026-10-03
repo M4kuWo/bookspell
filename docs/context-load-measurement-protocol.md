@@ -397,3 +397,82 @@ on narrow tasks. Treat Part 3's per-route percentages as single-run
 indications, not effect sizes. Only the injection saving is deterministic.
 (This is also relevant to CODX Task 26's counter-attribution lever: large
 searches landing in persisted outputs are the biggest unattributed cost.)
+
+## Part 4 — read_full rule, 42-agent two-arm test (2026-10-02/03)
+
+**Design.** CODX's Task 26 retest spec, run in full:
+- **Arms:** two throwaway git worktrees made from commit 9d3c331 with an
+  identical cleanup. All measurement material was hidden: prompts,
+  checklists, this doc, the CODX context-load reports, the routing
+  acceptance tests, the measurement entries in the project log, and the
+  TODO and CODX-task mentions. The **only** difference between the arms was
+  CLAUDE.md: copy 1 had the current rules including "Full reads use
+  `scripts/read_full.py`" (4,675 words); copy 2 had the version just before
+  that rule (4,551 words). Folder names were neutral.
+- **Runs:** each arm ran from its own fresh terminal, so each got the
+  correct injection (verified per transcript). The same 7 prompts as Part 3
+  ran 3 times per arm (42 agents), with the paths changed to the copy.
+- **Retries.** Several run-2 agents hit the repo owner's session limit
+  overnight, and some relaunches stalled. Only agents with a complete plan
+  were counted. Their re-runs came from the same launcher session, so they
+  had the same CLAUDE.md.
+- **Measurement.** Cost came from transcripts via the fixed counter.
+  Completeness was measured by content: each required file's distinctive
+  lines (at least 25 characters, unique in the file) were matched against
+  everything the agent received. The path-based attribution misses
+  read_full output that agents saved to a temp file and then opened with
+  Read, which undercounted the treatment arm.
+- **Quality.** A separate grader agent scored all 42 plans blind against the
+  pre-registered checklists. Plans were shuffled, and paths, branch names and
+  read_full mentions were redacted.
+
+**Results.**
+
+| Task | With read_full (median of 3, words) | Without | Δ |
+|---|---:|---:|---:|
+| R1 tagging correction | 31,230 | 31,529 | −1% |
+| R2 scoring | 39,221 | 38,095 | +3% |
+| R3 CI | 13,221 | 12,564 | +5% |
+| R4 UI | 17,021 | 15,396 | +11% |
+| R5 new scalar field | 67,343 | 60,609 | +11% |
+| T1 audiobook panel | 32,949 | 33,371 | −1% |
+| T2 possession trope | 43,553 | 44,245 | −2% |
+| All 21 agents | 734,597 | 686,046 | **+7%** (tokens +8%: 96.2M vs 88.8M) |
+
+- **Completeness** of the reads routes require in full: **with read_full,
+  127/129 complete, and 19/21 agents fully compliant** (the only misses
+  were 2 TODO reads). **Without it, 118/129, and 12/21 agents.** The
+  without-arm misses were the sub-agent CLAUDE.md re-read (4 of 21
+  incomplete), the full YAML (3 of 6), TODO (3) and the schema core (1).
+- **Quality:** 42/42 plans met every checklist item in both arms, with no
+  errors flagged. CLDO spot-checked the harder items directly in the plan
+  texts. The checklists hit a ceiling: they can't separate the arms on
+  quality.
+- **Variance:** small. Three runs per task mostly fall within a few percent,
+  unlike Part 3's single runs.
+
+**Conclusion.** The read_full rule costs about 7–8% more delivered words and
+tokens. In exchange, the share of agents that actually read everything their
+task requires rises from 57% to 90%. Quality on these tasks was already at
+ceiling without it. So the rule buys verified completeness, which is
+insurance against the "confidently read only part of a file" failure,
+rather than better answers on these 7 tasks. Keep it.
+
+**Comparison with the 2026-09-28 before arm** (pre-overhaul rules, one run
+each, sub-agents injected with the old 8,893-word CLAUDE.md): today's
+sub-agents read **more** on every task, from +27% (R3) to +143% (R5). The
+before-arm agents passed their checklists while skipping much of what their
+routes require, and today's agents actually read it. The largest new fixed
+cost for **sub-agents** is rule B's disk re-read of CLAUDE.md (about 4.7k
+words, on top of the 4.7k injected). Top-level sessions don't pay that, and
+keep A's ~4.3k-word injection saving. If sub-agent cost ever matters, B's
+re-read is the first lever to revisit, for example with a parent-supplied
+freshness signal.
+
+**Limitations.**
+- The sanitized log copy also dropped 3 non-measurement entries, identically
+  in both arms.
+- Some agents noticed they were on a throwaway branch.
+- Git history still held the hidden material.
+- The memory index injection (53 words) was the same in both arms.
+- Raw data is in `docs/codx-reviews/context-load-e2/`.

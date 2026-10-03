@@ -1,0 +1,643 @@
+{
+ "items": {
+  "R1": [
+   "person treated as HIGH_RISK: external verification (excerpt/synopsis/web), not recall",
+   "fix is a migration file in supabase/migrations",
+   "books referenced by title(+author) subselect, not UUID",
+   "title strings generated programmatically from stored values (curly-quote safety)",
+   "apply to local via psycopg2",
+   "apply to hosted via supabase db push",
+   "verify counts/values match on both sides after apply",
+   "run check_db_sync before using local",
+   "use confidence layer (book_field_confidence) where uncertain",
+   "project-log entry",
+   "person values restricted to YAML vocabulary (first/second/third_limited/third_omniscient/mixed)"
+  ],
+  "R2": [
+   "read scoring-test-protocol",
+   "answer the 10-question gate before writing code",
+   "run both failure scenarios (dilution + domination)",
+   "any discount per-book conditional, not blanket",
+   "check 'What's been tried' for prior rejected/reverted aggregation ideas",
+   "monkeypatch/module-identity caution or edit _full_score directly",
+   "CLDO owns engine change"
+  ],
+  "R3": [
+   "edit cron to twice daily (e.g. '43 7,19 * * *')",
+   "update the inline cron comment",
+   "flag the doc text that says 'daily' for update",
+   "structural-gate judgment for the doc change",
+   "project-log entry"
+  ],
+  "R4": [
+   "badge uses --gold/--gold-bg/--gold-border tokens",
+   "tokens redefined in @media dark block guarded :root:not([data-theme=light])",
+   "tokens redefined under :root[data-theme=dark]",
+   "no component-level dark override outside those blocks"
+  ],
+  "R5": [
+   "consult scalar-field gate in schema core",
+   "step 1: repeated failure class required; none found -> stop/flag",
+   "step 2: existing field (magic_system_hardness values) covers concept",
+   "step 3: ablation plan",
+   "step 4: 10-question gate",
+   "check decisions file for prior rejection",
+   "note schema.yaml + book-dna md + tag-catalog-batch SKILL updates in same session"
+  ],
+  "T1": [
+   "RLS/grants on audiobook_editions checked",
+   "grants checked for both anon and authenticated",
+   "uses column names release_date_start/release_date_end",
+   "notes columns are NULL on every row -> panel would be empty",
+   "hidden/display CSS guard handled (if modal UI)",
+   "theme tokens handled (if modal UI)"
+  ],
+  "T2": [
+   "finds existing Open tracker entry skinchanging_or_body_possession",
+   "notes evidence is one series only",
+   "applies second-occurrence rule",
+   "Turton (Evelyn Hardcastle) treated as mechanically different",
+   "Bone Season treated as unverified lead",
+   "checks YAML distinctions vs shapeshifters/telepathic_animal_bond",
+   "does not propose promotion without a 2nd occurrence"
+  ]
+ },
+ "grades": {
+  "P01": {
+   "task": "T2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P02": {
+   "task": "R1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P03": {
+   "task": "R1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P04": {
+   "task": "R1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "values not enumerated but only valid YAML values used"
+  },
+  "P05": {
+   "task": "R3",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "CLAUDE.md lacks schedule text; backups.md flagged; gate judged n/a"
+  },
+  "P06": {
+   "task": "R5",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P07": {
+   "task": "R2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P08": {
+   "task": "R3",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P09": {
+   "task": "T2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P10": {
+   "task": "R2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "rejected ideas listed; group-redundancy not named explicitly"
+  },
+  "P11": {
+   "task": "T1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "hidden-guard met via explicit 'no new CSS'; grants cited from migrations + planned anon REST read"
+  },
+  "P12": {
+   "task": "R4",
+   "met": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "guard named only as 'follow the computer's setting' block"
+  },
+  "P13": {
+   "task": "T1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "explicitly cites web.md hidden/display rule"
+  },
+  "P14": {
+   "task": "R3",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P15": {
+   "task": "R5",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P16": {
+   "task": "R2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P17": {
+   "task": "T2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P18": {
+   "task": "R4",
+   "met": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P19": {
+   "task": "R1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "values not enumerated but only valid YAML values used"
+  },
+  "P20": {
+   "task": "R3",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P21": {
+   "task": "R3",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P22": {
+   "task": "R2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "rejected ideas listed; group-redundancy not named explicitly"
+  },
+  "P23": {
+   "task": "R5",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P24": {
+   "task": "T2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P25": {
+   "task": "R4",
+   "met": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P26": {
+   "task": "R5",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "10-question gate referenced, not answered (stops at gate 1)"
+  },
+  "P27": {
+   "task": "T1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "hidden-guard met via 'no shared.css changes'"
+  },
+  "P28": {
+   "task": "R2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P29": {
+   "task": "R4",
+   "met": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P30": {
+   "task": "T1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "hidden-guard met via 'no new CSS'"
+  },
+  "P31": {
+   "task": "T2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "backfill by title subselect only (no author) - minor"
+  },
+  "P32": {
+   "task": "T1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "hidden-guard met via 'no new CSS'; recommends backfill first"
+  },
+  "P33": {
+   "task": "R4",
+   "met": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P34": {
+   "task": "T2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P35": {
+   "task": "T1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "hidden-guard met via 'no new CSS/markup'"
+  },
+  "P36": {
+   "task": "R5",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P37": {
+   "task": "R4",
+   "met": [
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "guard named only as 'system-preference block'"
+  },
+  "P38": {
+   "task": "R3",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P39": {
+   "task": "R1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P40": {
+   "task": "R1",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P41": {
+   "task": "R5",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "all checklist items addressed"
+  },
+  "P42": {
+   "task": "R2",
+   "met": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ],
+   "errors": [],
+   "note": "rejected ideas listed; group-redundancy not named explicitly"
+  }
+ }
+}

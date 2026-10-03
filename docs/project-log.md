@@ -23411,3 +23411,40 @@ only 4 accounts, all known people. No forced sign-out and no history
 rewrite. Every backup from 2026-09-28 on excludes auth secrets
 (`scripts/backup_snapshot.py`). The TODO item is closed and archived. Revisit
 only if the backups repo's visibility or access changes.
+
+## 2026-10-03 -- read_full rule measured (42 agents, two arms): +7% cost, completeness 12/21 -> 19/21, quality unchanged
+
+Ran the full two-arm re-measurement the repo owner had postponed to just
+before the weekly token reset: 3 runs × 7 tasks × 2 arms. The arms were
+identical throwaway worktrees differing only by the read_full rule in
+CLAUDE.md, each launched from its own fresh terminal with the measurement
+material hidden. Full method and table are in
+`docs/context-load-measurement-protocol.md` Part 4; raw data is in
+`docs/codx-reviews/context-load-e2/`.
+
+**Result: keep the rule.**
+- **Cost:** +7% words and +8% tokens overall. Per task it ranges from −2% to
+  +11%.
+- **Completeness:** agents that read everything their task requires rose
+  from 12/21 to 19/21 (required full reads 118/129 → 127/129).
+- **Quality:** 42/42 in both arms, graded blind. The checklists hit a
+  ceiling, so they can't separate the arms on quality.
+
+**Two measurement fixes along the way:**
+- The counter's path-based attribution misses read_full output that agents
+  saved to temp files and then opened with Read. Completeness was therefore
+  measured by matching each file's distinctive lines against everything the
+  agent received.
+- CLDO's first range for the decisions-file requirement wrongly included the
+  Deferred section; it was corrected to the preamble plus the Rejected
+  section.
+
+**Honest note on the overall overhaul.** Today's sub-agents read 27–143%
+more than the 2026-09-28 before arm. The before-arm agents were under-reading
+their required files and passing anyway; today's actually comply. For
+sub-agents, the biggest fixed cost is rule B's re-read of CLAUDE.md
+(about 4.7k words). Top-level sessions keep A's saving.
+
+**Run logistics.** The repo owner's session limit cut several run-2 agents
+off overnight, and some relaunches stalled. Only complete plans were
+counted. The throwaway worktrees and branches were removed afterwards.
