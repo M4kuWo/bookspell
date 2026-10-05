@@ -23544,3 +23544,24 @@ Final results:
 - A3 holds: 829 truncation/persisted-output markers.
 - A4 holds: the kit parses current transcripts.
 - With no history, the check reports INCONCLUSIVE.
+
+## 2026-10-05 -- macOS privacy block on ~/Documents recurred, after a Claude Code auto-update
+
+The 2026-09-15 macOS privacy (TCC) "Operation not permitted" problem has
+recurred in the long-running CLDO session that started 2026-09-26. Now
+blocked: `~/Documents` itself, `~/Documents/bookspell-codex`,
+`~/Documents/bookspell-backups` and `~/Downloads`. All of them were
+readable on 2026-09-28 and 10-03. Unaffected: this repo, `~/.claude`,
+`~/Desktop` and the scratchpad.
+
+**New clue.** Claude Code auto-updated from 2.1.288 to 2.1.289 in between.
+That supports the 09-15 theory: a TCC grant cached for a running process
+is dropped when the granting binary changes.
+
+**Fix to try**, in order:
+1. start a fresh session;
+2. failing that, toggle the "claude" entry's Documents Folder access in
+   System Settings → Privacy & Security → Files and Folders.
+
+Until it's fixed, CLDO can't read CODX reports or reach the backups repo
+from this session.
